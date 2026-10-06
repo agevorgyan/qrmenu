@@ -153,6 +153,7 @@
             aiChatInput: '',
             aiChatLoading: false,
             aiAllowedLanguages: vendor.ai_waiter_languages || ['hy', 'en', 'ru'],
+            aiLanguageDetails: vendor.ai_waiter_language_details || [],
 
             // Toast State
             toast: {
@@ -1177,11 +1178,34 @@
                         if (data.allowed_languages && data.allowed_languages.length) {
                             this.aiAllowedLanguages = data.allowed_languages;
                         }
+                        if (data.allowed_language_details && data.allowed_language_details.length) {
+                            this.aiLanguageDetails = data.allowed_language_details;
+                        }
                         this.aiCurrentQuestion = data.next_question;
                     }
                 } catch (e) {
                     console.error('Failed to start AI session:', e);
                 }
+            },
+
+            getAiLanguagesList() {
+                if (this.aiLanguageDetails && this.aiLanguageDetails.length > 0) {
+                    return this.aiLanguageDetails.filter(l => this.aiAllowedLanguages.includes(l.code));
+                }
+                const fallbackNames = {
+                    hy: { code: 'hy', name: 'Armenian', native_name: 'Հայերեն', flag: '🇦🇲' },
+                    en: { code: 'en', name: 'English', native_name: 'English', flag: '🇬🇧' },
+                    ru: { code: 'ru', name: 'Russian', native_name: 'Русский', flag: '🇷🇺' },
+                    fr: { code: 'fr', name: 'French', native_name: 'Français', flag: '🇫🇷' },
+                    de: { code: 'de', name: 'German', native_name: 'Deutsch', flag: '🇩🇪' },
+                    es: { code: 'es', name: 'Spanish', native_name: 'Español', flag: '🇪🇸' },
+                    it: { code: 'it', name: 'Italian', native_name: 'Italiano', flag: '🇮🇹' },
+                    ka: { code: 'ka', name: 'Georgian', native_name: 'ქართული', flag: '🇬🇪' },
+                    ar: { code: 'ar', name: 'Arabic', native_name: 'العربية', flag: '🇦🇪' },
+                };
+                return (this.aiAllowedLanguages || []).map(code => {
+                    return fallbackNames[code] || { code: code, name: code.toUpperCase(), native_name: code.toUpperCase(), flag: '🌐' };
+                });
             },
 
             async selectAiLanguage(lang) {

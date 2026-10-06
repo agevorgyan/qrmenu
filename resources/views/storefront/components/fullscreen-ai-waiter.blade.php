@@ -33,7 +33,7 @@
                     <div style="font-size: 0.72rem; color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 0.35rem; margin-top: 0.1rem;">
                         <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span>
                         <span x-show="selectedLang === 'hy'">Առցանց մատուցող</span>
-                        <span x-show="selectedLang === 'en'">Online Waiter</span>
+                        <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Online Waiter</span>
                         <span x-show="selectedLang === 'ru'">Онлайн-официант</span>
                     </div>
                 </div>
@@ -47,7 +47,7 @@
                         style="height: 36px; padding: 0 0.75rem; border-radius: 12px; background: rgba(139, 92, 246, 0.12); border: 1px solid rgba(139, 92, 246, 0.25); color: #8b5cf6; display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">
                     <i class="fa-solid fa-comments"></i>
                     <span class="hidden-xs" x-show="selectedLang === 'hy'">Հարցնել</span>
-                    <span class="hidden-xs" x-show="selectedLang === 'en'">Chat</span>
+                    <span class="hidden-xs" x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Chat</span>
                     <span class="hidden-xs" x-show="selectedLang === 'ru'">Чат</span>
                 </button>
 
@@ -99,25 +99,25 @@
                 <div style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.3rem 0.85rem; border-radius: 9999px; background: rgba(139, 92, 246, 0.12); border: 1px solid rgba(139, 92, 246, 0.25); color: #8b5cf6; font-size: 0.76rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.85rem;">
                     <i class="fa-solid fa-sparkles"></i>
                     <span x-show="selectedLang === 'hy'">Խելացի AI Մատուցող</span>
-                    <span x-show="selectedLang === 'en'">Intelligent AI Waiter</span>
+                    <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Intelligent AI Waiter</span>
                     <span x-show="selectedLang === 'ru'">Интеллектуальный AI-официант</span>
                 </div>
 
                 <h1 style="font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 900; color: var(--text-main); margin: 0 0 0.5rem 0; line-height: 1.2;">
                     <span x-show="selectedLang === 'hy'">👋 Բարև</span>
-                    <span x-show="selectedLang === 'en'">👋 Hello</span>
+                    <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">👋 Hello</span>
                     <span x-show="selectedLang === 'ru'">👋 Здравствуйте</span>
                 </h1>
 
                 <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.75rem 0;">
                     <span x-show="selectedLang === 'hy'">Ես <strong>{{ $vendor->getAiWaiterName() }}</strong>-ն եմ, ձեր AI մատուցողը։</span>
-                    <span x-show="selectedLang === 'en'">I am <strong>{{ $vendor->getAiWaiterName() }}</strong>, your personal AI dining advisor.</span>
+                    <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">I am <strong>{{ $vendor->getAiWaiterName() }}</strong>, your personal AI dining advisor.</span>
                     <span x-show="selectedLang === 'ru'">Я <strong>{{ $vendor->getAiWaiterName() }}</strong>, ваш персональный AI-официант.</span>
                 </h2>
 
                 <p style="font-size: 0.95rem; line-height: 1.6; color: var(--text-muted); max-width: 460px; margin: 0 auto 1.75rem auto;">
                     <span x-show="selectedLang === 'hy'">Կօգնեմ ընտրել հենց այն, ինչ ձեզ առավելագույնս դուր կգա մեր մենյուից՝ Ձեր տրամադրությանն ու նախասիրություններին համապատասխան։</span>
-                    <span x-show="selectedLang === 'en'">I will guide you to culinary delights that match your mood, dietary tastes, and occasion perfectly.</span>
+                    <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">I will guide you to culinary delights that match your mood, dietary tastes, and occasion perfectly.</span>
                     <span x-show="selectedLang === 'ru'">Я помогу подобрать идеальные блюда и напитки по вашему вкусу, настроению и предпочтениям.</span>
                 </p>
 
@@ -127,7 +127,7 @@
                         <div style="font-size: 1.4rem; margin-bottom: 0.25rem;">⚡</div>
                         <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-main);">
                             <span x-show="selectedLang === 'hy'">30 վայրկյան</span>
-                            <span x-show="selectedLang === 'en'">30 Seconds</span>
+                            <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">30 Seconds</span>
                             <span x-show="selectedLang === 'ru'">30 секунд</span>
                         </div>
                     </div>
@@ -135,7 +135,7 @@
                         <div style="font-size: 1.4rem; margin-bottom: 0.25rem;">🥩</div>
                         <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-main);">
                             <span x-show="selectedLang === 'hy'">Անհատական</span>
-                            <span x-show="selectedLang === 'en'">Tailored</span>
+                            <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Tailored</span>
                             <span x-show="selectedLang === 'ru'">Персонально</span>
                         </div>
                     </div>
@@ -143,7 +143,7 @@
                         <div style="font-size: 1.4rem; margin-bottom: 0.25rem;">🍷</div>
                         <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-main);">
                             <span x-show="selectedLang === 'hy'">Զուգորդում</span>
-                            <span x-show="selectedLang === 'en'">Pairings</span>
+                            <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Pairings</span>
                             <span x-show="selectedLang === 'ru'">Сочетания</span>
                         </div>
                     </div>
@@ -157,7 +157,7 @@
                             style="width: 100%; border: none; border-radius: 18px; padding: 1.05rem 1.5rem; font-size: 1.05rem; font-weight: 800; color: #ffffff; background: linear-gradient(135deg, #8b5cf6, #d946ef); box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.65rem; transition: transform 0.2s, box-shadow 0.2s;">
                         <span>🚀</span>
                         <span x-show="selectedLang === 'hy'">Սկսել</span>
-                        <span x-show="selectedLang === 'en'">Start</span>
+                        <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Start</span>
                         <span x-show="selectedLang === 'ru'">Начать</span>
                     </button>
 
@@ -165,7 +165,7 @@
                             @click="skipToMenu()"
                             style="width: 100%; border: 1px solid var(--border-color); border-radius: 18px; padding: 0.85rem 1.25rem; font-size: 0.9rem; font-weight: 600; color: var(--text-muted); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s;">
                         <span x-show="selectedLang === 'hy'">Տեսնել ամբողջ մենյուն</span>
-                        <span x-show="selectedLang === 'en'">Browse Full Menu Directly</span>
+                        <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Browse Full Menu Directly</span>
                         <span x-show="selectedLang === 'ru'">Посмотреть всё меню</span>
                         <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem;"></i>
                     </button>
@@ -202,51 +202,16 @@
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 0.85rem; margin-bottom: 2rem;">
-                    <!-- Armenian -->
-                    <template x-if="aiAllowedLanguages.includes('hy')">
+                    <template x-for="langItem in getAiLanguagesList()" :key="langItem.code">
                         <button type="button" 
-                                @click="selectAiLanguage('hy')"
-                                :class="{ 'ai-lang-active': selectedLang === 'hy' }"
+                                @click="selectAiLanguage(langItem.code)"
+                                :class="{ 'ai-lang-active': selectedLang === langItem.code }"
                                 class="ai-language-card">
                             <div style="display: flex; align-items: center; gap: 1rem;">
-                                <span style="font-size: 1.8rem;">🇦🇲</span>
+                                <span style="font-size: 1.8rem;" x-text="langItem.flag || '🌐'"></span>
                                 <div style="text-align: left;">
-                                    <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);">Հայերեն</div>
-                                    <div style="font-size: 0.78rem; color: var(--text-muted);">Armenian</div>
-                                </div>
-                            </div>
-                            <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 0.9rem;"></i>
-                        </button>
-                    </template>
-
-                    <!-- English -->
-                    <template x-if="aiAllowedLanguages.includes('en')">
-                        <button type="button" 
-                                @click="selectAiLanguage('en')"
-                                :class="{ 'ai-lang-active': selectedLang === 'en' }"
-                                class="ai-language-card">
-                            <div style="display: flex; align-items: center; gap: 1rem;">
-                                <span style="font-size: 1.8rem;">🇬🇧</span>
-                                <div style="text-align: left;">
-                                    <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);">English</div>
-                                    <div style="font-size: 0.78rem; color: var(--text-muted);">International</div>
-                                </div>
-                            </div>
-                            <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 0.9rem;"></i>
-                        </button>
-                    </template>
-
-                    <!-- Russian -->
-                    <template x-if="aiAllowedLanguages.includes('ru')">
-                        <button type="button" 
-                                @click="selectAiLanguage('ru')"
-                                :class="{ 'ai-lang-active': selectedLang === 'ru' }"
-                                class="ai-language-card">
-                            <div style="display: flex; align-items: center; gap: 1rem;">
-                                <span style="font-size: 1.8rem;">🇷🇺</span>
-                                <div style="text-align: left;">
-                                    <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);">Русский</div>
-                                    <div style="font-size: 0.78rem; color: var(--text-muted);">Russian</div>
+                                    <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);" x-text="langItem.native_name || langItem.name"></div>
+                                    <div style="font-size: 0.78rem; color: var(--text-muted);" x-text="langItem.name || langItem.code.toUpperCase()"></div>
                                 </div>
                             </div>
                             <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 0.9rem;"></i>
@@ -270,13 +235,13 @@
 
                 <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.65rem; font-weight: 900; color: var(--text-main); margin: 0 0 0.5rem 0;">
                     <span x-show="selectedLang === 'hy'">Հիանալի 😊</span>
-                    <span x-show="selectedLang === 'en'">Wonderful 😊</span>
+                    <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Wonderful 😊</span>
                     <span x-show="selectedLang === 'ru'">Отлично 😊</span>
                 </h2>
 
                 <p style="font-size: 0.95rem; line-height: 1.6; color: var(--text-muted); margin: 0 auto 2rem auto; max-width: 420px;">
                     <span x-show="selectedLang === 'hy'">Մի քանի կարճ հարց կտամ, որպեսզի ձեզ համար ընտրեմ լավագույն և ամենահամեղ տարբերակները։</span>
-                    <span x-show="selectedLang === 'en'">I'll ask a couple of quick questions to curate the finest dishes and pairings tailored for you.</span>
+                    <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">I'll ask a couple of quick questions to curate the finest dishes and pairings tailored for you.</span>
                     <span x-show="selectedLang === 'ru'">Задам буквально несколько коротких вопросов, чтобы подобрать для вас самые вкусные блюда.</span>
                 </p>
 
@@ -287,7 +252,7 @@
                             style="width: 100%; border: none; border-radius: 18px; padding: 1.05rem 1.5rem; font-size: 1.05rem; font-weight: 800; color: #ffffff; background: linear-gradient(135deg, #8b5cf6, #d946ef); box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.65rem;">
                         <span>✨</span>
                         <span x-show="selectedLang === 'hy'">Սկսել</span>
-                        <span x-show="selectedLang === 'en'">Start</span>
+                        <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Start</span>
                         <span x-show="selectedLang === 'ru'">Начать</span>
                     </button>
 
@@ -295,7 +260,7 @@
                             @click="skipToMenu()"
                             style="width: 100%; border: 1px solid var(--border-color); border-radius: 18px; padding: 0.85rem 1.25rem; font-size: 0.9rem; font-weight: 600; color: var(--text-muted); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
                         <span x-show="selectedLang === 'hy'">Տեսնել ամբողջ մենյուն</span>
-                        <span x-show="selectedLang === 'en'">Browse Full Menu Directly</span>
+                        <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Browse Full Menu Directly</span>
                         <span x-show="selectedLang === 'ru'">Посмотреть всё меню</span>
                     </button>
                 </div>
@@ -317,7 +282,7 @@
                             style="background: none; border: none; color: var(--text-muted); font-size: 0.85rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.35rem;">
                         <i class="fa-solid fa-arrow-left"></i>
                         <span x-show="selectedLang === 'hy'">Հետ</span>
-                        <span x-show="selectedLang === 'en'">Back</span>
+                        <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Back</span>
                         <span x-show="selectedLang === 'ru'">Назад</span>
                     </button>
 
@@ -330,7 +295,7 @@
                             @click="skipAiQuestion()" 
                             style="background: none; border: none; color: var(--text-muted); font-size: 0.82rem; font-weight: 600; cursor: pointer;">
                         <span x-show="selectedLang === 'hy'">Բաց թողնել</span>
-                        <span x-show="selectedLang === 'en'">Skip</span>
+                        <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Skip</span>
                         <span x-show="selectedLang === 'ru'">Пропустить</span>
                     </button>
                 </div>
@@ -371,7 +336,7 @@
                             <div style="position: absolute; inset: 50% 0 auto 0; border-top: 1px solid var(--border-color);"></div>
                             <span style="position: relative; background: var(--bg-card); padding: 0 0.75rem; font-size: 0.76rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">
                                 <span x-show="selectedLang === 'hy'">Կամ գրեք Ձեր պատասխանը</span>
-                                <span x-show="selectedLang === 'en'">Or type your custom answer</span>
+                                <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Or type your custom answer</span>
                                 <span x-show="selectedLang === 'ru'">Или напишите свой вариант</span>
                             </span>
                         </div>
@@ -381,7 +346,7 @@
                             <div style="position: relative; display: flex; align-items: center;">
                                 <input type="text" 
                                        x-model="aiFreeTextInput"
-                                       :placeholder="selectedLang === 'en' ? 'e.g. Tender meat without mushrooms, light sauce...' : (selectedLang === 'ru' ? 'например: Мясо без грибов, не острый соус...' : 'Օրինակ՝ Մսային ուտեստ առանց սնկի, թեթև սոուսով...')"
+                                       :placeholder="selectedLang === 'hy' ? 'Օրինակ՝ Մսային ուտեստ առանց սնկի, թեթև սոուսով...' : (selectedLang === 'ru' ? 'например: Мясо без грибов, не острый соус...' : 'e.g. Tender meat without mushrooms, light sauce...')"
                                        class="form-control" 
                                        style="width: 100%; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); border-radius: 16px; padding: 0.85rem 3.4rem 0.85rem 1rem; font-size: 0.92rem; outline: none; transition: border-color 0.2s;">
                                 
@@ -422,12 +387,12 @@
                     <div x-show="aiAnalysisStep === 1" x-transition>
                         <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.35rem 0;">
                             <span x-show="selectedLang === 'hy'">🔎 Մի պահ...</span>
-                            <span x-show="selectedLang === 'en'">🔎 One moment...</span>
+                            <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">🔎 One moment...</span>
                             <span x-show="selectedLang === 'ru'">🔎 Одну секунду...</span>
                         </h3>
                         <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0;">
                             <span x-show="selectedLang === 'hy'">Նախապատրաստում եմ առաջարկները</span>
-                            <span x-show="selectedLang === 'en'">Preparing your personalized selection</span>
+                            <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Preparing your personalized selection</span>
                             <span x-show="selectedLang === 'ru'">Готовим персональный подбор</span>
                         </p>
                     </div>
@@ -435,12 +400,12 @@
                     <div x-show="aiAnalysisStep === 2" x-transition>
                         <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.35rem 0;">
                             <span x-show="selectedLang === 'hy'">📋 Նայում եմ մեր մենյուին...</span>
-                            <span x-show="selectedLang === 'en'">📋 Reviewing our fresh menu...</span>
+                            <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">📋 Reviewing our fresh menu...</span>
                             <span x-show="selectedLang === 'ru'">📋 Изучаю актуальное меню...</span>
                         </h3>
                         <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0;">
                             <span x-show="selectedLang === 'hy'">Ստուգում եմ առկա ուտեստները և բաղադրիչները</span>
-                            <span x-show="selectedLang === 'en'">Checking active ingredients and chef specialties</span>
+                            <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Checking active ingredients and chef specialties</span>
                             <span x-show="selectedLang === 'ru'">Проверяю свежие ингредиенты и блюда</span>
                         </p>
                     </div>
@@ -448,12 +413,12 @@
                     <div x-show="aiAnalysisStep === 3" x-transition>
                         <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.35rem 0;">
                             <span x-show="selectedLang === 'hy'">🧠 Համադրում եմ ձեր նախասիրությունները...</span>
-                            <span x-show="selectedLang === 'en'">🧠 Matching your exact taste...</span>
+                            <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">🧠 Matching your exact taste...</span>
                             <span x-show="selectedLang === 'ru'">🧠 Сопоставляю с вашими вкусами...</span>
                         </h3>
                         <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0;">
                             <span x-show="selectedLang === 'hy'">Հաշվարկում եմ համային համահունչ զուգորդումները</span>
-                            <span x-show="selectedLang === 'en'">Calibrating flavor harmony and pairings</span>
+                            <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Calibrating flavor harmony and pairings</span>
                             <span x-show="selectedLang === 'ru'">Подбираю гармоничные гастро-пары</span>
                         </p>
                     </div>
@@ -461,12 +426,12 @@
                     <div x-show="aiAnalysisStep === 4" x-transition>
                         <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 800; color: #10b981; margin: 0 0 0.35rem 0;">
                             <span x-show="selectedLang === 'hy'">✨ Գտա ձեզ համար հարմար տարբերակները։</span>
-                            <span x-show="selectedLang === 'en'">✨ Found your ideal match!</span>
+                            <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">✨ Found your ideal match!</span>
                             <span x-show="selectedLang === 'ru'">✨ Нашел идеальные блюда для вас!</span>
                         </h3>
                         <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0;">
                             <span x-show="selectedLang === 'hy'">Բացում եմ անհատական մենյուն...</span>
-                            <span x-show="selectedLang === 'en'">Opening recommendations...</span>
+                            <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Opening recommendations...</span>
                             <span x-show="selectedLang === 'ru'">Открываю рекомендации...</span>
                         </p>
                     </div>
@@ -491,12 +456,12 @@
                         <div style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; font-weight: 800; color: #8b5cf6; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem;">
                             <i class="fa-solid fa-sparkles"></i>
                             <span x-show="selectedLang === 'hy'">Անհատական ընտրանի</span>
-                            <span x-show="selectedLang === 'en'">Personalized Selection</span>
+                            <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Personalized Selection</span>
                             <span x-show="selectedLang === 'ru'">Персональный выбор</span>
                         </div>
                         <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.55rem; font-weight: 900; color: var(--text-main); margin: 0;">
                             <span x-show="selectedLang === 'hy'">✨ Ձեզ համար ընտրեցինք</span>
-                            <span x-show="selectedLang === 'en'">✨ Selected Just for You</span>
+                            <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">✨ Selected Just for You</span>
                             <span x-show="selectedLang === 'ru'">✨ Подобранное для вас</span>
                         </h2>
                     </div>
@@ -506,7 +471,7 @@
                             style="background: none; border: 1px solid var(--border-color); border-radius: 12px; padding: 0.4rem 0.75rem; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 0.35rem;">
                         <i class="fa-solid fa-sliders"></i>
                         <span x-show="selectedLang === 'hy'">Փոխել</span>
-                        <span x-show="selectedLang === 'en'">Refine</span>
+                        <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Refine</span>
                         <span x-show="selectedLang === 'ru'">Изменить</span>
                     </button>
                 </div>
@@ -541,7 +506,7 @@
                                 <div style="position: absolute; top: 1.15rem; left: 1.15rem; z-index: 2; background: #10b981; color: #ffffff; padding: 0.2rem 0.65rem; border-radius: 999px; font-size: 0.74rem; font-weight: 800; display: inline-flex; align-items: center; gap: 0.35rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.45);">
                                     <i class="fa-solid fa-check"></i>
                                     <span x-show="selectedLang === 'hy'" x-text="getCartItemQty(rec.id) + ' հատ զամբյուղում'"></span>
-                                    <span x-show="selectedLang === 'en'" x-text="getCartItemQty(rec.id) + ' in cart'"></span>
+                                    <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)" x-text="getCartItemQty(rec.id) + ' in cart'"></span>
                                     <span x-show="selectedLang === 'ru'" x-text="getCartItemQty(rec.id) + ' в корзине'"></span>
                                 </div>
                             </template>
@@ -580,7 +545,7 @@
                                         <span style="display: flex; align-items: center; gap: 0.45rem;">
                                             <i class="fa-solid fa-cart-plus"></i>
                                             <span x-show="selectedLang === 'hy'">+ Ավելացնել պատվերին</span>
-                                            <span x-show="selectedLang === 'en'">+ Add to Order</span>
+                                            <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">+ Add to Order</span>
                                             <span x-show="selectedLang === 'ru'">+ Добавить к заказу</span>
                                         </span>
                                     </template>
@@ -588,7 +553,7 @@
                                         <span style="display: flex; align-items: center; gap: 0.45rem;">
                                             <i class="fa-solid fa-check"></i>
                                             <span x-show="selectedLang === 'hy'" x-text="'Զամբյուղում է (' + getCartItemQty(rec.id) + ') +1'"></span>
-                                            <span x-show="selectedLang === 'en'" x-text="'In Cart (' + getCartItemQty(rec.id) + ') +1'"></span>
+                                            <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)" x-text="'In Cart (' + getCartItemQty(rec.id) + ') +1'"></span>
                                             <span x-show="selectedLang === 'ru'" x-text="'В корзине (' + getCartItemQty(rec.id) + ') +1'"></span>
                                         </span>
                                     </template>
@@ -602,7 +567,7 @@
                                     <div>
                                         <strong style="color: var(--text-main); display: block; margin-bottom: 0.15rem;">
                                             <span x-show="selectedLang === 'hy'">Ինչու՞ սա:</span>
-                                            <span x-show="selectedLang === 'en'">Why this dish?</span>
+                                            <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Why this dish?</span>
                                             <span x-show="selectedLang === 'ru'">Почему это блюдо?</span>
                                         </strong>
                                         <span x-text="rec.reason"></span>
@@ -621,7 +586,7 @@
                                 <span style="font-size: 1.3rem;">✨</span>
                                 <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 900; color: #8b5cf6; margin: 0;">
                                     <span x-show="selectedLang === 'hy'">Խելացի Համադրություն · Smart Bundle</span>
-                                    <span x-show="selectedLang === 'en'">Smart Pairing Bundle</span>
+                                    <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Smart Pairing Bundle</span>
                                     <span x-show="selectedLang === 'ru'">Комбо-набор · Smart Bundle</span>
                                 </h3>
                             </div>
@@ -653,7 +618,7 @@
                             <div>
                                 <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
                                     <span x-show="selectedLang === 'hy'">Ընդհանուր արժեքը</span>
-                                    <span x-show="selectedLang === 'en'">Total Bundle Price</span>
+                                    <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Total Bundle Price</span>
                                     <span x-show="selectedLang === 'ru'">Общая стоимость</span>
                                 </div>
                                 <div style="font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 900; color: var(--accent);" x-text="aiBundle.formatted_total"></div>
@@ -665,7 +630,7 @@
                                     style="background: linear-gradient(135deg, #8b5cf6, #d946ef); color: #ffffff; border: none; border-radius: 16px; padding: 0.75rem 1.25rem; font-size: 0.95rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 0.55rem; box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);">
                                 <span>✨</span>
                                 <span x-show="selectedLang === 'hy'">Ավելացնել ամբողջ առաջարկը</span>
-                                <span x-show="selectedLang === 'en'">Add Entire Bundle</span>
+                                <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Add Entire Bundle</span>
                                 <span x-show="selectedLang === 'ru'">Добавить весь набор</span>
                             </button>
                         </div>
@@ -681,7 +646,7 @@
                             <div style="font-size: 0.9rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.45rem;">
                                 <span>🥈</span>
                                 <span x-show="selectedLang === 'hy'">Այլընտրանքային առաջարկներ</span>
-                                <span x-show="selectedLang === 'en'">Alternative Highlights</span>
+                                <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Alternative Highlights</span>
                                 <span x-show="selectedLang === 'ru'">Альтернативные варианты</span>
                             </div>
 
@@ -718,7 +683,7 @@
                             <div style="font-size: 0.9rem; font-weight: 800; color: #8b5cf6; margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.45rem;">
                                 <span>🍷</span>
                                 <span x-show="selectedLang === 'hy'">Առաջարկվող Ըմպելիք</span>
-                                <span x-show="selectedLang === 'en'">Suggested Drink Pairing</span>
+                                <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Suggested Drink Pairing</span>
                                 <span x-show="selectedLang === 'ru'">Рекомендуемый напиток</span>
                             </div>
 
@@ -756,12 +721,12 @@
                         <div>
                             <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">
                                 <span x-show="selectedLang === 'hy'">💬 Հարցրեք AI մատուցողին</span>
-                                <span x-show="selectedLang === 'en'">💬 Ask AI Waiter Anything</span>
+                                <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">💬 Ask AI Waiter Anything</span>
                                 <span x-show="selectedLang === 'ru'">💬 Спросите у AI-официанта</span>
                             </div>
                             <div style="font-size: 0.78rem; color: var(--text-muted);">
                                 <span x-show="selectedLang === 'hy'">Ունե՞ք հարցեր բաղադրիչների կամ առանց մսի ուտեստների մասին:</span>
-                                <span x-show="selectedLang === 'en'">Have questions about allergens, meatless options or kids menu?</span>
+                                <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Have questions about allergens, meatless options or kids menu?</span>
                                 <span x-show="selectedLang === 'ru'">Есть вопросы по аллергенам, веганским блюдам или напиткам?</span>
                             </div>
                         </div>
@@ -784,7 +749,7 @@
                     style="background: transparent; border: none; color: var(--text-muted); font-size: 0.88rem; font-weight: 600; display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
                 <i class="fa-solid fa-arrow-left"></i>
                 <span x-show="selectedLang === 'hy'">Մենյու</span>
-                <span x-show="selectedLang === 'en'">Menu</span>
+                <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Menu</span>
                 <span x-show="selectedLang === 'ru'">В меню</span>
             </button>
 
@@ -797,7 +762,7 @@
                 <i class="fa-solid fa-basket-shopping"></i>
                 <span x-show="cartTotalCount === 0">
                     <span x-show="selectedLang === 'hy'">Զամբյուղ</span>
-                    <span x-show="selectedLang === 'en'">Cart</span>
+                    <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Cart</span>
                     <span x-show="selectedLang === 'ru'">Корзина</span>
                 </span>
                 <span x-show="cartTotalCount > 0" style="display: flex; align-items: center; gap: 0.5rem;">
@@ -805,7 +770,7 @@
                     <span x-text="formatCurrency(cartTotalPrice)"></span>
                     <span style="opacity: 0.85; font-size: 0.85rem;">•</span>
                     <span x-show="selectedLang === 'hy'">Դեպի Զամբյուղ</span>
-                    <span x-show="selectedLang === 'en'">View Cart</span>
+                    <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">View Cart</span>
                     <span x-show="selectedLang === 'ru'">В Корзину</span>
                 </span>
                 <i class="fa-solid fa-arrow-right" style="font-size: 0.8rem;"></i>
@@ -841,7 +806,7 @@
                         </div>
                         <div style="font-size: 0.72rem; color: #10b981; font-weight: 600;">
                             ● <span x-show="selectedLang === 'hy'">Պատրաստ է պատասխանել</span>
-                            <span x-show="selectedLang === 'en'">Ready to answer</span>
+                            <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Ready to answer</span>
                             <span x-show="selectedLang === 'ru'">Готов ответить</span>
                         </div>
                     </div>
@@ -930,7 +895,7 @@
                 <div x-show="aiChatLoading" style="display: flex; gap: 0.5rem; align-items: center; color: var(--text-muted); font-size: 0.85rem;">
                     <i class="fa-solid fa-spinner fa-spin" style="color: #8b5cf6;"></i>
                     <span x-show="selectedLang === 'hy'">Մտածում եմ...</span>
-                    <span x-show="selectedLang === 'en'">Thinking...</span>
+                    <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Thinking...</span>
                     <span x-show="selectedLang === 'ru'">Печатает...</span>
                 </div>
             </div>
@@ -941,7 +906,7 @@
                     <div style="position: relative; display: flex; align-items: center;">
                         <input type="text" 
                                x-model="aiChatInput" 
-                               :placeholder="selectedLang === 'en' ? 'Ask about ingredients, wine, desserts...' : (selectedLang === 'ru' ? 'Спросите об ингредиентах, вине, десертах...' : 'Հարցրեք բաղադրիչների, գինու, աղանդերի մասին...')"
+                               :placeholder="selectedLang === 'hy' ? 'Հարցրեք բաղադրիչների, գինու, աղանդերի մասին...' : (selectedLang === 'ru' ? 'Спросите об ингредиентах, вине, десертах...' : 'Ask about ingredients, wine, desserts...')"
                                style="width: 100%; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); border-radius: 14px; padding: 0.75rem 3rem 0.75rem 0.85rem; font-size: 0.9rem; outline: none;">
                         
                         <button type="submit" 

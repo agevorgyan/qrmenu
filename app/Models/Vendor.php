@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\CredentialService;
+use App\Services\Localization\LocaleManager;
 use App\Services\Security\CssSanitizer;
 use App\Services\TenantCache;
 use Carbon\Carbon;
@@ -588,7 +589,7 @@ class Vendor extends Model
     public function getAiWaiterConfig(): array
     {
         $defaultConfig = [
-            'languages' => ['en'],
+            'languages' => $this->getSupportedLanguageCodes(),
             'personality' => 'friendly',
             'max_recommendations' => 3,
             'free_text_enabled' => true,
@@ -715,17 +716,57 @@ class Vendor extends Model
     public function getAiWaiterLanguages(): array
     {
         $config = $this->getAiWaiterConfig();
-        $allowed = $config['languages'] ?? ['en'];
-        $vendorSupported = array_map(fn ($l) => strtolower($l['code'] ?? ''), $this->getSupportedLanguages());
+        $allowed = $config['languages'] ?? [];
+        $vendorSupported = $this->getSupportedLanguageCodes();
 
-        if (! empty($vendorSupported)) {
-            $allowed = array_values(array_intersect($allowed, $vendorSupported));
-            if (empty($allowed)) {
-                $allowed = [$vendorSupported[0]];
+        if (empty($vendorSupported)) {
+            return ! empty($allowed) ? $allowed : ['en'];
+        }
+
+        if (empty($allowed)) {
+            return $vendorSupported;
+        }
+
+        $filtered = array_values(array_intersect($allowed, $vendorSupported));
+
+        return ! empty($filtered) ? $filtered : [$vendorSupported[0]];
+    }
+
+    /**
+     * Get detailed metadata (code, name, native_name, flag, direction) for AI waiter active languages.
+     *
+     * @return array<int, array{code: string, name: string, native_name: string, flag: string, direction: string, is_default: bool}>
+     */
+    public function getAiWaiterLanguageDetails(): array
+    {
+        $allowedCodes = $this->getAiWaiterLanguages();
+        $supported = $this->getSupportedLanguages();
+        $indexedSupported = [];
+        foreach ($supported as $item) {
+            $code = strtolower($item['code'] ?? '');
+            if ($code !== '') {
+                $indexedSupported[$code] = $item;
             }
         }
 
-        return ! empty($allowed) ? $allowed : ['en'];
+        $result = [];
+        foreach ($allowedCodes as $code) {
+            if (isset($indexedSupported[$code])) {
+                $result[] = $indexedSupported[$code];
+            } else {
+                $sysLang = Language::where('code', $code)->first();
+                $result[] = [
+                    'code' => $code,
+                    'name' => $sysLang?->name ?? strtoupper($code),
+                    'native_name' => $sysLang?->native_name ?? strtoupper($code),
+                    'flag' => $sysLang?->flag ?? '🌐',
+                    'direction' => $sysLang?->direction ?? 'ltr',
+                    'is_default' => false,
+                ];
+            }
+        }
+
+        return $result;
     }
 
     public function featuredProduct()
@@ -1329,6 +1370,207 @@ class Vendor extends Model
     public function getSupportedLanguageCodes(): array
     {
         return array_values(array_filter(array_map(fn ($l) => is_array($l) ? ($l['code'] ?? '') : (string) $l, $this->getSupportedLanguages())));
+    }
+
+    /**
+     * Ensure this vendor has relational vendor_languages initialized from supported_languages JSON or system defaults.
+     */
+    public function ensureVendorLanguagesInitialized(): void
+    {
+        if ($this->vendorLanguages()->count() > 0) {
+            return;
+        }
+
+        $source = ! empty($this->supported_languages) && is_array($this->supported_languages)
+            ? $this->supported_languages
+            : [
+                ['code' => 'en', 'name' => 'English', 'flag' => '🇬🇧', 'is_default' => true],
+                ['code' => 'hy', 'name' => 'Armenian', 'flag' => '🇦🇲', 'is_default' => false],
+                ['code' => 'ru', 'name' => 'Russian', 'flag' => '🇷🇺', 'is_default' => false],
+            ];
+
+        $order = 1;
+        foreach ($source as $langData) {
+            $code = is_array($langData) ? strtolower(trim($langData['code'] ?? '')) : strtolower(trim((string) $langData));
+            if (empty($code)) {
+                continue;
+            }
+            $name = is_array($langData) ? ($langData['name'] ?? strtoupper($code)) : strtoupper($code);
+            $flag = is_array($langData) ? ($langData['flag'] ?? '🌐') : '🌐';
+            $isDefault = is_array($langData) ? (! empty($langData['is_default']) || $order === 1) : ($order === 1);
+
+            $language = Language::firstOrCreate(
+                ['code' => $code],
+                [
+                    'name' => $name,
+                    'native_name' => $name,
+                    'flag' => $flag,
+                    'direction' => in_array($code, ['ar', 'fa', 'he', 'ur'], true) ? 'rtl' : 'ltr',
+                    'is_active' => true,
+                    'is_default' => false,
+                    'sort_order' => (Language::max('sort_order') ?? 0) + 1,
+                ]
+            );
+
+            VendorLanguage::firstOrCreate(
+                [
+                    'vendor_id' => $this->id,
+                    'language_id' => $language->id,
+                ],
+                [
+                    'is_active' => true,
+                    'is_default' => $isDefault,
+                    'sort_order' => $order++,
+                ]
+            );
+        }
+
+        $this->unsetRelation('vendorLanguages');
+    }
+
+    /**
+     * Add or update a language for this vendor, ensuring Language, VendorLanguage,
+     * and the supported_languages JSON column stay 100% in sync.
+     */
+    public function syncLanguage(
+        string $code,
+        ?string $name = null,
+        ?string $flag = null,
+        bool $isActive = true,
+        bool $isDefault = false
+    ): VendorLanguage {
+        $this->ensureVendorLanguagesInitialized();
+
+        $code = strtolower(trim($code));
+
+        $language = Language::firstOrCreate(
+            ['code' => $code],
+            [
+                'name' => $name ?? strtoupper($code),
+                'native_name' => $name ?? strtoupper($code),
+                'flag' => $flag ?? '🌐',
+                'direction' => in_array($code, ['ar', 'fa', 'he', 'ur'], true) ? 'rtl' : 'ltr',
+                'is_active' => true,
+                'is_default' => false,
+                'sort_order' => (Language::max('sort_order') ?? 0) + 1,
+            ]
+        );
+
+        $langUpdates = [];
+        if (! empty($name) && $language->name !== $name) {
+            $langUpdates['name'] = $name;
+            $langUpdates['native_name'] = $name;
+        }
+        if (! empty($flag) && $language->flag !== $flag) {
+            $langUpdates['flag'] = $flag;
+        }
+        if (! empty($langUpdates)) {
+            $language->update($langUpdates);
+        }
+
+        if ($isDefault) {
+            $this->vendorLanguages()->update(['is_default' => false]);
+        }
+
+        $nextOrder = (VendorLanguage::where('vendor_id', $this->id)->max('sort_order') ?? 0) + 1;
+
+        $vendorLang = VendorLanguage::updateOrCreate(
+            [
+                'vendor_id' => $this->id,
+                'language_id' => $language->id,
+            ],
+            [
+                'is_active' => $isActive,
+                'is_default' => $isDefault,
+                'sort_order' => $nextOrder,
+            ]
+        );
+
+        $this->refreshSupportedLanguagesJson();
+
+        // Keep AI Waiter configured languages in sync
+        $aiConfig = $this->ai_waiter_config;
+        if (is_array($aiConfig) && isset($aiConfig['languages']) && is_array($aiConfig['languages'])) {
+            if ($isActive && ! in_array($code, $aiConfig['languages'], true)) {
+                $aiConfig['languages'][] = $code;
+                $this->updateQuietly(['ai_waiter_config' => $aiConfig]);
+            }
+        }
+
+        return $vendorLang;
+    }
+
+    /**
+     * Remove or deactivate a supported language for this vendor.
+     */
+    public function removeLanguage(string $code): bool
+    {
+        $this->ensureVendorLanguagesInitialized();
+
+        $code = strtolower(trim($code));
+        $language = Language::where('code', $code)->first();
+        if (! $language) {
+            return false;
+        }
+
+        $activeLangs = $this->getSupportedLanguages();
+        if (count($activeLangs) <= 1) {
+            return false;
+        }
+
+        $vl = $this->vendorLanguages()->where('language_id', $language->id)->first();
+        if ($vl) {
+            $wasDefault = (bool) $vl->is_default;
+            $vl->update(['is_active' => false, 'is_default' => false]);
+
+            if ($wasDefault) {
+                $firstActive = $this->vendorLanguages()->where('is_active', true)->first();
+                if ($firstActive) {
+                    $firstActive->update(['is_default' => true]);
+                }
+            }
+        }
+
+        $this->refreshSupportedLanguagesJson();
+
+        // Keep AI Waiter configured languages in sync
+        $aiConfig = $this->ai_waiter_config;
+        if (is_array($aiConfig) && isset($aiConfig['languages']) && is_array($aiConfig['languages'])) {
+            $aiConfig['languages'] = array_values(array_filter($aiConfig['languages'], fn ($c) => $c !== $code));
+            $this->updateQuietly(['ai_waiter_config' => $aiConfig]);
+        }
+
+        return true;
+    }
+
+    /**
+     * Refresh and synchronize the supported_languages JSON column with current active vendor languages.
+     */
+    public function refreshSupportedLanguagesJson(): array
+    {
+        $this->unsetRelation('vendorLanguages');
+
+        $active = $this->vendorLanguages()->with('language')->where('is_active', true)->orderBy('sort_order')->get();
+        $formatted = $active->map(fn ($vl) => [
+            'code' => $vl->language?->code ?? 'en',
+            'name' => $vl->language?->name ?? 'English',
+            'native_name' => $vl->language?->native_name ?? 'English',
+            'flag' => $vl->language?->flag ?? '🌐',
+            'direction' => $vl->language?->direction ?? 'ltr',
+            'is_default' => (bool) $vl->is_default,
+        ])->values()->all();
+
+        $this->updateQuietly(['supported_languages' => $formatted]);
+
+        if (class_exists(LocaleManager::class)) {
+            try {
+                app(LocaleManager::class)->clearCache();
+            } catch (\Throwable) {
+                // Ignore if in early bootstrap or testing
+            }
+        }
+
+        return $formatted;
     }
 
     /**

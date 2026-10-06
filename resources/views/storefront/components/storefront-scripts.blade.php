@@ -37,6 +37,7 @@
             'ai_waiter_name' => $vendor->getAiWaiterName(),
             'ai_waiter_enabled' => (bool) $vendor->ai_waiter_enabled,
             'ai_waiter_languages' => $vendor->getAiWaiterLanguages(),
+            'ai_waiter_language_details' => $vendor->getAiWaiterLanguageDetails(),
         ],
         'catalogProducts' => $allCatalogProducts,
         'activeCat' => 'cat-' . ($categories->first()?->id ?? 1),

@@ -263,20 +263,20 @@
                         </label>
                         <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
                             @php
-                                $configuredLangs = $aiWaiterConfig['languages'] ?? ['hy', 'en', 'ru'];
+                                $configuredLangs = $aiWaiterConfig['languages'] ?? $vendor->getSupportedLanguageCodes();
+                                $allSupportedLangs = $vendor->getSupportedLanguages();
                             @endphp
-                            <label style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; font-weight: 600; cursor: pointer;">
-                                <input type="checkbox" name="ai_waiter_languages[]" value="hy" {{ in_array('hy', $configuredLangs) ? 'checked' : '' }} style="accent-color: #8b5cf6;">
-                                <span>🇦🇲 Armenian</span>
-                            </label>
-                            <label style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; font-weight: 600; cursor: pointer;">
-                                <input type="checkbox" name="ai_waiter_languages[]" value="en" {{ in_array('en', $configuredLangs) ? 'checked' : '' }} style="accent-color: #8b5cf6;">
-                                <span>🇬🇧 English</span>
-                            </label>
-                            <label style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; font-weight: 600; cursor: pointer;">
-                                <input type="checkbox" name="ai_waiter_languages[]" value="ru" {{ in_array('ru', $configuredLangs) ? 'checked' : '' }} style="accent-color: #8b5cf6;">
-                                <span>🇷🇺 Русский</span>
-                            </label>
+                            @foreach ($allSupportedLangs as $slang)
+                                @php
+                                    $scode = strtolower($slang['code'] ?? '');
+                                    $sname = $slang['native_name'] ?? ($slang['name'] ?? strtoupper($scode));
+                                    $sflag = $slang['flag'] ?? '🌐';
+                                @endphp
+                                <label style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; font-weight: 600; cursor: pointer;">
+                                    <input type="checkbox" name="ai_waiter_languages[]" value="{{ $scode }}" {{ in_array($scode, $configuredLangs, true) ? 'checked' : '' }} style="accent-color: #8b5cf6;">
+                                    <span>{{ $sflag }} {{ $sname }}</span>
+                                </label>
+                            @endforeach
                         </div>
                     </div>
 

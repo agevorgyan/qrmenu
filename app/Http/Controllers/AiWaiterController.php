@@ -95,6 +95,7 @@ class AiWaiterController extends Controller
             'session_token' => $session->session_token,
             'language' => $lang,
             'allowed_languages' => $vendor->getAiWaiterLanguages(),
+            'allowed_language_details' => $vendor->getAiWaiterLanguageDetails(),
             'waiter_name' => $vendor->getAiWaiterName(),
             'next_question' => $nextQuestion,
         ]);

@@ -684,7 +684,7 @@ class VendorSettingsController extends Controller
         }
 
         $newAiWaiterConfig = array_merge($currentConfig, [
-            'languages' => ! empty($validated['ai_waiter_languages']) ? (array) $validated['ai_waiter_languages'] : ['en'],
+            'languages' => ! empty($validated['ai_waiter_languages']) ? (array) $validated['ai_waiter_languages'] : $vendor->getSupportedLanguageCodes(),
             'personality' => $validated['ai_waiter_personality'] ?? 'friendly',
             'auto_popup' => $request->boolean('auto_popup', true),
             'free_text_enabled' => $request->boolean('free_text_enabled', true),

@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class LanguageController extends Controller
@@ -60,26 +61,54 @@ class LanguageController extends Controller
     {
         abort_unless(Auth::user()?->isSuperAdmin(), 403, 'Unauthorized access.');
 
-        $validated = $request->validate([
-            'code' => ['required', 'string', 'min:2', 'max:10', 'alpha_dash', 'unique:languages,code'],
-            'name' => ['required', 'string', 'max:60'],
-            'native_name' => ['required', 'string', 'max:60'],
-            'flag' => ['nullable', 'string', 'max:10'],
-            'direction' => ['required', 'in:ltr,rtl'],
-            'is_active' => ['nullable', 'boolean'],
-        ]);
+        try {
+            $validated = $request->validate([
+                'code' => ['required', 'string', 'min:2', 'max:10', 'alpha_dash'],
+                'name' => ['required', 'string', 'max:60'],
+                'native_name' => ['required', 'string', 'max:60'],
+                'flag' => ['nullable', 'string', 'max:20'],
+                'direction' => ['required', 'in:ltr,rtl'],
+                'is_active' => ['nullable', 'boolean'],
+            ]);
 
-        $code = strtolower(trim($validated['code']));
-        $validated['code'] = $code;
-        $validated['is_active'] = $request->boolean('is_active', true);
-        $validated['is_default'] = false;
-        $validated['sort_order'] = Language::count() + 1;
+            $code = strtolower(trim($validated['code']));
+            $existing = Language::where('code', $code)->first();
 
-        Language::create($validated);
-        $this->localeManager->clearCache();
+            if ($existing) {
+                $existing->update([
+                    'name' => $validated['name'],
+                    'native_name' => $validated['native_name'],
+                    'flag' => $validated['flag'] ?? $existing->flag,
+                    'direction' => $validated['direction'],
+                    'is_active' => $request->boolean('is_active', true),
+                ]);
+                $this->localeManager->clearCache();
 
-        return redirect()->route('superadmin.languages.index')
-            ->with('success', "Language '{$validated['name']}' ({$code}) successfully registered.");
+                return redirect()->route('superadmin.languages.index')
+                    ->with('success', "Language '{$existing->name}' ({$code}) updated and activated.");
+            }
+
+            $validated['code'] = $code;
+            $validated['is_active'] = $request->boolean('is_active', true);
+            $validated['is_default'] = false;
+            $validated['sort_order'] = (Language::max('sort_order') ?? 0) + 1;
+
+            Language::create($validated);
+            $this->localeManager->clearCache();
+
+            return redirect()->route('superadmin.languages.index')
+                ->with('success', "Language '{$validated['name']}' ({$code}) successfully registered.");
+        } catch (ValidationException $e) {
+            return redirect()->route('superadmin.languages.index')
+                ->withErrors($e->validator)
+                ->withInput();
+        } catch (\Throwable $e) {
+            Log::error('LanguageController store error: '.$e->getMessage());
+
+            return redirect()->route('superadmin.languages.index')
+                ->with('error', 'Failed to register language: '.$e->getMessage())
+                ->withInput();
+        }
     }
 
     public function update(Request $request, Language $language): RedirectResponse

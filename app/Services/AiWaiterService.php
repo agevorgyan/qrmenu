@@ -29,33 +29,39 @@ class AiWaiterService
                 'key' => 'mood',
                 'priority' => 1,
                 'title' => match ($lang) {
-                    'en' => 'What are you in the mood for today?',
+                    'hy' => '🍽️ Ի՞նչ տրամադրությամբ եք այսօր։',
                     'ru' => 'С каким настроением вы сегодня?',
-                    default => '🍽️ Ի՞նչ տրամադրությամբ եք այսօր։',
+                    'fr' => 'De quoi avez-vous envie aujourd\'hui ?',
+                    'de' => 'Worauf haben Sie heute Lust?',
+                    'es' => '¿Qué le apetece hoy?',
+                    default => 'What are you in the mood for today?',
                 },
                 'subtitle' => match ($lang) {
-                    'en' => 'Select a flavor vibe or tell us in your own words',
+                    'hy' => 'Ընտրեք համային ուղղությունը կամ գրեք Ձեր տարբերակը',
                     'ru' => 'Выберите вкусовое направление или напишите своими словами',
-                    default => 'Ընտրեք համային ուղղությունը կամ գրեք Ձեր տարբերակը',
+                    'fr' => 'Choisissez une orientation ou écrivez avec vos propres mots',
+                    'de' => 'Wählen Sie eine Geschmacksrichtung oder beschreiben Sie sie',
+                    'es' => 'Elija una dirección de sabor o escriba sus preferencias',
+                    default => 'Select a flavor vibe or tell us in your own words',
                 },
                 'options' => [
                     ['value' => 'meat', 'emoji' => '🥩', 'label' => match ($lang) {
-                        'en' => 'Meaty & Savory', 'ru' => 'Мясное и сытное', default => 'Մսային'
+                        'hy' => 'Մսային', 'ru' => 'Мясное и сытное', 'fr' => 'Viande et gourmand', 'de' => 'Fleischig & Herzhaft', 'es' => 'Carne y sabroso', default => 'Meaty & Savory'
                     }],
                     ['value' => 'light', 'emoji' => '🍗', 'label' => match ($lang) {
-                        'en' => 'Light & Tender', 'ru' => 'Легкое и нежное', default => 'Թեթև'
+                        'hy' => 'Թեթև', 'ru' => 'Легкое и нежное', 'fr' => 'Léger et tendre', 'de' => 'Leicht & Zart', 'es' => 'Ligero y tierno', default => 'Light & Tender'
                     }],
                     ['value' => 'spicy', 'emoji' => '🌶️', 'label' => match ($lang) {
-                        'en' => 'Spicy & Bold', 'ru' => 'Острое и пикантное', default => 'Կծու'
+                        'hy' => 'Կծու', 'ru' => 'Острое и пикантное', 'fr' => 'Épicé et relevé', 'de' => 'Scharf & Würzig', 'es' => 'Picante y sabroso', default => 'Spicy & Bold'
                     }],
                     ['value' => 'fresh', 'emoji' => '🥗', 'label' => match ($lang) {
-                        'en' => 'Fresh & Healthy', 'ru' => 'Свежее и полезное', default => 'Թարմ և առողջ'
+                        'hy' => 'Թարմ և առողջ', 'ru' => 'Свежее и полезное', 'fr' => 'Frais et sain', 'de' => 'Frisch & Gesund', 'es' => 'Fresco y saludable', default => 'Fresh & Healthy'
                     }],
                     ['value' => 'sweet', 'emoji' => '🍰', 'label' => match ($lang) {
-                        'en' => 'Sweet & Indulgent', 'ru' => 'Сладкое и десертное', default => 'Քաղցր'
+                        'hy' => 'Քաղցր', 'ru' => 'Сладкое и десертное', 'fr' => 'Sucré et dessert', 'de' => 'Süß & Verführerisch', 'es' => 'Dulce y delicioso', default => 'Sweet & Indulgent'
                     }],
                     ['value' => 'surprise', 'emoji' => '✨', 'label' => match ($lang) {
-                        'en' => 'Surprise Me', 'ru' => 'Удиви меня', default => 'Դու ընտրիր'
+                        'hy' => 'Դու ընտրիր', 'ru' => 'Удиви меня', 'fr' => 'Surprenez-moi', 'de' => 'Überrasch mich', 'es' => 'Sorpréndeme', default => 'Surprise Me'
                     }],
                 ],
             ],
@@ -63,30 +69,36 @@ class AiWaiterService
                 'key' => 'preference',
                 'priority' => 2,
                 'title' => match ($lang) {
-                    'en' => 'What type of dish do you prefer?',
+                    'hy' => 'Ի՞նչ եք նախընտրում։',
                     'ru' => 'Что вы предпочитаете в основе?',
-                    default => 'Ի՞նչ եք նախընտրում։',
+                    'fr' => 'Que préférez-vous comme base ?',
+                    'de' => 'Was bevorzugen Sie als Hauptzutat?',
+                    'es' => '¿Qué prefiere como ingrediente principal?',
+                    default => 'What type of dish do you prefer?',
                 },
                 'subtitle' => match ($lang) {
-                    'en' => 'Pick your primary ingredient preference',
+                    'hy' => 'Ընտրեք հիմնական բաղադրիչը',
                     'ru' => 'Выберите ключевой ингредиент',
-                    default => 'Ընտրեք հիմնական բաղադրիչը',
+                    'fr' => 'Choisissez l\'ingrédient clé',
+                    'de' => 'Wählen Sie die Hauptzutat',
+                    'es' => 'Elija el ingrediente clave',
+                    default => 'Pick your primary ingredient preference',
                 },
                 'options' => [
                     ['value' => 'beef', 'emoji' => '🥩', 'label' => match ($lang) {
-                        'en' => 'Meat / Beef', 'ru' => 'Мясо / Говядина', default => 'Միս / Տավար'
+                        'hy' => 'Միս / Տավար', 'ru' => 'Мясо / Говядина', 'fr' => 'Viande / Bœuf', 'de' => 'Fleisch / Rind', 'es' => 'Carne / Ternera', default => 'Meat / Beef'
                     }],
                     ['value' => 'chicken', 'emoji' => '🍗', 'label' => match ($lang) {
-                        'en' => 'Chicken / Poultry', 'ru' => 'Курица / Птица', default => 'Հավ'
+                        'hy' => 'Հավ', 'ru' => 'Курица / Птица', 'fr' => 'Poulet / Volaille', 'de' => 'Hähnchen / Geflügel', 'es' => 'Pollo / Aves', default => 'Chicken / Poultry'
                     }],
                     ['value' => 'fish', 'emoji' => '🐟', 'label' => match ($lang) {
-                        'en' => 'Fish & Seafood', 'ru' => 'Рыба и морепродукты', default => 'Ձուկ / Ծովամթերք'
+                        'hy' => 'Ձուկ / Ծովամթերք', 'ru' => 'Рыба и морепродукты', 'fr' => 'Poisson & Fruits de mer', 'de' => 'Fisch & Meeresfrüchte', 'es' => 'Pescado y mariscos', default => 'Fish & Seafood'
                     }],
                     ['value' => 'vegetarian', 'emoji' => '🥦', 'label' => match ($lang) {
-                        'en' => 'Vegetarian / Greens', 'ru' => 'Овощи и зелень', default => 'Բուսական'
+                        'hy' => 'Բուսական', 'ru' => 'Овощи и зелень', 'fr' => 'Végétarien / Légumes', 'de' => 'Vegetarisch / Gemüse', 'es' => 'Vegetariano / Verduras', default => 'Vegetarian / Greens'
                     }],
                     ['value' => 'all', 'emoji' => '🍽️', 'label' => match ($lang) {
-                        'en' => 'Open to Everything', 'ru' => 'Любое блюдо', default => 'Ամեն ինչ'
+                        'hy' => 'Ամեն ինչ', 'ru' => 'Любое блюдо', 'fr' => 'Ouvert à tout', 'de' => 'Offen für alles', 'es' => 'Abierto a todo', default => 'Open to Everything'
                     }],
                 ],
             ],
@@ -94,27 +106,33 @@ class AiWaiterService
                 'key' => 'spiciness',
                 'priority' => 3,
                 'title' => match ($lang) {
-                    'en' => 'How spicy do you like your food?',
+                    'hy' => 'Որքա՞ն կծու եք սիրում։',
                     'ru' => 'Насколько острую еду вы любите?',
-                    default => 'Որքա՞ն կծու եք սիրում։',
+                    'fr' => 'Quel niveau de piquant préférez-vous ?',
+                    'de' => 'Wie scharf mögen Sie Ihr Essen?',
+                    'es' => '¿Cómo de picante le gusta la comida?',
+                    default => 'How spicy do you like your food?',
                 },
                 'subtitle' => match ($lang) {
-                    'en' => 'We will calibrate the spice level for you',
+                    'hy' => 'Մենք կընտրենք համապատասխան կծվության մակարդակը',
                     'ru' => 'Мы подберем идеальный уровень остроты',
-                    default => 'Մենք կընտրենք համապատասխան կծվության մակարդակը',
+                    'fr' => 'Nous adapterons le niveau d\'épices pour vous',
+                    'de' => 'Wir passen die Schärfe für Sie an',
+                    'es' => 'Ajustaremos el nivel de picante para usted',
+                    default => 'We will calibrate the spice level for you',
                 },
                 'options' => [
                     ['value' => 'none', 'emoji' => '🙅', 'label' => match ($lang) {
-                        'en' => 'Not Spicy at all', 'ru' => 'Совсем не острое', default => 'Չեմ սիրում կծու'
+                        'hy' => 'Չեմ սիրում կծու', 'ru' => 'Совсем не острое', 'fr' => 'Pas épicé du tout', 'de' => 'Gar nicht scharf', 'es' => 'Nada picante', default => 'Not Spicy at all'
                     }],
                     ['value' => 'mild', 'emoji' => '🌶️', 'label' => match ($lang) {
-                        'en' => 'Mildly Spicy', 'ru' => 'Слегка пикантное', default => 'Թեթև կծու'
+                        'hy' => 'Թեթև կծու', 'ru' => 'Слегка пикантное', 'fr' => 'Légèrement épicé', 'de' => 'Mild scharf', 'es' => 'Ligeramente picante', default => 'Mildly Spicy'
                     }],
                     ['value' => 'medium', 'emoji' => '🌶️🌶️', 'label' => match ($lang) {
-                        'en' => 'Medium Spice', 'ru' => 'Средней остроты', default => 'Միջին'
+                        'hy' => 'Միջին', 'ru' => 'Средней остроты', 'fr' => 'Moyennement épicé', 'de' => 'Mittelscharf', 'es' => 'Picante medio', default => 'Medium Spice'
                     }],
                     ['value' => 'hot', 'emoji' => '🔥', 'label' => match ($lang) {
-                        'en' => 'Very Spicy', 'ru' => 'Очень острое', default => 'Շատ կծու'
+                        'hy' => 'Շատ կծու', 'ru' => 'Очень острое', 'fr' => 'Très épicé', 'de' => 'Sehr scharf', 'es' => 'Muy picante', default => 'Very Spicy'
                     }],
                 ],
             ],
@@ -122,30 +140,36 @@ class AiWaiterService
                 'key' => 'occasion',
                 'priority' => 4,
                 'title' => match ($lang) {
-                    'en' => 'What is the dining occasion today?',
+                    'hy' => 'Այսօր ինչպիսի՞ առիթ է։',
                     'ru' => 'Какой сегодня повод для визита?',
-                    default => 'Այսօր ինչպիսի՞ առիթ է։',
+                    'fr' => 'Quelle est l\'occasion aujourd\'hui ?',
+                    'de' => 'Was ist der Anlass heute?',
+                    'es' => '¿Cuál es la ocasión hoy?',
+                    default => 'What is the dining occasion today?',
                 },
                 'subtitle' => match ($lang) {
-                    'en' => 'Helps us tailor portion sizes and pairings',
+                    'hy' => 'Կօգնի ընտրել չափաբաժինը և մատուցման ոճը',
                     'ru' => 'Поможет составить идеальное сочетание порций',
-                    default => 'Կօգնի ընտրել չափաբաժինը և մատուցման ոճը',
+                    'fr' => 'Nous aide à adapter les portions et les accords',
+                    'de' => 'Hilft uns, Portionen und Empfehlungen anzupassen',
+                    'es' => 'Nos ayuda a adaptar porciones y combinaciones',
+                    default => 'Helps us tailor portion sizes and pairings',
                 },
                 'options' => [
                     ['value' => 'solo', 'emoji' => '👤', 'label' => match ($lang) {
-                        'en' => 'Just for Me', 'ru' => 'Только для меня', default => 'Միայն ինձ համար'
+                        'hy' => 'Միայն ինձ համար', 'ru' => 'Только для меня', 'fr' => 'Juste pour moi', 'de' => 'Nur für mich', 'es' => 'Solo para mí', default => 'Just for Me'
                     }],
                     ['value' => 'couple', 'emoji' => '💑', 'label' => match ($lang) {
-                        'en' => 'Date / Couple', 'ru' => 'Вдвоем / Романтика', default => 'Զույգով'
+                        'hy' => 'Զույգով', 'ru' => 'Вдвоем / Романтика', 'fr' => 'En couple / Romantique', 'de' => 'Zu zweit / Date', 'es' => 'En pareja / Cita', default => 'Date / Couple'
                     }],
                     ['value' => 'friends', 'emoji' => '👥', 'label' => match ($lang) {
-                        'en' => 'With Friends', 'ru' => 'С друзьями', default => 'Ընկերներով'
+                        'hy' => 'Ընկերներով', 'ru' => 'С друзьями', 'fr' => 'Entre amis', 'de' => 'Mit Freunden', 'es' => 'Con amigos', default => 'With Friends'
                     }],
                     ['value' => 'family', 'emoji' => '👨‍👩‍👧', 'label' => match ($lang) {
-                        'en' => 'Family Dinner', 'ru' => 'Семьей', default => 'Ընտանիքով'
+                        'hy' => 'Ընտանիքով', 'ru' => 'Семьей', 'fr' => 'En famille', 'de' => 'Mit der Familie', 'es' => 'En familia', default => 'Family Dinner'
                     }],
                     ['value' => 'celebration', 'emoji' => '🎉', 'label' => match ($lang) {
-                        'en' => 'Celebration / Party', 'ru' => 'Праздник / Событие', default => 'Տոնական'
+                        'hy' => 'Տոնական', 'ru' => 'Праздник / Событие', 'fr' => 'Fête / Célébration', 'de' => 'Feier / Party', 'es' => 'Celebración / Fiesta', default => 'Celebration / Party'
                     }],
                 ],
             ],
@@ -153,27 +177,33 @@ class AiWaiterService
                 'key' => 'budget',
                 'priority' => 5,
                 'title' => match ($lang) {
-                    'en' => 'What is your approximate budget?',
+                    'hy' => 'Մոտավորապես ի՞նչ բյուջե եք նախատեսում։',
                     'ru' => 'Какой бюджет вы планируете?',
-                    default => 'Մոտավորապես ի՞նչ բյուջե եք նախատեսում։',
+                    'fr' => 'Quel est votre budget approximatif ?',
+                    'de' => 'Was ist Ihr ungefähres Budget?',
+                    'es' => '¿Cuál es su presupuesto aproximado?',
+                    default => 'What is your approximate budget?',
                 },
                 'subtitle' => match ($lang) {
-                    'en' => 'Per person estimate',
+                    'hy' => 'Մեկ անձի համար նախատեսված',
                     'ru' => 'Примерная сумма на человека',
-                    default => 'Մեկ անձի համար նախատեսված',
+                    'fr' => 'Estimation par personne',
+                    'de' => 'Schätzung pro Person',
+                    'es' => 'Estimación por persona',
+                    default => 'Per person estimate',
                 },
                 'options' => [
                     ['value' => '5000', 'emoji' => '💵', 'label' => match ($lang) {
-                        'en' => 'Up to 5,000 ֏', 'ru' => 'До 5,000 ֏', default => 'Մինչև 5,000 ֏'
+                        'hy' => 'Մինչև 5,000 ֏', 'ru' => 'До 5,000 ֏', 'fr' => 'Jusqu\'à 5 000', 'de' => 'Bis zu 5.000', 'es' => 'Hasta 5.000', default => 'Up to 5,000'
                     }],
                     ['value' => '10000', 'emoji' => '💳', 'label' => match ($lang) {
-                        'en' => '5,000 – 10,000 ֏', 'ru' => '5,000 – 10,000 ֏', default => '5,000–10,000 ֏'
+                        'hy' => '5,000–10,000 ֏', 'ru' => '5,000 – 10,000 ֏', 'fr' => '5 000 – 10 000', 'de' => '5.000 – 10.000', 'es' => '5.000 – 10.000', default => '5,000 – 10,000'
                     }],
                     ['value' => '20000', 'emoji' => '💎', 'label' => match ($lang) {
-                        'en' => '10,000 – 20,000 ֏', 'ru' => '10,000 – 20,000 ֏', default => '10,000–20,000 ֏'
+                        'hy' => '10,000–20,000 ֏', 'ru' => '10,000 – 20,000 ֏', 'fr' => '10 000 – 20 000', 'de' => '10.000 – 20.000', 'es' => '10.000 – 20.000', default => '10,000 – 20,000'
                     }],
                     ['value' => 'any', 'emoji' => '🤷', 'label' => match ($lang) {
-                        'en' => "Doesn't Matter", 'ru' => 'Не имеет значения', default => 'Կարևոր չէ'
+                        'hy' => 'Կարևոր չէ', 'ru' => 'Не имеет значения', 'fr' => 'Peu importe', 'de' => 'Egal', 'es' => 'No importa', default => "Doesn't Matter"
                     }],
                 ],
             ],
@@ -181,39 +211,45 @@ class AiWaiterService
                 'key' => 'drink',
                 'priority' => 6,
                 'title' => match ($lang) {
-                    'en' => 'What would you like to drink?',
+                    'hy' => 'Ի՞նչ կցանկանաք խմել։',
                     'ru' => 'Что бы вы хотели выпить?',
-                    default => 'Ի՞նչ կցանկանաք խմել։',
+                    'fr' => 'Que souhaiteriez-vous boire ?',
+                    'de' => 'Was möchten Sie trinken?',
+                    'es' => '¿Qué le gustaría beber?',
+                    default => 'What would you like to drink?',
                 },
                 'subtitle' => match ($lang) {
-                    'en' => 'Choose your beverage preference',
+                    'hy' => 'Ընտրեք ըմպելիքի տեսակը',
                     'ru' => 'Выберите напиток к блюду',
-                    default => 'Ընտրեք ըմպելիքի տեսակը',
+                    'fr' => 'Choisissez votre préférence de boisson',
+                    'de' => 'Wählen Sie Ihr Getränk',
+                    'es' => 'Elija su preferencia de bebida',
+                    default => 'Choose your beverage preference',
                 },
                 'options' => [
                     ['value' => 'water', 'emoji' => '💧', 'label' => match ($lang) {
-                        'en' => 'Water', 'ru' => 'Вода', default => 'Ջուր'
+                        'hy' => 'Ջուր', 'ru' => 'Вода', 'fr' => 'Eau', 'de' => 'Wasser', 'es' => 'Agua', default => 'Water'
                     }],
                     ['value' => 'soft', 'emoji' => '🥤', 'label' => match ($lang) {
-                        'en' => 'Soft Drinks', 'ru' => 'Прохладительные', default => 'Զովացուցիչ'
+                        'hy' => 'Զովացուցիչ', 'ru' => 'Прохладительные', 'fr' => 'Boissons fraîches', 'de' => 'Erfrischungsgetränke', 'es' => 'Refrescos', default => 'Soft Drinks'
                     }],
                     ['value' => 'lemonade', 'emoji' => '🍋', 'label' => match ($lang) {
-                        'en' => 'Fresh Lemonade', 'ru' => 'Лимонад', default => 'Լիմոնադ'
+                        'hy' => 'Լիմոնադ', 'ru' => 'Лимонад', 'fr' => 'Limonade', 'de' => 'Limonade', 'es' => 'Limonada', default => 'Fresh Lemonade'
                     }],
                     ['value' => 'coffee', 'emoji' => '☕', 'label' => match ($lang) {
-                        'en' => 'Coffee / Tea', 'ru' => 'Кофе / Чай', default => 'Սուրճ / Թեյ'
+                        'hy' => 'Սուրճ / Թեյ', 'ru' => 'Кофе / Чай', 'fr' => 'Café / Thé', 'de' => 'Kaffee / Tee', 'es' => 'Café / Té', default => 'Coffee / Tea'
                     }],
                     ['value' => 'cocktail', 'emoji' => '🍸', 'label' => match ($lang) {
-                        'en' => 'Cocktails', 'ru' => 'Коктейли', default => 'Կոկտեյլ'
+                        'hy' => 'Կոկտեյլ', 'ru' => 'Коктейли', 'fr' => 'Cocktails', 'de' => 'Cocktails', 'es' => 'Cócteles', default => 'Cocktails'
                     }],
                     ['value' => 'wine', 'emoji' => '🍷', 'label' => match ($lang) {
-                        'en' => 'Wine', 'ru' => 'Вино', default => 'Գինի'
+                        'hy' => 'Գինի', 'ru' => 'Вино', 'fr' => 'Vin', 'de' => 'Wein', 'es' => 'Vino', default => 'Wine'
                     }],
                     ['value' => 'beer', 'emoji' => '🍺', 'label' => match ($lang) {
-                        'en' => 'Beer', 'ru' => 'Пиво', default => 'Գարեջուր'
+                        'hy' => 'Գարեջուր', 'ru' => 'Пиво', 'fr' => 'Bière', 'de' => 'Bier', 'es' => 'Cerveza', default => 'Beer'
                     }],
                     ['value' => 'surprise', 'emoji' => '✨', 'label' => match ($lang) {
-                        'en' => 'You choose', 'ru' => 'На твой выбор', default => 'Դու ընտրիր'
+                        'hy' => 'Դու ընտրիր', 'ru' => 'На твой выбор', 'fr' => 'À vous de choisir', 'de' => 'Deine Wahl', 'es' => 'Tú eliges', default => 'You choose'
                     }],
                 ],
             ],
@@ -438,8 +474,9 @@ class AiWaiterService
         string $lang = 'en',
         ?int $locationId = null
     ): array {
-        if (! in_array($lang, ['en', 'hy', 'ru'])) {
-            $lang = 'en';
+        $allowed = $vendor->getAiWaiterLanguages();
+        if (! in_array($lang, $allowed, true)) {
+            $lang = $allowed[0] ?? 'en';
         }
 
         // Merge prompt analysis into preferences if provided
@@ -1071,8 +1108,9 @@ class AiWaiterService
         string $lang = 'en',
         ?int $locationId = null
     ): array {
-        if (! in_array($lang, ['en', 'hy', 'ru'])) {
-            $lang = 'en';
+        $allowed = $vendor->getAiWaiterLanguages();
+        if (! in_array($lang, $allowed, true)) {
+            $lang = $allowed[0] ?? 'en';
         }
 
         $waiterName = $vendor->getAiWaiterName();
@@ -1367,12 +1405,23 @@ Respond directly to the guest.";
             }
         }
 
-        $dishNames = ! empty($recommendations) ? implode(' և ', array_column(array_slice($recommendations, 0, 2), 'name')) : '';
+        $dishSeparator = match ($lang) {
+            'hy' => ' և ',
+            'ru' => ' и ',
+            'fr' => ' et ',
+            'de' => ' und ',
+            'es' => ' y ',
+            default => ' and ',
+        };
+        $dishNames = ! empty($recommendations) ? implode($dishSeparator, array_column(array_slice($recommendations, 0, 2), 'name')) : '';
 
         return match ($lang) {
-            'en' => "Hello! I am {$waiterName}, your personal dining advisor. Based on your preferences, I have hand-picked our standout specialties: {$dishNames}. Each dish is paired with the finest drinks to create an unforgettable gastronomic journey for you!",
+            'hy' => "Ողջույն! Ես {$waiterName}-ն եմ՝ Ձեր անձնական խոհարարական խորհրդատուն: Ելնելով Ձեր նախասիրություններից՝ ընտրել եմ մեր մենյուի լավագույն ճաշատեսակները՝ «{$dishNames}»: Յուրաքանչյուր ուտեստի հետ պատրաստել եմ նաև համահունչ ըմպելիքների զուգորդումներ, որոնք կդարձնեն Ձեր այցը անմոռանալի:",
             'ru' => "Здравствуйте! Я {$waiterName}, ваш персональный гастрономический консультант. Основываясь на ваших пожеланиях, я подобрал лучшие блюда: {$dishNames}. Каждое из них дополнено идеально гармонирующими напитками для великолепного вечера!",
-            default => "Ողջույն! Ես {$waiterName}-ն եմ՝ Ձեր անձնական խոհարարական խորհրդատուն: Ելնելով Ձեր նախասիրություններից՝ ընտրել եմ մեր մենյուի լավագույն ճաշատեսակները՝ «{$dishNames}»: Յուրաքանչյուր ուտեստի հետ պատրաստել եմ նաև համահունչ ըմպելիքների զուգորդումներ, որոնք կդարձնեն Ձեր այցը անմոռանալի:",
+            'fr' => "Bonjour ! Je suis {$waiterName}, votre conseiller gastronomique personnel. Selon vos préférences, j'ai sélectionné nos meilleures spécialités : {$dishNames}. Chacune est accompagnée de boissons harmonieuses pour un moment inoubliable !",
+            'de' => "Hallo! Ich bin {$waiterName}, Ihr persönlicher Genussberater. Basierend auf Ihren Vorlieben habe ich unsere besten Spezialitäten ausgewählt: {$dishNames}. Jedes Gericht wird von passenden Getränken begleitet, um Ihren Besuch unvergesslich zu machen!",
+            'es' => "¡Hola! Soy {$waiterName}, su asesor gastronómico personal. Según sus preferencias, he seleccionado nuestras especialidades destacadas: {$dishNames}. ¡Cada plato se combina con bebidas ideales para una velada inolvidable!",
+            default => "Hello! I am {$waiterName}, your personal dining advisor. Based on your preferences, I have hand-picked our standout specialties: {$dishNames}. Each dish is paired with the finest drinks to create an unforgettable gastronomic journey for you!",
         };
     }
 
@@ -1382,9 +1431,12 @@ Respond directly to the guest.";
     protected function getDefaultEmptyCommentary(string $lang): string
     {
         return match ($lang) {
-            'en' => 'Welcome! Please browse our curated menu or adjust your search to discover our specialties.',
+            'hy' => 'Բարի գալուստ! Խնդրում ենք ծանոթանալ մեր մենյուին կամ փոփոխել նախասիրությունները՝ լավագույն առաջարկները տեսնելու համար:',
             'ru' => 'Добро пожаловать! Ознакомьтесь с нашим меню или измените фильтры, чтобы найти подходящие блюда.',
-            default => 'Բարի գալուստ! Խնդրում ենք ծանոթանալ մեր մենյուին կամ փոփոխել նախասիրությունները՝ լավագույն առաջարկները տեսնելու համար:',
+            'fr' => 'Bienvenue ! Veuillez parcourir notre menu ou ajuster vos critères pour découvrir nos spécialités.',
+            'de' => 'Willkommen! Bitte durchsuchen Sie unsere Speisekarte oder passen Sie Ihre Suche an.',
+            'es' => '¡Bienvenido! Explore nuestro menú o ajuste sus preferencias para descubrir nuestras especialidades.',
+            default => 'Welcome! Please browse our curated menu or adjust your search to discover our specialties.',
         };
     }
 }

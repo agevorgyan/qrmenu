@@ -185,49 +185,35 @@ class AiMenuController extends Controller
      */
     public function saveLanguage(Request $request)
     {
-        $this->authorize('settings.manage');
+        $user = Auth::user();
+        abort_unless(
+            $user->isVendorOwner() || $user->can('translations.manage') || $user->can('settings.manage') || $user->can('menu.manage'),
+            403,
+            'Unauthorized access.'
+        );
 
-        $vendor = Auth::user()->vendor;
+        $vendor = $user->vendor;
+        abort_unless($vendor, 404, 'Vendor not found.');
+
         $validated = $request->validate([
-            'code' => 'required|string|regex:/^[a-zA-Z]{2,5}$/|max:5',
-            'name' => 'required|string|max:50',
-            'flag' => 'nullable|string|max:10',
-            'original_code' => 'nullable|string|max:5',
+            'code' => ['required', 'string', 'min:2', 'max:10', 'alpha_dash'],
+            'name' => ['required', 'string', 'max:60'],
+            'flag' => ['nullable', 'string', 'max:20'],
+            'original_code' => ['nullable', 'string', 'max:10'],
         ]);
 
         $code = strtolower(trim($validated['code']));
         $name = trim($validated['name']);
-        $flag = trim($validated['flag'] ?? '');
-        if (empty($flag)) {
-            $flag = '🌐';
-        }
-
-        $languages = $vendor->getSupportedLanguages();
+        $flag = trim($validated['flag'] ?? '') ?: '🌐';
         $originalCode = ! empty($validated['original_code']) ? strtolower(trim($validated['original_code'])) : null;
 
-        $updated = false;
-        $newLanguages = [];
-
-        foreach ($languages as $lang) {
-            $lCode = strtolower($lang['code'] ?? '');
-            if ($originalCode && $lCode === $originalCode) {
-                $newLanguages[] = ['code' => $code, 'name' => $name, 'flag' => $flag];
-                $updated = true;
-            } elseif (! $originalCode && $lCode === $code) {
-                $newLanguages[] = ['code' => $code, 'name' => $name, 'flag' => $flag];
-                $updated = true;
-            } else {
-                $newLanguages[] = $lang;
-            }
+        if ($originalCode && $originalCode !== $code) {
+            $vendor->removeLanguage($originalCode);
         }
 
-        if (! $updated) {
-            $newLanguages[] = ['code' => $code, 'name' => $name, 'flag' => $flag];
-        }
+        $vendor->syncLanguage($code, $name, $flag, isActive: true);
 
-        $vendor->update(['supported_languages' => $newLanguages]);
-
-        return back()->with('success', 'Language settings saved successfully.');
+        return back()->with('success', "Language '{$name}' ({$code}) saved successfully.");
     }
 
     /**
@@ -235,21 +221,20 @@ class AiMenuController extends Controller
      */
     public function deleteLanguage(string $code)
     {
-        $this->authorize('settings.manage');
+        $user = Auth::user();
+        abort_unless(
+            $user->isVendorOwner() || $user->can('translations.manage') || $user->can('settings.manage') || $user->can('menu.manage'),
+            403,
+            'Unauthorized access.'
+        );
 
-        $vendor = Auth::user()->vendor;
-        $languages = $vendor->getSupportedLanguages();
-        $targetCode = strtolower(trim($code));
+        $vendor = $user->vendor;
+        abort_unless($vendor, 404, 'Vendor not found.');
 
-        if (count($languages) <= 1) {
+        $success = $vendor->removeLanguage($code);
+        if (! $success) {
             return back()->with('error', 'Cannot remove the last active language.');
         }
-
-        $newLanguages = array_values(array_filter($languages, function ($lang) use ($targetCode) {
-            return strtolower($lang['code'] ?? '') !== $targetCode;
-        }));
-
-        $vendor->update(['supported_languages' => $newLanguages]);
 
         return back()->with('success', 'Language removed successfully.');
     }

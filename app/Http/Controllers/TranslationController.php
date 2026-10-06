@@ -234,17 +234,38 @@ class TranslationController extends Controller
     public function syncVendorLanguages(Request $request): RedirectResponse
     {
         $user = Auth::user();
+        abort_unless(
+            $user->isVendorOwner() || $user->can('translations.manage') || $user->can('settings.manage') || $user->can('menu.manage'),
+            403,
+            'Unauthorized access.'
+        );
+
         $vendor = $user->vendor;
         abort_unless($vendor, 404, 'Vendor not found.');
 
         $validated = $request->validate([
-            'active_locales' => ['required', 'array', 'min:1'],
+            'active_locales' => ['nullable', 'array'],
             'active_locales.*' => ['string', 'exists:languages,code'],
             'default_locale' => ['required', 'string', 'exists:languages,code'],
+            'new_code' => ['nullable', 'string', 'min:2', 'max:10', 'alpha_dash'],
+            'new_name' => ['nullable', 'string', 'max:60'],
+            'new_flag' => ['nullable', 'string', 'max:20'],
         ]);
 
-        $activeCodes = $validated['active_locales'];
+        $activeCodes = (array) ($validated['active_locales'] ?? []);
         $defaultCode = $validated['default_locale'];
+
+        // If a new custom language was submitted simultaneously
+        if (! empty($validated['new_code']) && ! empty($validated['new_name'])) {
+            $newCode = strtolower(trim($validated['new_code']));
+            $newName = trim($validated['new_name']);
+            $newFlag = trim($validated['new_flag'] ?? '') ?: '🌐';
+
+            $vendor->syncLanguage($newCode, $newName, $newFlag, isActive: true);
+            if (! in_array($newCode, $activeCodes, true)) {
+                $activeCodes[] = $newCode;
+            }
+        }
 
         if (! in_array($defaultCode, $activeCodes, true)) {
             $activeCodes[] = $defaultCode;
@@ -270,6 +291,7 @@ class TranslationController extends Controller
             ->whereNotIn('language_id', $allSystemLangs->pluck('id'))
             ->update(['is_active' => false, 'is_default' => false]);
 
+        $vendor->refreshSupportedLanguagesJson();
         $this->localeManager->clearCache();
 
         return redirect()->route('admin.translations.index')

@@ -67,6 +67,20 @@
     </div>
 @endif
 
+@if($errors->any())
+    <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 1rem 1.25rem; border-radius: 12px; margin-bottom: 1.5rem;">
+        <div style="font-weight: 700; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span>{{ __('Please correct the following errors:') }}</span>
+        </div>
+        <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.88rem;">
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 <!-- Language Selector Tabs -->
 <div style="display: flex; gap: 0.6rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem; overflow-x: auto;">
     @foreach($supportedLanguages as $langItem)
@@ -283,6 +297,27 @@
                     @endforeach
                 </div>
             </div>
+
+            <!-- Quick Add Custom Language (if not listed above) -->
+            <details style="margin-bottom: 1.5rem; background: rgba(99, 102, 241, 0.05); border: 1px dashed rgba(99, 102, 241, 0.3); border-radius: 10px; padding: 0.75rem 1rem;">
+                <summary style="font-size: 0.85rem; font-weight: 700; color: #6366f1; cursor: pointer;">
+                    <i class="fa-solid fa-plus-circle"></i> {{ __('Add another language (e.g. Portuguese, Greek...)') }}
+                </summary>
+                <div style="margin-top: 0.75rem; display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 0.6rem;">
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.2rem;">ISO Code (e.g. pt)</label>
+                        <input type="text" name="new_code" placeholder="pt" maxlength="10" class="form-control" style="font-size: 0.85rem; padding: 0.45rem 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-main);">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.2rem;">Language Name</label>
+                        <input type="text" name="new_name" placeholder="Portuguese" maxlength="60" class="form-control" style="font-size: 0.85rem; padding: 0.45rem 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-main);">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.2rem;">Flag Emoji</label>
+                        <input type="text" name="new_flag" placeholder="🇵🇹" maxlength="10" class="form-control" style="font-size: 0.85rem; padding: 0.45rem 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-main);">
+                    </div>
+                </div>
+            </details>
 
             <div style="margin-bottom: 1.5rem;">
                 <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem;">
