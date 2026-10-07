@@ -214,4 +214,100 @@ class ProductStorageCleanupTest extends TestCase
         Storage::disk('public')->assertExists($newLogo);
         Storage::disk('public')->assertExists($newCover);
     }
+
+    public function test_branding_update_succeeds_when_submitting_existing_storage_paths(): void
+    {
+        $template = MenuTemplate::create([
+            'name' => 'Bistro 2',
+            'slug' => 'modern-bistro-2',
+            'blade_view' => 'modern-bistro',
+            'is_active' => true,
+        ]);
+
+        $logo = UploadedFile::fake()->image('logo.png', 200, 200);
+        $cover = UploadedFile::fake()->image('cover.jpg', 800, 400);
+
+        // Upload initial images
+        $this->actingAs($this->user)->post(route('admin.branding.update'), [
+            'menu_template_id' => $template->id,
+            'primary_color' => '#ff0000',
+            'theme_mode' => 'dark',
+            'logo_file' => $logo,
+            'cover_file' => $cover,
+        ]);
+
+        $this->vendor->refresh();
+        $storedLogo = $this->vendor->logo;
+        $storedCover = $this->vendor->cover_image;
+
+        // Now edit colors/settings while submitting the existing storage paths in logo & cover_image inputs
+        $response = $this->actingAs($this->user)->post(route('admin.branding.update'), [
+            'menu_template_id' => $template->id,
+            'primary_color' => '#123456',
+            'theme_mode' => 'light',
+            'logo' => $storedLogo,
+            'cover_image' => $storedCover,
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        $this->vendor->refresh();
+        $this->assertEquals('#123456', $this->vendor->primary_color);
+        $this->assertEquals('light', $this->vendor->theme_mode);
+        $this->assertEquals($storedLogo, $this->vendor->logo);
+        $this->assertEquals($storedCover, $this->vendor->cover_image);
+
+        // Files must still exist
+        Storage::disk('public')->assertExists(str_replace('/storage/', '', $storedLogo));
+        Storage::disk('public')->assertExists(str_replace('/storage/', '', $storedCover));
+    }
+
+    public function test_branding_update_normalizes_full_storage_urls(): void
+    {
+        $template = MenuTemplate::create([
+            'name' => 'Bistro 3',
+            'slug' => 'modern-bistro-3',
+            'blade_view' => 'modern-bistro',
+            'is_active' => true,
+        ]);
+
+        $logo = UploadedFile::fake()->image('logo.png', 200, 200);
+
+        $this->actingAs($this->user)->post(route('admin.branding.update'), [
+            'menu_template_id' => $template->id,
+            'primary_color' => '#ff0000',
+            'theme_mode' => 'dark',
+            'logo_file' => $logo,
+        ]);
+
+        $this->vendor->refresh();
+        $storedLogo = $this->vendor->logo;
+        $fullLogoUrl = 'https://menu.elab.am'.$storedLogo;
+
+        // Submit with full domain URL
+        $response = $this->actingAs($this->user)->post(route('admin.branding.update'), [
+            'menu_template_id' => $template->id,
+            'primary_color' => '#990000',
+            'theme_mode' => 'dark',
+            'logo' => $fullLogoUrl,
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        $this->vendor->refresh();
+        $this->assertEquals($storedLogo, $this->vendor->logo);
+    }
+
+    public function test_branding_blade_renders_text_inputs_for_logo_and_cover(): void
+    {
+        $response = $this->actingAs($this->user)->get(route('admin.branding.index'));
+
+        $response->assertOk();
+        $response->assertSee('<input type="text" name="logo" id="logoUrlInput"', false);
+        $response->assertSee('<input type="text" name="cover_image" id="coverUrlInput"', false);
+        $response->assertDontSee('<input type="url" name="logo"', false);
+        $response->assertDontSee('<input type="url" name="cover_image"', false);
+    }
 }

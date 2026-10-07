@@ -714,8 +714,8 @@
                         <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">📁 Upload file from device</small>
                     </div>
                     <div>
-                        <input type="url" name="image" placeholder="https://..." class="form-input">
-                        <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">🔗 Or paste external image link</small>
+                        <input type="text" name="image" placeholder="/storage/... or https://..." class="form-input">
+                        <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">🔗 Or image link / path</small>
                     </div>
                 </div>
             </div>
@@ -1049,8 +1049,8 @@
                         <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">📁 Upload new image file</small>
                     </div>
                     <div>
-                        <input type="url" id="edit_prod_image" name="image" placeholder="https://..." class="form-input">
-                        <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">🔗 Or edit external image link</small>
+                        <input type="text" id="edit_prod_image" name="image" placeholder="/storage/... or https://..." class="form-input">
+                        <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">🔗 Or edit image link / path</small>
                     </div>
                 </div>
             </div>

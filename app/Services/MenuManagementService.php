@@ -244,7 +244,18 @@ class MenuManagementService
                 ]);
             }
         } else {
-            $imageUrl = ! empty($data['image']) ? $data['image'] : ($product->image ?: Product::DEFAULT_IMAGE);
+            $rawImage = ! empty($data['image']) ? $data['image'] : ($product->image ?: Product::DEFAULT_IMAGE);
+            if (! empty($rawImage)) {
+                $parsed = parse_url($rawImage, PHP_URL_PATH);
+                if ($parsed && str_starts_with($parsed, '/storage/')) {
+                    $rawImage = $parsed;
+                }
+            }
+            $imageUrl = $rawImage;
+
+            if (array_key_exists('image', $data) && $imageUrl !== $product->image && ! empty($product->image)) {
+                $product->deleteImageFile();
+            }
         }
 
         $name = $data['name'];
@@ -522,6 +533,11 @@ class MenuManagementService
         }
 
         if (! empty($fallbackUrl)) {
+            $parsed = parse_url($fallbackUrl, PHP_URL_PATH);
+            if ($parsed && str_starts_with($parsed, '/storage/')) {
+                return $parsed;
+            }
+
             return $fallbackUrl;
         }
 

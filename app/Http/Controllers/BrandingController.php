@@ -59,6 +59,20 @@ class BrandingController extends Controller
             $validated['custom_css'] = app(CssSanitizer::class)->sanitize($validated['custom_css']);
         }
 
+        if (! empty($validated['logo'])) {
+            $parsedLogo = parse_url($validated['logo'], PHP_URL_PATH);
+            if ($parsedLogo && str_starts_with($parsedLogo, '/storage/')) {
+                $validated['logo'] = $parsedLogo;
+            }
+        }
+
+        if (! empty($validated['cover_image'])) {
+            $parsedCover = parse_url($validated['cover_image'], PHP_URL_PATH);
+            if ($parsedCover && str_starts_with($parsedCover, '/storage/')) {
+                $validated['cover_image'] = $parsedCover;
+            }
+        }
+
         if ($request->hasFile('logo_file') && $request->file('logo_file')->isValid()) {
             try {
                 $storageFile = $storageService->replace(
@@ -94,6 +108,32 @@ class BrandingController extends Controller
                 Log::error('Branding cover upload failed: '.$e->getMessage(), ['exception' => $e]);
 
                 return back()->withInput()->with('error', 'Cover image upload failed: '.$e->getMessage());
+            }
+        }
+
+        if (! $request->hasFile('logo_file') && array_key_exists('logo', $validated)) {
+            if ($validated['logo'] !== $vendor->logo && ! empty($vendor->logo)) {
+                try {
+                    $cleanOld = $storageService->cleanPath($vendor->logo);
+                    if ($storageService->isVendorScopedPath($cleanOld, $vendor)) {
+                        $storageService->delete($cleanOld, $vendor);
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to delete old logo upon url change: '.$e->getMessage());
+                }
+            }
+        }
+
+        if (! $request->hasFile('cover_file') && array_key_exists('cover_image', $validated)) {
+            if ($validated['cover_image'] !== $vendor->cover_image && ! empty($vendor->cover_image)) {
+                try {
+                    $cleanOld = $storageService->cleanPath($vendor->cover_image);
+                    if ($storageService->isVendorScopedPath($cleanOld, $vendor)) {
+                        $storageService->delete($cleanOld, $vendor);
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to delete old cover upon url change: '.$e->getMessage());
+                }
             }
         }
 

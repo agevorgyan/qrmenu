@@ -453,6 +453,13 @@ class StorageService
     public function cleanPath(string $path): string
     {
         $clean = trim($path);
+        if (str_starts_with($clean, 'http://') || str_starts_with($clean, 'https://')) {
+            $urlPath = parse_url($clean, PHP_URL_PATH);
+            if ($urlPath !== false && $urlPath !== null) {
+                $clean = $urlPath;
+            }
+        }
+
         if (str_starts_with($clean, '/storage/')) {
             $clean = substr($clean, 9);
         } elseif (str_starts_with($clean, 'storage/')) {

@@ -44,7 +44,16 @@ class Product extends Model
     public function deleteImageFile(): void
     {
         $raw = $this->getRawOriginal('image');
-        if (! empty($raw) && ! str_contains($raw, 'default-dish') && ! str_starts_with($raw, 'http://') && ! str_starts_with($raw, 'https://')) {
+        if (! empty($raw) && ! str_contains($raw, 'default-dish')) {
+            if (str_starts_with($raw, 'http://') || str_starts_with($raw, 'https://')) {
+                $parsed = parse_url($raw, PHP_URL_PATH);
+                if ($parsed && str_starts_with($parsed, '/storage/')) {
+                    $raw = $parsed;
+                } else {
+                    return;
+                }
+            }
+
             if (str_contains($raw, '..')) {
                 return;
             }

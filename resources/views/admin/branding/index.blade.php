@@ -254,8 +254,8 @@
                                 <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 0.25rem;">📁 Upload file (PNG/JPG)</small>
                             </div>
                             <div>
-                                <input type="url" name="logo" id="logoUrlInput" value="{{ $vendor->logo }}" placeholder="https://..." class="form-input-control" oninput="debounceReloadPreview()">
-                                <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 0.25rem;">🔗 Or web image URL</small>
+                                <input type="text" name="logo" id="logoUrlInput" value="{{ $vendor->logo }}" placeholder="/storage/... or https://..." class="form-input-control" oninput="debounceReloadPreview()">
+                                <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 0.25rem;">🔗 Or image URL / path</small>
                             </div>
                         </div>
                     </div>
@@ -271,8 +271,8 @@
                                 <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 0.25rem;">📁 Upload banner photo</small>
                             </div>
                             <div>
-                                <input type="url" name="cover_image" id="coverUrlInput" value="{{ $vendor->cover_image }}" placeholder="https://..." class="form-input-control" oninput="debounceReloadPreview()">
-                                <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 0.25rem;">🔗 Or cover image URL</small>
+                                <input type="text" name="cover_image" id="coverUrlInput" value="{{ $vendor->cover_image }}" placeholder="/storage/... or https://..." class="form-input-control" oninput="debounceReloadPreview()">
+                                <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 0.25rem;">🔗 Or cover image URL / path</small>
                             </div>
                         </div>
                     </div>
