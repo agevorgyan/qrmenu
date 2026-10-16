@@ -11,6 +11,9 @@
                 'description' => $prod->getTranslatedDescription($lang),
                 'price' => (float) $prod->getEffectivePrice($location?->id),
                 'image' => $prod->image,
+                'available_for_dine_in' => (bool) ($prod->available_for_dine_in ?? true),
+                'available_for_takeaway' => (bool) ($prod->available_for_takeaway ?? true),
+                'available_for_delivery' => (bool) ($prod->available_for_delivery ?? true),
                 'variations' => $prod->variations->map(fn($v) => [
                     'id' => $v->id,
                     'name' => $v->name,
@@ -96,6 +99,16 @@
             'invalid_phone_format' => __('menu.invalid_phone_format'),
             'invalid_email_format' => __('menu.invalid_email_format'),
             'phone_country' => __('menu.phone_country'),
+            'choose_order_type' => __('menu.choose_order_type'),
+            'choose_order_type_desc' => __('menu.choose_order_type_desc'),
+            'delivery_desc' => __('menu.delivery_desc'),
+            'takeaway_desc' => __('menu.takeaway_desc'),
+            'switched_to_delivery' => __('menu.switched_to_delivery'),
+            'switched_to_takeaway' => __('menu.switched_to_takeaway'),
+            'item_unavailable_for_channel' => __('menu.item_unavailable_for_channel'),
+            'remove_unavailable_items_notice' => __('menu.remove_unavailable_items_notice'),
+            'no_items_for_channel' => __('menu.no_items_for_channel'),
+            'change_order_type' => __('menu.change_order_type'),
         ],
     ];
 @endphp

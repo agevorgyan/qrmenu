@@ -472,6 +472,9 @@
         </div>
     </header>
 
+    <!-- Order Type Selector Bar (Direct Visits: Delivery vs Takeaway, or Table QR badge) -->
+    @include('storefront.components.order-type-header-toggle')
+
     <!-- Search & Language Bar -->
     <div class="controls-bar">
         <div class="search-box">
@@ -479,7 +482,7 @@
             <input type="text" x-model.debounce.250ms="search" placeholder="{{ __('menu.search_placeholder') }}" class="search-input">
         </div>
 
-        <select onchange="window.location.href='?lang=' + this.value" class="lang-select" aria-label="Language selection">
+        <select onchange="const u = new URL(window.location.href); u.searchParams.set('lang', this.value); window.location.href = u.toString();" class="lang-select" aria-label="Language selection">
             @foreach($vendor->getSupportedLanguages() as $sLang)
                 <option value="{{ $sLang['code'] }}" {{ $lang == $sLang['code'] ? 'selected' : '' }}>
                     {{ $sLang['flag'] ?? '🌐' }} {{ strtoupper($sLang['code']) }}
@@ -492,9 +495,18 @@
     <div class="category-nav-wrap">
         <nav class="category-scroll">
             @foreach($categories as $cat)
+                @php
+                    $catDishesMeta = $cat->products->map(fn($p) => [
+                        'name' => mb_strtolower($p->getTranslatedName($lang)),
+                        'dine_in' => (bool)($p->available_for_dine_in ?? true),
+                        'takeaway' => (bool)($p->available_for_takeaway ?? true),
+                        'delivery' => (bool)($p->available_for_delivery ?? true),
+                    ])->values()->all();
+                @endphp
                 <button id="chip-cat-{{ $cat->id }}" 
                         class="cat-chip" 
                         :class="{ 'active': activeCat === 'cat-{{ $cat->id }}' }" 
+                        x-show="isCategoryVisible('cat-{{ $cat->id }}', {{ json_encode($catDishesMeta, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})"
                         @click="scrollToCat('cat-{{ $cat->id }}')">
                     {{ $cat->getTranslatedName($lang) }}
                 </button>
@@ -508,7 +520,15 @@
         @include('storefront.components.featured-dish-banner')
 
         @foreach($categories as $cat)
-            <div id="cat-{{ $cat->id }}" class="category-anchor" x-show="!search || isCategoryVisible('cat-{{ $cat->id }}')">
+            @php
+                $catDishesMeta = $cat->products->map(fn($p) => [
+                    'name' => mb_strtolower($p->getTranslatedName($lang)),
+                    'dine_in' => (bool)($p->available_for_dine_in ?? true),
+                    'takeaway' => (bool)($p->available_for_takeaway ?? true),
+                    'delivery' => (bool)($p->available_for_delivery ?? true),
+                ])->values()->all();
+            @endphp
+            <div id="cat-{{ $cat->id }}" class="category-anchor" x-show="isCategoryVisible('cat-{{ $cat->id }}', {{ json_encode($catDishesMeta, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})">
                 <div class="category-title">
                     <span>{{ $cat->getTranslatedName($lang) }}</span>
                     <span style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">{{ $cat->products->count() }}</span>
@@ -551,8 +571,10 @@
 
                         <div class="dish-card" 
                              style="{{ (!$isLocAvailable || !$isTimeAvailable) ? 'opacity: 0.65;' : '' }}"
-                             :class="{ 'dish-hidden': search && !'{{ addslashes(mb_strtolower($prod->getTranslatedName($lang))) }}'.includes(search.toLowerCase()) && !'{{ addslashes(mb_strtolower($prod->getTranslatedDescription($lang))) }}'.includes(search.toLowerCase()) }"
+                             x-show="matchesSearch({!! json_encode(mb_strtolower($prod->getTranslatedName($lang))) !!}) && isProductAvailableForCurrentOrderType({{ $isDineIn ? 'true' : 'false' }}, {{ $isTakeaway ? 'true' : 'false' }}, {{ $isDelivery ? 'true' : 'false' }})"
+                             :class="{ 'dish-hidden': !isDishVisible({{ $prod->id }}, '{{ addslashes(mb_strtolower($prod->getTranslatedName($lang))) }}', {{ $isDineIn ? 'true' : 'false' }}, {{ $isTakeaway ? 'true' : 'false' }}, {{ $isDelivery ? 'true' : 'false' }}) }"
                              @click="selectDish({{ json_encode($prodPayload, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})">
+
 
                             @if(!empty($prod->image))
                                 <div class="dish-img-wrap">
@@ -675,6 +697,9 @@
         </footer>
     </main>
     </div> <!-- /.storefront-app-shell -->
+
+    <!-- Order Type Selection Modal (Direct Visitors) -->
+    @include('storefront.components.order-type-modal')
 
     <!-- Variation Selection Modal -->
     @include('storefront.components.variation-modal')

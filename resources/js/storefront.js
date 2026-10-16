@@ -85,6 +85,14 @@
             get phoneCleanDigits() {
                 return (this.phoneNationalNumber || '').replace(/\D/g, '');
             },
+            get hasUnavailableCartItems() {
+                return (this.cart || []).some(item => {
+                    if (this.orderType === 'dine_in' && item.available_for_dine_in === false) return true;
+                    if (this.orderType === 'takeaway' && item.available_for_takeaway === false) return true;
+                    if (this.orderType === 'delivery' && item.available_for_delivery === false) return true;
+                    return false;
+                });
+            },
             paymentMethod: settings.paymentMethod || 'cash',
             birthdayDiscountPercent: Number(settings.birthdayDiscountPercent || 15),
             birthdayDiscountEnabled: !!settings.birthdayDiscountEnabled,
@@ -103,6 +111,7 @@
             takeawayMinAmount: Number(settings.takeawayMinAmount || 0),
             isTableFixed: !!bootConfig.isTableFixed,
             tableNumber: customConfig.tableNumber !== undefined ? customConfig.tableNumber : (bootConfig.table || ''),
+            showOrderTypeModal: false,
             showWaiterModal: false,
             serviceType: 'call_waiter',
             serviceTable: customConfig.tableNumber !== undefined && customConfig.tableNumber ? customConfig.tableNumber : (bootConfig.table || ''),
@@ -167,6 +176,26 @@
             init() {
                 this.restoreActiveOrderFromStorage();
                 this.initAiWaiterWelcome();
+
+                // Initial order type prompt for direct visitors (no table QR)
+                if (!this.isTableFixed) {
+                    if (this.deliveryEnabled && this.takeawayEnabled) {
+                        let sessionChosen = null;
+                        try {
+                            sessionChosen = sessionStorage.getItem('storefront_order_type_chosen_' + this.vendorSlug);
+                        } catch(e) {}
+                        if (sessionChosen && (sessionChosen === 'delivery' || sessionChosen === 'takeaway')) {
+                            this.orderType = sessionChosen;
+                        } else {
+                            this.showOrderTypeModal = true;
+                        }
+                    } else if (this.deliveryEnabled && !this.takeawayEnabled) {
+                        this.orderType = 'delivery';
+                    } else if (this.takeawayEnabled && !this.deliveryEnabled) {
+                        this.orderType = 'takeaway';
+                    }
+                }
+
                 const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams.get('payment_success') === '1') {
                     this.triggerToast('🎉 Վճարումը հաջողությամբ կատարվել է:', 'success', 'fa-solid fa-circle-check');
@@ -185,6 +214,95 @@
                                 this.triggerToast(this.closingNotice.message || 'Ուշադրություն: Խոհանոցը շուտով փակվում է:', 'info', 'fa-solid fa-clock');
                             }
                         }, 1200);
+                    }
+                }
+            },
+
+            setOrderType(type) {
+                if (this.isTableFixed) return;
+                if (type !== 'delivery' && type !== 'takeaway') return;
+                if (type === 'delivery' && !this.deliveryEnabled) {
+                    this.triggerToast(translations.delivery_disabled_notice || 'Առաքման ծառայությունը ներկայումս հասանելի չէ', 'remove', 'fa-solid fa-ban');
+                    return;
+                }
+                if (type === 'takeaway' && !this.takeawayEnabled) {
+                    this.triggerToast(translations.takeaway_disabled_notice || 'Տեղում վերցնելու ծառայությունը ներկայումս հասանելի չէ', 'remove', 'fa-solid fa-ban');
+                    return;
+                }
+                this.orderType = type;
+                try {
+                    sessionStorage.setItem('storefront_order_type_chosen_' + this.vendorSlug, type);
+                } catch(e) {}
+                this.showOrderTypeModal = false;
+
+                const unavailable = (this.cart || []).filter(item => {
+                    if (type === 'delivery' && item.available_for_delivery === false) return true;
+                    if (type === 'takeaway' && item.available_for_takeaway === false) return true;
+                    return false;
+                });
+                if (unavailable.length > 0) {
+                    const names = unavailable.map(i => '«' + i.name + '»').join(', ');
+                    this.triggerToast('Ուշադրություն. ' + names + ' հասանելի չէ ընտրված պատվերի եղանակի համար', 'remove', 'fa-solid fa-triangle-exclamation');
+                } else {
+                    const label = type === 'delivery' 
+                        ? (translations.switched_to_delivery || 'Ընտրվել է՝ Առաքում') 
+                        : (translations.switched_to_takeaway || 'Ընտրվել է՝ Տեղում վերցնել');
+                    const icon = type === 'delivery' ? 'fa-solid fa-motorcycle' : 'fa-solid fa-bag-shopping';
+                    this.triggerToast(label, 'info', icon);
+                }
+
+                this.$nextTick(() => {
+                    this.adjustActiveCategoryIfHidden();
+                });
+            },
+
+            selectInitialOrderType(type) {
+                this.setOrderType(type);
+            },
+
+            isProductAvailableForCurrentOrderType(dineIn = true, takeaway = true, delivery = true) {
+                if (this.orderType === 'dine_in') {
+                    return dineIn !== false;
+                }
+                if (this.orderType === 'takeaway') {
+                    return takeaway !== false;
+                }
+                if (this.orderType === 'delivery') {
+                    return delivery !== false;
+                }
+                return true;
+            },
+
+            isDishVisible(dishId, dishName, dineIn = true, takeaway = true, delivery = true) {
+                if (!this.matchesSearch(dishName)) return false;
+                return this.isProductAvailableForCurrentOrderType(dineIn, takeaway, delivery);
+            },
+
+            isCategoryVisible(catId, dishes = null) {
+                let prods = dishes;
+                if (!prods && this.catalogProducts) {
+                    const idNum = parseInt(String(catId).replace('cat-', ''), 10);
+                    prods = this.catalogProducts.filter(p => Number(p.category_id) === idNum).map(p => ({
+                        name: p.name,
+                        dine_in: p.available_for_dine_in !== false,
+                        takeaway: p.available_for_takeaway !== false,
+                        delivery: p.available_for_delivery !== false,
+                    }));
+                }
+                if (!prods || prods.length === 0) return false;
+                return prods.some(d => {
+                    const matches = !this.search || !this.search.trim() || (d.name || '').toLowerCase().includes(this.search.trim().toLowerCase());
+                    if (!matches) return false;
+                    return this.isProductAvailableForCurrentOrderType(d.dine_in, d.takeaway, d.delivery);
+                });
+            },
+
+            adjustActiveCategoryIfHidden() {
+                const activeChip = document.getElementById('chip-' + this.activeCat);
+                if (activeChip && activeChip.offsetParent === null) {
+                    const firstVisible = Array.from(document.querySelectorAll('.cat-chip')).find(el => el.offsetParent !== null);
+                    if (firstVisible && firstVisible.id) {
+                        this.activeCat = firstVisible.id.replace('chip-', '');
                     }
                 }
             },

@@ -56,13 +56,18 @@ class ClientStorefrontController extends Controller
         }
         session(['app_locale' => $lang, 'locale' => $lang]);
         App::setLocale($lang);
-        $table = $request->get('table', null);
+        $table = null;
         if ($request->has('table') && $request->filled('table')) {
-            session(['storefront_table_'.$vendor->slug => $request->get('table')]);
-        } elseif (session()->has('storefront_table_'.$vendor->slug)) {
-            $table = session('storefront_table_'.$vendor->slug);
+            $table = $request->get('table');
+            session(['storefront_table_'.$vendor->slug => $table]);
+        } elseif ($request->has('table') && ! $request->filled('table')) {
+            session()->forget('storefront_table_'.$vendor->slug);
+            $table = null;
+        } elseif (! $request->has('table')) {
+            session()->forget('storefront_table_'.$vendor->slug);
+            $table = null;
         }
-        $channel = $request->get('mode', 'dine_in'); // dine_in vs ordering
+        $channel = $request->get('mode', ! empty($table) ? 'dine_in' : ($vendor->delivery_enabled ? 'delivery' : ($vendor->takeaway_enabled ? 'takeaway' : 'dine_in')));
 
         // Deduplicate analytics visit per IP/user-agent per hour to prevent metric inflation
         $visitHash = md5($request->ip().'|'.($request->userAgent() ?? ''));

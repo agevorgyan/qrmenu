@@ -248,6 +248,8 @@
         </p>
     </div>
 
+    <!-- Order Type Selector Bar (Direct Visits: Delivery vs Takeaway, or Table QR badge) -->
+    @include('storefront.components.order-type-header-toggle')
 
     <!-- Search & Lang Bar -->
     <div style="margin-bottom: 1rem; display: flex; gap: 0.75rem;">
@@ -256,7 +258,7 @@
             <input type="text" x-model.debounce.250ms="search" placeholder="{{ __('menu.search_placeholder') }}" style="width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); outline: none; font-size: 0.85rem;">
         </div>
 
-        <select onchange="window.location.href='?lang=' + this.value" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 700; cursor: pointer;">
+        <select onchange="const u = new URL(window.location.href); u.searchParams.set('lang', this.value); window.location.href = u.toString();" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 700; cursor: pointer;">
             @foreach($vendor->getSupportedLanguages() as $sLang)
                 <option value="{{ $sLang['code'] }}" {{ $lang == $sLang['code'] ? 'selected' : '' }}>
                     {{ $sLang['flag'] ?? '🌐' }} {{ strtoupper($sLang['code']) }}
@@ -268,7 +270,18 @@
     <!-- Category Nav -->
     <nav class="category-nav">
         @foreach($categories as $cat)
-            <button id="chip-cat-{{ $cat->id }}" class="cat-chip" :class="{ 'active': activeCat === 'cat-{{ $cat->id }}' }" @click="scrollToCat('cat-{{ $cat->id }}')">
+            @php
+                $catDishesMeta = $cat->products->map(fn($p) => [
+                    'name' => mb_strtolower($p->getTranslatedName($lang)),
+                    'dine_in' => (bool)($p->available_for_dine_in ?? true),
+                    'takeaway' => (bool)($p->available_for_takeaway ?? true),
+                    'delivery' => (bool)($p->available_for_delivery ?? true),
+                ])->values()->all();
+            @endphp
+            <button id="chip-cat-{{ $cat->id }}" class="cat-chip" 
+                    :class="{ 'active': activeCat === 'cat-{{ $cat->id }}' }" 
+                    x-show="isCategoryVisible('cat-{{ $cat->id }}', {{ json_encode($catDishesMeta, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})"
+                    @click="scrollToCat('cat-{{ $cat->id }}')">
                 {{ $cat->getTranslatedName($lang) }}
             </button>
         @endforeach
@@ -280,7 +293,17 @@
         @include('storefront.components.featured-dish-banner')
 
         @foreach($categories as $cat)
-            <div id="cat-{{ $cat->id }}" class="category-section" style="margin-bottom: 2.5rem;">
+            @php
+                $catDishesMeta = $cat->products->map(fn($p) => [
+                    'name' => mb_strtolower($p->getTranslatedName($lang)),
+                    'dine_in' => (bool)($p->available_for_dine_in ?? true),
+                    'takeaway' => (bool)($p->available_for_takeaway ?? true),
+                    'delivery' => (bool)($p->available_for_delivery ?? true),
+                ])->values()->all();
+            @endphp
+            <div id="cat-{{ $cat->id }}" class="category-section" 
+                 x-show="isCategoryVisible('cat-{{ $cat->id }}', {{ json_encode($catDishesMeta, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})"
+                 style="margin-bottom: 2.5rem;">
                 <h2 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1rem; color: var(--primary); padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-color);">
                     {{ $cat->getTranslatedName($lang) }}
                 </h2>
@@ -319,7 +342,9 @@
                                 ])->values(),
                             ];
                         @endphp
-                        <div class="glass-card" style="{{ (!$isLocAvailable || !$isTimeAvailable) ? 'opacity: 0.68;' : '' }}" x-show='matchesSearch({!! json_encode(mb_strtolower($prod->getTranslatedName($lang))) !!})' @click='selectDish({{ json_encode($prodPayload, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'>
+                        <div class="glass-card" style="{{ (!$isLocAvailable || !$isTimeAvailable) ? 'opacity: 0.68;' : '' }}" 
+                             x-show='matchesSearch({!! json_encode(mb_strtolower($prod->getTranslatedName($lang))) !!}) && isProductAvailableForCurrentOrderType({{ $isDineIn ? 'true' : 'false' }}, {{ $isTakeaway ? 'true' : 'false' }}, {{ $isDelivery ? 'true' : 'false' }})' 
+                             @click='selectDish({{ json_encode($prodPayload, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'>
                             <img src="{{ $prod->image }}" onerror="this.onerror=null;this.src='{{ asset('images/default-dish.png') }}';" class="glass-img" alt="{{ $prod->getTranslatedName($lang) }}" loading="lazy" decoding="async">
                             <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
                                 <div>
@@ -330,6 +355,7 @@
                                             <span style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35); padding: 0.1rem 0.45rem; border-radius: 6px; font-size: 0.65rem; font-weight: 800;">
                                                 🚫 {{ __('menu.out_of_stock') ?: 'Սպառված է' }}
                                             </span>
+
                                         @elseif(!$isTimeAvailable)
                                             <span style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.35); padding: 0.1rem 0.45rem; border-radius: 6px; font-size: 0.65rem; font-weight: 700;">
                                                 <i class="fa-regular fa-clock"></i> {{ $scheduleSummary }}
@@ -441,6 +467,9 @@
         </footer>
     </div>
     </div> <!-- /.storefront-app-shell -->
+
+    <!-- Initial Order Type Selection Modal -->
+    @include('storefront.components.order-type-modal')
 
     <!-- Variation Selection Modal -->
     @include('storefront.components.variation-modal')

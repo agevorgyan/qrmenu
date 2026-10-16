@@ -289,6 +289,8 @@
         </div>
     </div>
 
+    <!-- Order Type Selector Bar (Direct Visits: Delivery vs Takeaway, or Table QR badge) -->
+    @include('storefront.components.order-type-header-toggle')
 
     <!-- Language & Search Bar -->
     <div style="padding: 1.25rem 1.25rem 0.5rem; display: flex; gap: 0.75rem;">
@@ -297,7 +299,7 @@
             <input type="text" x-model.debounce.250ms="search" placeholder="{{ __('menu.search_placeholder') }}" style="width: 100%; padding: 0.65rem 1rem 0.65rem 2.5rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); outline: none; font-size: 0.85rem;">
         </div>
 
-        <select onchange="window.location.href='?lang=' + this.value" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 700; cursor: pointer;">
+        <select onchange="const u = new URL(window.location.href); u.searchParams.set('lang', this.value); window.location.href = u.toString();" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 700; cursor: pointer;">
             @foreach($vendor->getSupportedLanguages() as $sLang)
                 <option value="{{ $sLang['code'] }}" {{ $lang == $sLang['code'] ? 'selected' : '' }}>
                     {{ $sLang['flag'] ?? '🌐' }} {{ strtoupper($sLang['code']) }}
@@ -310,7 +312,18 @@
     <nav class="category-nav-wrapper" id="categoryNavWrapper" style="margin-top: 0.5rem;">
         @foreach($categories as $cat)
             @if(is_object($cat) && isset($cat->id))
-                <button id="chip-cat-{{ $cat->id }}" class="cat-chip" :class="{ 'active': activeCat === 'cat-{{ $cat->id }}' }" @click="scrollToCat('cat-{{ $cat->id }}')">
+                @php
+                    $catDishesMeta = $cat->products->map(fn($p) => [
+                        'name' => mb_strtolower($p->getTranslatedName($lang)),
+                        'dine_in' => (bool)($p->available_for_dine_in ?? true),
+                        'takeaway' => (bool)($p->available_for_takeaway ?? true),
+                        'delivery' => (bool)($p->available_for_delivery ?? true),
+                    ])->values()->all();
+                @endphp
+                <button id="chip-cat-{{ $cat->id }}" class="cat-chip" 
+                        :class="{ 'active': activeCat === 'cat-{{ $cat->id }}' }" 
+                        x-show="isCategoryVisible('cat-{{ $cat->id }}', {{ json_encode($catDishesMeta, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})"
+                        @click="scrollToCat('cat-{{ $cat->id }}')">
                     {{ $cat->getTranslatedName($lang) }}
                 </button>
             @endif
@@ -324,56 +337,68 @@
 
         @foreach($categories as $cat)
             @if(is_object($cat) && isset($cat->id))
-            <div id="cat-{{ $cat->id }}" class="category-section">
-                <h2 style="font-family: 'Outfit'; font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-main);">
-                    {{ $cat->getTranslatedName($lang) }}
-                </h2>
+                @php
+                    $catDishesMeta = $cat->products->map(fn($p) => [
+                        'name' => mb_strtolower($p->getTranslatedName($lang)),
+                        'dine_in' => (bool)($p->available_for_dine_in ?? true),
+                        'takeaway' => (bool)($p->available_for_takeaway ?? true),
+                        'delivery' => (bool)($p->available_for_delivery ?? true),
+                    ])->values()->all();
+                @endphp
+                <div id="cat-{{ $cat->id }}" class="category-section" 
+                     x-show="isCategoryVisible('cat-{{ $cat->id }}', {{ json_encode($catDishesMeta, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})">
+                    <h2 style="font-family: 'Outfit'; font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-main);">
+                        {{ $cat->getTranslatedName($lang) }}
+                    </h2>
 
-                <div class="dishes-grid">
-                    @foreach($cat->products as $prod)
-                        @php
-                            $isLocAvailable = $prod->isAvailableAtLocation($location?->id);
-                            $isTimeAvailable = $prod->isTimeAvailable();
-                            $scheduleSummary = $prod->getAvailabilityScheduleSummary($lang);
-                            $isDineIn = (bool)($prod->available_for_dine_in ?? true);
-                            $isTakeaway = (bool)($prod->available_for_takeaway ?? true);
-                            $isDelivery = (bool)($prod->available_for_delivery ?? true);
+                    <div class="dishes-grid">
+                        @foreach($cat->products as $prod)
+                            @php
+                                $isLocAvailable = $prod->isAvailableAtLocation($location?->id);
+                                $isTimeAvailable = $prod->isTimeAvailable();
+                                $scheduleSummary = $prod->getAvailabilityScheduleSummary($lang);
+                                $isDineIn = (bool)($prod->available_for_dine_in ?? true);
+                                $isTakeaway = (bool)($prod->available_for_takeaway ?? true);
+                                $isDelivery = (bool)($prod->available_for_delivery ?? true);
 
-                            $prodPayload = [
-                                'id' => $prod->id,
-                                'name' => $prod->getTranslatedName($lang),
-                                'image' => $prod->image ?: asset('images/default-dish.png'),
-                                'description' => $prod->getTranslatedDescription($lang),
-                                'base_price' => (float)$prod->getEffectivePrice($location?->id),
-                                'regular_price' => (float)$prod->getRegularPrice($location?->id),
-                                'is_discount_active' => $prod->isDiscountActive(),
-                                'discount_percentage' => $prod->getDiscountPercentage(),
-                                'is_available' => $isLocAvailable,
-                                'is_time_available' => $isTimeAvailable,
-                                'schedule_summary' => $scheduleSummary,
-                                'available_for_dine_in' => $isDineIn,
-                                'available_for_takeaway' => $isTakeaway,
-                                'available_for_delivery' => $isDelivery,
-                                'variations' => $prod->variations->map(fn($v) => [
-                                    'id' => $v->id,
-                                    'name' => $v->getTranslatedName($lang),
-                                    'price' => (float)$v->getEffectivePrice(),
-                                    'regular_price' => (float)$v->price,
-                                    'is_default' => (bool)$v->is_default
-                                ])->values(),
-                            ];
-                        @endphp
-                        <div class="dish-card" style="{{ (!$isLocAvailable || !$isTimeAvailable) ? 'opacity: 0.68;' : '' }}" x-show='matchesSearch({!! json_encode(mb_strtolower($prod->getTranslatedName($lang))) !!})' @click='selectDish({{ json_encode($prodPayload, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'>
-                            <img src="{{ $prod->image }}" onerror="this.onerror=null;this.src='{{ asset('images/default-dish.png') }}';" loading="lazy" decoding="async" class="dish-img" alt="{{ $prod->getTranslatedName($lang) }}">
-                            <div class="dish-content">
-                                <div>
-                                    <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 0.25rem;">
-                                        <div class="dish-title">{{ $prod->getTranslatedName($lang) }}</div>
+                                $prodPayload = [
+                                    'id' => $prod->id,
+                                    'name' => $prod->getTranslatedName($lang),
+                                    'image' => $prod->image ?: asset('images/default-dish.png'),
+                                    'description' => $prod->getTranslatedDescription($lang),
+                                    'base_price' => (float)$prod->getEffectivePrice($location?->id),
+                                    'regular_price' => (float)$prod->getRegularPrice($location?->id),
+                                    'is_discount_active' => $prod->isDiscountActive(),
+                                    'discount_percentage' => $prod->getDiscountPercentage(),
+                                    'is_available' => $isLocAvailable,
+                                    'is_time_available' => $isTimeAvailable,
+                                    'schedule_summary' => $scheduleSummary,
+                                    'available_for_dine_in' => $isDineIn,
+                                    'available_for_takeaway' => $isTakeaway,
+                                    'available_for_delivery' => $isDelivery,
+                                    'variations' => $prod->variations->map(fn($v) => [
+                                        'id' => $v->id,
+                                        'name' => $v->getTranslatedName($lang),
+                                        'price' => (float)$v->getEffectivePrice(),
+                                        'regular_price' => (float)$v->price,
+                                        'is_default' => (bool)$v->is_default
+                                    ])->values(),
+                                ];
+                            @endphp
+                            <div class="dish-card" style="{{ (!$isLocAvailable || !$isTimeAvailable) ? 'opacity: 0.68;' : '' }}" 
+                                 x-show='matchesSearch({!! json_encode(mb_strtolower($prod->getTranslatedName($lang))) !!}) && isProductAvailableForCurrentOrderType({{ $isDineIn ? 'true' : 'false' }}, {{ $isTakeaway ? 'true' : 'false' }}, {{ $isDelivery ? 'true' : 'false' }})' 
+                                 @click='selectDish({{ json_encode($prodPayload, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'>
+                                <img src="{{ $prod->image }}" onerror="this.onerror=null;this.src='{{ asset('images/default-dish.png') }}';" loading="lazy" decoding="async" class="dish-img" alt="{{ $prod->getTranslatedName($lang) }}">
+                                <div class="dish-content">
+                                    <div>
+                                        <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 0.25rem;">
+                                            <div class="dish-title">{{ $prod->getTranslatedName($lang) }}</div>
 
-                                        @if(!$isLocAvailable)
-                                            <span style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); padding: 0.1rem 0.45rem; border-radius: 6px; font-size: 0.65rem; font-weight: 800;">
-                                                🚫 {{ __('menu.out_of_stock') ?: 'Սպառված է' }}
-                                            </span>
+                                            @if(!$isLocAvailable)
+                                                <span style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); padding: 0.1rem 0.45rem; border-radius: 6px; font-size: 0.65rem; font-weight: 800;">
+                                                    🚫 {{ __('menu.out_of_stock') ?: 'Սպառված է' }}
+                                                </span>
+
                                         @elseif(!$isTimeAvailable)
                                             <span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4); padding: 0.1rem 0.45rem; border-radius: 6px; font-size: 0.65rem; font-weight: 700;">
                                                 <i class="fa-regular fa-clock"></i> {{ $scheduleSummary }}
@@ -485,6 +510,9 @@
         </footer>
     </div>
     </div> <!-- /.storefront-app-shell -->
+
+    <!-- Initial Order Type Selection Modal -->
+    @include('storefront.components.order-type-modal')
 
     <!-- Variation Selection Modal -->
     @include('storefront.components.variation-modal')

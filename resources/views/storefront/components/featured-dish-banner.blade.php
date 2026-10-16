@@ -9,6 +9,9 @@
             'regular_price' => (float)$featuredDish->getRegularPrice($location?->id),
             'is_discount_active' => $featuredDish->isDiscountActive(),
             'discount_percentage' => $featuredDish->getDiscountPercentage(),
+            'available_for_dine_in' => (bool)($featuredDish->available_for_dine_in ?? true),
+            'available_for_takeaway' => (bool)($featuredDish->available_for_takeaway ?? true),
+            'available_for_delivery' => (bool)($featuredDish->available_for_delivery ?? true),
             'variations' => $featuredDish->variations->map(fn($v) => [
                 'id' => $v->id,
                 'name' => $v->getTranslatedName($lang),
@@ -17,14 +20,18 @@
                 'is_default' => (bool)$v->is_default
             ])->values(),
         ];
+        $isFeaturedDineIn = (bool)($featuredDish->available_for_dine_in ?? true);
+        $isFeaturedTakeaway = (bool)($featuredDish->available_for_takeaway ?? true);
+        $isFeaturedDelivery = (bool)($featuredDish->available_for_delivery ?? true);
         $badgeText = $vendor->featured_dish_badge ?: '⭐ ՕՐՎԱ ԱՌԱՋԱՐԿ';
         $subtitleText = $vendor->featured_dish_subtitle ?: ($featuredDish->getTranslatedDescription($lang) ?: 'Շեֆ խոհարարի հատուկ ընտրանի');
     @endphp
 
     <div class="featured-dish-banner-container"
-         x-show='matchesSearch({!! json_encode(mb_strtolower($featuredDish->getTranslatedName($lang))) !!})'
+         x-show='matchesSearch({!! json_encode(mb_strtolower($featuredDish->getTranslatedName($lang))) !!}) && isProductAvailableForCurrentOrderType({{ $isFeaturedDineIn ? 'true' : 'false' }}, {{ $isFeaturedTakeaway ? 'true' : 'false' }}, {{ $isFeaturedDelivery ? 'true' : 'false' }})'
          @click='selectDish({{ json_encode($dishPayload, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'
          style="margin-bottom: 1.75rem; cursor: pointer;">
+
         
         <div style="position: relative; border-radius: 20px; overflow: hidden; background: var(--bg-card); border: 2px solid var(--primary); box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.35); transition: transform 0.25s ease, box-shadow 0.25s ease;">
             

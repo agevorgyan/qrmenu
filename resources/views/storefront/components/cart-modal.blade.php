@@ -108,7 +108,14 @@
                                         <span x-text="Number(item.price).toLocaleString()"></span>
                                         <span class="cart-curr">{{ $vendor->currency }}</span>
                                     </div>
+                                    <template x-if="(orderType === 'dine_in' && item.available_for_dine_in === false) || (orderType === 'takeaway' && item.available_for_takeaway === false) || (orderType === 'delivery' && item.available_for_delivery === false)">
+                                        <div style="background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.72rem; font-weight: 700; margin-top: 0.35rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                            <i class="fa-solid fa-triangle-exclamation"></i>
+                                            <span>{{ __('menu.item_unavailable_for_channel') }}</span>
+                                        </div>
+                                    </template>
                                 </div>
+
 
                                 <div class="cart-item-controls">
                                     <!-- Stepper -->
@@ -209,18 +216,18 @@
                             <span>{{ __('menu.dine_in') }}</span>
                         </button>
                     </template>
-                    <template x-if="takeawayEnabled">
+                    <template x-if="!isTableFixed && takeawayEnabled">
                         <button type="button" 
-                                @click="orderType = 'takeaway'" 
+                                @click="setOrderType('takeaway')" 
                                 :class="{ 'is-active': orderType === 'takeaway' }"
                                 class="cart-type-btn">
                             <i class="fa-solid fa-bag-shopping"></i>
                             <span>{{ __('menu.takeaway') }}</span>
                         </button>
                     </template>
-                    <template x-if="deliveryEnabled">
+                    <template x-if="!isTableFixed && deliveryEnabled">
                         <button type="button" 
-                                @click="orderType = 'delivery'" 
+                                @click="setOrderType('delivery')" 
                                 :class="{ 'is-active': orderType === 'delivery' }"
                                 class="cart-type-btn">
                             <i class="fa-solid fa-motorcycle"></i>
@@ -228,6 +235,7 @@
                         </button>
                     </template>
                 </div>
+
 
                 <!-- Channel Operating Hours & Closing Alert Banner -->
                 <template x-if="currentSchedule && currentSchedule.enabled">
