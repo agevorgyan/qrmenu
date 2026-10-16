@@ -149,4 +149,7 @@ return [
     'remove_unavailable_items_notice' => 'Please remove unavailable items before placing your order',
     'no_items_for_channel' => 'No items available for this order method at the moment',
     'change_order_type' => 'Change Order Method',
+    'closed_hours' => 'Outside order hours',
+    'only_available_hours_notice' => 'Can only be ordered :time',
+    'product_time_restriction_toast' => 'This item can only be ordered :time',
 ];

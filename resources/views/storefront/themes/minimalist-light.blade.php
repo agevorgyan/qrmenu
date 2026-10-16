@@ -482,7 +482,7 @@
             <input type="text" x-model.debounce.250ms="search" placeholder="{{ __('menu.search_placeholder') }}" class="search-input">
         </div>
 
-        <select onchange="const u = new URL(window.location.href); u.searchParams.set('lang', this.value); window.location.href = u.toString();" class="lang-select" aria-label="Language selection">
+        <select @change="changeLanguage($event.target.value)" onchange="const u = new URL(window.location.href); u.searchParams.set('lang', this.value); window.location.href = u.toString();" class="lang-select" aria-label="Language selection">
             @foreach($vendor->getSupportedLanguages() as $sLang)
                 <option value="{{ $sLang['code'] }}" {{ $lang == $sLang['code'] ? 'selected' : '' }}>
                     {{ $sLang['flag'] ?? '🌐' }} {{ strtoupper($sLang['code']) }}
@@ -597,7 +597,11 @@
                                                 🚫 {{ __('menu.out_of_stock') ?: 'Սպառված է' }}
                                             </span>
                                         @elseif(!$isTimeAvailable)
-                                            <span style="background: rgba(245, 158, 11, 0.15); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3); padding: 0.1rem 0.45rem; border-radius: 4px; font-size: 0.65rem; font-weight: 700;">
+                                            <span style="background: rgba(245, 158, 11, 0.15); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3); padding: 0.12rem 0.5rem; border-radius: 4px; font-size: 0.68rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                                <i class="fa-regular fa-clock"></i> {{ __('menu.only_available_hours_notice', ['time' => $scheduleSummary]) }}
+                                            </span>
+                                        @elseif($scheduleSummary)
+                                            <span style="background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.25); padding: 0.12rem 0.5rem; border-radius: 4px; font-size: 0.68rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
                                                 <i class="fa-regular fa-clock"></i> {{ $scheduleSummary }}
                                             </span>
                                         @endif
@@ -657,8 +661,9 @@
                                             {{ __('menu.out_of_stock') ?: 'Սպառված է' }}
                                         </span>
                                     @elseif(!$isTimeAvailable)
-                                        <span style="font-size: 0.72rem; font-weight: 700; color: #d97706; padding: 0.35rem 0.5rem; background: #fef3c7; border-radius: 6px;">
-                                            {{ __('menu.closed_hours') ?: 'Ժամից դուրս' }}
+                                        <span style="font-size: 0.72rem; font-weight: 700; color: #d97706; padding: 0.35rem 0.5rem; background: #fef3c7; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                            <i class="fa-regular fa-clock"></i>
+                                            <span>{{ __('menu.only_available_hours_notice', ['time' => $scheduleSummary]) }}</span>
                                         </span>
                                     @elseif($prod->variations->count() > 1)
                                         <button class="btn-portion-select" 

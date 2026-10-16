@@ -389,10 +389,13 @@ class CreateOrderAction
 
         // 2. Schedule / time availability
         if (! $product->isTimeAvailable()) {
-            $scheduleDesc = $product->getAvailabilityScheduleSummary('en');
-            $timeMsg = $scheduleDesc ? " (only available: {$scheduleDesc})" : '';
+            $locale = app()->getLocale() ?: 'hy';
+            $scheduleDesc = $product->getAvailabilityScheduleSummary($locale);
+            $notice = $scheduleDesc
+                ? __('menu.only_available_hours_notice', ['time' => $scheduleDesc], $locale)
+                : __('menu.closed_hours', [], $locale);
             throw ValidationException::withMessages([
-                'items' => "The item \"{$product->name}\" is currently not available for ordering{$timeMsg}.",
+                'items' => "«{$product->name}» - {$notice}:",
             ]);
         }
 

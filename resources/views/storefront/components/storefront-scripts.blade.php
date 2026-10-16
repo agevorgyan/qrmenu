@@ -11,12 +11,15 @@
                 'description' => $prod->getTranslatedDescription($lang),
                 'price' => (float) $prod->getEffectivePrice($location?->id),
                 'image' => $prod->image,
+                'is_available' => (bool) $prod->isAvailableAtLocation($location?->id),
+                'is_time_available' => (bool) $prod->isTimeAvailable(),
+                'schedule_summary' => $prod->getAvailabilityScheduleSummary($lang),
                 'available_for_dine_in' => (bool) ($prod->available_for_dine_in ?? true),
                 'available_for_takeaway' => (bool) ($prod->available_for_takeaway ?? true),
                 'available_for_delivery' => (bool) ($prod->available_for_delivery ?? true),
                 'variations' => $prod->variations->map(fn($v) => [
                     'id' => $v->id,
-                    'name' => $v->name,
+                    'name' => $v->getTranslatedName($lang),
                     'price' => (float)$v->price
                 ])->toArray(),
             ];
@@ -109,6 +112,9 @@
             'remove_unavailable_items_notice' => __('menu.remove_unavailable_items_notice'),
             'no_items_for_channel' => __('menu.no_items_for_channel'),
             'change_order_type' => __('menu.change_order_type'),
+            'closed_hours' => __('menu.closed_hours'),
+            'only_available_hours_notice' => __('menu.only_available_hours_notice', ['time' => ':time']),
+            'product_time_restriction_toast' => __('menu.product_time_restriction_toast', ['time' => ':time']),
         ],
     ];
 @endphp

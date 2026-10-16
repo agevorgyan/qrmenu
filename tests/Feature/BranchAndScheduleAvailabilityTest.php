@@ -539,4 +539,64 @@ class BranchAndScheduleAvailabilityTest extends TestCase
 
         Carbon::setTestNow();
     }
+
+    public function test_product_schedule_availability_renders_in_menu_with_ordering_disabled_outside_hours(): void
+    {
+        $product = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->category->id,
+            'name' => 'Breakfast Special',
+            'price' => 2000,
+            'is_available' => true,
+            'available_start_time' => '10:00',
+            'available_end_time' => '14:00',
+            'available_days' => ['mon', 'tue', 'wed', 'thu', 'fri'],
+        ]);
+
+        // 1. Outside hours: Monday at 16:00
+        Carbon::setTestNow(Carbon::parse('2026-09-28 16:00:00', 'Asia/Yerevan'));
+        $this->assertFalse($product->isTimeAvailable());
+
+        $storefrontResponse = $this->get(route('client.menu', [
+            'vendor_slug' => $this->vendor->slug,
+            'lang' => 'hy',
+        ]));
+
+        $storefrontResponse->assertStatus(200);
+        // Product MUST still be visible on page
+        $storefrontResponse->assertSee('Breakfast Special');
+        // Schedule notice MUST be visible
+        $storefrontResponse->assertSee('10:00 - 14:00');
+        $storefrontResponse->assertSee('Կարող եք պատվիրել միայն');
+
+        // Ordering at 16:00 is rejected
+        $orderReject = $this->postJson(route('client.order.submit', ['vendor_slug' => $this->vendor->slug]), [
+            'location_id' => $this->locationA->id,
+            'table_number' => '2',
+            'type' => 'dine_in',
+            'customer_name' => 'Tigran',
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1],
+            ],
+        ]);
+        $orderReject->assertStatus(422);
+        $orderReject->assertJsonValidationErrors(['items']);
+
+        // 2. Inside hours: Monday at 11:30
+        Carbon::setTestNow(Carbon::parse('2026-09-28 11:30:00', 'Asia/Yerevan'));
+        $this->assertTrue($product->isTimeAvailable());
+
+        $orderSuccess = $this->postJson(route('client.order.submit', ['vendor_slug' => $this->vendor->slug]), [
+            'location_id' => $this->locationA->id,
+            'table_number' => '2',
+            'type' => 'dine_in',
+            'customer_name' => 'Tigran',
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1],
+            ],
+        ]);
+        $orderSuccess->assertStatus(200);
+
+        Carbon::setTestNow();
+    }
 }

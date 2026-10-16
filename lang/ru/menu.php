@@ -149,4 +149,7 @@ return [
     'remove_unavailable_items_notice' => 'Пожалуйста, удалите недоступные блюда перед оформлением',
     'no_items_for_channel' => 'В данный момент нет доступных блюд для этого способа заказа',
     'change_order_type' => 'Изменить способ заказа',
+    'closed_hours' => 'Вне часов заказа',
+    'only_available_hours_notice' => 'Можно заказать только :time',
+    'product_time_restriction_toast' => 'Данный товар можно заказать только :time',
 ];

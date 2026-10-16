@@ -149,4 +149,7 @@ return [
     'remove_unavailable_items_notice' => 'Խնդրում ենք հեռացնել անհասանելի ուտեստները պատվիրելուց առաջ',
     'no_items_for_channel' => 'Այս պահին ընտրված պատվերի եղանակի համար հասանելի ուտեստներ չկան',
     'change_order_type' => 'Փոխել պատվերի եղանակը',
+    'closed_hours' => 'Ժամից դուրս',
+    'only_available_hours_notice' => 'Կարող եք պատվիրել միայն :time',
+    'product_time_restriction_toast' => 'Տվյալ պրոդուկտը կարող եք պատվիրել միայն :time',
 ];

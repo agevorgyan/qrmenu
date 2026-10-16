@@ -104,12 +104,22 @@
         <!-- Add to Order Button (CTA) -->
         <button type="button" 
                 @click="addSelectedVariationToCart()" 
+                :disabled="selectedDish?.is_time_available === false"
+                :style="selectedDish?.is_time_available === false ? 'opacity: 0.85; cursor: not-allowed; background: #d97706; box-shadow: none;' : ''"
                 class="variation-cta-btn">
-            <div class="variation-cta-left">
-                <i class="fa-solid fa-cart-plus"></i>
-                <span>{{ __('menu.add_to_cart') }}</span>
-            </div>
-            <div class="variation-cta-price">
+            <template x-if="selectedDish?.is_time_available === false">
+                <div class="variation-cta-left" style="display: flex; align-items: center; gap: 0.5rem; justify-content: center; width: 100%;">
+                    <i class="fa-regular fa-clock"></i>
+                    <span x-text="selectedDish?.schedule_summary ? ('{{ __('menu.only_available_hours_notice', ['time' => ':time']) }}'.replace(':time', selectedDish.schedule_summary)) : '{{ __('menu.closed_hours') }}'"></span>
+                </div>
+            </template>
+            <template x-if="selectedDish?.is_time_available !== false">
+                <div class="variation-cta-left">
+                    <i class="fa-solid fa-cart-plus"></i>
+                    <span>{{ __('menu.add_to_cart') }}</span>
+                </div>
+            </template>
+            <div class="variation-cta-price" x-show="selectedDish?.is_time_available !== false">
                 <span x-text="Number((selectedVariation?.price || selectedDish?.base_price || 0) * variationQty).toLocaleString()"></span>
                 <span class="variation-cta-curr">{{ $vendor->currency }}</span>
             </div>

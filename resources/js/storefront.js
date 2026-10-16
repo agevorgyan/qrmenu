@@ -175,6 +175,7 @@
 
             init() {
                 this.restoreActiveOrderFromStorage();
+                this.restoreCartFromStorage();
                 this.initAiWaiterWelcome();
 
                 // Initial order type prompt for direct visitors (no table QR)
@@ -186,7 +187,8 @@
                         } catch(e) {}
                         if (sessionChosen && (sessionChosen === 'delivery' || sessionChosen === 'takeaway')) {
                             this.orderType = sessionChosen;
-                        } else {
+                            this.showOrderTypeModal = false;
+                        } else if (!this.orderType || (this.orderType !== 'delivery' && this.orderType !== 'takeaway')) {
                             this.showOrderTypeModal = true;
                         }
                     } else if (this.deliveryEnabled && !this.takeawayEnabled) {
@@ -216,6 +218,24 @@
                         }, 1200);
                     }
                 }
+
+                if (typeof this.$watch === 'function') {
+                    this.$watch('customerName', () => this.saveCartToStorage());
+                    this.$watch('phoneNationalNumber', () => this.saveCartToStorage());
+                    this.$watch('phoneCountryCode', () => this.saveCartToStorage());
+                    this.$watch('customerEmail', () => this.saveCartToStorage());
+                    this.$watch('customerBirthdate', () => this.saveCartToStorage());
+                    this.$watch('deliveryAddress', () => this.saveCartToStorage());
+                    this.$watch('orderNotes', () => this.saveCartToStorage());
+                    this.$watch('orderType', () => this.saveCartToStorage());
+                }
+
+                window.addEventListener('beforeunload', () => {
+                    this.saveCartToStorage();
+                });
+                window.addEventListener('pagehide', () => {
+                    this.saveCartToStorage();
+                });
             },
 
             setOrderType(type) {
@@ -233,6 +253,7 @@
                 try {
                     sessionStorage.setItem('storefront_order_type_chosen_' + this.vendorSlug, type);
                 } catch(e) {}
+                this.saveCartToStorage();
                 this.showOrderTypeModal = false;
 
                 const unavailable = (this.cart || []).filter(item => {
@@ -369,19 +390,23 @@
                 }
                 if (dish.is_time_available === false) {
                     const sched = dish.schedule_summary || '';
-                    this.triggerToast((translations.closed_hours || 'Ուտեստը հասանելի չէ այս ժամին') + (sched ? ' (' + sched + ')' : ''), 'remove', 'fa-regular fa-clock');
+                    const toastTemplate = translations.product_time_restriction_toast || 'Տվյալ պրոդուկտը կարող եք պատվիրել միայն :time';
+                    const msg = sched 
+                        ? toastTemplate.replace(':time', sched) 
+                        : (translations.closed_hours || 'Ուտեստը հասանելի չէ այս ժամին');
+                    this.triggerToast(msg, 'remove', 'fa-regular fa-clock');
                     return;
                 }
                 if (this.orderType === 'dine_in' && dish.available_for_dine_in === false) {
-                    this.triggerToast('Այս ուտեստը հասանելի չէ սրահում պատվիրելու համար', 'remove', 'fa-solid fa-ban');
+                    this.triggerToast(translations.item_unavailable_for_channel || 'Այս ուտեստը հասանելի չէ սրահում պատվիրելու համար', 'remove', 'fa-solid fa-ban');
                     return;
                 }
                 if (this.orderType === 'takeaway' && dish.available_for_takeaway === false) {
-                    this.triggerToast('Այս ուտեստը հասանելի չէ տանելու պատվերի համար', 'remove', 'fa-solid fa-ban');
+                    this.triggerToast(translations.item_unavailable_for_channel || 'Այս ուտեստը հասանելի չէ տանելու պատվերի համար', 'remove', 'fa-solid fa-ban');
                     return;
                 }
                 if (this.orderType === 'delivery' && dish.available_for_delivery === false) {
-                    this.triggerToast('Այս ուտեստը հասանելի չէ առաքման համար', 'remove', 'fa-solid fa-ban');
+                    this.triggerToast(translations.item_unavailable_for_channel || 'Այս ուտեստը հասանելի չէ առաքման համար', 'remove', 'fa-solid fa-ban');
                     return;
                 }
 
@@ -406,6 +431,16 @@
 
             addSelectedVariationToCart() {
                 if (!this.selectedDish || !this.selectedVariation) return;
+                if (this.selectedDish.is_time_available === false) {
+                    const sched = this.selectedDish.schedule_summary || '';
+                    const toastTemplate = translations.product_time_restriction_toast || 'Տվյալ պրոդուկտը կարող եք պատվիրել միայն :time';
+                    const msg = sched 
+                        ? toastTemplate.replace(':time', sched) 
+                        : (translations.closed_hours || 'Ուտեստը հասանելի չէ այս ժամին');
+                    this.triggerToast(msg, 'remove', 'fa-regular fa-clock');
+                    this.showVariationModal = false;
+                    return;
+                }
                 this.addToCart(
                     this.selectedDish.id,
                     this.selectedDish.name,
@@ -419,26 +454,31 @@
             },
 
             addToCart(id, name, price, variationName = 'Standard', variationId = null, qty = 1, dishObj = null) {
-                if (dishObj) {
-                    if (dishObj.is_available === false) {
+                const targetObj = dishObj || (this.catalogProducts ? this.catalogProducts.find(p => p.id === id) : null);
+                if (targetObj) {
+                    if (targetObj.is_available === false) {
                         this.triggerToast(translations.out_of_stock || 'Ուտեստը ժամանակավորապես սպառված է այս մասնաճյուղում', 'remove', 'fa-solid fa-ban');
                         return;
                     }
-                    if (dishObj.is_time_available === false) {
-                        const sched = dishObj.schedule_summary || '';
-                        this.triggerToast((translations.closed_hours || 'Ուտեստը հասանելի չէ այս ժամին') + (sched ? ' (' + sched + ')' : ''), 'remove', 'fa-regular fa-clock');
+                    if (targetObj.is_time_available === false) {
+                        const sched = targetObj.schedule_summary || '';
+                        const toastTemplate = translations.product_time_restriction_toast || 'Տվյալ պրոդուկտը կարող եք պատվիրել միայն :time';
+                        const msg = sched 
+                            ? toastTemplate.replace(':time', sched) 
+                            : (translations.closed_hours || 'Ուտեստը հասանելի չէ այս ժամին');
+                        this.triggerToast(msg, 'remove', 'fa-regular fa-clock');
                         return;
                     }
-                    if (this.orderType === 'dine_in' && dishObj.available_for_dine_in === false) {
-                        this.triggerToast('Այս ուտեստը հասանելի չէ սրահում պատվիրելու համար', 'remove', 'fa-solid fa-ban');
+                    if (this.orderType === 'dine_in' && targetObj.available_for_dine_in === false) {
+                        this.triggerToast(translations.item_unavailable_for_channel || 'Այս ուտեստը հասանելի չէ սրահում պատվիրելու համար', 'remove', 'fa-solid fa-ban');
                         return;
                     }
-                    if (this.orderType === 'takeaway' && dishObj.available_for_takeaway === false) {
-                        this.triggerToast('Այս ուտեստը հասանելի չէ տանելու պատվերի համար', 'remove', 'fa-solid fa-ban');
+                    if (this.orderType === 'takeaway' && targetObj.available_for_takeaway === false) {
+                        this.triggerToast(translations.item_unavailable_for_channel || 'Այս ուտեստը հասանելի չէ տանելու պատվերի համար', 'remove', 'fa-solid fa-ban');
                         return;
                     }
-                    if (this.orderType === 'delivery' && dishObj.available_for_delivery === false) {
-                        this.triggerToast('Այս ուտեստը հասանելի չէ առաքման համար', 'remove', 'fa-solid fa-ban');
+                    if (this.orderType === 'delivery' && targetObj.available_for_delivery === false) {
+                        this.triggerToast(translations.item_unavailable_for_channel || 'Այս ուտեստը հասանելի չէ առաքման համար', 'remove', 'fa-solid fa-ban');
                         return;
                     }
                 }
@@ -458,8 +498,11 @@
                         available_for_dine_in: dishObj ? (dishObj.available_for_dine_in ?? true) : true,
                         available_for_takeaway: dishObj ? (dishObj.available_for_takeaway ?? true) : true,
                         available_for_delivery: dishObj ? (dishObj.available_for_delivery ?? true) : true,
+                        is_time_available: dishObj ? (dishObj.is_time_available ?? true) : true,
+                        schedule_summary: dishObj ? (dishObj.schedule_summary || '') : '',
                     });
                 }
+                this.saveCartToStorage();
                 const addedText = translations.added_to_cart || 'ավելացվեց զամբյուղում';
                 const varLabel = (variationName && variationName !== 'Standard' && variationName !== 'Standard Portion') ? ' (' + variationName + ')' : '';
                 this.triggerToast('«' + name + varLabel + '» ' + addedText, 'success', 'fa-solid fa-circle-check');
@@ -477,6 +520,7 @@
                     this.cart.splice(idx, 1);
                     this.triggerToast('«' + removedName + '» ' + removedText, 'remove', 'fa-solid fa-trash-can');
                 }
+                this.saveCartToStorage();
             },
 
             get cartTotalCount() {
@@ -819,6 +863,7 @@
                     if (res.ok && data.success) {
                         if (data.payment_redirect_url) {
                             this.cart = [];
+                            this.clearStoredCart();
                             this.saveActiveOrderToStorage();
                             window.location.href = data.payment_redirect_url;
                             return;
@@ -877,6 +922,7 @@
                         this.hideTrackerPill = false;
                         this.saveActiveOrderToStorage();
                         this.cart = [];
+                        this.clearStoredCart();
                         this.orderNotes = '';
                         this.showCartModal = false;
                         this.startOrderPolling();
@@ -936,6 +982,152 @@
                     setTimeout(() => { this.wifiCopied = false; }, 2500);
                 } catch(e) {}
                 document.body.removeChild(ta);
+            },
+
+            saveCartToStorage() {
+                try {
+                    const key = 'storefront_cart_' + (this.vendorSlug || 'default');
+                    const data = {
+                        cart: (this.cart || []).map(item => ({
+                            id: Number(item.id || item.product_id),
+                            product_id: Number(item.id || item.product_id),
+                            name: item.name,
+                            price: Number(item.price),
+                            variation_name: item.variation_name || null,
+                            variation_id: item.variation_id ? Number(item.variation_id) : null,
+                            qty: Number(item.qty || 1),
+                            available_for_dine_in: item.available_for_dine_in !== false,
+                            available_for_takeaway: item.available_for_takeaway !== false,
+                            available_for_delivery: item.available_for_delivery !== false,
+                            is_time_available: item.is_time_available !== false,
+                            schedule_summary: item.schedule_summary || '',
+                        })),
+                        customerName: this.customerName || '',
+                        customerPhone: this.customerPhone || '',
+                        phoneNationalNumber: this.phoneNationalNumber || '',
+                        phoneCountryCode: this.phoneCountryCode || 'AM',
+                        customerEmail: this.customerEmail || '',
+                        customerBirthdate: this.customerBirthdate || '',
+                        deliveryAddress: this.deliveryAddress || '',
+                        orderNotes: this.orderNotes || '',
+                        orderType: this.orderType || null,
+                        savedAt: Date.now()
+                    };
+                    localStorage.setItem(key, JSON.stringify(data));
+                } catch(e) {
+                    console.debug('Failed to save cart to storage:', e);
+                }
+            },
+
+            clearStoredCart() {
+                try {
+                    const key = 'storefront_cart_' + (this.vendorSlug || 'default');
+                    localStorage.removeItem(key);
+                } catch(e) {}
+            },
+
+            restoreCartFromStorage() {
+                try {
+                    const key = 'storefront_cart_' + (this.vendorSlug || 'default');
+                    const saved = localStorage.getItem(key);
+                    if (!saved) return;
+                    const parsed = JSON.parse(saved);
+                    if (!parsed) return;
+
+                    // Expire cart after 24 hours
+                    if (parsed.savedAt && (Date.now() - parsed.savedAt > 24 * 60 * 60 * 1000)) {
+                        localStorage.removeItem(key);
+                        return;
+                    }
+
+                    if (parsed.customerName && !this.customerName) {
+                        this.customerName = parsed.customerName;
+                    }
+                    if (parsed.phoneCountryCode) {
+                        this.phoneCountryCode = parsed.phoneCountryCode;
+                    }
+                    if (parsed.phoneNationalNumber && !this.phoneNationalNumber) {
+                        this.phoneNationalNumber = parsed.phoneNationalNumber;
+                        if (typeof this.onPhoneInput === 'function') {
+                            this.onPhoneInput();
+                        }
+                    } else if (parsed.customerPhone && !this.customerPhone) {
+                        this.customerPhone = parsed.customerPhone;
+                        this.phoneNationalNumber = parsed.customerPhone;
+                        if (typeof this.onPhoneInput === 'function') {
+                            this.onPhoneInput();
+                        }
+                    }
+                    if (parsed.customerEmail && !this.customerEmail) {
+                        this.customerEmail = parsed.customerEmail;
+                    }
+                    if (parsed.customerBirthdate && !this.customerBirthdate) {
+                        this.customerBirthdate = parsed.customerBirthdate;
+                    }
+                    if (parsed.deliveryAddress && !this.deliveryAddress) {
+                        this.deliveryAddress = parsed.deliveryAddress;
+                    }
+                    if (parsed.orderNotes && !this.orderNotes) {
+                        this.orderNotes = parsed.orderNotes;
+                    }
+
+                    if (!this.isTableFixed && parsed.orderType && (parsed.orderType === 'delivery' || parsed.orderType === 'takeaway')) {
+                        if ((parsed.orderType === 'delivery' && this.deliveryEnabled) || (parsed.orderType === 'takeaway' && this.takeawayEnabled)) {
+                            this.orderType = parsed.orderType;
+                            this.showOrderTypeModal = false;
+                        }
+                    }
+
+                    if (Array.isArray(parsed.cart) && parsed.cart.length > 0) {
+                        const restoredItems = [];
+                        for (const item of parsed.cart) {
+                            const prodId = Number(item.id || item.product_id);
+                            const catalogProduct = (this.catalogProducts || []).find(p => Number(p.id) === prodId);
+
+                            if (catalogProduct) {
+                                let variationName = item.variation_name;
+                                let price = Number(item.price);
+
+                                if (item.variation_id && catalogProduct.variations && catalogProduct.variations.length > 0) {
+                                    const v = catalogProduct.variations.find(v => Number(v.id) === Number(item.variation_id));
+                                    if (v) {
+                                        variationName = v.name;
+                                        price = Number(v.price);
+                                    }
+                                } else if (!item.variation_id && catalogProduct.price !== undefined) {
+                                    price = Number(catalogProduct.price);
+                                }
+
+                                restoredItems.push({
+                                    id: prodId,
+                                    product_id: prodId,
+                                    name: catalogProduct.name,
+                                    price: price,
+                                    variation_name: variationName,
+                                    variation_id: item.variation_id ? Number(item.variation_id) : null,
+                                    qty: Number(item.qty || 1),
+                                    available_for_dine_in: catalogProduct.available_for_dine_in !== false,
+                                    available_for_takeaway: catalogProduct.available_for_takeaway !== false,
+                                    available_for_delivery: catalogProduct.available_for_delivery !== false,
+                                    is_time_available: catalogProduct.is_time_available !== false,
+                                    schedule_summary: catalogProduct.schedule_summary || '',
+                                });
+                            } else {
+                                restoredItems.push({
+                                    ...item,
+                                    id: prodId,
+                                    product_id: prodId,
+                                    price: Number(item.price || 0),
+                                    qty: Number(item.qty || 1)
+                                });
+                            }
+                        }
+
+                        this.cart = restoredItems;
+                    }
+                } catch(e) {
+                    console.error('Failed to restore cart from storage:', e);
+                }
             },
 
             saveActiveOrderToStorage() {
@@ -1233,6 +1425,7 @@
 
             // AI Waiter Advisor Methods
             selectLanguage(locale) {
+                this.saveCartToStorage();
                 this.selectedLang = locale;
                 try { localStorage.setItem('qrmenu_locale_' + this.vendorSlug, locale); } catch(e) {}
                 const url = new URL(window.location.href);
@@ -1240,6 +1433,15 @@
                     url.searchParams.set('lang', locale);
                     window.location.href = url.toString();
                 }
+            },
+
+            changeLanguage(locale) {
+                this.saveCartToStorage();
+                this.selectedLang = locale;
+                try { localStorage.setItem('qrmenu_locale_' + this.vendorSlug, locale); } catch(e) {}
+                const url = new URL(window.location.href);
+                url.searchParams.set('lang', locale);
+                window.location.href = url.toString();
             },
 
             initAiWaiterWelcome() {

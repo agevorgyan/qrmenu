@@ -9,6 +9,9 @@
             'regular_price' => (float)$featuredDish->getRegularPrice($location?->id),
             'is_discount_active' => $featuredDish->isDiscountActive(),
             'discount_percentage' => $featuredDish->getDiscountPercentage(),
+            'is_available' => (bool)$featuredDish->isAvailableAtLocation($location?->id),
+            'is_time_available' => (bool)$featuredDish->isTimeAvailable(),
+            'schedule_summary' => $featuredDish->getAvailabilityScheduleSummary($lang),
             'available_for_dine_in' => (bool)($featuredDish->available_for_dine_in ?? true),
             'available_for_takeaway' => (bool)($featuredDish->available_for_takeaway ?? true),
             'available_for_delivery' => (bool)($featuredDish->available_for_delivery ?? true),
@@ -23,6 +26,8 @@
         $isFeaturedDineIn = (bool)($featuredDish->available_for_dine_in ?? true);
         $isFeaturedTakeaway = (bool)($featuredDish->available_for_takeaway ?? true);
         $isFeaturedDelivery = (bool)($featuredDish->available_for_delivery ?? true);
+        $isFeaturedTimeAvailable = $featuredDish->isTimeAvailable();
+        $featuredScheduleSummary = $featuredDish->getAvailabilityScheduleSummary($lang);
         $badgeText = $vendor->featured_dish_badge ?: '⭐ ՕՐՎԱ ԱՌԱՋԱՐԿ';
         $subtitleText = $vendor->featured_dish_subtitle ?: ($featuredDish->getTranslatedDescription($lang) ?: 'Շեֆ խոհարարի հատուկ ընտրանի');
     @endphp
@@ -63,6 +68,18 @@
                         @if($featuredDish->isDiscountActive())
                             <span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: #ffffff; font-size: 0.78rem; font-weight: 800; padding: 0.35rem 0.75rem; border-radius: 9999px; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.45); display: inline-flex; align-items: center; gap: 0.3rem;">
                                 <i class="fa-solid fa-tag"></i> -{{ $featuredDish->getDiscountPercentage() }}%
+                            </span>
+                        @endif
+
+                        @if(!$isFeaturedTimeAvailable)
+                            <span style="background: rgba(217, 119, 6, 0.9); backdrop-filter: blur(6px); color: #ffffff; font-size: 0.74rem; font-weight: 800; padding: 0.35rem 0.75rem; border-radius: 9999px; box-shadow: 0 4px 14px rgba(217, 119, 6, 0.45); display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <i class="fa-regular fa-clock"></i>
+                                <span>{{ __('menu.only_available_hours_notice', ['time' => $featuredScheduleSummary]) }}</span>
+                            </span>
+                        @elseif($featuredScheduleSummary)
+                            <span style="background: rgba(16, 185, 129, 0.85); backdrop-filter: blur(6px); color: #ffffff; font-size: 0.74rem; font-weight: 800; padding: 0.35rem 0.75rem; border-radius: 9999px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4); display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <i class="fa-regular fa-clock"></i>
+                                <span>{{ $featuredScheduleSummary }}</span>
                             </span>
                         @endif
                         
@@ -140,14 +157,25 @@
                             @endif
                         </div>
 
-                        <button type="button"
-                                class="btn btn-primary"
-                                style="background: var(--primary); color: #ffffff; border: none; padding: 0.65rem 1.25rem; border-radius: 12px; font-weight: 700; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 6px 18px rgba(0,0,0,0.15); cursor: pointer; transition: transform 0.15s ease;"
-                                onmouseover="this.style.transform='translateY(-2px)'"
-                                onmouseout="this.style.transform='translateY(0)'">
-                            <i class="fa-solid fa-cart-plus"></i>
-                            <span>{{ __('menu.add') }}</span>
-                        </button>
+                        @if(!$isFeaturedTimeAvailable)
+                            <button type="button"
+                                    disabled
+                                    class="btn"
+                                    style="background: rgba(245, 158, 11, 0.18); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.4); padding: 0.65rem 1.15rem; border-radius: 12px; font-weight: 700; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem; opacity: 0.85; cursor: not-allowed;"
+                                    title="{{ __('menu.only_available_hours_notice', ['time' => $featuredScheduleSummary]) }}">
+                                <i class="fa-regular fa-clock"></i>
+                                <span>{{ __('menu.only_available_hours_notice', ['time' => $featuredScheduleSummary]) }}</span>
+                            </button>
+                        @else
+                            <button type="button"
+                                    class="btn btn-primary"
+                                    style="background: var(--primary); color: #ffffff; border: none; padding: 0.65rem 1.25rem; border-radius: 12px; font-weight: 700; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 6px 18px rgba(0,0,0,0.15); cursor: pointer; transition: transform 0.15s ease;"
+                                    onmouseover="this.style.transform='translateY(-2px)'"
+                                    onmouseout="this.style.transform='translateY(0)'">
+                                <i class="fa-solid fa-cart-plus"></i>
+                                <span>{{ __('menu.add') }}</span>
+                            </button>
+                        @endif
                     </div>
 
                 </div>

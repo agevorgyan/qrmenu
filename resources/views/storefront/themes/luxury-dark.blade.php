@@ -264,11 +264,6 @@
             <span x-text="toast.message"></span>
         </div>
 
-        <!-- PWA Install Banner -->
-        <div x-show="showPWA" style="background: var(--primary); color: #ffffff; padding: 0.6rem 1rem; font-size: 0.8rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center;">
-            <span><i class="fa-solid fa-mobile-screen"></i> Add menu to Home Screen for instant access!</span>
-            <button @click="showPWA = false" style="background: none; border: none; color: inherit; font-weight: 800; cursor: pointer;">✕</button>
-        </div>
 
         <!-- Header Cover -->
         <div class="cover-header" style="background-image: url('{{ $vendor->cover_image ?? 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80' }}');">
@@ -299,7 +294,7 @@
             <input type="text" x-model.debounce.250ms="search" placeholder="{{ __('menu.search_placeholder') }}" style="width: 100%; padding: 0.65rem 1rem 0.65rem 2.5rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); outline: none; font-size: 0.85rem;">
         </div>
 
-        <select onchange="const u = new URL(window.location.href); u.searchParams.set('lang', this.value); window.location.href = u.toString();" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 700; cursor: pointer;">
+        <select @change="changeLanguage($event.target.value)" onchange="const u = new URL(window.location.href); u.searchParams.set('lang', this.value); window.location.href = u.toString();" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 700; cursor: pointer;">
             @foreach($vendor->getSupportedLanguages() as $sLang)
                 <option value="{{ $sLang['code'] }}" {{ $lang == $sLang['code'] ? 'selected' : '' }}>
                     {{ $sLang['flag'] ?? '🌐' }} {{ strtoupper($sLang['code']) }}
@@ -400,7 +395,11 @@
                                                 </span>
 
                                         @elseif(!$isTimeAvailable)
-                                            <span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4); padding: 0.1rem 0.45rem; border-radius: 6px; font-size: 0.65rem; font-weight: 700;">
+                                            <span style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); padding: 0.12rem 0.5rem; border-radius: 6px; font-size: 0.68rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                                <i class="fa-regular fa-clock"></i> {{ __('menu.only_available_hours_notice', ['time' => $scheduleSummary]) }}
+                                            </span>
+                                        @elseif($scheduleSummary)
+                                            <span style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); padding: 0.12rem 0.5rem; border-radius: 6px; font-size: 0.68rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
                                                 <i class="fa-regular fa-clock"></i> {{ $scheduleSummary }}
                                             </span>
                                         @endif
@@ -472,8 +471,9 @@
                                             <span>{{ __('menu.out_of_stock') ?: 'Սպառված է' }}</span>
                                         </button>
                                     @elseif(!$isTimeAvailable)
-                                        <button class="btn btn-secondary" disabled style="opacity: 0.6; cursor: not-allowed; font-size: 0.75rem; padding: 0.4rem 0.65rem;" title="{{ $scheduleSummary }}">
-                                            <span>{{ __('menu.closed_hours') ?: 'Ժամից դուրս' }}</span>
+                                        <button class="btn btn-secondary" disabled style="opacity: 0.85; cursor: not-allowed; font-size: 0.72rem; padding: 0.4rem 0.65rem; background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 8px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.3rem;" title="{{ __('menu.only_available_hours_notice', ['time' => $scheduleSummary]) }}">
+                                            <i class="fa-regular fa-clock"></i>
+                                            <span>{{ __('menu.only_available_hours_notice', ['time' => $scheduleSummary]) }}</span>
                                         </button>
                                     @else
                                         <button class="btn btn-primary" @click.stop='selectDish({{ json_encode($prodPayload, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})' aria-label="{{ __('menu.add_to_cart') }}" title="{{ __('menu.add_to_cart') }}">
