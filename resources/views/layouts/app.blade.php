@@ -788,6 +788,38 @@
                 <a href="{{ route('superadmin.languages.index') }}" class="nav-item {{ request()->routeIs('superadmin.languages.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-language" style="color: #a855f7;"></i> <span>{{ __('Languages & i18n') }}</span>
                 </a>
+
+                <div class="menu-category">{{ __('Email Management') }}</div>
+                <a href="{{ route('superadmin.emails.overview') }}" class="nav-item {{ request()->routeIs('superadmin.emails.overview') ? 'active' : '' }}">
+                    <i class="fa-solid fa-gauge-high" style="color: #3b82f6;"></i> <span>{{ __('Overview') }}</span>
+                </a>
+                <a href="{{ route('superadmin.emails.senders.index') }}" class="nav-item {{ request()->routeIs('superadmin.emails.senders.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-id-card-clip" style="color: #10b981;"></i> <span>{{ __('Sender Identities') }}</span>
+                </a>
+                <a href="{{ route('superadmin.emails.connections.index') }}" class="nav-item {{ request()->routeIs('superadmin.emails.connections.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-server" style="color: #f59e0b;"></i> <span>{{ __('SMTP Connections') }}</span>
+                </a>
+                <a href="{{ route('superadmin.emails.routing.index') }}" class="nav-item {{ request()->routeIs('superadmin.emails.routing.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-route" style="color: #8b5cf6;"></i> <span>{{ __('Email Routing') }}</span>
+                </a>
+                <a href="{{ route('superadmin.emails.templates.index') }}" class="nav-item {{ request()->routeIs('superadmin.emails.templates.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-envelope-open-text" style="color: #ec4899;"></i> <span>{{ __('Templates') }}</span>
+                </a>
+                <a href="{{ route('superadmin.emails.logs.index') }}" class="nav-item {{ request()->routeIs('superadmin.emails.logs.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-list-check" style="color: #06b6d4;"></i> <span>{{ __('Email Logs') }}</span>
+                </a>
+                <a href="{{ route('superadmin.emails.queue.index') }}" class="nav-item {{ request()->routeIs('superadmin.emails.queue.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-clock-rotate-left" style="color: #eab308;"></i> <span>{{ __('Queue Monitor') }}</span>
+                </a>
+                <a href="{{ route('superadmin.emails.failed.index') }}" class="nav-item {{ request()->routeIs('superadmin.emails.failed.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i> <span>{{ __('Failed Emails') }}</span>
+                </a>
+                <a href="{{ route('superadmin.emails.reports.index') }}" class="nav-item {{ request()->routeIs('superadmin.emails.reports.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-chart-pie" style="color: #6366f1;"></i> <span>{{ __('Reports') }}</span>
+                </a>
+                <a href="{{ route('superadmin.emails.settings.index') }}" class="nav-item {{ request()->routeIs('superadmin.emails.settings.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-gear" style="color: #94a3b8;"></i> <span>{{ __('Email Settings') }}</span>
+                </a>
             @else
                 @php $v = Auth::user()?->vendor; @endphp
                 

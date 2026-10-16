@@ -20,14 +20,28 @@
     </style>
 </head>
 <body>
+    @php
+        $customTpl = app(\App\Services\EmailTemplateService::class)->render('order_receipt', [
+            'customer_name' => $order->customer_name ?? 'Հաճախորդ',
+            'vendor_name' => $order->vendor?->name ?? 'QRMenu',
+            'order_number' => $order->order_number,
+            'order_type' => $order->table_number ? ('Սեղան: ' . $order->table_number) : 'Takeaway',
+            'total_amount' => number_format($order->total_amount) . ' ' . ($order->vendor?->currency ?? 'AMD'),
+            'support_email' => 'support@menu.elab.am',
+            'site_name' => \App\Models\SystemSetting::getSiteName(),
+        ]);
+    @endphp
     <div class="card">
         <div class="header">
-            <span class="badge">✓ Պատվերն ընդունված է</span>
+            <span class="badge">✓ {{ $customTpl['cta_text'] ?? 'Պատվերն ընդունված է' }}</span>
             <h1>{{ $order->vendor?->name ?? 'QRMenu' }}</h1>
             <div class="meta">
                 Պատվեր #<strong>{{ $order->order_number }}</strong> &bull; 
                 {{ $order->table_number ? 'Սեղան: ' . $order->table_number : 'Takeaway' }}
             </div>
+            @if($customTpl && !empty($customTpl['intro']))
+                <p style="font-size: 13px; color: #475569; margin: 8px 0 0;">{!! nl2br(e($customTpl['intro'])) !!}</p>
+            @endif
         </div>
 
         <div style="margin-bottom: 16px;">
@@ -50,7 +64,7 @@
         </div>
 
         <div class="footer">
-            Շնորհակալություն մեզ ընտրելու համար։<br>
+            {{ $customTpl['footer'] ?? 'Շնորհակալություն մեզ ընտրելու համար։' }}<br>
             {{ $order->created_at ? $order->created_at->format('Y-m-d H:i') : '' }}
         </div>
     </div>

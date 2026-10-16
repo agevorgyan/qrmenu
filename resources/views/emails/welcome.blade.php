@@ -17,22 +17,35 @@
     </style>
 </head>
 <body>
+    @php
+        $customTpl = app(\App\Services\EmailTemplateService::class)->render('welcome_verification', [
+            'user_name' => $user->name,
+            'vendor_name' => $user->vendor?->name ?? 'QRMenu',
+            'verification_url' => $verificationUrl,
+            'support_email' => 'support@menu.elab.am',
+            'site_name' => \App\Models\SystemSetting::getSiteName(),
+        ]);
+    @endphp
     <div class="card">
         <div class="header">
-            <div class="logo">🍽️ QRMenu</div>
+            <div class="logo">🍽️ {{ \App\Models\SystemSetting::getSiteName() }}</div>
             <h1>Բարի գալուստ, {{ $user->name }}!</h1>
         </div>
-        <p>Շնորհակալություն QRMenu հարթակում ձեր ռեստորանը գրանցելու համար։</p>
-        <p>Ձեր թվային մենյուն և վահանակն ակտիվացնելու համար խնդրում ենք հաստատել ձեր էլ․ փոստի հասցեն՝ սեղմելով ներքևի կոճակը։</p>
+        @if($customTpl && !empty($customTpl['intro']))
+            <p>{!! nl2br(e($customTpl['intro'])) !!}</p>
+        @else
+            <p>Շնորհակալություն QRMenu հարթակում ձեր ռեստորանը գրանցելու համար։</p>
+            <p>Ձեր թվային մենյուն և վահանակն ակտիվացնելու համար խնդրում ենք հաստատել ձեր էլ․ փոստի հասցեն՝ սեղմելով ներքևի կոճակը։</p>
+        @endif
         
         <div class="btn-box">
-            <a href="{{ $verificationUrl }}" class="btn" target="_blank">Հաստատել Էլ․ Հասցեն</a>
+            <a href="{{ $verificationUrl }}" class="btn" target="_blank">{{ $customTpl['cta_text'] ?? 'Հաստատել Էլ․ Հասցեն' }}</a>
         </div>
 
         <p style="font-size: 13px; color: #64748b;">Եթե կոճակը չի աշխատում, պատճենեք հետևյալ հղումը ձեր բրաուզերում՝<br><a href="{{ $verificationUrl }}" style="color: #e11d48; word-break: break-all;">{{ $verificationUrl }}</a></p>
 
         <div class="footer">
-            &copy; {{ date('Y') }} QRMenu SaaS Platform. Բոլոր իրավունքները պաշտպանված են։
+            {{ $customTpl['footer'] ?? ('© ' . date('Y') . ' ' . \App\Models\SystemSetting::getSiteName() . ' SaaS Platform. Բոլոր իրավունքները պաշտպանված են։') }}
         </div>
     </div>
 </body>

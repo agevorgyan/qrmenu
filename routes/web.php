@@ -7,6 +7,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BrandingController;
 use App\Http\Controllers\ClientStorefrontController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\EmailWebhookController;
 use App\Http\Controllers\FloorPlanController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\LandingController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\QrStudioController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\SuperAdminController;
+use App\Http\Controllers\SuperAdminEmailController;
 use App\Http\Controllers\TranslationController;
 use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\VendorAdminController;
@@ -196,7 +198,63 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::put('/languages/{language}', [LanguageController::class, 'update'])->name('languages.update');
     Route::post('/languages/{language}/toggle', [LanguageController::class, 'toggleActive'])->name('languages.toggle');
     Route::post('/languages/{language}/default', [LanguageController::class, 'setDefault'])->name('languages.default');
+
+    // Centralized Email Management Console
+    Route::prefix('emails')->name('emails.')->group(function () {
+        Route::get('/overview', [SuperAdminEmailController::class, 'overview'])->name('overview');
+
+        // Sender Identities
+        Route::get('/senders', [SuperAdminEmailController::class, 'sendersIndex'])->name('senders.index');
+        Route::post('/senders', [SuperAdminEmailController::class, 'storeSender'])->name('senders.store');
+        Route::put('/senders/{sender}', [SuperAdminEmailController::class, 'updateSender'])->name('senders.update');
+        Route::post('/senders/{sender}/toggle', [SuperAdminEmailController::class, 'toggleSender'])->name('senders.toggle');
+        Route::delete('/senders/{sender}', [SuperAdminEmailController::class, 'destroySender'])->name('senders.destroy');
+
+        // SMTP Connections
+        Route::get('/connections', [SuperAdminEmailController::class, 'connectionsIndex'])->name('connections.index');
+        Route::post('/connections', [SuperAdminEmailController::class, 'storeConnection'])->name('connections.store');
+        Route::put('/connections/{connection}', [SuperAdminEmailController::class, 'updateConnection'])->name('connections.update');
+        Route::post('/connections/{connection}/test', [SuperAdminEmailController::class, 'testConnection'])->name('connections.test');
+        Route::post('/connections/{connection}/send-test', [SuperAdminEmailController::class, 'sendTestEmail'])->name('connections.send_test');
+        Route::post('/connections/{connection}/default', [SuperAdminEmailController::class, 'setDefaultConnection'])->name('connections.default');
+        Route::delete('/connections/{connection}', [SuperAdminEmailController::class, 'destroyConnection'])->name('connections.destroy');
+
+        // Email Routing
+        Route::get('/routing', [SuperAdminEmailController::class, 'routingIndex'])->name('routing.index');
+        Route::put('/routing/{rule}', [SuperAdminEmailController::class, 'updateRouting'])->name('routing.update');
+
+        // Email Templates
+        Route::get('/templates', [SuperAdminEmailController::class, 'templatesIndex'])->name('templates.index');
+        Route::put('/templates/{template}', [SuperAdminEmailController::class, 'updateTemplate'])->name('templates.update');
+        Route::get('/templates/{template}/preview', [SuperAdminEmailController::class, 'previewTemplate'])->name('templates.preview');
+
+        // Email Logs
+        Route::get('/logs', [SuperAdminEmailController::class, 'logsIndex'])->name('logs.index');
+        Route::get('/logs/export', [SuperAdminEmailController::class, 'exportLogs'])->name('logs.export');
+        Route::get('/logs/{log}', [SuperAdminEmailController::class, 'showLog'])->name('logs.show');
+
+        // Queue Monitor
+        Route::get('/queue', [SuperAdminEmailController::class, 'queueIndex'])->name('queue.index');
+        Route::post('/queue/retry/{uuid}', [SuperAdminEmailController::class, 'retryJob'])->name('queue.retry');
+        Route::delete('/queue/cancel/{id}', [SuperAdminEmailController::class, 'cancelJob'])->name('queue.cancel');
+
+        // Failed Emails
+        Route::get('/failed', [SuperAdminEmailController::class, 'failedIndex'])->name('failed.index');
+        Route::post('/failed/{log}/retry', [SuperAdminEmailController::class, 'retryEmail'])->name('failed.retry');
+        Route::post('/failed/{log}/cancel', [SuperAdminEmailController::class, 'cancelEmail'])->name('failed.cancel');
+
+        // Reports & Analytics
+        Route::get('/reports', [SuperAdminEmailController::class, 'reportsIndex'])->name('reports.index');
+        Route::get('/reports/export', [SuperAdminEmailController::class, 'exportReport'])->name('reports.export');
+
+        // Settings
+        Route::get('/settings', [SuperAdminEmailController::class, 'settingsIndex'])->name('settings.index');
+        Route::post('/settings', [SuperAdminEmailController::class, 'updateSettings'])->name('settings.update');
+    });
 });
+
+// Provider Webhook Endpoint (No CSRF needed, signature verified)
+Route::post('/api/webhooks/email/{provider}', [EmailWebhookController::class, 'handle'])->name('webhooks.email');
 
 // 4. Vendor Admin Panel (/admin)
 Route::middleware(['auth', 'role:vendor_owner,manager,staff,chef,cashier', EnsureSubscriptionIsActive::class])->prefix('admin')->name('admin.')->group(function () {

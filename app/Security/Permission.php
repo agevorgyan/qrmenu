@@ -82,6 +82,8 @@ class Permission
 
     public const PLATFORM_LANGUAGES = 'platform.languages';
 
+    public const PLATFORM_EMAILS = 'platform.emails';
+
     /**
      * Get all defined permissions in the system.
      */
@@ -121,6 +123,7 @@ class Permission
             self::PLATFORM_SETTINGS,
             self::PLATFORM_LOGS,
             self::PLATFORM_LANGUAGES,
+            self::PLATFORM_EMAILS,
         ];
     }
 
@@ -137,6 +140,7 @@ class Permission
                 self::PLATFORM_SETTINGS,
                 self::PLATFORM_LOGS,
                 self::PLATFORM_LANGUAGES,
+                self::PLATFORM_EMAILS,
                 self::TRANSLATIONS_VIEW,
                 self::TRANSLATIONS_MANAGE,
                 self::TRANSLATIONS_PUBLISH,

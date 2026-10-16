@@ -22,8 +22,9 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 0. Subscription Plans
+        // 0. Subscription Plans & Email Management Setup
         $this->call(SubscriptionPlanSeeder::class);
+        $this->call(EmailManagementSeeder::class);
         $proPlan = SubscriptionPlan::where('slug', 'pro')->first();
         $businessPlan = SubscriptionPlan::where('slug', 'business')->first();
 

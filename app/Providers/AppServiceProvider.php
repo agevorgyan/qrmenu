@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Events\OrderCreated;
 use App\Events\WaiterCalled;
+use App\Listeners\EmailTrackingSubscriber;
 use App\Listeners\SecurityAuditAuthSubscriber;
 use App\Listeners\SendTelegramOrderNotification;
 use App\Listeners\SendTelegramWaiterCallNotification;
@@ -32,6 +33,7 @@ use App\Policies\VendorPolicy;
 use App\Policies\VendorStorageFilePolicy;
 use App\Policies\WaiterCallPolicy;
 use App\Security\Permission;
+use App\Services\EmailRoutingService;
 use App\Services\Localization\Contracts\TranslationProviderInterface;
 use App\Services\Localization\Providers\AiGatewayTranslationProvider;
 use App\Services\Localization\TranslationService;
@@ -102,6 +104,14 @@ class AppServiceProvider extends ServiceProvider
 
         // Register Security Audit Authentication Subscriber
         Event::subscribe(SecurityAuditAuthSubscriber::class);
+
+        // Register Email Tracking & Routing Subscriber
+        Event::subscribe(EmailTrackingSubscriber::class);
+
+        // Apply active database mail configuration (SMTP / senders)
+        if (! app()->runningInConsole() || app()->runningUnitTests()) {
+            app(EmailRoutingService::class)->applyActiveMailConfiguration();
+        }
 
         // Register Multi-Tenant Security Policies
         Gate::policy(Vendor::class, VendorPolicy::class);
