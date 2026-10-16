@@ -42,6 +42,13 @@
             <a href="{{ $verificationUrl }}" class="btn" target="_blank">{{ $customTpl['cta_text'] ?? 'Հաստատել Էլ․ Հասցեն' }}</a>
         </div>
 
+        @if(!empty($otpCode))
+            <div style="text-align: center; margin: 24px 0; background: #f8fafc; border: 1px dashed #cbd5e1; padding: 16px; border-radius: 12px;">
+                <div style="font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Կամ մուտքագրեք 6-նիշ ստուգիչ կոդը</div>
+                <div style="font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #0f172a; margin-top: 6px; font-family: monospace;">{{ $otpCode }}</div>
+            </div>
+        @endif
+
         <p style="font-size: 13px; color: #64748b;">Եթե կոճակը չի աշխատում, պատճենեք հետևյալ հղումը ձեր բրաուզերում՝<br><a href="{{ $verificationUrl }}" style="color: #e11d48; word-break: break-all;">{{ $verificationUrl }}</a></p>
 
         <div class="footer">

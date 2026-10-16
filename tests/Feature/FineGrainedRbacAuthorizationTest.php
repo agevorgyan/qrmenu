@@ -138,6 +138,7 @@ class FineGrainedRbacAuthorizationTest extends TestCase
             'role' => 'vendor_owner',
             'vendor_id' => $this->vendor->id,
             'location_id' => null, // Access to all branches
+            'email_verified_at' => now(),
         ]);
 
         $this->manager = User::create([
@@ -147,6 +148,7 @@ class FineGrainedRbacAuthorizationTest extends TestCase
             'role' => 'manager',
             'vendor_id' => $this->vendor->id,
             'location_id' => null,
+            'email_verified_at' => now(),
         ]);
 
         $this->staff = User::create([
@@ -156,6 +158,7 @@ class FineGrainedRbacAuthorizationTest extends TestCase
             'role' => 'staff',
             'vendor_id' => $this->vendor->id,
             'location_id' => $this->locationA->id, // Bound to Location A
+            'email_verified_at' => now(),
         ]);
 
         $this->chef = User::create([
@@ -165,6 +168,7 @@ class FineGrainedRbacAuthorizationTest extends TestCase
             'role' => 'chef',
             'vendor_id' => $this->vendor->id,
             'location_id' => $this->locationA->id, // Bound to Location A
+            'email_verified_at' => now(),
         ]);
 
         $this->cashier = User::create([
@@ -174,6 +178,7 @@ class FineGrainedRbacAuthorizationTest extends TestCase
             'role' => 'cashier',
             'vendor_id' => $this->vendor->id,
             'location_id' => $this->locationA->id, // Bound to Location A
+            'email_verified_at' => now(),
         ]);
 
         $this->superAdmin = User::create([
@@ -183,6 +188,7 @@ class FineGrainedRbacAuthorizationTest extends TestCase
             'role' => 'superadmin',
             'vendor_id' => null,
             'location_id' => null,
+            'email_verified_at' => now(),
         ]);
     }
 

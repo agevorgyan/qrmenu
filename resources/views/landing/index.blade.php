@@ -2484,6 +2484,11 @@
                 </div>
 
                 <div class="nav-actions">
+                    <div class="lang-switch" id="landingLangSwitch">
+                        <a href="{{ route('lang.switch', 'hy') }}" class="lang-btn {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">🇦🇲 ՀԱՅ</a>
+                        <a href="{{ route('lang.switch', 'en') }}" class="lang-btn {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">🇬🇧 ENG</a>
+                        <a href="{{ route('lang.switch', 'ru') }}" class="lang-btn {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">🇷🇺 РУС</a>
+                    </div>
 
                     @auth
                         @if(Auth::user()->isSuperAdmin())
@@ -2606,8 +2611,13 @@
             </div>
 
             <!-- Drawer Footer Quick Actions -->
-            <div class="command-modal-footer">
+            <div class="command-modal-footer" style="flex-wrap: wrap; gap: 1rem;">
                 <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                    <div class="lang-switch" style="background: rgba(255, 255, 255, 0.08); padding: 3px;">
+                        <a href="{{ route('lang.switch', 'hy') }}" class="lang-btn {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">🇦🇲 ՀԱՅ</a>
+                        <a href="{{ route('lang.switch', 'en') }}" class="lang-btn {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">🇬🇧 ENG</a>
+                        <a href="{{ route('lang.switch', 'ru') }}" class="lang-btn {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">🇷🇺 РУС</a>
+                    </div>
                     @php
                         $rawPhone = $settings['contact_phone'] ?? '+37455776066';
                         $cleanPhone = preg_replace('/[^0-9]/', '', $settings['contact_whatsapp'] ?? $rawPhone);
@@ -2656,7 +2666,9 @@
                     <h1 class="hero-title">
                         {!! $cms('hero_title', ($loc === 'hy' 
                             ? 'Ավելացրեք ռեստորանի շրջանառությունը <span class="gradient-text">+30%-ով</span> խելացի QR մենյուի և AI-ի շնորհիվ' 
-                            : 'Boost Restaurant Revenue by <span class="gradient-text">+30%</span> with Smart QR Menu & AI Waiter')) !!}
+                            : ($loc === 'ru'
+                                ? 'Увеличьте оборот ресторана на <span class="gradient-text">+30%</span> благодаря умному QR-меню и AI'
+                                : 'Boost Restaurant Revenue by <span class="gradient-text">+30%</span> with Smart QR Menu & AI Waiter'))) !!}
                     </h1>
 
                     <p class="hero-subtitle">
@@ -2742,9 +2754,9 @@
 
                                 <!-- Category Chips -->
                                 <div class="app-categories">
-                                    <span class="app-cat-chip active">{{ $loc === 'hy' ? '🔥 Թոփ Մսային' : '🔥 Top Steaks' }}</span>
-                                    <span class="app-cat-chip">{{ $loc === 'hy' ? '🍷 Գինիներ' : '🍷 Wines' }}</span>
-                                    <span class="app-cat-chip">{{ $loc === 'hy' ? '🥗 Աղցաններ' : '🥗 Salads' }}</span>
+                                    <span class="app-cat-chip active">{{ $loc === 'hy' ? '🔥 Թոփ Մսային' : ($loc === 'ru' ? '🔥 Стейки Прайм' : '🔥 Top Steaks') }}</span>
+                                    <span class="app-cat-chip">{{ $loc === 'hy' ? '🍷 Գինիներ' : ($loc === 'ru' ? '🍷 Вина' : '🍷 Wines') }}</span>
+                                    <span class="app-cat-chip">{{ $loc === 'hy' ? '🥗 Աղցաններ' : ($loc === 'ru' ? '🥗 Салаты' : '🥗 Salads') }}</span>
                                 </div>
 
                                 <!-- Dish Card Inside iPhone -->
@@ -3213,7 +3225,9 @@
                 <h2 class="final-cta-title">
                     {!! $cms('cta_banner_title', ($loc === 'hy'
                         ? 'Պատրա՞ստ եք ռեստորանը տեղափոխել <span style="background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">նոր մակարդակ</span>'
-                        : 'Ready to Transform Your <span style="background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Dining Experience</span>?')) !!}
+                        : ($loc === 'ru'
+                            ? 'Готовы вывести ресторан на <span style="background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">новый уровень</span>?'
+                            : 'Ready to Transform Your <span style="background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Dining Experience</span>?'))) !!}
                 </h2>
                 <p class="final-cta-subtitle">
                     {{ $cms('cta_banner_subtitle', __('cta_final_subtitle')) }}

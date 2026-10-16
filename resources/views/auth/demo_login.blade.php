@@ -126,6 +126,31 @@
             transform: translateY(-1px);
         }
 
+        .lang-switch-box {
+            display: inline-flex;
+            align-items: center;
+            background: #f1f5f9;
+            border: 1px solid var(--border-card);
+            border-radius: 999px;
+            padding: 2px;
+        }
+
+        .lang-switch-link {
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .lang-switch-link.active {
+            background: #ffffff;
+            color: #b45309;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
         /* Header Hero */
         .demo-header {
             text-align: center;
@@ -503,14 +528,19 @@
         <!-- Top Navigation -->
         <div class="top-nav">
             <a href="/" class="back-link">
-                <i class="fa-solid fa-arrow-left"></i> Home Page
+                <i class="fa-solid fa-arrow-left"></i> {{ __('Home') }}
             </a>
             <div class="top-nav-actions">
+                <div class="lang-switch-box">
+                    <a href="{{ route('lang.switch', 'hy') }}" class="lang-switch-link {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">🇦🇲 ՀԱՅ</a>
+                    <a href="{{ route('lang.switch', 'en') }}" class="lang-switch-link {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">🇬🇧 ENG</a>
+                    <a href="{{ route('lang.switch', 'ru') }}" class="lang-switch-link {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">🇷🇺 РУС</a>
+                </div>
                 <a href="{{ route('login') }}" class="btn-top-login">
-                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> {{ __('Sign In') }}
                 </a>
                 <a href="{{ route('register.show') }}" class="btn-top-register">
-                    <i class="fa-solid fa-user-plus"></i> Register (14 Days Free)
+                    <i class="fa-solid fa-user-plus"></i> {{ __('nav_register_cta') }}
                 </a>
             </div>
         </div>

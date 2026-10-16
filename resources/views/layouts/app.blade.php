@@ -357,6 +357,15 @@
             border-color: var(--primary);
         }
 
+        .lang-dropdown-menu a:hover {
+            background: var(--nav-hover);
+            color: var(--primary) !important;
+        }
+        .lang-dropdown-menu a.active {
+            background: var(--nav-active);
+            color: var(--primary) !important;
+        }
+
         .badge-role {
             padding: 0.25rem 0.65rem;
             border-radius: 9999px;
@@ -1002,6 +1011,37 @@
             </div>
 
             <div class="user-profile">
+                <!-- Platform Language Switcher Dropdown -->
+                <div class="lang-dropdown-wrapper" x-data="{ openLang: false }" @click.outside="openLang = false" style="position: relative;">
+                    <button type="button" @click="openLang = !openLang" class="theme-toggle-btn" style="border-radius: 10px; gap: 0.45rem; padding: 0.4rem 0.75rem;" title="{{ __('Select Language') }}">
+                        @if(app()->getLocale() === 'hy')
+                            <span style="font-size: 1.05rem; line-height: 1;">🇦🇲</span>
+                            <span class="hide-on-mobile" style="font-size: 0.8rem; font-weight: 600;">Հայերեն</span>
+                        @elseif(app()->getLocale() === 'ru')
+                            <span style="font-size: 1.05rem; line-height: 1;">🇷🇺</span>
+                            <span class="hide-on-mobile" style="font-size: 0.8rem; font-weight: 600;">Русский</span>
+                        @else
+                            <span style="font-size: 1.05rem; line-height: 1;">🇬🇧</span>
+                            <span class="hide-on-mobile" style="font-size: 0.8rem; font-weight: 600;">English</span>
+                        @endif
+                        <i class="fa-solid fa-chevron-down" style="font-size: 0.65rem; opacity: 0.7; transition: transform 0.2s;" :style="openLang ? 'transform: rotate(180deg)' : ''"></i>
+                    </button>
+                    <div x-show="openLang" x-transition.origin.top.right class="lang-dropdown-menu" style="display: none; position: absolute; right: 0; top: calc(100% + 6px); z-index: 1000; min-width: 145px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: var(--shadow-card); padding: 5px; flex-direction: column; gap: 3px;">
+                        <a href="{{ route('lang.switch', 'hy') }}" class="lang-item {{ app()->getLocale() === 'hy' ? 'active' : '' }}" style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.45rem 0.65rem; border-radius: 8px; text-decoration: none; font-size: 0.8rem; font-weight: 600; color: var(--text-main); transition: all 0.15s ease;">
+                            <span style="display: flex; align-items: center; gap: 0.45rem;"><span style="font-size: 1rem;">🇦🇲</span> Հայերեն</span>
+                            @if(app()->getLocale() === 'hy') <i class="fa-solid fa-check" style="color: var(--primary); font-size: 0.75rem;"></i> @endif
+                        </a>
+                        <a href="{{ route('lang.switch', 'en') }}" class="lang-item {{ app()->getLocale() === 'en' ? 'active' : '' }}" style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.45rem 0.65rem; border-radius: 8px; text-decoration: none; font-size: 0.8rem; font-weight: 600; color: var(--text-main); transition: all 0.15s ease;">
+                            <span style="display: flex; align-items: center; gap: 0.45rem;"><span style="font-size: 1rem;">🇬🇧</span> English</span>
+                            @if(app()->getLocale() === 'en') <i class="fa-solid fa-check" style="color: var(--primary); font-size: 0.75rem;"></i> @endif
+                        </a>
+                        <a href="{{ route('lang.switch', 'ru') }}" class="lang-item {{ app()->getLocale() === 'ru' ? 'active' : '' }}" style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.45rem 0.65rem; border-radius: 8px; text-decoration: none; font-size: 0.8rem; font-weight: 600; color: var(--text-main); transition: all 0.15s ease;">
+                            <span style="display: flex; align-items: center; gap: 0.45rem;"><span style="font-size: 1rem;">🇷🇺</span> Русский</span>
+                            @if(app()->getLocale() === 'ru') <i class="fa-solid fa-check" style="color: var(--primary); font-size: 0.75rem;"></i> @endif
+                        </a>
+                    </div>
+                </div>
+
                 <!-- Light / Dark Theme Switcher Button -->
                 <button class="theme-toggle-btn" @click="toggleTheme()" title="Toggle Light / Dark Mode">
                     <i class="fa-solid" :class="currentTheme === 'dark' ? 'fa-sun' : 'fa-moon'" style="color: var(--primary);"></i>

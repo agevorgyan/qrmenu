@@ -84,6 +84,31 @@
             transform: translateX(-3px);
         }
 
+        .lang-switch-box {
+            display: inline-flex;
+            align-items: center;
+            background: #f1f5f9;
+            border: 1px solid var(--border-card);
+            border-radius: 999px;
+            padding: 2px;
+        }
+
+        .lang-switch-link {
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .lang-switch-link.active {
+            background: #ffffff;
+            color: #b45309;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
         .auth-card {
             background: var(--bg-card);
             border: 1px solid var(--border-card);
@@ -282,11 +307,18 @@
     <div class="auth-wrapper">
         <div class="top-nav">
             <a href="{{ route('login') }}" class="back-link">
-                <i class="fa-solid fa-arrow-left"></i> Վերադառնալ մուտքի էջ
+                <i class="fa-solid fa-arrow-left"></i> {{ __('Back to Login') }}
             </a>
-            <span style="font-size: 0.8rem; font-weight: 600; color: #64748b;">
-                <i class="fa-solid fa-user-shield text-amber-500" style="color: #f59e0b;"></i> 2FA Անվտանգություն
-            </span>
+            <div style="display: flex; align-items: center; gap: 0.65rem;">
+                <div class="lang-switch-box">
+                    <a href="{{ route('lang.switch', 'hy') }}" class="lang-switch-link {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">🇦🇲 ՀԱՅ</a>
+                    <a href="{{ route('lang.switch', 'en') }}" class="lang-switch-link {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">🇬🇧 ENG</a>
+                    <a href="{{ route('lang.switch', 'ru') }}" class="lang-switch-link {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">🇷🇺 РУС</a>
+                </div>
+                <span style="font-size: 0.8rem; font-weight: 600; color: #64748b;">
+                    <i class="fa-solid fa-user-shield text-amber-500" style="color: #f59e0b;"></i> {{ __('2FA Security') }}
+                </span>
+            </div>
         </div>
 
         <div class="auth-card">
@@ -294,9 +326,9 @@
                 <div class="card-icon-box">
                     <i class="fa-solid fa-shield-halved"></i>
                 </div>
-                <h1 class="card-title">Երկփուլային Մուտք</h1>
+                <h1 class="card-title">{{ __('Two-Factor Login') }}</h1>
                 <p class="card-subtitle">
-                    Հաստատեք ձեր ինքնությունը հաշիվ մուտք գործելու համար
+                    {{ __('Verify your identity to log in to your account') }}
                 </p>
             </div>
 

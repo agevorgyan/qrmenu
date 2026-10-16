@@ -84,6 +84,31 @@
             transform: translateX(-3px);
         }
 
+        .lang-switch-box {
+            display: inline-flex;
+            align-items: center;
+            background: #f1f5f9;
+            border: 1px solid var(--border-card);
+            border-radius: 999px;
+            padding: 2px;
+        }
+
+        .lang-switch-link {
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .lang-switch-link.active {
+            background: #ffffff;
+            color: #b45309;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
         .auth-card {
             background: var(--bg-card);
             border: 1px solid var(--border-card);
@@ -268,8 +293,13 @@
     <div class="auth-wrapper">
         <div class="top-nav">
             <a href="{{ route('login') }}" class="back-link">
-                <i class="fa-solid fa-arrow-left"></i> Վերադառնալ մուտքի էջ
+                <i class="fa-solid fa-arrow-left"></i> {{ __('Back to Login') }}
             </a>
+            <div class="lang-switch-box">
+                <a href="{{ route('lang.switch', 'hy') }}" class="lang-switch-link {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">🇦🇲 ՀԱՅ</a>
+                <a href="{{ route('lang.switch', 'en') }}" class="lang-switch-link {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">🇬🇧 ENG</a>
+                <a href="{{ route('lang.switch', 'ru') }}" class="lang-switch-link {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">🇷🇺 РУС</a>
+            </div>
         </div>
 
         <div class="auth-card">
@@ -277,9 +307,9 @@
                 <div class="card-icon-box">
                     <i class="fa-solid fa-lock-open"></i>
                 </div>
-                <h1 class="card-title">Նոր Գաղտնաբառ</h1>
+                <h1 class="card-title">{{ __('New Password') }}</h1>
                 <p class="card-subtitle">
-                    Սահմանեք նոր անվտանգ գաղտնաբառ ձեր հաշվի համար
+                    {{ __('Set a new secure password for your account') }}
                 </p>
             </div>
 
@@ -295,7 +325,7 @@
                 <input type="hidden" name="token" value="{{ $token }}">
 
                 <div class="form-group">
-                    <label class="form-label">Էլ․ Փոստի Հասցե</label>
+                    <label class="form-label">{{ __('Email Address') }}</label>
                     <div class="input-wrapper">
                         <input 
                             type="email" 
@@ -311,7 +341,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Նոր Գաղտնաբառ</label>
+                    <label class="form-label">{{ __('New Password') }}</label>
                     <div class="input-wrapper">
                         <input 
                             type="password" 
@@ -330,7 +360,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Կրկնել Նոր Գաղտնաբառը</label>
+                    <label class="form-label">{{ __('Confirm Password') }}</label>
                     <div class="input-wrapper">
                         <input 
                             type="password" 
@@ -349,12 +379,12 @@
 
                 <!-- CAPTCHA -->
                 <div class="form-group">
-                    <label class="form-label">Անվտանգության Ստուգում (CAPTCHA)</label>
+                    <label class="form-label">{{ __('Security Verification (CAPTCHA)') }}</label>
                     <div class="captcha-row">
                         <div class="captcha-svg-container" id="captchaContainer">
                             {!! $captcha['svg'] !!}
                         </div>
-                        <button type="button" class="btn-refresh-captcha" onclick="refreshCaptcha()" title="Փոխել հարցը">
+                        <button type="button" class="btn-refresh-captcha" onclick="refreshCaptcha()" title="{{ __('Refresh Question') }}">
                             <i class="fa-solid fa-arrows-rotate"></i>
                         </button>
                     </div>
@@ -364,7 +394,7 @@
                             name="captcha" 
                             class="form-input" 
                             required 
-                            placeholder="Մուտքագրեք գումարի պատասխանը"
+                            placeholder="{{ __('Enter the math answer') }}"
                             autocomplete="off"
                             inputmode="numeric"
                         >
@@ -374,7 +404,7 @@
 
                 <button type="submit" class="btn-submit">
                     <i class="fa-solid fa-check"></i>
-                    <span>Պահպանել Նոր Գաղտնաբառը</span>
+                    <span>{{ __('Save New Password') }}</span>
                 </button>
             </form>
         </div>

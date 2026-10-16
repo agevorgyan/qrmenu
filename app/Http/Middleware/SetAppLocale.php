@@ -34,6 +34,11 @@ class SetAppLocale
             session(['app_locale' => $locale, 'locale' => $locale]);
             App::setLocale($locale);
 
+            if ($request->cookie('app_locale') !== $locale) {
+                cookie()->queue('app_locale', $locale, 525600);
+                cookie()->queue('locale', $locale, 525600);
+            }
+
             return $next($request);
         }
 
@@ -56,6 +61,20 @@ class SetAppLocale
         $adminLocale = $this->localeManager->resolveAdminLocale($request, Auth::user());
         session(['admin_locale' => $adminLocale, 'app_locale' => $adminLocale, 'locale' => $adminLocale]);
         App::setLocale($adminLocale);
+
+        if (Auth::check()) {
+            $user = Auth::user();
+            if ($user && $user->locale !== $adminLocale) {
+                $user->locale = $adminLocale;
+                $user->saveQuietly();
+            }
+        }
+
+        if ($request->cookie('app_locale') !== $adminLocale || $request->cookie('admin_locale') !== $adminLocale) {
+            cookie()->queue('app_locale', $adminLocale, 525600);
+            cookie()->queue('admin_locale', $adminLocale, 525600);
+            cookie()->queue('locale', $adminLocale, 525600);
+        }
 
         return $next($request);
     }

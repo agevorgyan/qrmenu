@@ -96,6 +96,7 @@ class SubscriptionSystemTest extends TestCase
             'email' => 'expired@restaurant.am',
             'password' => bcrypt('password'),
             'role' => 'vendor_owner',
+            'email_verified_at' => now(),
         ]);
 
         $response = $this->actingAs($user)->get(route('admin.menu.index'));
@@ -128,6 +129,7 @@ class SubscriptionSystemTest extends TestCase
             'email' => 'info@basiccafe.am',
             'password' => bcrypt('password'),
             'role' => 'vendor_owner',
+            'email_verified_at' => now(),
         ]);
 
         // Menu builder should be accessible for Basic vendor

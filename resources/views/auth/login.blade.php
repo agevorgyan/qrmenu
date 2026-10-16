@@ -552,6 +552,11 @@
                     <i class="fa-solid fa-arrow-left"></i> {{ $customVendor->name }} {{ __('View Menu') }}
                 </a>
                 <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <div class="lang-switch-box">
+                        <a href="{{ route('lang.switch', 'hy') }}" class="lang-switch-link {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">🇦🇲 ՀԱՅ</a>
+                        <a href="{{ route('lang.switch', 'en') }}" class="lang-switch-link {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">🇬🇧 ENG</a>
+                        <a href="{{ route('lang.switch', 'ru') }}" class="lang-switch-link {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">🇷🇺 РУС</a>
+                    </div>
                     <span class="nav-badge-pill">
                         <i class="fa-solid fa-store"></i> {{ $customVendor->name }}
                     </span>
@@ -561,6 +566,11 @@
                     <i class="fa-solid fa-arrow-left"></i> {{ __('Home') }}
                 </a>
                 <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <div class="lang-switch-box">
+                        <a href="{{ route('lang.switch', 'hy') }}" class="lang-switch-link {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">🇦🇲 ՀԱՅ</a>
+                        <a href="{{ route('lang.switch', 'en') }}" class="lang-switch-link {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">🇬🇧 ENG</a>
+                        <a href="{{ route('lang.switch', 'ru') }}" class="lang-switch-link {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">🇷🇺 РУС</a>
+                    </div>
                     <a href="{{ route('demo.login') }}" class="nav-badge-pill">
                         <i class="fa-solid fa-bolt"></i> {{ __('Try Demo') }}
                     </a>
@@ -580,7 +590,7 @@
                         </div>
                     @endif
                     <h1 class="vendor-title">{{ $customVendor->name }}</h1>
-                    <p class="brand-subtitle">{{ __('Կառավարման Վահանակ') }}</p>
+                    <p class="brand-subtitle">{{ __('Dashboard') }}</p>
                 @else
                     @if($siteLogoLight)
                         <div style="margin-bottom: 1.25rem;">

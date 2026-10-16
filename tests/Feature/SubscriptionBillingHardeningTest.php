@@ -59,6 +59,7 @@ class SubscriptionBillingHardeningTest extends TestCase
             'email' => $vendor->email,
             'password' => bcrypt('password123'),
             'role' => 'vendor_owner',
+            'email_verified_at' => now(),
         ]);
 
         return [$vendor, $user];

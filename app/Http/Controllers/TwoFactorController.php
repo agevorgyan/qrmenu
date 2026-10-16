@@ -122,6 +122,10 @@ class TwoFactorController extends Controller
             return redirect()->route('superadmin.dashboard');
         }
 
+        if (! $user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice');
+        }
+
         return redirect()->route('admin.dashboard');
     }
 }

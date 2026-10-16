@@ -60,7 +60,7 @@ class RegisterController extends Controller
         $user = DB::transaction(function () use ($validated, $plan, $template) {
             $trialDays = $plan?->trial_days ?? 14;
 
-            // 1. Create Vendor Record with Free Trial
+            // 1. Create Vendor Record with Free Trial (Inactive until email is verified)
             $vendor = Vendor::create([
                 'name' => $validated['name'],
                 'slug' => Str::slug($validated['name']).'-'.Str::random(4),
@@ -82,11 +82,12 @@ class RegisterController extends Controller
                 'menu_template_id' => $template?->id,
                 'primary_color' => '#e11d48',
                 'secondary_color' => '#4f46e5',
-                'is_active' => true,
+                'is_active' => false,
             ]);
 
             if ($plan) {
                 app(SubscriptionService::class)->startTrial($vendor, $plan, $trialDays);
+                $vendor->updateQuietly(['is_active' => false]);
             }
 
             // 2. Create Initial Main Location
@@ -112,6 +113,9 @@ class RegisterController extends Controller
             ]);
         });
 
+        $otpCode = (string) random_int(100000, 999999);
+        cache()->put('email_verify_code_'.$user->id, $otpCode, now()->addHours(24));
+
         $verificationUrl = route('verification.verify', [
             'id' => $user->id,
             'hash' => sha1($user->getEmailForVerification()),
@@ -119,7 +123,7 @@ class RegisterController extends Controller
 
         try {
             Mail::to($user->email)->queue(
-                new VendorWelcomeVerificationMail($user, $verificationUrl)
+                new VendorWelcomeVerificationMail($user, $verificationUrl, $otpCode)
             );
         } catch (\Throwable $e) {
             // Silently handle mail dispatch failure if queue/mailer is offline
@@ -132,6 +136,16 @@ class RegisterController extends Controller
 
     public function showVerificationNotice()
     {
+        $user = Auth::user();
+        if ($user && $user->hasVerifiedEmail()) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        if ($user && ! cache()->has('email_verify_code_'.$user->id)) {
+            $otpCode = (string) random_int(100000, 999999);
+            cache()->put('email_verify_code_'.$user->id, $otpCode, now()->addHours(24));
+        }
+
         return view('auth.verify-email');
     }
 
@@ -145,24 +159,87 @@ class RegisterController extends Controller
 
         if (! $user->hasVerifiedEmail()) {
             $user->markEmailAsVerified();
+            cache()->forget('email_verify_code_'.$user->id);
+
             if ($user->vendor) {
-                $user->vendor->update(['email_verified_at' => now()]);
+                $user->vendor->update([
+                    'email_verified_at' => now(),
+                    'is_active' => true,
+                ]);
             }
         }
 
-        return redirect()->route('admin.dashboard')->with('success', '🎉 Your email has been verified successfully. Welcome to the Dashboard!');
+        if (! Auth::check()) {
+            Auth::login($user);
+        }
+
+        return redirect()->route('admin.dashboard')->with('success', '🎉 Ձեր էլ․ փոստը հաջողությամբ հաստատվել է։ Բարի գալուստ QRMenu!');
     }
 
-    public function directDemoVerify(Request $request)
+    public function verifyCode(Request $request)
     {
+        $request->validate([
+            'code' => ['required', 'string', 'size:6'],
+        ]);
+
         $user = Auth::user();
-        if ($user && ! $user->hasVerifiedEmail()) {
-            $user->markEmailAsVerified();
-            if ($user->vendor) {
-                $user->vendor->update(['email_verified_at' => now()]);
-            }
+        if (! $user) {
+            return redirect()->route('login');
         }
 
-        return redirect()->route('admin.dashboard')->with('success', '⚡ Email successfully verified in demo mode.');
+        if ($user->hasVerifiedEmail()) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        $inputCode = trim($request->input('code'));
+        $cachedCode = cache()->get('email_verify_code_'.$user->id);
+
+        if (! $cachedCode || ! hash_equals((string) $cachedCode, $inputCode)) {
+            return back()->withErrors([
+                'code' => 'Մուտքագրված ստուգիչ կոդը սխալ է կամ ժամկետանց։',
+            ]);
+        }
+
+        $user->markEmailAsVerified();
+        cache()->forget('email_verify_code_'.$user->id);
+
+        if ($user->vendor) {
+            $user->vendor->update([
+                'email_verified_at' => now(),
+                'is_active' => true,
+            ]);
+        }
+
+        return redirect()->route('admin.dashboard')->with('success', '🎉 Ձեր էլ․ փոստը հաջողությամբ հաստատվել է։ Բարի գալուստ QRMenu!');
+    }
+
+    public function resendVerificationEmail(Request $request)
+    {
+        $user = Auth::user();
+        if (! $user) {
+            return redirect()->route('login');
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        $otpCode = (string) random_int(100000, 999999);
+        cache()->put('email_verify_code_'.$user->id, $otpCode, now()->addHours(24));
+
+        $verificationUrl = route('verification.verify', [
+            'id' => $user->id,
+            'hash' => sha1($user->getEmailForVerification()),
+        ]);
+
+        try {
+            Mail::to($user->email)->queue(
+                new VendorWelcomeVerificationMail($user, $verificationUrl, $otpCode)
+            );
+        } catch (\Throwable $e) {
+            // Silently handle mail dispatch failure
+        }
+
+        return back()->with('status', 'verification-link-sent');
     }
 }

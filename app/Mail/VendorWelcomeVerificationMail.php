@@ -19,7 +19,8 @@ class VendorWelcomeVerificationMail extends Mailable implements ShouldQueue
      */
     public function __construct(
         public User $user,
-        public string $verificationUrl
+        public string $verificationUrl,
+        public ?string $otpCode = null
     ) {}
 
     /**
@@ -39,6 +40,11 @@ class VendorWelcomeVerificationMail extends Mailable implements ShouldQueue
     {
         return new Content(
             view: 'emails.welcome',
+            with: [
+                'user' => $this->user,
+                'verificationUrl' => $this->verificationUrl,
+                'otpCode' => $this->otpCode,
+            ],
         );
     }
 }

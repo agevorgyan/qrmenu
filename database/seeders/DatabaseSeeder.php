@@ -126,6 +126,7 @@ class DatabaseSeeder extends Seeder
                 'theme_mode' => 'dark',
                 'subscription_plan' => 'pro',
                 'subscription_plan_id' => $proPlan?->id,
+                'email_verified_at' => now(),
                 'is_active' => true,
             ]
         );
@@ -172,6 +173,7 @@ class DatabaseSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'role' => 'vendor_owner',
                 'phone' => '+37491111222',
+                'email_verified_at' => now(),
             ]
         );
 
@@ -184,6 +186,7 @@ class DatabaseSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'role' => 'manager',
                 'phone' => '+37493333444',
+                'email_verified_at' => now(),
             ]
         );
 

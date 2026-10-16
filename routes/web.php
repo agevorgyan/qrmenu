@@ -95,10 +95,55 @@ Route::prefix('/api/m/{vendor_slug}/ai-waiter')->middleware('throttle:60,1')->gr
 });
 
 // Admin / Platform Language Switcher
-Route::get('/lang/{locale}', function (string $locale, LocaleManager $localeManager) {
-    if ($localeManager->isValidLocale($locale)) {
-        session(['admin_locale' => $locale, 'app_locale' => $locale, 'locale' => $locale]);
-        App::setLocale($locale);
+Route::get('/lang/{locale}', function (Request $request, string $locale, LocaleManager $localeManager) {
+    $targetLocale = strtolower(trim($locale));
+    if ($localeManager->isValidLocale($targetLocale)) {
+        session([
+            'admin_locale' => $targetLocale,
+            'app_locale' => $targetLocale,
+            'locale' => $targetLocale,
+        ]);
+        App::setLocale($targetLocale);
+
+        if (Auth::check()) {
+            $user = Auth::user();
+            if ($user) {
+                $user->locale = $targetLocale;
+                $user->saveQuietly();
+            }
+        }
+
+        cookie()->queue('app_locale', $targetLocale, 525600);
+        cookie()->queue('admin_locale', $targetLocale, 525600);
+        cookie()->queue('locale', $targetLocale, 525600);
+
+        // Sanitize previous URL so existing ?lang= or ?locale= params don't override the new selection
+        $previousUrl = url()->previous();
+        if ($previousUrl) {
+            $parsed = parse_url($previousUrl);
+            if (isset($parsed['query'])) {
+                parse_str($parsed['query'], $query);
+                if (isset($query['lang']) || isset($query['locale'])) {
+                    unset($query['lang'], $query['locale']);
+                    $queryString = http_build_query($query);
+                    $cleanUrl = ($parsed['scheme'] ?? 'http').'://'.($parsed['host'] ?? 'localhost')
+                        .(isset($parsed['port']) ? ':'.$parsed['port'] : '')
+                        .($parsed['path'] ?? '/')
+                        .($queryString ? '?'.$queryString : '')
+                        .(isset($parsed['fragment']) ? '#'.$parsed['fragment'] : '');
+
+                    return redirect()->to($cleanUrl)
+                        ->withCookie(cookie('app_locale', $targetLocale, 525600))
+                        ->withCookie(cookie('admin_locale', $targetLocale, 525600))
+                        ->withCookie(cookie('locale', $targetLocale, 525600));
+                }
+            }
+        }
+
+        return redirect()->back()
+            ->withCookie(cookie('app_locale', $targetLocale, 525600))
+            ->withCookie(cookie('admin_locale', $targetLocale, 525600))
+            ->withCookie(cookie('locale', $targetLocale, 525600));
     }
 
     return redirect()->back();
@@ -140,7 +185,8 @@ Route::post('/register', [RegisterController::class, 'register'])->middleware('t
 
 Route::get('/email/verify', [RegisterController::class, 'showVerificationNotice'])->name('verification.notice');
 Route::get('/email/verify/{id}/{hash}', [RegisterController::class, 'verifyEmail'])->name('verification.verify');
-Route::post('/email/verify/demo', [RegisterController::class, 'directDemoVerify'])->name('verification.demo');
+Route::post('/email/verify/code', [RegisterController::class, 'verifyCode'])->middleware(['auth', 'throttle:10,1'])->name('verification.code');
+Route::post('/email/verification-notification', [RegisterController::class, 'resendVerificationEmail'])->middleware(['auth', 'throttle:6,1'])->name('verification.send');
 
 // Authenticated 2FA & Profile Security Routes
 Route::middleware(['auth'])->group(function () {
@@ -257,7 +303,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
 Route::post('/api/webhooks/email/{provider}', [EmailWebhookController::class, 'handle'])->name('webhooks.email');
 
 // 4. Vendor Admin Panel (/admin)
-Route::middleware(['auth', 'role:vendor_owner,manager,staff,chef,cashier', EnsureSubscriptionIsActive::class])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cashier', EnsureSubscriptionIsActive::class])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [VendorAdminController::class, 'dashboard'])->name('dashboard');
 
     // Vendor Subscription Status & Payment History

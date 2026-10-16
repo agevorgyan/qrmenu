@@ -82,4 +82,120 @@ class AdminLocaleSwitchTest extends TestCase
         $invalidResponse->assertRedirect();
         $this->assertEquals('en', session('admin_locale'));
     }
+
+    public function test_landing_page_displays_language_switcher(): void
+    {
+        $response = $this->get(route('landing'));
+        $response->assertStatus(200);
+        $response->assertSee(route('lang.switch', 'hy'));
+        $response->assertSee(route('lang.switch', 'en'));
+        $response->assertSee(route('lang.switch', 'ru'));
+        $response->assertSee('ՀԱՅ');
+        $response->assertSee('ENG');
+        $response->assertSee('РУС');
+    }
+
+    public function test_auth_pages_display_language_switcher(): void
+    {
+        // 1. Login page
+        $loginRes = $this->get(route('login'));
+        $loginRes->assertStatus(200);
+        $loginRes->assertSee(route('lang.switch', 'hy'));
+        $loginRes->assertSee(route('lang.switch', 'en'));
+        $loginRes->assertSee(route('lang.switch', 'ru'));
+
+        // 2. Register page
+        $registerRes = $this->get(route('register.show'));
+        $registerRes->assertStatus(200);
+        $registerRes->assertSee(route('lang.switch', 'hy'));
+        $registerRes->assertSee(route('lang.switch', 'en'));
+        $registerRes->assertSee(route('lang.switch', 'ru'));
+
+        // 3. Forgot Password page
+        $forgotRes = $this->get(route('password.request'));
+        $forgotRes->assertStatus(200);
+        $forgotRes->assertSee(route('lang.switch', 'hy'));
+        $forgotRes->assertSee(route('lang.switch', 'en'));
+        $forgotRes->assertSee(route('lang.switch', 'ru'));
+
+        // 4. Demo Login page
+        $demoRes = $this->get(route('demo.login'));
+        $demoRes->assertStatus(200);
+        $demoRes->assertSee(route('lang.switch', 'hy'));
+        $demoRes->assertSee(route('lang.switch', 'en'));
+        $demoRes->assertSee(route('lang.switch', 'ru'));
+    }
+
+    public function test_partner_admin_header_displays_language_switcher(): void
+    {
+        $user = User::create([
+            'name' => 'Vendor Admin',
+            'email' => 'vendor@test.am',
+            'password' => bcrypt('password'),
+            'role' => 'superadmin',
+        ]);
+
+        $dashRes = $this->actingAs($user)->get(route('superadmin.dashboard'));
+        $dashRes->assertStatus(200);
+        $dashRes->assertSee(route('lang.switch', 'hy'));
+        $dashRes->assertSee(route('lang.switch', 'en'));
+        $dashRes->assertSee(route('lang.switch', 'ru'));
+        $dashRes->assertSee('Հայերեն');
+        $dashRes->assertSee('English');
+        $dashRes->assertSee('Русский');
+    }
+
+    public function test_selected_language_persists_across_refreshes_via_cookies_and_session(): void
+    {
+        // Switch to Armenian
+        $switchRes = $this->get(route('lang.switch', 'hy'));
+        $switchRes->assertRedirect();
+        $switchRes->assertCookie('app_locale', 'hy');
+        $switchRes->assertCookie('admin_locale', 'hy');
+
+        // Refresh/re-visit landing with the cookie
+        $landingRes = $this->withUnencryptedCookie('app_locale', 'hy')
+            ->withSession(['app_locale' => 'hy', 'admin_locale' => 'hy', 'locale' => 'hy'])
+            ->get(route('landing'));
+        $landingRes->assertStatus(200);
+        $this->assertEquals('hy', app()->getLocale());
+
+        // Refresh/re-visit login page with cookie
+        $loginRes = $this->withUnencryptedCookie('app_locale', 'hy')
+            ->withSession(['app_locale' => 'hy', 'admin_locale' => 'hy', 'locale' => 'hy'])
+            ->get(route('login'));
+        $loginRes->assertStatus(200);
+        $this->assertEquals('hy', app()->getLocale());
+
+        // Switch to Russian
+        $switchRu = $this->get(route('lang.switch', 'ru'));
+        $switchRu->assertRedirect();
+        $switchRu->assertCookie('app_locale', 'ru');
+
+        // Refresh login in Russian
+        $loginRu = $this->withUnencryptedCookie('app_locale', 'ru')
+            ->withSession(['app_locale' => 'ru', 'admin_locale' => 'ru', 'locale' => 'ru'])
+            ->get(route('login'));
+        $loginRu->assertStatus(200);
+        $this->assertEquals('ru', app()->getLocale());
+    }
+
+    public function test_authenticated_user_persists_locale_in_database_and_across_logout(): void
+    {
+        $user = User::create([
+            'name' => 'Test User',
+            'email' => 'user@test.am',
+            'password' => bcrypt('password'),
+            'role' => 'superadmin',
+        ]);
+
+        $this->actingAs($user)->get(route('lang.switch', 'hy'));
+        $user->refresh();
+        $this->assertEquals('hy', $user->locale);
+
+        // Logging out should keep locale in cookie and session
+        $logoutRes = $this->actingAs($user)->post(route('logout'));
+        $logoutRes->assertRedirect(route('login'));
+        $logoutRes->assertCookie('app_locale', 'hy');
+    }
 }

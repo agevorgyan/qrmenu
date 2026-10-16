@@ -73,6 +73,14 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
+        $activeLocale = $user->locale ?? session('admin_locale') ?? $request->cookie('app_locale') ?? app()->getLocale();
+        if ($activeLocale) {
+            session(['admin_locale' => $activeLocale, 'app_locale' => $activeLocale, 'locale' => $activeLocale]);
+            cookie()->queue('app_locale', $activeLocale, 525600);
+            cookie()->queue('admin_locale', $activeLocale, 525600);
+            cookie()->queue('locale', $activeLocale, 525600);
+        }
+
         $customVendor = $tenantContext->getTenant();
 
         return $this->redirectUser($user, $customVendor);
@@ -127,6 +135,18 @@ class AuthController extends Controller
             Auth::login($user, $request->boolean('remember'));
             $request->session()->regenerate();
 
+            $activeLocale = $user->locale ?? session('admin_locale') ?? $request->cookie('app_locale') ?? app()->getLocale();
+            if ($activeLocale) {
+                session(['admin_locale' => $activeLocale, 'app_locale' => $activeLocale, 'locale' => $activeLocale]);
+                cookie()->queue('app_locale', $activeLocale, 525600);
+                cookie()->queue('admin_locale', $activeLocale, 525600);
+                cookie()->queue('locale', $activeLocale, 525600);
+                if (! $user->locale) {
+                    $user->locale = $activeLocale;
+                    $user->saveQuietly();
+                }
+            }
+
             return $this->redirectUser($user, $customVendor);
         }
 
@@ -144,9 +164,21 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        $currentLocale = session('admin_locale') ?? session('app_locale') ?? $request->cookie('app_locale') ?? app()->getLocale();
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        if ($currentLocale) {
+            session([
+                'admin_locale' => $currentLocale,
+                'app_locale' => $currentLocale,
+                'locale' => $currentLocale,
+            ]);
+            cookie()->queue('app_locale', $currentLocale, 525600);
+            cookie()->queue('admin_locale', $currentLocale, 525600);
+            cookie()->queue('locale', $currentLocale, 525600);
+        }
 
         return redirect()->route('login');
     }
@@ -161,6 +193,10 @@ class AuthController extends Controller
             }
 
             return redirect()->route('superadmin.dashboard');
+        }
+
+        if (! $user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice');
         }
 
         return redirect()->route('admin.dashboard');

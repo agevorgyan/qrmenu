@@ -200,8 +200,8 @@ class LocaleManager
             }
         }
 
-        // 2. Guest session
-        $sessionLocale = session('app_locale') ?? session('locale');
+        // 2. Guest session or cookie
+        $sessionLocale = session('app_locale') ?? session('locale') ?? $request->cookie('app_locale') ?? $request->cookie('locale');
         if ($sessionLocale && is_string($sessionLocale)) {
             $candidate = strtolower(trim($sessionLocale));
             if (in_array($candidate, $vendorLocales, true)) {
@@ -246,8 +246,17 @@ class LocaleManager
         }
 
         // 3. User preference if saved
-        if ($user && isset($user->locale) && in_array(strtolower($user->locale), $activeLocales, true)) {
+        if ($user && ! empty($user->locale) && in_array(strtolower($user->locale), $activeLocales, true)) {
             return strtolower($user->locale);
+        }
+
+        // 4. Long-lived cookie preference (survives session restarts, browser refreshes, and logout)
+        $cookieLocale = $request->cookie('admin_locale') ?? $request->cookie('app_locale') ?? $request->cookie('locale');
+        if ($cookieLocale && is_string($cookieLocale)) {
+            $candidate = strtolower(trim($cookieLocale));
+            if (in_array($candidate, $activeLocales, true)) {
+                return $candidate;
+            }
         }
 
         return $defaultLocale;

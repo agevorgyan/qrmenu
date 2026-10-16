@@ -16,6 +16,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $fillable = [
         'name',
         'email',
+        'email_verified_at',
         'password',
         'role',
         'custom_permissions',
@@ -28,6 +29,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'two_factor_confirmed_at',
         'two_factor_email_code',
         'two_factor_email_expires_at',
+        'locale',
     ];
 
     protected $hidden = [
