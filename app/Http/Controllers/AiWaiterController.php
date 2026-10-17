@@ -296,6 +296,7 @@ class AiWaiterController extends Controller
             ], 422);
         }
 
+        $history = (array) $request->input('history', []);
         $lang = $session->language ?? $this->resolveLanguage($request, $vendor);
         $locationId = $session->location_id ?: ($request->input('location_id') ? (int) $request->input('location_id') : null);
 
@@ -304,8 +305,23 @@ class AiWaiterController extends Controller
             $message,
             $session->toArray(),
             $lang,
-            $locationId
+            $locationId,
+            $history
         );
+
+        // Persist conversation history to session for continuity
+        $answers = (array) ($session->answers_history ?? []);
+        $chatLog = (array) ($answers['chat_log'] ?? []);
+        $chatLog[] = ['sender' => 'user', 'text' => $message, 'time' => now()->toIso8601String()];
+        $chatLog[] = [
+            'sender' => 'ai',
+            'text' => $chatResponse['reply'],
+            'products' => array_column($chatResponse['suggested_products'] ?? [], 'id'),
+            'time' => now()->toIso8601String(),
+        ];
+        $answers['chat_log'] = array_slice($chatLog, -30);
+        $session->answers_history = $answers;
+        $session->saveQuietly();
 
         return response()->json([
             'success' => true,

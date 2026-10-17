@@ -605,6 +605,7 @@ class VendorSettingsController extends Controller
             // AI Waiter Configuration
             'ai_waiter_enabled' => 'nullable|boolean',
             'ai_waiter_name' => 'nullable|string|max:100',
+            'ai_waiter_instructions' => 'nullable|string|max:10000',
             'ai_waiter_priority_ingredients' => 'nullable|string|max:2000',
             'ai_waiter_welcome_text' => 'nullable|string|max:1000',
             'ai_waiter_languages' => 'nullable|array',
@@ -684,6 +685,7 @@ class VendorSettingsController extends Controller
         }
 
         $newAiWaiterConfig = array_merge($currentConfig, [
+            'custom_instructions' => ! empty($validated['ai_waiter_instructions']) ? trim((string) $validated['ai_waiter_instructions']) : ($currentConfig['custom_instructions'] ?? null),
             'languages' => ! empty($validated['ai_waiter_languages']) ? (array) $validated['ai_waiter_languages'] : $vendor->getSupportedLanguageCodes(),
             'personality' => $validated['ai_waiter_personality'] ?? 'friendly',
             'auto_popup' => $request->boolean('auto_popup', true),

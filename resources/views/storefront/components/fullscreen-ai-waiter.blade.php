@@ -849,36 +849,55 @@
 
                         <!-- AI Message -->
                         <template x-if="msg.sender === 'ai'">
-                            <div style="display: flex; gap: 0.65rem; align-items: flex-start; max-width: 90%;">
+                            <div style="display: flex; gap: 0.65rem; align-items: flex-start; max-width: 92%;">
                                 <div style="width: 30px; height: 30px; border-radius: 50%; background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; margin-top: 0.2rem;">
                                     <i class="fa-solid fa-wand-magic-sparkles"></i>
                                 </div>
-                                <div style="flex: 1;">
-                                    <div style="background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.75rem 1rem; border-radius: 4px 18px 18px 18px; font-size: 0.92rem; line-height: 1.5;"
-                                         x-text="msg.text"></div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.75rem 1rem; border-radius: 4px 18px 18px 18px; font-size: 0.92rem; line-height: 1.5; position: relative;">
+                                        <div x-text="msg.text"></div>
+                                        
+                                        <!-- Voice Readout Button -->
+                                        <div style="display: flex; justify-content: flex-end; margin-top: 0.4rem;">
+                                            <button type="button" 
+                                                    @click="toggleSpeakAiMessage(msg.text)" 
+                                                    :class="{ 'speaking': currentlySpeakingText === msg.text }"
+                                                    class="ai-speak-btn"
+                                                    :title="currentlySpeakingText === msg.text ? 'Դադարեցնել' : 'Լսել ձայնով'">
+                                                <i :class="currentlySpeakingText === msg.text ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-low'"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                     
                                     <!-- Embedded Product Cards inside Chat -->
                                     <template x-if="msg.products && msg.products.length > 0">
-                                        <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.65rem;">
+                                        <div style="display: flex; flex-direction: column; gap: 0.55rem; margin-top: 0.75rem;">
                                             <template x-for="p in msg.products" :key="p.id">
-                                                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.55rem 0.75rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
-                                                    <div style="display: flex; align-items: center; gap: 0.5rem; min-width: 0;">
+                                                <div class="ai-chat-product-card">
+                                                    <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0; flex: 1;">
                                                         <img :src="p.image || '{{ asset('images/default-dish.png') }}'" 
                                                              x-on:error="$event.target.src = '{{ asset('images/default-dish.png') }}'" 
-                                                             style="width: 36px; height: 36px; border-radius: 8px; object-fit: cover; flex-shrink: 0;">
-                                                        <div style="min-width: 0;">
-                                                            <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" x-text="p.name"></div>
-                                                            <div style="font-size: 0.8rem; font-weight: 800; color: var(--text-main);" x-text="p.formatted_price"></div>
+                                                             class="ai-chat-product-img">
+                                                        <div style="min-width: 0; flex: 1;">
+                                                            <div class="ai-chat-product-title" x-text="p.name"></div>
+                                                            <div class="ai-chat-product-price" x-text="p.formatted_price"></div>
                                                         </div>
                                                     </div>
 
                                                     <button type="button" 
                                                             @click="addAiDishToCart(p)"
                                                             :title="getCartItemQty(p.id) > 0 ? 'Զամբյուղում է (' + getCartItemQty(p.id) + ')' : 'Ավելացնել զամբյուղ'"
-                                                            :style="getCartItemQty(p.id) > 0 ? 'background: #10b981; min-width: 40px; padding: 0 0.35rem;' : 'background: var(--primary); width: 30px;'"
-                                                            style="height: 30px; border-radius: 8px; border: none; color: #fff; display: flex; align-items: center; justify-content: center; gap: 0.25rem; cursor: pointer; flex-shrink: 0; font-size: 0.75rem; font-weight: 700; transition: all 0.2s;">
-                                                        <i :class="getCartItemQty(p.id) > 0 ? 'fa-solid fa-check' : 'fa-solid fa-plus'"></i>
-                                                        <span x-show="getCartItemQty(p.id) > 0" x-text="getCartItemQty(p.id)"></span>
+                                                            class="ai-card-btn-add"
+                                                            :class="{ 'in-cart': getCartItemQty(p.id) > 0 }">
+                                                        <template x-if="getCartItemQty(p.id) === 0">
+                                                            <i class="fa-solid fa-plus"></i>
+                                                        </template>
+                                                        <template x-if="getCartItemQty(p.id) > 0">
+                                                            <span style="display: flex; align-items: center; gap: 0.25rem;">
+                                                                <i class="fa-solid fa-check"></i>
+                                                                <span x-text="getCartItemQty(p.id)"></span>
+                                                            </span>
+                                                        </template>
                                                     </button>
                                                 </div>
                                             </template>
@@ -899,20 +918,42 @@
                 </div>
             </div>
 
-            <!-- Chat Bottom Input Bar -->
+            <!-- Chat Bottom Input Bar with Voice Support -->
             <div style="padding: 0.85rem 1.25rem max(0.85rem, env(safe-area-inset-bottom)) 1.25rem; border-top: 1px solid var(--border-color); background: var(--bg-card);">
+                <!-- Voice Listening Active Indicator Banner -->
+                <div x-show="isVoiceListening" x-cloak class="ai-voice-listening-banner">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444; animation: pulseAvatar 1s infinite;"></span>
+                    <span style="flex: 1;" x-show="selectedLang === 'hy'">Ձայնագրվում է... Խոսեք հիմա</span>
+                    <span style="flex: 1;" x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Listening... Speak now</span>
+                    <span style="flex: 1;" x-show="selectedLang === 'ru'">Слушаю... Говорите</span>
+                    <button type="button" @click="toggleVoiceInput()" style="background: none; border: none; color: #ef4444; font-size: 0.85rem; font-weight: 700; cursor: pointer;">
+                        <i class="fa-solid fa-stop"></i>
+                    </button>
+                </div>
+
                 <form @submit.prevent="sendAiChatMessage()">
-                    <div style="position: relative; display: flex; align-items: center;">
-                        <input type="text" 
-                                x-model="aiChatInput" 
-                                :placeholder="selectedLang === 'hy' ? 'Հարցրեք բաղադրիչների, գինու, աղանդերի մասին...' : (selectedLang === 'ru' ? 'Спросите об ингредиентах, вине, десертах...' : 'Ask about ingredients, wine, desserts...')"
-                                style="width: 100%; background: var(--bg-main); border: 1.5px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 3rem 0.75rem 0.85rem; font-size: 0.9rem; outline: none;">
-                        
-                        <button type="submit" 
-                                :disabled="aiChatLoading || !aiChatInput.trim()"
-                                style="position: absolute; right: 0.35rem; width: 34px; height: 34px; border-radius: 9px; border: none; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: opacity 0.2s;">
-                            <i class="fa-solid fa-paper-plane" style="font-size: 0.85rem;"></i>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <!-- Voice Input (Microphone) Button -->
+                        <button type="button" 
+                                @click="toggleVoiceInput()"
+                                :class="{ 'ai-voice-active': isVoiceListening }"
+                                class="ai-voice-btn"
+                                :title="isVoiceListening ? 'Դադարեցնել խոսափողը' : 'Խոսել AI մատուցողի հետ'">
+                            <i :class="isVoiceListening ? 'fa-solid fa-waveform-lines' : 'fa-solid fa-microphone'"></i>
                         </button>
+
+                        <div style="position: relative; flex: 1; display: flex; align-items: center;">
+                            <input type="text" 
+                                    x-model="aiChatInput" 
+                                    :placeholder="selectedLang === 'hy' ? 'Հարցրեք բաղադրիչների, գինու, աղանդերի մասին...' : (selectedLang === 'ru' ? 'Спросите об ингредиентах, вине, десертах...' : 'Ask about ingredients, wine, desserts...')"
+                                    style="width: 100%; background: var(--bg-main); border: 1.5px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 2.85rem 0.75rem 0.85rem; font-size: 0.9rem; outline: none;">
+                            
+                            <button type="submit" 
+                                    :disabled="aiChatLoading || !aiChatInput.trim()"
+                                    style="position: absolute; right: 0.35rem; width: 34px; height: 34px; border-radius: 9px; border: none; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: opacity 0.2s;">
+                                <i class="fa-solid fa-paper-plane" style="font-size: 0.85rem;"></i>
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>

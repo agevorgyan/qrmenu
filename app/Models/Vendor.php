@@ -515,12 +515,34 @@ class Vendor extends Model
             return trim($apiKey);
         }
 
-        // Fallback to system key for gemini
-        if ($this->getAiProvider() === 'gemini') {
-            return config('services.gemini.key') ?? env('GEMINI_API_KEY');
+        if (! empty($this->ai_settings['api_key'])) {
+            return trim((string) $this->ai_settings['api_key']);
         }
 
-        return null;
+        $provider = $this->getAiProvider();
+
+        return match ($provider) {
+            'openai' => config('services.openai.key') ?? env('OPENAI_API_KEY'),
+            'claude' => config('services.anthropic.key') ?? env('ANTHROPIC_API_KEY'),
+            'deepseek' => config('services.deepseek.key') ?? env('DEEPSEEK_API_KEY'),
+            'groq' => config('services.groq.key') ?? env('GROQ_API_KEY'),
+            'openrouter' => config('services.openrouter.key') ?? env('OPENROUTER_API_KEY'),
+            default => config('services.gemini.key') ?? env('GEMINI_API_KEY') ?? env('OPENAI_API_KEY'),
+        };
+    }
+
+    /**
+     * Get custom partner training instructions for the AI Waiter.
+     */
+    public function getAiWaiterInstructions(): string
+    {
+        $config = $this->getAiWaiterConfig();
+        $instructions = trim((string) ($config['custom_instructions'] ?? ''));
+        if ($instructions !== '') {
+            return $instructions;
+        }
+
+        return trim((string) ($this->ai_waiter_priority_ingredients ?? ''));
     }
 
     /**

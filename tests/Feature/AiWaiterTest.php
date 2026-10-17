@@ -63,6 +63,7 @@ class AiWaiterTest extends TestCase
         $this->user = User::create([
             'name' => 'Owner',
             'email' => 'waiter@bistro.am',
+            'email_verified_at' => now(),
             'password' => bcrypt('password'),
             'vendor_id' => $this->vendor->id,
             'role' => 'vendor_owner',
@@ -138,6 +139,7 @@ class AiWaiterTest extends TestCase
         ]);
 
         $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
 
         $this->vendor->refresh();
         $this->assertTrue($this->vendor->ai_waiter_enabled);

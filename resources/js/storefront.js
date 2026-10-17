@@ -164,6 +164,11 @@
             aiAllowedLanguages: vendor.ai_waiter_languages || ['hy', 'en', 'ru'],
             aiLanguageDetails: vendor.ai_waiter_language_details || [],
 
+            // AI Voice Conversation
+            isVoiceListening: false,
+            speechRecognition: null,
+            currentlySpeakingText: null,
+
             // Toast State
             toast: {
                 show: false,
@@ -1774,9 +1779,162 @@
                 this.showAiChatDrawer = false;
             },
 
+            toggleVoiceInput() {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    const noSupportMsg = this.selectedLang === 'en'
+                        ? 'Voice input is not supported in this browser. Please use Chrome or Safari.'
+                        : (this.selectedLang === 'ru' ? 'Голосовой ввод не поддерживается в этом браузере. Используйте Chrome или Safari.' : 'Ձայնային մուտքագրումը չի աջակցվում այս բրաուզերում: Խնդրում ենք օգտագործել Chrome կամ Safari:');
+                    this.triggerToast(noSupportMsg, 'remove', 'fa-solid fa-microphone-slash');
+                    return;
+                }
+
+                if (this.isVoiceListening) {
+                    this.stopVoiceInput();
+                    return;
+                }
+
+                try {
+                    const recognition = new SpeechRecognition();
+                    recognition.continuous = false;
+                    recognition.interimResults = true;
+                    
+                    let bcp47 = 'hy-AM';
+                    if (this.selectedLang === 'ru') bcp47 = 'ru-RU';
+                    else if (this.selectedLang === 'en') bcp47 = 'en-US';
+                    else if (this.selectedLang === 'fr') bcp47 = 'fr-FR';
+                    else if (this.selectedLang === 'de') bcp47 = 'de-DE';
+                    else if (this.selectedLang === 'es') bcp47 = 'es-ES';
+                    else if (this.selectedLang === 'it') bcp47 = 'it-IT';
+                    else if (this.selectedLang === 'ar') bcp47 = 'ar-SA';
+                    else if (this.selectedLang === 'fa') bcp47 = 'fa-IR';
+                    else if (this.selectedLang === 'ka') bcp47 = 'ka-GE';
+                    recognition.lang = bcp47;
+
+                    recognition.onstart = () => {
+                        this.isVoiceListening = true;
+                    };
+
+                    recognition.onresult = (event) => {
+                        let interim = '';
+                        let final = '';
+                        for (let i = event.resultIndex; i < event.results.length; ++i) {
+                            if (event.results[i].isFinal) {
+                                final += event.results[i][0].transcript;
+                            } else {
+                                interim += event.results[i][0].transcript;
+                            }
+                        }
+                        const text = (final || interim || '').trim();
+                        if (text) {
+                            this.aiChatInput = text;
+                        }
+                    };
+
+                    recognition.onerror = (event) => {
+                        console.warn('Speech recognition error:', event.error);
+                        this.isVoiceListening = false;
+                        if (event.error === 'not-allowed') {
+                            const deniedMsg = this.selectedLang === 'en'
+                                ? 'Please allow microphone access to talk with the AI Waiter.'
+                                : (this.selectedLang === 'ru' ? 'Пожалуйста, разрешите доступ к микрофону для разговора с AI-официантом.' : 'Խնդրում ենք թույլատրել խոսափողի (microphone) հասանելիությունը AI մատուցողի հետ խոսելու համար:');
+                            this.triggerToast(deniedMsg, 'remove', 'fa-solid fa-microphone-slash');
+                        }
+                    };
+
+                    recognition.onend = () => {
+                        this.isVoiceListening = false;
+                        if (this.aiChatInput && this.aiChatInput.trim().length > 1) {
+                            this.sendAiChatMessage();
+                        }
+                    };
+
+                    this.speechRecognition = recognition;
+                    recognition.start();
+                } catch (e) {
+                    console.error('Failed to start speech recognition:', e);
+                    this.isVoiceListening = false;
+                }
+            },
+
+            stopVoiceInput() {
+                if (this.speechRecognition) {
+                    try {
+                        this.speechRecognition.stop();
+                    } catch (e) {}
+                }
+                this.isVoiceListening = false;
+            },
+
+            toggleSpeakAiMessage(text) {
+                if (!window.speechSynthesis) {
+                    const noTtsMsg = this.selectedLang === 'en'
+                        ? 'Speech playback is not supported on this device.'
+                        : (this.selectedLang === 'ru' ? 'Озвучивание не поддерживается на этом устройстве.' : 'Ձայնային վերարտադրումը չի աջակցվում այս սարքում:');
+                    this.triggerToast(noTtsMsg, 'remove', 'fa-solid fa-volume-xmark');
+                    return;
+                }
+
+                if (window.speechSynthesis.speaking) {
+                    window.speechSynthesis.cancel();
+                    if (this.currentlySpeakingText === text) {
+                        this.currentlySpeakingText = null;
+                        return;
+                    }
+                }
+
+                if (!text) return;
+
+                // Clean markdown artifacts or emoji soup for cleaner speech
+                const cleanText = text
+                    .replace(/[*#_~`«»]/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+
+                let bcp47 = 'hy-AM';
+                if (this.selectedLang === 'ru') bcp47 = 'ru-RU';
+                else if (this.selectedLang === 'en') bcp47 = 'en-US';
+                utterance.lang = bcp47;
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+
+                // Attempt to pick a natural sounding voice if available
+                const voices = window.speechSynthesis.getVoices();
+                if (voices && voices.length) {
+                    const langVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(this.selectedLang));
+                    if (langVoice) {
+                        utterance.voice = langVoice;
+                    }
+                }
+
+                utterance.onstart = () => {
+                    this.currentlySpeakingText = text;
+                };
+                utterance.onend = () => {
+                    this.currentlySpeakingText = null;
+                };
+                utterance.onerror = () => {
+                    this.currentlySpeakingText = null;
+                };
+
+                window.speechSynthesis.speak(utterance);
+            },
+
             async sendAiChatMessage(customText = null) {
                 const message = (customText || this.aiChatInput || '').trim();
                 if (!message) return;
+
+                if (this.isVoiceListening) {
+                    this.stopVoiceInput();
+                }
+
+                // Prepare conversation history
+                const history = (this.aiChatMessages || [])
+                    .filter(m => m && m.text)
+                    .slice(-8)
+                    .map(m => ({ sender: m.sender, text: m.text }));
 
                 this.aiChatMessages.push({
                     sender: 'user',
@@ -1808,7 +1966,8 @@
                         body: JSON.stringify({
                             message: message,
                             lang: this.selectedLang,
-                            location_id: this.locationId
+                            location_id: this.locationId,
+                            history: history
                         })
                     });
                     const data = await res.json();

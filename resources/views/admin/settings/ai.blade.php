@@ -254,6 +254,36 @@
                     </small>
                 </div>
 
+                <!-- AI Custom Training & Knowledge Base -->
+                <div class="form-group" style="margin-bottom: 1.5rem; background: var(--bg-body); border: 1.5px solid var(--border-color); border-radius: 16px; padding: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <label style="font-size: 0.95rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                            <i class="fa-solid fa-graduation-cap" style="color: #8b5cf6; font-size: 1.15rem;"></i>
+                            <span>{{ __('AI Waiter Training & Restaurant Knowledge Base (Ուսուցում)') }}</span>
+                            <span style="font-size: 0.7rem; font-weight: 800; background: linear-gradient(135deg, #8b5cf6, #ec4899); color: #fff; padding: 0.15rem 0.55rem; border-radius: 6px; letter-spacing: 0.04em;">PRO TRAINING</span>
+                        </label>
+                    </div>
+
+                    <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0 0 0.75rem 0; line-height: 1.45;">
+                        {{ __('Տվեք Ձեր AI Մատուցողին հատուկ գիտելիքներ և ցուցումներ: Գրեք Ձեր ռեստորանի ֆիրմային ուտեստները, գինիների համադրությունները, հատուկ ռեցեպտները, ալերգիաների կանոններն ու խորհուրդները: AI-ն սովորում է այս կանոնները և օգտագործում հաճախորդների հետ կենդանի զրույցում:') }}
+                    </p>
+
+                    <textarea name="ai_waiter_instructions" 
+                              id="aiWaiterInstructionsInput" 
+                              rows="5" 
+                              class="form-control" 
+                              placeholder="Օրինակ՝ Մենք մասնագիտացված ենք իտալական և միջերկրածովյան խոհանոցում: Մեր ֆիրմային ուտեստն է «Պեստո Լինգվինին» և «Տոմատի ռեհանով ապուրը»: Գինիներից խորհուրդ տալ կարմիր չոր Արենի: Աղանդերներից առաջարկել Տիրամիսու: Տաք ուտեստների հետ խորհուրդ տալ նաև թեթև աղցան: Կծու սիրողներին առաջարկել մեր հատուկ չիլի սոուսով ուտեստները..." 
+                              style="width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.85rem 1rem; font-size: 0.92rem; line-height: 1.5; resize: vertical;">{{ old('ai_waiter_instructions', $aiWaiterConfig['custom_instructions'] ?? $vendor->ai_waiter_priority_ingredients) }}</textarea>
+                    
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.65rem;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">{{ __('Արագ հուշումներ՝') }}</span>
+                        <span style="font-size: 0.73rem; background: var(--bg-card); border: 1px solid var(--border-color); padding: 0.2rem 0.5rem; border-radius: 6px; color: var(--text-muted);">🍷 Գինու զուգորդումներ</span>
+                        <span style="font-size: 0.73rem; background: var(--bg-card); border: 1px solid var(--border-color); padding: 0.2rem 0.5rem; border-radius: 6px; color: var(--text-muted);">⭐ Շեֆ-խոհարարի ընտրանի</span>
+                        <span style="font-size: 0.73rem; background: var(--bg-card); border: 1px solid var(--border-color); padding: 0.2rem 0.5rem; border-radius: 6px; color: var(--text-muted);">👶 Մանկական մենյու</span>
+                        <span style="font-size: 0.73rem; background: var(--bg-card); border: 1px solid var(--border-color); padding: 0.2rem 0.5rem; border-radius: 6px; color: var(--text-muted);">⚠️ Ալերգեններ & Բուսակերություն</span>
+                    </div>
+                </div>
+
                 <!-- Languages & Feature Checkboxes -->
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
                     <!-- Allowed Languages -->
