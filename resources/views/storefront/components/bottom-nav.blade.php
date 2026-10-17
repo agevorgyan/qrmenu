@@ -83,9 +83,9 @@
                 @click="openAiWaiter()"
                 title="{{ $vendor->getAiWaiterName() }}">
             <div class="nav-icon-wrapper" style="position: relative;">
-                <i class="fa-solid fa-wand-magic-sparkles" style="color: #8b5cf6;"></i>
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
             </div>
-            <span class="nav-label" style="font-weight: 700; color: #8b5cf6;">{{ __('AI Մատուցող') }}</span>
+            <span class="nav-label">{{ __('AI Մատուցող') }}</span>
         </button>
         @endif
 
@@ -395,14 +395,14 @@
         bottom: calc(78px + max(0.5rem, env(safe-area-inset-bottom)));
         right: 1.25rem;
         z-index: 75;
-        background: linear-gradient(135deg, #8b5cf6, #d946ef);
+        background: var(--primary);
         color: #ffffff;
         border-radius: 9999px;
-        padding: 0.45rem 0.9rem 0.45rem 0.5rem;
+        padding: 0.45rem 0.95rem 0.45rem 0.5rem;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        box-shadow: 0 10px 25px rgba(139, 92, 246, 0.45), 0 0 15px rgba(217, 70, 239, 0.3);
+        gap: 0.55rem;
+        box-shadow: 0 8px 24px -2px color-mix(in srgb, var(--primary) 40%, transparent), 0 2px 8px rgba(0, 0, 0, 0.12);
         cursor: pointer;
         animation: aiBubbleFloat 3s ease-in-out infinite;
         transition: bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -420,13 +420,12 @@
         width: 30px;
         height: 30px;
         border-radius: 50%;
-        background: #ffffff;
-        color: #8b5cf6;
+        background: rgba(255, 255, 255, 0.22);
+        color: #ffffff;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 0.88rem;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     }
     .ai-bubble-content {
         display: flex;
@@ -441,7 +440,7 @@
     .ai-bubble-desc {
         font-size: 0.66rem;
         font-weight: 600;
-        opacity: 0.9;
+        opacity: 0.92;
     }
     @keyframes aiBubbleFloat {
         0%, 100% { transform: translateY(0); }

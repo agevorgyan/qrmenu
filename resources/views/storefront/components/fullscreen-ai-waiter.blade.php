@@ -12,12 +12,12 @@
      x-cloak>
 
     <!-- Top Navigation Bar -->
-    <header style="background: var(--bg-card); border-bottom: 1px solid var(--border-color); padding: 0.75rem 1.25rem; z-index: 30; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); width: 100%;">
+    <header style="background: var(--bg-card); border-bottom: 1px solid var(--border-color); padding: 0.75rem 1.25rem; z-index: 30; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); width: 100%;">
         <div style="max-width: 680px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; width: 100%;">
             <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <!-- AI Waiter Avatar with animated glow ring -->
-                <div class="ai-avatar-badge-wrap" style="position: relative; width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #8b5cf6, #ec4899); padding: 2px; flex-shrink: 0;">
-                    <div style="width: 100%; height: 100%; border-radius: 50%; background: var(--bg-card); display: flex; align-items: center; justify-content: center; color: #8b5cf6; font-size: 1.25rem;">
+                <!-- AI Waiter Avatar with clean theme ring -->
+                <div class="ai-avatar-badge-wrap" style="position: relative; width: 42px; height: 42px; border-radius: 50%; background: color-mix(in srgb, var(--primary) 15%, transparent); border: 2px solid var(--primary); padding: 1px; flex-shrink: 0;">
+                    <div style="width: 100%; height: 100%; border-radius: 50%; background: var(--bg-card); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.15rem;">
                         <i class="fa-solid fa-wand-magic-sparkles"></i>
                     </div>
                     <span style="position: absolute; bottom: 0; right: 0; width: 11px; height: 11px; border-radius: 50%; background: #10b981; border: 2px solid var(--bg-card);" title="Online"></span>
@@ -28,7 +28,7 @@
                         <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin: 0;">
                             {{ $vendor->getAiWaiterName() }}
                         </h3>
-                        <span style="font-size: 0.62rem; font-weight: 800; background: rgba(139, 92, 246, 0.15); color: #8b5cf6; padding: 0.1rem 0.45rem; border-radius: 6px; letter-spacing: 0.04em;">AI WAITER</span>
+                        <span style="font-size: 0.62rem; font-weight: 800; background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); padding: 0.12rem 0.45rem; border-radius: 6px; letter-spacing: 0.04em;">AI WAITER</span>
                     </div>
                     <div style="font-size: 0.72rem; color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 0.35rem; margin-top: 0.1rem;">
                         <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span>
@@ -44,7 +44,7 @@
                 <button type="button" 
                         @click="openAiChat()"
                         title="AI Chat"
-                        style="height: 36px; padding: 0 0.75rem; border-radius: 12px; background: rgba(139, 92, 246, 0.12); border: 1px solid rgba(139, 92, 246, 0.25); color: #8b5cf6; display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+                        class="ai-header-chat-btn">
                     <i class="fa-solid fa-comments"></i>
                     <span class="hidden-xs" x-show="selectedLang === 'hy'">Հարցնել</span>
                     <span class="hidden-xs" x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Chat</span>
@@ -55,14 +55,15 @@
                 <button type="button" 
                         @click="resetAiQuiz()"
                         title="Սկսել նորից"
-                        style="width: 36px; height: 36px; border-radius: 12px; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">
+                        class="ai-header-btn">
                     <i class="fa-solid fa-rotate-left"></i>
                 </button>
 
                 <!-- Close Button -->
                 <button type="button" 
                         @click="closeAiWaiter()" 
-                        style="width: 36px; height: 36px; border-radius: 12px; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">
+                        title="{{ __('menu.close') ?: 'Փակել' }}"
+                        class="ai-header-btn">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
@@ -84,19 +85,19 @@
                  style="text-align: center; padding: 2rem 0.5rem;">
                 
                 <!-- Animated Floating AI Avatar -->
-                <div style="position: relative; width: 110px; height: 110px; margin: 0 auto 1.75rem auto;">
-                    <div class="ai-intro-glow" style="position: absolute; inset: -14px; border-radius: 50%; background: radial-gradient(circle, rgba(139, 92, 246, 0.45), rgba(217, 70, 239, 0.15), transparent 70%); filter: blur(10px); animation: pulseAvatar 2.4s infinite ease-in-out;"></div>
-                    <div class="ai-intro-avatar" style="position: relative; width: 110px; height: 110px; border-radius: 50%; background: linear-gradient(135deg, #8b5cf6, #d946ef, #f59e0b); padding: 4px; box-shadow: 0 12px 30px rgba(139, 92, 246, 0.35); animation: floatAvatar 3s ease-in-out infinite;">
-                        <div style="width: 100%; height: 100%; border-radius: 50%; background: var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #8b5cf6;">
+                <div style="position: relative; width: 100px; height: 100px; margin: 0 auto 1.5rem auto;">
+                    <div class="ai-intro-glow" style="position: absolute; inset: -10px; border-radius: 50%; background: color-mix(in srgb, var(--primary) 25%, transparent); filter: blur(8px); animation: pulseAvatar 2.4s infinite ease-in-out;"></div>
+                    <div class="ai-intro-avatar" style="position: relative; width: 100px; height: 100px; border-radius: 50%; background: var(--bg-card); border: 3px solid var(--primary); padding: 2px; box-shadow: 0 10px 25px color-mix(in srgb, var(--primary) 25%, transparent); animation: floatAvatar 3s ease-in-out infinite;">
+                        <div style="width: 100%; height: 100%; border-radius: 50%; background: color-mix(in srgb, var(--primary) 8%, var(--bg-card)); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: var(--primary);">
                             <i class="fa-solid fa-wand-magic-sparkles"></i>
                         </div>
                     </div>
-                    <span style="position: absolute; bottom: 2px; right: 2px; width: 28px; height: 28px; border-radius: 50%; background: #10b981; color: #fff; border: 3px solid var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; box-shadow: 0 2px 8px rgba(16,185,129,0.3);">
+                    <span style="position: absolute; bottom: 2px; right: 2px; width: 26px; height: 26px; border-radius: 50%; background: #10b981; color: #fff; border: 2.5px solid var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; box-shadow: 0 2px 8px rgba(16,185,129,0.3);">
                         <i class="fa-solid fa-check"></i>
                     </span>
                 </div>
 
-                <div style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.3rem 0.85rem; border-radius: 9999px; background: rgba(139, 92, 246, 0.12); border: 1px solid rgba(139, 92, 246, 0.25); color: #8b5cf6; font-size: 0.76rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.85rem;">
+                <div style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.25rem 0.8rem; border-radius: 9999px; background: color-mix(in srgb, var(--primary) 10%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent); color: var(--primary); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.85rem;">
                     <i class="fa-solid fa-sparkles"></i>
                     <span x-show="selectedLang === 'hy'">Խելացի AI Մատուցող</span>
                     <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Intelligent AI Waiter</span>
@@ -123,7 +124,7 @@
 
                 <!-- Value Highlights Cards -->
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.65rem; max-width: 480px; margin: 0 auto 2rem auto;">
-                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 0.85rem 0.5rem; text-align: center;">
+                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 0.85rem 0.5rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
                         <div style="font-size: 1.4rem; margin-bottom: 0.25rem;">⚡</div>
                         <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-main);">
                             <span x-show="selectedLang === 'hy'">30 վայրկյան</span>
@@ -131,7 +132,7 @@
                             <span x-show="selectedLang === 'ru'">30 секунд</span>
                         </div>
                     </div>
-                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 0.85rem 0.5rem; text-align: center;">
+                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 0.85rem 0.5rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
                         <div style="font-size: 1.4rem; margin-bottom: 0.25rem;">🥩</div>
                         <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-main);">
                             <span x-show="selectedLang === 'hy'">Անհատական</span>
@@ -139,7 +140,7 @@
                             <span x-show="selectedLang === 'ru'">Персонально</span>
                         </div>
                     </div>
-                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 0.85rem 0.5rem; text-align: center;">
+                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 0.85rem 0.5rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
                         <div style="font-size: 1.4rem; margin-bottom: 0.25rem;">🍷</div>
                         <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-main);">
                             <span x-show="selectedLang === 'hy'">Զուգորդում</span>
@@ -150,11 +151,10 @@
                 </div>
 
                 <!-- CTA Actions -->
-                <div style="max-width: 420px; margin: 0 auto; display: flex; flex-direction: column; gap: 0.85rem;">
+                <div style="max-width: 420px; margin: 0 auto; display: flex; flex-direction: column; gap: 0.75rem;">
                     <button type="button" 
                             @click="aiStep = 'language'"
-                            class="ai-primary-btn"
-                            style="width: 100%; border: none; border-radius: 18px; padding: 1.05rem 1.5rem; font-size: 1.05rem; font-weight: 800; color: #ffffff; background: linear-gradient(135deg, #8b5cf6, #d946ef); box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.65rem; transition: transform 0.2s, box-shadow 0.2s;">
+                            class="ai-primary-btn">
                         <span>🚀</span>
                         <span x-show="selectedLang === 'hy'">Սկսել</span>
                         <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Start</span>
@@ -163,7 +163,7 @@
 
                     <button type="button" 
                             @click="skipToMenu()"
-                            style="width: 100%; border: 1px solid var(--border-color); border-radius: 18px; padding: 0.85rem 1.25rem; font-size: 0.9rem; font-weight: 600; color: var(--text-muted); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s;">
+                            class="ai-secondary-btn">
                         <span x-show="selectedLang === 'hy'">Տեսնել ամբողջ մենյուն</span>
                         <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Browse Full Menu Directly</span>
                         <span x-show="selectedLang === 'ru'">Посмотреть всё меню</span>
@@ -184,11 +184,11 @@
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
                     <button type="button" 
                             @click="aiStep = 'intro'" 
-                            style="background: none; border: none; color: var(--text-muted); font-size: 0.9rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.4rem;">
+                            style="background: none; border: none; color: var(--text-muted); font-size: 0.85rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.35rem;">
                         <i class="fa-solid fa-arrow-left"></i>
                         <span>Հետ</span>
                     </button>
-                    <span style="font-size: 0.75rem; font-weight: 700; color: #8b5cf6; text-transform: uppercase;">Step 1 of 2</span>
+                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">Step 1 of 2</span>
                 </div>
 
                 <div style="text-align: center; margin-bottom: 2rem;">
@@ -229,7 +229,7 @@
                  x-transition:enter-end="opacity-100 translate-y-0"
                  style="max-width: 480px; margin: 0 auto; text-align: center; padding: 2rem 0.5rem;">
                 
-                <div style="width: 80px; height: 80px; margin: 0 auto 1.25rem auto; border-radius: 50%; background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(217,70,239,0.15)); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; color: #8b5cf6;">
+                <div style="width: 80px; height: 80px; margin: 0 auto 1.25rem auto; border-radius: 50%; background: color-mix(in srgb, var(--primary) 12%, transparent); border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; color: var(--primary);">
                     <i class="fa-solid fa-face-smile-wink"></i>
                 </div>
 
@@ -245,11 +245,10 @@
                     <span x-show="selectedLang === 'ru'">Задам буквально несколько коротких вопросов, чтобы подобрать для вас самые вкусные блюда.</span>
                 </p>
 
-                <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                     <button type="button" 
                             @click="startAiQuestions()"
-                            class="ai-primary-btn"
-                            style="width: 100%; border: none; border-radius: 18px; padding: 1.05rem 1.5rem; font-size: 1.05rem; font-weight: 800; color: #ffffff; background: linear-gradient(135deg, #8b5cf6, #d946ef); box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.65rem;">
+                            class="ai-primary-btn">
                         <span>✨</span>
                         <span x-show="selectedLang === 'hy'">Սկսել</span>
                         <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Start</span>
@@ -258,10 +257,11 @@
 
                     <button type="button" 
                             @click="skipToMenu()"
-                            style="width: 100%; border: 1px solid var(--border-color); border-radius: 18px; padding: 0.85rem 1.25rem; font-size: 0.9rem; font-weight: 600; color: var(--text-muted); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                            class="ai-secondary-btn">
                         <span x-show="selectedLang === 'hy'">Տեսնել ամբողջ մենյուն</span>
                         <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Browse Full Menu Directly</span>
                         <span x-show="selectedLang === 'ru'">Посмотреть всё меню</span>
+                        <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem;"></i>
                     </button>
                 </div>
             </div>
@@ -286,7 +286,7 @@
                         <span x-show="selectedLang === 'ru'">Назад</span>
                     </button>
 
-                    <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; font-weight: 800; color: #8b5cf6;">
+                    <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; font-weight: 800; color: var(--primary);">
                         <i class="fa-solid fa-circle-dot"></i>
                         <span x-text="'Հարց ' + (aiQuestionHistory.length + 1) + ' / 4'"></span>
                     </div>
@@ -301,21 +301,21 @@
                 </div>
 
                 <!-- Progress Bar -->
-                <div style="width: 100%; height: 6px; background: rgba(139, 92, 246, 0.12); border-radius: 9999px; margin-bottom: 1.5rem; overflow: hidden;">
-                    <div style="height: 100%; background: linear-gradient(90deg, #8b5cf6, #d946ef); border-radius: 9999px; transition: width 0.3s ease;"
+                <div style="width: 100%; height: 6px; background: color-mix(in srgb, var(--primary) 12%, transparent); border-radius: 9999px; margin-bottom: 1.5rem; overflow: hidden;">
+                    <div style="height: 100%; background: var(--primary); border-radius: 9999px; transition: width 0.3s ease;"
                          :style="'width: ' + Math.min(100, Math.max(25, (aiQuestionHistory.length + 1) * 25)) + '%;'"></div>
                 </div>
 
                 <!-- Active Question Card -->
                 <template x-if="aiCurrentQuestion">
-                    <div style="background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 24px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04); margin-bottom: 1.25rem;">
+                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.04); margin-bottom: 1.25rem;">
                         
                         <!-- Question Header -->
                         <div style="margin-bottom: 1.25rem;">
                             <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.35rem; font-weight: 900; color: var(--text-main); margin: 0 0 0.35rem 0; line-height: 1.3;"
                                 x-text="aiCurrentQuestion.title"></h3>
                             <p style="font-size: 0.86rem; color: var(--text-muted); margin: 0;"
-                               x-text="aiCurrentQuestion.subtitle"></p>
+                                x-text="aiCurrentQuestion.subtitle"></p>
                         </div>
 
                         <!-- Quick Answer Options Grid -->
@@ -348,12 +348,13 @@
                                        x-model="aiFreeTextInput"
                                        :placeholder="selectedLang === 'hy' ? 'Օրինակ՝ Մսային ուտեստ առանց սնկի, թեթև սոուսով...' : (selectedLang === 'ru' ? 'например: Мясо без грибов, не острый соус...' : 'e.g. Tender meat without mushrooms, light sauce...')"
                                        class="form-control" 
-                                       style="width: 100%; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); border-radius: 16px; padding: 0.85rem 3.4rem 0.85rem 1rem; font-size: 0.92rem; outline: none; transition: border-color 0.2s;">
+                                       style="width: 100%; background: var(--bg-main); border: 1.5px solid var(--border-color); color: var(--text-main); border-radius: 14px; padding: 0.85rem 3.4rem 0.85rem 1rem; font-size: 0.92rem; outline: none; transition: border-color 0.2s;">
                                 
                                 <button type="submit" 
                                         :disabled="aiLoading || !aiFreeTextInput.trim()"
-                                        style="position: absolute; right: 0.4rem; width: 38px; height: 38px; border-radius: 12px; border: none; background: linear-gradient(135deg, #8b5cf6, #d946ef); color: #ffffff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s; opacity: aiFreeTextInput.trim() ? 1 : 0.6;">
-                                    <i class="fa-solid fa-paper-plane" x-show="!aiLoading"></i>
+                                        style="position: absolute; right: 0.4rem; width: 36px; height: 36px; border-radius: 10px; border: none; background: var(--primary); color: #ffffff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: opacity 0.15s;"
+                                        :style="aiFreeTextInput.trim() ? 'opacity: 1;' : 'opacity: 0.45; cursor: not-allowed;'">
+                                    <i class="fa-solid fa-arrow-right" x-show="!aiLoading"></i>
                                     <i class="fa-solid fa-spinner fa-spin" x-show="aiLoading" x-cloak></i>
                                 </button>
                             </div>
@@ -373,10 +374,10 @@
                  x-transition:enter-end="opacity-100 scale-100"
                  style="max-width: 480px; margin: 0 auto; text-align: center; padding: 3rem 0.5rem;">
                 
-                <div style="position: relative; width: 100px; height: 100px; margin: 0 auto 2rem auto;">
-                    <div style="position: absolute; inset: -15px; border-radius: 50%; background: radial-gradient(circle, rgba(139, 92, 246, 0.4), transparent 70%); filter: blur(8px); animation: pulseAvatar 1.5s infinite ease-in-out;"></div>
-                    <div style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #8b5cf6, #ec4899); padding: 3px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(139, 92, 246, 0.35);">
-                        <div style="width: 100%; height: 100%; border-radius: 50%; background: var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 2.4rem; color: #8b5cf6;">
+                <div style="position: relative; width: 90px; height: 90px; margin: 0 auto 2rem auto;">
+                    <div style="position: absolute; inset: -12px; border-radius: 50%; background: color-mix(in srgb, var(--primary) 20%, transparent); filter: blur(8px); animation: pulseAvatar 1.5s infinite ease-in-out;"></div>
+                    <div style="width: 90px; height: 90px; border-radius: 50%; background: var(--bg-card); border: 3px solid var(--primary); padding: 2px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px color-mix(in srgb, var(--primary) 25%, transparent);">
+                        <div style="width: 100%; height: 100%; border-radius: 50%; background: color-mix(in srgb, var(--primary) 8%, var(--bg-card)); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; color: var(--primary);">
                             <i class="fa-solid fa-wand-magic-sparkles fa-spin" style="--fa-animation-duration: 3s;"></i>
                         </div>
                     </div>
@@ -437,8 +438,8 @@
                     </div>
                 </div>
 
-                <div style="width: 140px; height: 4px; background: rgba(139, 92, 246, 0.15); border-radius: 9999px; margin: 2rem auto 0 auto; overflow: hidden;">
-                    <div style="width: 100%; height: 100%; background: linear-gradient(90deg, #8b5cf6, #d946ef); animation: shimmerBar 1.2s infinite ease-in-out;"></div>
+                <div style="width: 140px; height: 4px; background: color-mix(in srgb, var(--primary) 15%, transparent); border-radius: 9999px; margin: 2rem auto 0 auto; overflow: hidden;">
+                    <div style="width: 100%; height: 100%; background: var(--primary); animation: shimmerBar 1.2s infinite ease-in-out;"></div>
                 </div>
             </div>
 
@@ -453,13 +454,13 @@
                 <!-- Screen Header Title -->
                 <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.25rem;">
                     <div>
-                        <div style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; font-weight: 800; color: #8b5cf6; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem;">
+                        <div style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem;">
                             <i class="fa-solid fa-sparkles"></i>
                             <span x-show="selectedLang === 'hy'">Անհատական ընտրանի</span>
                             <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Personalized Selection</span>
                             <span x-show="selectedLang === 'ru'">Персональный выбор</span>
                         </div>
-                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.55rem; font-weight: 900; color: var(--text-main); margin: 0;">
+                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.45rem; font-weight: 800; color: var(--text-main); margin: 0;">
                             <span x-show="selectedLang === 'hy'">✨ Ձեզ համար ընտրեցինք</span>
                             <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">✨ Selected Just for You</span>
                             <span x-show="selectedLang === 'ru'">✨ Подобранное для вас</span>
@@ -468,7 +469,7 @@
 
                     <button type="button" 
                             @click="aiStep = 'question'"
-                            style="background: none; border: 1px solid var(--border-color); border-radius: 12px; padding: 0.4rem 0.75rem; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 0.35rem;">
+                            class="ai-refine-btn">
                         <i class="fa-solid fa-sliders"></i>
                         <span x-show="selectedLang === 'hy'">Փոխել</span>
                         <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Refine</span>
@@ -478,32 +479,32 @@
 
                 <!-- Sommelier Commentary Bubble -->
                 <div x-show="aiCommentary" 
-                     style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.05)); border: 1.5px solid rgba(139, 92, 246, 0.25); border-radius: 20px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; gap: 0.85rem; align-items: flex-start; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.06);">
-                    <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #8b5cf6, #d946ef); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);">
+                     class="ai-note-box">
+                    <div style="width: 36px; height: 36px; border-radius: 10px; background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0;">
                         <i class="fa-solid fa-quote-left"></i>
                     </div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 800; font-size: 0.78rem; color: #8b5cf6; margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 800; font-size: 0.74rem; color: var(--primary); margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.04em;">
                             {{ $vendor->getAiWaiterName() }} &bull; AI NOTE
                         </div>
-                        <div style="font-size: 0.9rem; line-height: 1.5; color: var(--text-main);" x-text="aiCommentary"></div>
+                        <div style="font-size: 0.88rem; line-height: 1.5; color: var(--text-main);" x-text="aiCommentary"></div>
                     </div>
                 </div>
 
                 <!-- 1. MAIN RECOMMENDATIONS (Hero Cards) -->
-                <div style="display: flex; flex-direction: column; gap: 1.25rem; margin-bottom: 2rem;">
+                <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem;">
                     <template x-for="(rec, idx) in aiMainRecommendations" :key="rec.id">
-                        <div class="ai-hero-card" style="background: var(--bg-card); border: 2px solid var(--border-color); border-radius: 24px; padding: 1.25rem; box-shadow: 0 10px 30px rgba(0,0,0,0.05); position: relative; overflow: hidden; transition: all 0.25s ease;">
+                        <div class="ai-hero-card">
                             
                             <!-- Match Score Pill Badge -->
-                            <div style="position: absolute; top: 1rem; right: 1rem; z-index: 5; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; padding: 0.3rem 0.75rem; border-radius: 9999px; font-size: 0.78rem; font-weight: 800; display: flex; align-items: center; gap: 0.35rem; box-shadow: 0 4px 12px rgba(16,185,129,0.35);">
+                            <div style="position: absolute; top: 1rem; right: 1rem; z-index: 5;" class="ai-match-badge">
                                 <i class="fa-solid fa-fire"></i>
                                 <span x-text="rec.match_score + '% Match'"></span>
                             </div>
 
                             <!-- In-cart quantity badge -->
                             <template x-if="getCartItemQty(rec.id) > 0">
-                                <div style="position: absolute; top: 1.15rem; left: 1.15rem; z-index: 2; background: #10b981; color: #ffffff; padding: 0.2rem 0.65rem; border-radius: 999px; font-size: 0.74rem; font-weight: 800; display: inline-flex; align-items: center; gap: 0.35rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.45);">
+                                <div style="position: absolute; top: 1rem; left: 1rem; z-index: 2; background: #10b981; color: #ffffff; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);">
                                     <i class="fa-solid fa-check"></i>
                                     <span x-show="selectedLang === 'hy'" x-text="getCartItemQty(rec.id) + ' հատ զամբյուղում'"></span>
                                     <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)" x-text="getCartItemQty(rec.id) + ' in cart'"></span>
@@ -515,38 +516,38 @@
                                 <img :src="rec.image || '{{ asset('images/default-dish.png') }}'" 
                                      x-on:error="$event.target.src = '{{ asset('images/default-dish.png') }}'" 
                                      :alt="rec.name" 
-                                     style="width: 105px; height: 105px; border-radius: 18px; object-fit: cover; flex-shrink: 0; box-shadow: 0 6px 16px rgba(0,0,0,0.12);">
+                                     style="width: 105px; height: 105px; border-radius: 14px; object-fit: cover; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
 
                                 <div style="flex: 1; min-width: 0; padding-right: 4.5rem;">
                                     <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.25rem; flex-wrap: wrap;">
-                                        <span style="font-size: 0.72rem; font-weight: 700; color: #8b5cf6; background: rgba(139, 92, 246, 0.12); padding: 0.15rem 0.5rem; border-radius: 6px;" x-text="rec.category_name"></span>
+                                        <span class="ai-meta-pill" x-text="rec.category_name"></span>
                                         <template x-if="rec.calories">
-                                            <span style="font-size: 0.72rem; color: var(--text-muted);">
-                                                <i class="fa-solid fa-fire" style="color: #f97316;"></i> <span x-text="rec.calories + ' kcal'"></span>
+                                            <span class="ai-meta-pill">
+                                                <i class="fa-solid fa-fire-flame-curved" style="color: #f59e0b; font-size: 0.68rem;"></i>
+                                                <span x-text="rec.calories + ' kcal'"></span>
                                             </span>
                                         </template>
                                     </div>
 
-                                    <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 900; color: var(--text-main); margin: 0 0 0.35rem 0; line-height: 1.25;" x-text="rec.name"></h3>
-                                    <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" x-text="rec.description"></div>
+                                    <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.3rem 0; line-height: 1.3;" x-text="rec.name"></h3>
+                                    <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" x-text="rec.description"></div>
                                 </div>
                             </div>
 
                             <!-- Pricing & One-Tap Add CTA -->
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid var(--border-color);">
-                                <div style="font-family: 'Outfit', sans-serif; font-size: 1.35rem; font-weight: 900; color: var(--accent);" x-text="rec.formatted_price"></div>
+                                <div class="ai-price-text" x-text="rec.formatted_price"></div>
 
                                 <button type="button" 
                                         @click="addAiDishToCart(rec)"
                                         class="ai-action-btn"
-                                        :style="getCartItemQty(rec.id) > 0 ? 'background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);' : 'background: linear-gradient(135deg, #8b5cf6, #d946ef); box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);'"
-                                        style="color: #ffffff; border: none; border-radius: 14px; padding: 0.65rem 1.15rem; font-size: 0.88rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s;">
+                                        :class="{ 'in-cart': getCartItemQty(rec.id) > 0 }">
                                     <template x-if="getCartItemQty(rec.id) === 0">
                                         <span style="display: flex; align-items: center; gap: 0.45rem;">
-                                            <i class="fa-solid fa-cart-plus"></i>
-                                            <span x-show="selectedLang === 'hy'">+ Ավելացնել պատվերին</span>
-                                            <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">+ Add to Order</span>
-                                            <span x-show="selectedLang === 'ru'">+ Добавить к заказу</span>
+                                            <i class="fa-solid fa-plus"></i>
+                                            <span x-show="selectedLang === 'hy'">Ավելացնել պատվերին</span>
+                                            <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Add to Order</span>
+                                            <span x-show="selectedLang === 'ru'">Добавить к заказу</span>
                                         </span>
                                     </template>
                                     <template x-if="getCartItemQty(rec.id) > 0">
@@ -560,12 +561,12 @@
                                 </button>
                             </div>
 
-                            <!-- AI Explanation: Why this dish? (Section 16) -->
+                            <!-- AI Explanation: Why this dish? -->
                             <template x-if="rec.reason">
-                                <div style="margin-top: 0.85rem; padding: 0.75rem 0.95rem; border-radius: 14px; background: var(--bg-body); border: 1px dashed var(--border-color); font-size: 0.82rem; color: var(--text-muted); display: flex; align-items: flex-start; gap: 0.55rem;">
-                                    <span style="font-size: 1rem; flex-shrink: 0;">💡</span>
-                                    <div>
-                                        <strong style="color: var(--text-main); display: block; margin-bottom: 0.15rem;">
+                                <div class="ai-reason-box">
+                                    <span style="font-size: 0.95rem; flex-shrink: 0; line-height: 1.2;">💡</span>
+                                    <div style="flex: 1; min-width: 0;">
+                                        <strong style="color: var(--text-main); font-size: 0.78rem; display: block; margin-bottom: 0.15rem;">
                                             <span x-show="selectedLang === 'hy'">Ինչու՞ սա:</span>
                                             <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Why this dish?</span>
                                             <span x-show="selectedLang === 'ru'">Почему это блюдо?</span>
@@ -578,57 +579,56 @@
                     </template>
                 </div>
 
-                <!-- 2. SMART PAIRING BUNDLE CARD (Section 17) -->
+                <!-- 2. SMART PAIRING BUNDLE CARD -->
                 <template x-if="aiBundle && aiBundle.items && aiBundle.items.length >= 2">
-                    <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(217, 70, 239, 0.08)); border: 2px solid #8b5cf6; border-radius: 24px; padding: 1.35rem; margin-bottom: 2rem; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(139, 92, 246, 0.15);">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                    <div class="ai-bundle-card">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
                             <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <span style="font-size: 1.3rem;">✨</span>
-                                <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 900; color: #8b5cf6; margin: 0;">
+                                <i class="fa-solid fa-sparkles" style="color: var(--primary); font-size: 1rem;"></i>
+                                <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin: 0;">
                                     <span x-show="selectedLang === 'hy'">Խելացի Համադրություն · Smart Bundle</span>
                                     <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Smart Pairing Bundle</span>
                                     <span x-show="selectedLang === 'ru'">Комбо-набор · Smart Bundle</span>
                                 </h3>
                             </div>
-                            <span style="font-size: 0.75rem; font-weight: 800; background: #8b5cf6; color: #fff; padding: 0.2rem 0.6rem; border-radius: 9999px;">1-TAP COMBO</span>
+                            <span style="font-size: 0.7rem; font-weight: 800; background: var(--primary); color: #ffffff; padding: 0.2rem 0.65rem; border-radius: 9999px; letter-spacing: 0.03em;">1-TAP COMBO</span>
                         </div>
 
-                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.45;" x-text="aiBundle.note"></div>
+                        <div style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.45;" x-text="aiBundle.note"></div>
 
                         <!-- Bundle Items Row -->
-                        <div style="display: flex; flex-direction: column; gap: 0.55rem; margin-bottom: 1.25rem;">
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.25rem;">
                             <template x-for="(item, bIdx) in aiBundle.items" :key="item.id">
-                                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 0.65rem 0.85rem; display: flex; align-items: center; justify-content: space-between;">
-                                    <div style="display: flex; align-items: center; gap: 0.65rem;">
+                                <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.65rem 0.85rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0;">
                                         <img :src="item.image || '{{ asset('images/default-dish.png') }}'" 
                                              x-on:error="$event.target.src = '{{ asset('images/default-dish.png') }}'" 
-                                             style="width: 40px; height: 40px; border-radius: 10px; object-fit: cover;">
-                                        <div>
-                                            <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);" x-text="item.name"></div>
+                                             style="width: 40px; height: 40px; border-radius: 10px; object-fit: cover; flex-shrink: 0;">
+                                        <div style="min-width: 0;">
+                                            <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" x-text="item.name"></div>
                                             <div style="font-size: 0.72rem; color: var(--text-muted);" x-text="item.category_name"></div>
                                         </div>
                                     </div>
-                                    <div style="font-size: 0.88rem; font-weight: 800; color: var(--accent);" x-text="item.formatted_price"></div>
+                                    <div style="font-family: 'Outfit', sans-serif; font-size: 0.88rem; font-weight: 800; color: var(--text-main); white-space: nowrap;" x-text="item.formatted_price"></div>
                                 </div>
                             </template>
                         </div>
 
                         <!-- Bundle Total & Single Tap Order CTA -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.85rem; border-top: 1.5px dashed rgba(139, 92, 246, 0.3);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.85rem; border-top: 1px dashed var(--border-color);">
                             <div>
-                                <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+                                <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em;">
                                     <span x-show="selectedLang === 'hy'">Ընդհանուր արժեքը</span>
                                     <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Total Bundle Price</span>
                                     <span x-show="selectedLang === 'ru'">Общая стоимость</span>
                                 </div>
-                                <div style="font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 900; color: var(--accent);" x-text="aiBundle.formatted_total"></div>
+                                <div style="font-family: 'Outfit', sans-serif; font-size: 1.3rem; font-weight: 800; color: var(--text-main);" x-text="aiBundle.formatted_total"></div>
                             </div>
 
                             <button type="button" 
                                     @click="addAiBundleToCart()"
-                                    class="ai-action-btn"
-                                    style="background: linear-gradient(135deg, #8b5cf6, #d946ef); color: #ffffff; border: none; border-radius: 16px; padding: 0.75rem 1.25rem; font-size: 0.95rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 0.55rem; box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);">
-                                <span>✨</span>
+                                    class="ai-bundle-btn">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
                                 <span x-show="selectedLang === 'hy'">Ավելացնել ամբողջ առաջարկը</span>
                                 <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Add Entire Bundle</span>
                                 <span x-show="selectedLang === 'ru'">Добавить весь набор</span>
@@ -637,37 +637,37 @@
                     </div>
                 </template>
 
-                <!-- 3. SECONDARY ALTERNATIVES & DRINK PAIRING GRID (Section 15) -->
+                <!-- 3. SECONDARY ALTERNATIVES & DRINK PAIRING GRID -->
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
                     
                     <!-- Secondary Alternatives -->
                     <template x-if="aiSecondaryRecommendations && aiSecondaryRecommendations.length > 0">
-                        <div style="background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 20px; padding: 1.15rem;">
-                            <div style="font-size: 0.9rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.45rem;">
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 1.15rem; box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.04);">
+                            <div style="font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.45rem;">
                                 <span>🥈</span>
                                 <span x-show="selectedLang === 'hy'">Այլընտրանքային առաջարկներ</span>
                                 <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Alternative Highlights</span>
                                 <span x-show="selectedLang === 'ru'">Альтернативные варианты</span>
                             </div>
 
-                            <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+                            <div style="display: flex; flex-direction: column; gap: 0.55rem;">
                                 <template x-for="alt in aiSecondaryRecommendations" :key="alt.id">
-                                    <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 0.65rem 0.85rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                                    <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.65rem 0.85rem; display: flex; align-items: center; justify-content: space-between; gap: 0.65rem;">
                                         <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0;">
                                             <img :src="alt.image || '{{ asset('images/default-dish.png') }}'" 
                                                  x-on:error="$event.target.src = '{{ asset('images/default-dish.png') }}'" 
                                                  style="width: 44px; height: 44px; border-radius: 10px; object-fit: cover; flex-shrink: 0;">
                                             <div style="min-width: 0;">
                                                 <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" x-text="alt.name"></div>
-                                                <div style="font-size: 0.8rem; font-weight: 800; color: var(--accent);" x-text="alt.formatted_price"></div>
+                                                <div style="font-family: 'Outfit', sans-serif; font-size: 0.82rem; font-weight: 800; color: var(--text-main); margin-top: 0.1rem;" x-text="alt.formatted_price"></div>
                                             </div>
                                         </div>
 
                                         <button type="button" 
                                                 @click="addAiDishToCart(alt)"
                                                 :title="getCartItemQty(alt.id) > 0 ? 'Զամբյուղում է (' + getCartItemQty(alt.id) + ')' : 'Ավելացնել'"
-                                                :style="getCartItemQty(alt.id) > 0 ? 'background: #10b981; color: #fff; border-color: #10b981; min-width: 44px; padding: 0 0.4rem;' : 'background: var(--bg-card); color: #8b5cf6; border-color: var(--border-color); width: 34px;'"
-                                                style="height: 34px; border-radius: 10px; border: 1px solid; display: flex; align-items: center; justify-content: center; gap: 0.25rem; cursor: pointer; flex-shrink: 0; font-size: 0.8rem; font-weight: 700; transition: all 0.2s;">
+                                                class="ai-card-btn-add"
+                                                :class="{ 'in-cart': getCartItemQty(alt.id) > 0 }">
                                             <i :class="getCartItemQty(alt.id) > 0 ? 'fa-solid fa-check' : 'fa-solid fa-plus'"></i>
                                             <span x-show="getCartItemQty(alt.id) > 0" x-text="getCartItemQty(alt.id)"></span>
                                         </button>
@@ -679,30 +679,30 @@
 
                     <!-- Drink Pairing -->
                     <template x-if="aiPairingDrink">
-                        <div style="background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 20px; padding: 1.15rem;">
-                            <div style="font-size: 0.9rem; font-weight: 800; color: #8b5cf6; margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.45rem;">
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 1.15rem; box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.04);">
+                            <div style="font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.45rem;">
                                 <span>🍷</span>
                                 <span x-show="selectedLang === 'hy'">Առաջարկվող Ըմպելիք</span>
                                 <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Suggested Drink Pairing</span>
                                 <span x-show="selectedLang === 'ru'">Рекомендуемый напиток</span>
                             </div>
 
-                            <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 0.75rem 0.85rem; display: flex; align-items: center; justify-content: space-between; gap: 0.65rem;">
+                            <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.65rem 0.85rem; display: flex; align-items: center; justify-content: space-between; gap: 0.65rem;">
                                 <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0;">
                                     <img :src="aiPairingDrink.image || '{{ asset('images/default-dish.png') }}'" 
                                          x-on:error="$event.target.src = '{{ asset('images/default-dish.png') }}'" 
-                                         style="width: 46px; height: 46px; border-radius: 12px; object-fit: cover; flex-shrink: 0;">
+                                         style="width: 44px; height: 44px; border-radius: 10px; object-fit: cover; flex-shrink: 0;">
                                     <div style="min-width: 0;">
                                         <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" x-text="aiPairingDrink.name"></div>
-                                        <div style="font-size: 0.8rem; font-weight: 800; color: var(--accent);" x-text="aiPairingDrink.formatted_price"></div>
+                                        <div style="font-family: 'Outfit', sans-serif; font-size: 0.82rem; font-weight: 800; color: var(--text-main); margin-top: 0.1rem;" x-text="aiPairingDrink.formatted_price"></div>
                                     </div>
                                 </div>
 
                                 <button type="button" 
                                         @click="addAiDishToCart(aiPairingDrink)"
                                         :title="getCartItemQty(aiPairingDrink.id) > 0 ? 'Զամբյուղում է (' + getCartItemQty(aiPairingDrink.id) + ')' : 'Ավելացնել'"
-                                        :style="getCartItemQty(aiPairingDrink.id) > 0 ? 'background: #10b981; min-width: 46px; padding: 0 0.5rem;' : 'background: #8b5cf6; width: 36px;'"
-                                        style="height: 36px; border-radius: 12px; border: none; color: #ffffff; display: flex; align-items: center; justify-content: center; gap: 0.3rem; cursor: pointer; flex-shrink: 0; font-size: 0.82rem; font-weight: 800; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: all 0.2s;">
+                                        class="ai-card-btn-add"
+                                        :class="{ 'in-cart': getCartItemQty(aiPairingDrink.id) > 0 }">
                                     <i :class="getCartItemQty(aiPairingDrink.id) > 0 ? 'fa-solid fa-check' : 'fa-solid fa-plus'"></i>
                                     <span x-show="getCartItemQty(aiPairingDrink.id) > 0" x-text="getCartItemQty(aiPairingDrink.id)"></span>
                                 </button>
@@ -712,26 +712,25 @@
                 </div>
 
                 <!-- 4. CHAT WITH AI WAITER PROMPT CARD (Section 23) -->
-                <div style="background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: 20px; padding: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; cursor: pointer; transition: border-color 0.2s;"
-                     @click="openAiChat()">
-                    <div style="display: flex; align-items: center; gap: 0.85rem;">
-                        <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(139, 92, 246, 0.15); color: #8b5cf6; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
+                <div class="ai-ask-card" @click="openAiChat()">
+                    <div style="display: flex; align-items: center; gap: 0.85rem; min-width: 0;">
+                        <div style="width: 42px; height: 42px; border-radius: 12px; background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0;">
                             <i class="fa-solid fa-comments"></i>
                         </div>
-                        <div>
-                            <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">
+                        <div style="min-width: 0;">
+                            <div style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 0.95rem; color: var(--text-main);">
                                 <span x-show="selectedLang === 'hy'">💬 Հարցրեք AI մատուցողին</span>
                                 <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">💬 Ask AI Waiter Anything</span>
                                 <span x-show="selectedLang === 'ru'">💬 Спросите у AI-официанта</span>
                             </div>
-                            <div style="font-size: 0.78rem; color: var(--text-muted);">
+                            <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.35; margin-top: 0.15rem;">
                                 <span x-show="selectedLang === 'hy'">Ունե՞ք հարցեր բաղադրիչների կամ առանց մսի ուտեստների մասին:</span>
                                 <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Have questions about allergens, meatless options or kids menu?</span>
                                 <span x-show="selectedLang === 'ru'">Есть вопросы по аллергенам, веганским блюдам или напиткам?</span>
                             </div>
                         </div>
                     </div>
-                    <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 0.85rem;"></i>
+                    <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 0.85rem; flex-shrink: 0;"></i>
                 </div>
 
             </div>
@@ -757,8 +756,8 @@
             <button type="button" 
                     @click="closeAiWaiter(); showCartModal = true"
                     :class="{ 'cart-bump': cartBump }"
-                    :style="cartTotalCount > 0 ? 'background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45);' : 'background: var(--primary);'"
-                    style="color: #ffffff; border: none; border-radius: 16px; padding: 0.7rem 1.35rem; font-size: 0.95rem; font-weight: 800; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.18); transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
+                    :style="cartTotalCount > 0 ? 'background: #10b981; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.4);' : 'background: var(--primary);'"
+                    style="color: #ffffff; border: none; border-radius: 14px; padding: 0.72rem 1.35rem; font-size: 0.92rem; font-weight: 700; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.15); transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
                 <i class="fa-solid fa-basket-shopping"></i>
                 <span x-show="cartTotalCount === 0">
                     <span x-show="selectedLang === 'hy'">Զամբյուղ</span>
@@ -797,7 +796,7 @@
             <!-- Drawer Header -->
             <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 0.65rem;">
-                    <div style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #8b5cf6, #d946ef); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.1rem;">
+                    <div style="width: 38px; height: 38px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.05rem; box-shadow: 0 3px 10px rgba(0,0,0,0.12);">
                         <i class="fa-solid fa-wand-magic-sparkles"></i>
                     </div>
                     <div>
@@ -814,7 +813,7 @@
 
                 <button type="button" 
                         @click="closeAiChat()"
-                        style="width: 34px; height: 34px; border-radius: 10px; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                        class="ai-header-btn">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
@@ -843,7 +842,7 @@
                         <!-- User Message -->
                         <template x-if="msg.sender === 'user'">
                             <div style="display: flex; justify-content: flex-end;">
-                                <div style="max-width: 82%; background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #ffffff; padding: 0.75rem 1rem; border-radius: 18px 18px 4px 18px; font-size: 0.92rem; line-height: 1.45; box-shadow: 0 4px 12px rgba(139,92,246,0.25);"
+                                <div style="max-width: 82%; background: var(--primary); color: #ffffff; padding: 0.75rem 1rem; border-radius: 18px 18px 4px 18px; font-size: 0.92rem; line-height: 1.45; box-shadow: 0 3px 10px color-mix(in srgb, var(--primary) 25%, transparent);"
                                      x-text="msg.text"></div>
                             </div>
                         </template>
@@ -851,11 +850,11 @@
                         <!-- AI Message -->
                         <template x-if="msg.sender === 'ai'">
                             <div style="display: flex; gap: 0.65rem; align-items: flex-start; max-width: 90%;">
-                                <div style="width: 30px; height: 30px; border-radius: 50%; background: rgba(139, 92, 246, 0.15); color: #8b5cf6; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; margin-top: 0.2rem;">
-                                    <i class="fa-solid fa-robot"></i>
+                                <div style="width: 30px; height: 30px; border-radius: 50%; background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; margin-top: 0.2rem;">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i>
                                 </div>
                                 <div style="flex: 1;">
-                                    <div style="background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.75rem 1rem; border-radius: 4px 18px 18px 18px; font-size: 0.92rem; line-height: 1.5;"
+                                    <div style="background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.75rem 1rem; border-radius: 4px 18px 18px 18px; font-size: 0.92rem; line-height: 1.5;"
                                          x-text="msg.text"></div>
                                     
                                     <!-- Embedded Product Cards inside Chat -->
@@ -869,14 +868,14 @@
                                                              style="width: 36px; height: 36px; border-radius: 8px; object-fit: cover; flex-shrink: 0;">
                                                         <div style="min-width: 0;">
                                                             <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" x-text="p.name"></div>
-                                                            <div style="font-size: 0.78rem; font-weight: 800; color: var(--accent);" x-text="p.formatted_price"></div>
+                                                            <div style="font-size: 0.8rem; font-weight: 800; color: var(--text-main);" x-text="p.formatted_price"></div>
                                                         </div>
                                                     </div>
 
                                                     <button type="button" 
                                                             @click="addAiDishToCart(p)"
                                                             :title="getCartItemQty(p.id) > 0 ? 'Զամբյուղում է (' + getCartItemQty(p.id) + ')' : 'Ավելացնել զամբյուղ'"
-                                                            :style="getCartItemQty(p.id) > 0 ? 'background: #10b981; min-width: 40px; padding: 0 0.35rem;' : 'background: #8b5cf6; width: 30px;'"
+                                                            :style="getCartItemQty(p.id) > 0 ? 'background: #10b981; min-width: 40px; padding: 0 0.35rem;' : 'background: var(--primary); width: 30px;'"
                                                             style="height: 30px; border-radius: 8px; border: none; color: #fff; display: flex; align-items: center; justify-content: center; gap: 0.25rem; cursor: pointer; flex-shrink: 0; font-size: 0.75rem; font-weight: 700; transition: all 0.2s;">
                                                         <i :class="getCartItemQty(p.id) > 0 ? 'fa-solid fa-check' : 'fa-solid fa-plus'"></i>
                                                         <span x-show="getCartItemQty(p.id) > 0" x-text="getCartItemQty(p.id)"></span>
@@ -893,7 +892,7 @@
 
                 <!-- AI Chat Typing indicator -->
                 <div x-show="aiChatLoading" style="display: flex; gap: 0.5rem; align-items: center; color: var(--text-muted); font-size: 0.85rem;">
-                    <i class="fa-solid fa-spinner fa-spin" style="color: #8b5cf6;"></i>
+                    <i class="fa-solid fa-spinner fa-spin" style="color: var(--primary);"></i>
                     <span x-show="selectedLang === 'hy'">Մտածում եմ...</span>
                     <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Thinking...</span>
                     <span x-show="selectedLang === 'ru'">Печатает...</span>
@@ -905,13 +904,13 @@
                 <form @submit.prevent="sendAiChatMessage()">
                     <div style="position: relative; display: flex; align-items: center;">
                         <input type="text" 
-                               x-model="aiChatInput" 
-                               :placeholder="selectedLang === 'hy' ? 'Հարցրեք բաղադրիչների, գինու, աղանդերի մասին...' : (selectedLang === 'ru' ? 'Спросите об ингредиентах, вине, десертах...' : 'Ask about ingredients, wine, desserts...')"
-                               style="width: 100%; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); border-radius: 14px; padding: 0.75rem 3rem 0.75rem 0.85rem; font-size: 0.9rem; outline: none;">
+                                x-model="aiChatInput" 
+                                :placeholder="selectedLang === 'hy' ? 'Հարցրեք բաղադրիչների, գինու, աղանդերի մասին...' : (selectedLang === 'ru' ? 'Спросите об ингредиентах, вине, десертах...' : 'Ask about ingredients, wine, desserts...')"
+                                style="width: 100%; background: var(--bg-main); border: 1.5px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 3rem 0.75rem 0.85rem; font-size: 0.9rem; outline: none;">
                         
                         <button type="submit" 
                                 :disabled="aiChatLoading || !aiChatInput.trim()"
-                                style="position: absolute; right: 0.35rem; width: 34px; height: 34px; border-radius: 10px; border: none; background: #8b5cf6; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                                style="position: absolute; right: 0.35rem; width: 34px; height: 34px; border-radius: 9px; border: none; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: opacity 0.2s;">
                             <i class="fa-solid fa-paper-plane" style="font-size: 0.85rem;"></i>
                         </button>
                     </div>

@@ -22,32 +22,33 @@
          style="width: 100%; max-width: 440px; max-height: calc(100vh - 2.5rem); max-height: calc(100dvh - 2.5rem); background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 28px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); overflow-y: auto; -webkit-overflow-scrolling: touch; position: relative; text-align: center; margin: auto;">
 
         <!-- Top Ambient Glow -->
-        <div style="position: absolute; top: 0; left: 0; right: 0; height: 120px; background: radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.35), transparent 70%); pointer-events: none;"></div>
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 120px; background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--primary) 20%, transparent), transparent 70%); pointer-events: none;"></div>
 
         <!-- Close Button -->
         <button type="button" 
                 @click="skipToMenu()" 
-                style="position: absolute; top: 1rem; right: 1rem; width: 34px; height: 34px; border-radius: 50%; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10;">
+                class="ai-header-btn"
+                style="position: absolute; top: 1rem; right: 1rem; z-index: 10;">
             <i class="fa-solid fa-xmark"></i>
         </button>
 
         <div style="padding: 2.25rem 1.75rem 2rem 1.75rem; position: relative; z-index: 5;">
             <!-- AI Avatar with Glowing Pulsing Rings -->
             <div style="position: relative; width: 88px; height: 88px; margin: 0 auto 1.5rem auto;">
-                <div class="ai-avatar-pulse" style="position: absolute; inset: -8px; border-radius: 50%; background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(236, 72, 153, 0.4)); filter: blur(6px); animation: pulseAvatar 2.2s infinite;"></div>
-                <div style="position: relative; width: 88px; height: 88px; border-radius: 50%; background: linear-gradient(135deg, #8b5cf6, #d946ef, #f59e0b); padding: 3px; box-shadow: 0 8px 24px rgba(139, 92, 246, 0.35);">
-                    <div style="width: 100%; height: 100%; border-radius: 50%; background: var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: #8b5cf6;">
+                <div class="ai-avatar-pulse" style="position: absolute; inset: -6px; border-radius: 50%; background: var(--primary); opacity: 0.15; filter: blur(6px); animation: pulseAvatar 2.2s infinite;"></div>
+                <div style="position: relative; width: 88px; height: 88px; border-radius: 50%; background: var(--primary); padding: 3px; box-shadow: 0 8px 24px color-mix(in srgb, var(--primary) 25%, transparent);">
+                    <div style="width: 100%; height: 100%; border-radius: 50%; background: var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 2.3rem; color: var(--primary);">
                         <i class="fa-solid fa-wand-magic-sparkles"></i>
                     </div>
                 </div>
                 <!-- Mini sommelier badge -->
-                <span style="position: absolute; bottom: -2px; right: -2px; width: 26px; height: 26px; border-radius: 50%; background: #10b981; color: #fff; border: 2.5px solid var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 0.72rem;">
+                <span style="position: absolute; bottom: -2px; right: -2px; width: 26px; height: 26px; border-radius: 50%; background: #10b981; color: #fff; border: 2.5px solid var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 0.72rem; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
                     <i class="fa-solid fa-check"></i>
                 </span>
             </div>
 
             <!-- Header Titles -->
-            <div style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.75rem; border-radius: 9999px; background: rgba(139, 92, 246, 0.12); border: 1px solid rgba(139, 92, 246, 0.25); color: #8b5cf6; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">
+            <div style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.75rem; border-radius: 9999px; background: color-mix(in srgb, var(--primary) 10%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent); color: var(--primary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">
                 <i class="fa-solid fa-sparkles"></i> AI SOMMELIER & ADVISOR
             </div>
 
@@ -108,8 +109,8 @@
             <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                 <button type="button" 
                         @click="startAiWaiter()"
-                        class="ai-start-btn"
-                        style="width: 100%; border: none; border-radius: 16px; padding: 0.95rem 1.25rem; font-size: 1rem; font-weight: 700; color: #ffffff; background: linear-gradient(135deg, #8b5cf6, #d946ef); box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.65rem; transition: transform 0.2s, box-shadow 0.2s;">
+                        class="ai-primary-btn"
+                        style="width: 100%; justify-content: center;">
                     <i class="fa-solid fa-wand-magic-sparkles"></i>
                     <span x-show="selectedLang === 'hy'">Միանալ AI Մատուցողին</span>
                     <span x-show="selectedLang === 'en'">Connect with AI Waiter</span>
@@ -117,9 +118,9 @@
                 </button>
 
                 <button type="button" 
-                        @click="skipToMenu()"
-                        class="ai-skip-btn"
-                        style="width: 100%; border: 1px solid var(--border-color); border-radius: 16px; padding: 0.75rem 1.25rem; font-size: 0.88rem; font-weight: 600; color: var(--text-muted); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s;">
+                        @click="skipToMenu()" 
+                        class="ai-secondary-btn"
+                        style="width: 100%; justify-content: center;">
                     <span x-show="selectedLang === 'hy'">Անցնել Մենյուին</span>
                     <span x-show="selectedLang === 'en'">Browse Menu Directly</span>
                     <span x-show="selectedLang === 'ru'">Перейти в меню</span>
@@ -138,7 +139,7 @@
     padding: 0.5rem 0.85rem;
     border-radius: 12px;
     border: 1px solid var(--border-color);
-    background: var(--bg-body);
+    background: var(--bg-main);
     color: var(--text-muted);
     font-size: 0.82rem;
     font-weight: 600;
@@ -146,26 +147,19 @@
     transition: all 0.2s ease;
 }
 .lang-pill-btn:hover {
-    border-color: #8b5cf6;
+    border-color: var(--primary);
     color: var(--text-main);
 }
 .lang-pill-btn.active-lang {
-    background: rgba(139, 92, 246, 0.15);
-    border-color: #8b5cf6;
-    color: #8b5cf6;
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    border-color: var(--primary);
+    color: var(--primary);
     font-weight: 700;
-    box-shadow: 0 0 12px rgba(139, 92, 246, 0.25);
-}
-.ai-start-btn:active {
-    transform: scale(0.98);
-}
-.ai-skip-btn:hover {
-    color: var(--text-main);
-    border-color: var(--text-muted);
+    box-shadow: 0 0 0 1px var(--primary);
 }
 @keyframes pulseAvatar {
-    0%, 100% { transform: scale(1); opacity: 0.6; }
-    50% { transform: scale(1.12); opacity: 0.25; }
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.12); opacity: 0.15; }
 }
 </style>
 @endif
