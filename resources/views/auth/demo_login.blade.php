@@ -531,11 +531,7 @@
                 <i class="fa-solid fa-arrow-left"></i> {{ __('Home') }}
             </a>
             <div class="top-nav-actions">
-                <div class="lang-switch-box">
-                    <a href="{{ route('lang.switch', 'hy') }}" class="lang-switch-link {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">🇦🇲 ՀԱՅ</a>
-                    <a href="{{ route('lang.switch', 'en') }}" class="lang-switch-link {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">🇬🇧 ENG</a>
-                    <a href="{{ route('lang.switch', 'ru') }}" class="lang-switch-link {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">🇷🇺 РУС</a>
-                </div>
+                @include('auth.partials.lang_switcher')
                 <a href="{{ route('login') }}" class="btn-top-login">
                     <i class="fa-solid fa-arrow-right-to-bracket"></i> {{ __('Sign In') }}
                 </a>
@@ -548,13 +544,13 @@
         <!-- Header Hero -->
         <div class="demo-header">
             <div class="badge-live-demo">
-                <i class="fa-solid fa-bolt"></i> Interactive Demo System • Free Exploration
+                <i class="fa-solid fa-bolt"></i> {{ __('Interactive Demo System • Free Exploration') }}
             </div>
             <h1 class="demo-title">
-                Explore the <span>QRMenu</span> Platform
+                {{ __('Explore the QRMenu Platform') }}
             </h1>
             <p class="demo-subtitle">
-                Discover all restaurant management tools and digital menu features before registering. Instant 1-click access.
+                {{ __('Discover all restaurant management tools and digital menu features before registering. Instant 1-click access.') }}
             </p>
         </div>
 
@@ -569,7 +565,7 @@
             <!-- 1. Vendor Owner Card -->
             <div class="demo-card featured">
                 <div class="featured-pill">
-                    <i class="fa-solid fa-star"></i> Full Access
+                    <i class="fa-solid fa-star"></i> {{ __('Full Access') }}
                 </div>
 
                 <div>
@@ -579,7 +575,7 @@
                         </div>
                         <div class="role-meta">
                             <h3>Bistro Yerevan</h3>
-                            <p><i class="fa-solid fa-store"></i> Restaurant Owner</p>
+                            <p><i class="fa-solid fa-store"></i> {{ __('Restaurant Owner') }}</p>
                         </div>
                     </div>
 
@@ -597,19 +593,19 @@
                     <ul class="features-list">
                         <li>
                             <i class="fa-solid fa-circle-check" style="color: #059669;"></i>
-                            <span><strong>Menu Management:</strong> Dishes, categories, prices, photos & allergens</span>
+                            <span><strong>{{ __('Menu Management') }}:</strong> {{ __('Dishes, categories, prices, photos & allergens') }}</span>
                         </li>
                         <li>
                             <i class="fa-solid fa-circle-check" style="color: #059669;"></i>
-                            <span><strong>QR Studio:</strong> Generate branded table QR codes with custom logo</span>
+                            <span><strong>{{ __('QR Studio') }}:</strong> {{ __('Generate branded table QR codes with custom logo') }}</span>
                         </li>
                         <li>
                             <i class="fa-solid fa-circle-check" style="color: #059669;"></i>
-                            <span><strong>Live Analytics:</strong> Real-time sales, orders, and visitor charts</span>
+                            <span><strong>{{ __('Live Analytics') }}:</strong> {{ __('Real-time sales, orders, and visitor charts') }}</span>
                         </li>
                         <li>
                             <i class="fa-solid fa-circle-check" style="color: #059669;"></i>
-                            <span><strong>Settings & Staff:</strong> Branches, managers, and service staff</span>
+                            <span><strong>{{ __('Settings & Staff') }}:</strong> {{ __('Branches, managers, and service staff') }}</span>
                         </li>
                     </ul>
                 </div>
@@ -619,7 +615,7 @@
                     <input type="hidden" name="role" value="owner">
                     <button type="submit" class="btn-oneclick btn-owner">
                         <i class="fa-solid fa-bolt"></i>
-                        <span>Sign In as Owner</span>
+                        <span>{{ __('Sign In as Owner') }}</span>
                     </button>
                 </form>
             </div>
@@ -633,7 +629,7 @@
                         </div>
                         <div class="role-meta">
                             <h3>Cascades Branch</h3>
-                            <p style="color: #0284c7;"><i class="fa-solid fa-location-dot"></i> Branch Manager</p>
+                            <p style="color: #0284c7;"><i class="fa-solid fa-location-dot"></i> {{ __('Branch Manager') }}</p>
                         </div>
                     </div>
 
@@ -651,19 +647,19 @@
                     <ul class="features-list">
                         <li>
                             <i class="fa-solid fa-circle-check" style="color: #0284c7;"></i>
-                            <span><strong>Live Orders:</strong> Real-time kitchen and bar order feed</span>
+                            <span><strong>{{ __('Live Orders') }}:</strong> {{ __('Real-time kitchen and bar order feed') }}</span>
                         </li>
                         <li>
                             <i class="fa-solid fa-circle-check" style="color: #0284c7;"></i>
-                            <span><strong>Waiter Calls:</strong> Instant table service paging alerts</span>
+                            <span><strong>{{ __('Waiter Calls') }}:</strong> {{ __('Instant table service paging alerts') }}</span>
                         </li>
                         <li>
                             <i class="fa-solid fa-circle-check" style="color: #0284c7;"></i>
-                            <span><strong>Stop-List Mode:</strong> Instant dish availability toggle</span>
+                            <span><strong>{{ __('Stop-List Mode') }}:</strong> {{ __('Instant dish availability toggle') }}</span>
                         </li>
                         <li>
                             <i class="fa-solid fa-circle-check" style="color: #0284c7;"></i>
-                            <span><strong>Table Management:</strong> Live floor plan and table status tracking</span>
+                            <span><strong>{{ __('Table Management') }}:</strong> {{ __('Live floor plan and table status tracking') }}</span>
                         </li>
                     </ul>
                 </div>
@@ -673,7 +669,7 @@
                     <input type="hidden" name="role" value="manager">
                     <button type="submit" class="btn-oneclick btn-manager">
                         <i class="fa-solid fa-bolt"></i>
-                        <span>Sign In as Manager</span>
+                        <span>{{ __('Sign In as Manager') }}</span>
                     </button>
                 </form>
             </div>
@@ -683,7 +679,7 @@
         <div class="demo-features-banner">
             <div class="banner-title">
                 <i class="fa-solid fa-wand-magic-sparkles" style="color: #d97706;"></i>
-                What can you explore in the demo?
+                {{ __('What can you explore in the demo?') }}
             </div>
             <div class="banner-grid">
                 <div class="banner-item">
@@ -691,8 +687,8 @@
                         <i class="fa-solid fa-qrcode"></i>
                     </div>
                     <div class="banner-item-text">
-                        <h4>Smart QR Codes</h4>
-                        <p>Create branded table QR codes with custom colors and logo.</p>
+                        <h4>{{ __('Smart QR Codes') }}</h4>
+                        <p>{{ __('Create branded table QR codes with custom colors and logo.') }}</p>
                     </div>
                 </div>
                 <div class="banner-item">
@@ -700,8 +696,8 @@
                         <i class="fa-solid fa-bell-concierge"></i>
                     </div>
                     <div class="banner-item-text">
-                        <h4>Online Ordering & Paging</h4>
-                        <p>Guests order from table and call staff with zero app downloads.</p>
+                        <h4>{{ __('Online Ordering & Paging') }}</h4>
+                        <p>{{ __('Guests order from table and call staff with zero app downloads.') }}</p>
                     </div>
                 </div>
                 <div class="banner-item">
@@ -709,8 +705,8 @@
                         <i class="fa-solid fa-brain"></i>
                     </div>
                     <div class="banner-item-text">
-                        <h4>AI Waiter & Assistant</h4>
-                        <p>Automated pairings, dietary advice, and smart menu import.</p>
+                        <h4>{{ __('AI Waiter & Assistant') }}</h4>
+                        <p>{{ __('Automated pairings, dietary advice, and smart menu import.') }}</p>
                     </div>
                 </div>
             </div>
@@ -718,16 +714,16 @@
 
         <!-- Registration CTA Block -->
         <div class="bottom-cta-card">
-            <h3>Ready to launch your restaurant's digital menu?</h3>
-            <p>Sign up now and get a 14-day free trial with all features included.</p>
+            <h3>{{ __('Ready to launch your restaurant\'s digital menu?') }}</h3>
+            <p>{{ __('Sign up now and get a 14-day free trial with all features included.') }}</p>
             <div class="cta-buttons-row">
                 <a href="{{ route('register.show') }}" class="btn-register-action">
                     <i class="fa-solid fa-rocket"></i>
-                    <span>Register (14 Days Free)</span>
+                    <span>{{ __('Register (14 Days Free)') }}</span>
                 </a>
                 <a href="{{ route('login') }}" class="btn-login-action">
                     <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                    <span>Already have an account? Sign In</span>
+                    <span>{{ __('Already have an account? Sign In') }}</span>
                 </a>
             </div>
         </div>

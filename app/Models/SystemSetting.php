@@ -121,11 +121,27 @@ class SystemSetting extends Model
     }
 
     /**
-     * Get the configured site tagline/subtitle.
+     * Get the configured site tagline/subtitle (supports locale).
      */
-    public static function getSiteTagline(): string
+    public static function getSiteTagline(?string $locale = null): string
     {
-        return static::get('site_tagline') ?: 'Խելացի Ռեստորանային QR Մենյու & Պատվերների Համակարգ';
+        $locale = $locale ?: app()->getLocale();
+        if ($locale === 'ru' && ! empty(static::get('site_tagline_ru'))) {
+            return static::get('site_tagline_ru');
+        }
+        if ($locale === 'en' && ! empty(static::get('site_tagline_en'))) {
+            return static::get('site_tagline_en');
+        }
+        if ($locale === 'hy' && ! empty(static::get('site_tagline_hy'))) {
+            return static::get('site_tagline_hy');
+        }
+
+        $tagline = static::get('site_tagline');
+        if (! empty($tagline)) {
+            return __($tagline);
+        }
+
+        return __('Խելացի Ռեստորանային QR Մենյու & Պատվերների Համակարգ');
     }
 
     /**

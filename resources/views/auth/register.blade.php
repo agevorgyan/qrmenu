@@ -515,11 +515,7 @@
                 <i class="fa-solid fa-arrow-left"></i> {{ __('Home') }}
             </a>
             <div class="top-nav-actions">
-                <div class="lang-switch-box">
-                    <a href="{{ route('lang.switch', 'hy') }}" class="lang-switch-link {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">🇦🇲 ՀԱՅ</a>
-                    <a href="{{ route('lang.switch', 'en') }}" class="lang-switch-link {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">🇬🇧 ENG</a>
-                    <a href="{{ route('lang.switch', 'ru') }}" class="lang-switch-link {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">🇷🇺 РУС</a>
-                </div>
+                @include('auth.partials.lang_switcher')
                 <a href="{{ route('demo.login') }}" class="nav-pill-btn">
                     <i class="fa-solid fa-bolt"></i> {{ __('Try Demo') }}
                 </a>

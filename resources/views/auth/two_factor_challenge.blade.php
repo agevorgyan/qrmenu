@@ -310,11 +310,7 @@
                 <i class="fa-solid fa-arrow-left"></i> {{ __('Back to Login') }}
             </a>
             <div style="display: flex; align-items: center; gap: 0.65rem;">
-                <div class="lang-switch-box">
-                    <a href="{{ route('lang.switch', 'hy') }}" class="lang-switch-link {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">🇦🇲 ՀԱՅ</a>
-                    <a href="{{ route('lang.switch', 'en') }}" class="lang-switch-link {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">🇬🇧 ENG</a>
-                    <a href="{{ route('lang.switch', 'ru') }}" class="lang-switch-link {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">🇷🇺 РУС</a>
-                </div>
+                @include('auth.partials.lang_switcher')
                 <span style="font-size: 0.8rem; font-weight: 600; color: #64748b;">
                     <i class="fa-solid fa-user-shield text-amber-500" style="color: #f59e0b;"></i> {{ __('2FA Security') }}
                 </span>

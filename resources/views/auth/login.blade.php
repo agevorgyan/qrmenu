@@ -552,11 +552,7 @@
                     <i class="fa-solid fa-arrow-left"></i> {{ $customVendor->name }} {{ __('View Menu') }}
                 </a>
                 <div style="display: flex; align-items: center; gap: 0.65rem;">
-                    <div class="lang-switch-box">
-                        <a href="{{ route('lang.switch', 'hy') }}" class="lang-switch-link {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">🇦🇲 ՀԱՅ</a>
-                        <a href="{{ route('lang.switch', 'en') }}" class="lang-switch-link {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">🇬🇧 ENG</a>
-                        <a href="{{ route('lang.switch', 'ru') }}" class="lang-switch-link {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">🇷🇺 РУС</a>
-                    </div>
+                    @include('auth.partials.lang_switcher')
                     <span class="nav-badge-pill">
                         <i class="fa-solid fa-store"></i> {{ $customVendor->name }}
                     </span>
@@ -566,11 +562,7 @@
                     <i class="fa-solid fa-arrow-left"></i> {{ __('Home') }}
                 </a>
                 <div style="display: flex; align-items: center; gap: 0.65rem;">
-                    <div class="lang-switch-box">
-                        <a href="{{ route('lang.switch', 'hy') }}" class="lang-switch-link {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">🇦🇲 ՀԱՅ</a>
-                        <a href="{{ route('lang.switch', 'en') }}" class="lang-switch-link {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">🇬🇧 ENG</a>
-                        <a href="{{ route('lang.switch', 'ru') }}" class="lang-switch-link {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">🇷🇺 РУС</a>
-                    </div>
+                    @include('auth.partials.lang_switcher')
                     <a href="{{ route('demo.login') }}" class="nav-badge-pill">
                         <i class="fa-solid fa-bolt"></i> {{ __('Try Demo') }}
                     </a>
@@ -602,7 +594,7 @@
                         </div>
                         <h1 class="brand-title">{{ $siteName }}</h1>
                     @endif
-                    <p class="brand-subtitle">{{ $siteTagline ?: __('Sign in to your restaurant dashboard') }}</p>
+                    <p class="brand-subtitle">{{ __($siteTagline ?: 'Sign in to your restaurant dashboard') }}</p>
                 @endif
             </div>
 

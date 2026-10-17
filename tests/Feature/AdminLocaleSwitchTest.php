@@ -198,4 +198,34 @@ class AdminLocaleSwitchTest extends TestCase
         $logoutRes->assertRedirect(route('login'));
         $logoutRes->assertCookie('app_locale', 'hy');
     }
+
+    public function test_login_page_renders_complete_russian_translations(): void
+    {
+        $res = $this->withUnencryptedCookie('app_locale', 'ru')
+            ->withSession(['app_locale' => 'ru', 'admin_locale' => 'ru'])
+            ->get(route('login'));
+
+        $res->assertStatus(200);
+        $res->assertSee('Умное ресторанное QR-меню и система заказов');
+        $res->assertSee('Запомнить меня');
+        $res->assertSee('Забыли пароль?');
+        $res->assertSee('Проверка безопасности (CAPTCHA)');
+        $res->assertSee('Введите ответ');
+        $res->assertSee('или');
+        $res->assertSee('Ознакомиться с Демо');
+        $res->assertSee('Протестируйте систему в 1 клик');
+        $res->assertSee('Еще нет зарегистрированного ресторана?');
+        $res->assertSee('Зарегистрироваться как партнер (14 дней бесплатно)');
+    }
+
+    public function test_auth_pages_render_responsive_mobile_dropdown_and_segmented_desktop_switch(): void
+    {
+        $res = $this->get(route('login'));
+        $res->assertStatus(200);
+        $res->assertSee('auth-lang-segmented');
+        $res->assertSee('auth-lang-dropdown');
+        $res->assertSee('auth-lang-trigger');
+        $res->assertSee('auth-lang-menu');
+        $res->assertSee('toggleAuthLang');
+    }
 }
