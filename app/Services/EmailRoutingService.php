@@ -109,17 +109,20 @@ class EmailRoutingService
 
         $lower = mb_strtolower($subject);
 
-        if (str_contains($lower, '2fa') || str_contains($lower, 'երկփուլային') || str_contains($lower, 'verification code')) {
+        if (str_contains($lower, '2fa') || str_contains($lower, 'երկփուլային') || str_contains($lower, 'verification code') || str_contains($lower, 'двухфакторн')) {
             return EmailRoutingRule::CATEGORY_TWO_FACTOR;
         }
-        if (str_contains($lower, 'password') || str_contains($lower, 'գաղտնաբառ')) {
+        if (str_contains($lower, 'password') || str_contains($lower, 'գաղտնաբառ') || str_contains($lower, 'парол')) {
             return EmailRoutingRule::CATEGORY_PASSWORD_RESET;
         }
-        if (str_contains($lower, 'order') || str_contains($lower, 'պատվեր')) {
+        if (str_contains($lower, 'order') || str_contains($lower, 'պատվեր') || str_contains($lower, 'заказ') || str_contains($lower, 'чек')) {
             return EmailRoutingRule::CATEGORY_ORDER_RECEIPT;
         }
-        if (str_contains($lower, 'welcome') || str_contains($lower, 'բարի գալուստ') || str_contains($lower, 'verify')) {
+        if (str_contains($lower, 'welcome') || str_contains($lower, 'բարի գալուստ') || str_contains($lower, 'verify') || str_contains($lower, 'добро пожаловать') || str_contains($lower, 'подтверд')) {
             return EmailRoutingRule::CATEGORY_VERIFICATION;
+        }
+        if (str_contains($lower, 'test') || str_contains($lower, 'թեստ') || str_contains($lower, 'тест')) {
+            return EmailRoutingRule::CATEGORY_SYSTEM_TEST;
         }
 
         return EmailRoutingRule::CATEGORY_ADMIN_ALERT;
@@ -196,7 +199,7 @@ class EmailRoutingService
             app('mail.manager')->purge($mailerKey);
         }
 
-        $mailable = new SystemTestMail($recipient, $connection, $sender, $notes);
+        $mailable = new SystemTestMail($recipient, $connection, $sender, $notes, app()->getLocale());
         $mailable->mailer($mailerKey);
 
         $startTime = microtime(true);
@@ -269,7 +272,7 @@ class EmailRoutingService
             if ($mailableClass === OrderReceiptMail::class && $log->related_id) {
                 $order = Order::find($log->related_id);
                 if ($order) {
-                    $newMailable = new OrderReceiptMail($order);
+                    $newMailable = new OrderReceiptMail($order, $log->metadata['locale'] ?? app()->getLocale());
                 }
             } elseif ($mailableClass === VendorWelcomeVerificationMail::class && $log->related_id) {
                 $user = User::find($log->related_id);
@@ -278,12 +281,12 @@ class EmailRoutingService
                         'id' => $user->id,
                         'hash' => sha1($user->getEmailForVerification()),
                     ]);
-                    $newMailable = new VendorWelcomeVerificationMail($user, $verificationUrl);
+                    $newMailable = new VendorWelcomeVerificationMail($user, $verificationUrl, null, $user->locale ?? $log->metadata['locale'] ?? app()->getLocale());
                 }
             } elseif ($mailableClass === SystemTestMail::class) {
                 $connection = $log->connection ?? EmailConnection::where('is_active', true)->first();
                 if ($connection) {
-                    $newMailable = new SystemTestMail($log->recipient_email, $connection, $log->senderIdentity);
+                    $newMailable = new SystemTestMail($log->recipient_email, $connection, $log->senderIdentity, null, $log->metadata['locale'] ?? app()->getLocale());
                 }
             }
 

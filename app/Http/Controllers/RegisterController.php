@@ -110,6 +110,7 @@ class RegisterController extends Controller
                 'password' => Hash::make($validated['password']),
                 'role' => 'vendor_owner',
                 'phone' => $validated['phone'],
+                'locale' => app()->getLocale() ?: 'hy',
             ]);
         });
 
@@ -123,7 +124,7 @@ class RegisterController extends Controller
 
         try {
             Mail::to($user->email)->queue(
-                new VendorWelcomeVerificationMail($user, $verificationUrl, $otpCode)
+                new VendorWelcomeVerificationMail($user, $verificationUrl, $otpCode, $user->locale ?? app()->getLocale())
             );
         } catch (\Throwable $e) {
             // Silently handle mail dispatch failure if queue/mailer is offline
@@ -234,7 +235,7 @@ class RegisterController extends Controller
 
         try {
             Mail::to($user->email)->queue(
-                new VendorWelcomeVerificationMail($user, $verificationUrl, $otpCode)
+                new VendorWelcomeVerificationMail($user, $verificationUrl, $otpCode, $user->locale ?? app()->getLocale())
             );
         } catch (\Throwable $e) {
             // Silently handle mail dispatch failure

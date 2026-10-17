@@ -114,7 +114,8 @@ class TwoFactorAuthService
         ])->save();
 
         try {
-            Mail::to($user->email)->send(new TwoFactorCodeMail($user, $code, $action));
+            $targetLocale = $user->locale ?: (app()->getLocale() ?: 'hy');
+            Mail::to($user->email)->send(new TwoFactorCodeMail($user, $code, $action, $targetLocale));
         } catch (\Throwable $e) {
             // Log error or proceed in development
             report($e);

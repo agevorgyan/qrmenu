@@ -50,7 +50,7 @@ class SecurityAndAuthFeaturesTest extends TestCase
 
     public function test_forgot_password_page_renders_with_captcha(): void
     {
-        $response = $this->get('/forgot-password');
+        $response = $this->withSession(['app_locale' => 'hy'])->get('/forgot-password');
 
         $response->assertStatus(200);
         $response->assertSee('Վերականգնել Գաղտնաբառը');

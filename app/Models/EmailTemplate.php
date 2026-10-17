@@ -98,11 +98,12 @@ class EmailTemplate extends Model
      */
     public function getLocalizedField(string $field, ?string $locale = null): ?string
     {
-        $locale = $locale ?: app()->getLocale();
-        $translations = $this->translations ?? [];
+        if ($locale !== null) {
+            $translations = $this->translations ?? [];
 
-        if (isset($translations[$locale][$field]) && filled($translations[$locale][$field])) {
-            return (string) $translations[$locale][$field];
+            if (isset($translations[$locale][$field]) && filled($translations[$locale][$field])) {
+                return (string) $translations[$locale][$field];
+            }
         }
 
         return (string) ($this->{$field} ?? '');

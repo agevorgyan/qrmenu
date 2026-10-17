@@ -34,8 +34,9 @@ class OrderDispatchService
 
         if (! empty($order->customer_email)) {
             try {
+                $targetLocale = session('app_locale') ?: (app()->getLocale() ?: 'hy');
                 Mail::to($order->customer_email)->queue(
-                    new OrderReceiptMail($order)
+                    new OrderReceiptMail($order, $targetLocale)
                 );
             } catch (\Throwable $e) {
                 // Silently ignore mail failure in queue dispatch

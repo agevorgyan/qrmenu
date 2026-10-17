@@ -1,9 +1,20 @@
+@php
+    $targetLocale = $locale ?? ($user->locale ?? app()->getLocale());
+    $siteName = \App\Models\SystemSetting::getSiteName();
+    $customTpl = app(\App\Services\EmailTemplateService::class)->render('welcome_verification', [
+        'user_name' => $user->name,
+        'vendor_name' => $user->vendor?->name ?? 'QRMenu',
+        'verification_url' => $verificationUrl,
+        'support_email' => 'support@menu.elab.am',
+        'site_name' => $siteName,
+    ], $targetLocale);
+@endphp
 <!DOCTYPE html>
-<html lang="hy">
+<html lang="{{ $targetLocale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Բարի գալուստ QRMenu</title>
+    <title>{{ __('Welcome to :site_name', ['site_name' => $siteName], $targetLocale) }}</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 20px; }
         .card { max-width: 540px; margin: 0 auto; background: #ffffff; border-radius: 16px; padding: 32px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
@@ -17,42 +28,33 @@
     </style>
 </head>
 <body>
-    @php
-        $customTpl = app(\App\Services\EmailTemplateService::class)->render('welcome_verification', [
-            'user_name' => $user->name,
-            'vendor_name' => $user->vendor?->name ?? 'QRMenu',
-            'verification_url' => $verificationUrl,
-            'support_email' => 'support@menu.elab.am',
-            'site_name' => \App\Models\SystemSetting::getSiteName(),
-        ]);
-    @endphp
     <div class="card">
         <div class="header">
-            <div class="logo">🍽️ {{ \App\Models\SystemSetting::getSiteName() }}</div>
-            <h1>Բարի գալուստ, {{ $user->name }}!</h1>
+            <div class="logo">🍽️ {{ $siteName }}</div>
+            <h1>{{ __('Welcome, :name!', ['name' => $user->name], $targetLocale) }}</h1>
         </div>
         @if($customTpl && !empty($customTpl['intro']))
             <p>{!! nl2br(e($customTpl['intro'])) !!}</p>
         @else
-            <p>Շնորհակալություն QRMenu հարթակում ձեր ռեստորանը գրանցելու համար։</p>
-            <p>Ձեր թվային մենյուն և վահանակն ակտիվացնելու համար խնդրում ենք հաստատել ձեր էլ․ փոստի հասցեն՝ սեղմելով ներքևի կոճակը։</p>
+            <p>{{ __('Thank you for registering your restaurant on :site_name.', ['site_name' => $siteName], $targetLocale) }}</p>
+            <p>{{ __('To activate your digital menu and dashboard, please verify your email address by clicking the button below.', [], $targetLocale) }}</p>
         @endif
         
         <div class="btn-box">
-            <a href="{{ $verificationUrl }}" class="btn" target="_blank">{{ $customTpl['cta_text'] ?? 'Հաստատել Էլ․ Հասցեն' }}</a>
+            <a href="{{ $verificationUrl }}" class="btn" target="_blank">{{ $customTpl['cta_text'] ?? __('Verify Email Address', [], $targetLocale) }}</a>
         </div>
 
         @if(!empty($otpCode))
             <div style="text-align: center; margin: 24px 0; background: #f8fafc; border: 1px dashed #cbd5e1; padding: 16px; border-radius: 12px;">
-                <div style="font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Կամ մուտքագրեք 6-նիշ ստուգիչ կոդը</div>
+                <div style="font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">{{ __('Or enter the 6-digit verification code', [], $targetLocale) }}</div>
                 <div style="font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #0f172a; margin-top: 6px; font-family: monospace;">{{ $otpCode }}</div>
             </div>
         @endif
 
-        <p style="font-size: 13px; color: #64748b;">Եթե կոճակը չի աշխատում, պատճենեք հետևյալ հղումը ձեր բրաուզերում՝<br><a href="{{ $verificationUrl }}" style="color: #e11d48; word-break: break-all;">{{ $verificationUrl }}</a></p>
+        <p style="font-size: 13px; color: #64748b;">{{ __('If the button does not work, copy and paste this link into your browser:', [], $targetLocale) }}<br><a href="{{ $verificationUrl }}" style="color: #e11d48; word-break: break-all;">{{ $verificationUrl }}</a></p>
 
         <div class="footer">
-            {{ $customTpl['footer'] ?? ('© ' . date('Y') . ' ' . \App\Models\SystemSetting::getSiteName() . ' SaaS Platform. Բոլոր իրավունքները պաշտպանված են։') }}
+            {{ $customTpl['footer'] ?? __('© :year :site_name SaaS Platform. All rights reserved.', ['year' => date('Y'), 'site_name' => $siteName], $targetLocale) }}
         </div>
     </div>
 </body>

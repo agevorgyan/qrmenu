@@ -3,6 +3,8 @@
 namespace App\Mail;
 
 use App\Models\Order;
+use App\Models\SystemSetting;
+use App\Services\EmailTemplateService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -18,16 +20,50 @@ class OrderReceiptMail extends Mailable implements ShouldQueue
      * Create a new message instance.
      */
     public function __construct(
-        public Order $order
-    ) {}
+        public Order $order,
+        ?string $locale = null
+    ) {
+        $targetLocale = $locale ?: (session('app_locale') ?: (app()->getLocale() ?: 'hy'));
+        $this->locale($targetLocale);
+    }
 
     /**
      * Get the message envelope.
      */
     public function envelope(): Envelope
     {
+        $targetLocale = $this->locale ?: (session('app_locale') ?: (app()->getLocale() ?: 'hy'));
+        $siteName = SystemSetting::getSiteName();
+
+        $orderTypeLabel = $this->order->table_number
+            ? __('Table: :number', ['number' => $this->order->table_number], $targetLocale)
+            : ($this->order->type === 'delivery' ? __('Delivery', [], $targetLocale) : __('Takeaway', [], $targetLocale));
+
+        $subject = null;
+        if (app()->bound(EmailTemplateService::class)) {
+            $tpl = app(EmailTemplateService::class)->render('order_receipt', [
+                'customer_name' => $this->order->customer_name ?? __('Customer', [], $targetLocale),
+                'vendor_name' => $this->order->vendor?->name ?? 'QRMenu',
+                'order_number' => $this->order->order_number,
+                'order_type' => $orderTypeLabel,
+                'total_amount' => number_format((float) $this->order->total_amount).' '.($this->order->vendor?->currency ?? 'AMD'),
+                'support_email' => 'support@menu.elab.am',
+                'site_name' => $siteName,
+            ], $targetLocale);
+
+            if (! empty($tpl['subject'])) {
+                $subject = $tpl['subject'];
+            }
+        }
+
+        if (empty($subject)) {
+            $subject = __('Your order #:order_number has been successfully received', [
+                'order_number' => $this->order->order_number,
+            ], $targetLocale);
+        }
+
         return new Envelope(
-            subject: "Ձեր պատվերը #{$this->order->order_number} հաջողությամբ ընդունվել է",
+            subject: $subject,
         );
     }
 
@@ -36,8 +72,14 @@ class OrderReceiptMail extends Mailable implements ShouldQueue
      */
     public function content(): Content
     {
+        $targetLocale = $this->locale ?: (session('app_locale') ?: (app()->getLocale() ?: 'hy'));
+
         return new Content(
             view: 'emails.receipt',
+            with: [
+                'order' => $this->order,
+                'locale' => $targetLocale,
+            ],
         );
     }
 }

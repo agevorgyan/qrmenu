@@ -523,15 +523,17 @@ class SuperAdminEmailController extends Controller
     /**
      * Safe preview of email template with mock test data.
      */
-    public function previewTemplate(EmailTemplate $template): JsonResponse
+    public function previewTemplate(Request $request, EmailTemplate $template): JsonResponse
     {
+        $locale = $request->query('locale') ?: app()->getLocale();
         $sampleData = $template->getPreviewSampleData();
-        $rendered = $this->templateService->render($template->key, $sampleData);
+        $rendered = $this->templateService->render($template->key, $sampleData, $locale);
 
         return response()->json([
             'template' => $template,
             'preview' => $rendered,
             'sample_data' => $sampleData,
+            'locale' => $locale,
         ]);
     }
 

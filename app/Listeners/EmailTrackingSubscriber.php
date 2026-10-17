@@ -117,6 +117,9 @@ class EmailTrackingSubscriber
                 'related_type' => $relatedType,
                 'related_id' => $relatedId,
                 'vendor_id' => $vendorId,
+                'metadata' => [
+                    'locale' => $mailable->locale ?? app()->getLocale(),
+                ],
                 'last_attempt_at' => now(),
             ]);
         } catch (\Throwable $e) {

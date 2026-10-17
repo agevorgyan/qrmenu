@@ -62,7 +62,8 @@ class ForgotPasswordController extends Controller
             ]);
 
             try {
-                Mail::to($user->email)->send(new ResetPasswordMail($user, $resetUrl));
+                $targetLocale = $user->locale ?: (app()->getLocale() ?: 'hy');
+                Mail::to($user->email)->send(new ResetPasswordMail($user, $resetUrl, $targetLocale));
             } catch (\Throwable $e) {
                 report($e);
             }
