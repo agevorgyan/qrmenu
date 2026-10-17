@@ -139,21 +139,31 @@ class EmailRoutingService
                 ->first();
 
             if ($connection) {
-                $mailerConfig = $connection->toMailerConfig();
-                config(['mail.mailers.smtp' => $mailerConfig]);
+                // Safeguard: If the DB connection is just an unconfigured dummy (127.0.0.1 with no credentials),
+                // do not override .env/config if the environment already provides a configured mailer.
+                $isDbDummy = ($connection->transport === 'smtp' && ($connection->host === '127.0.0.1' || empty($connection->host)) && empty($connection->username));
+                $envDriver = env('MAIL_MAILER');
+                $envHost = env('MAIL_HOST');
+                $envUser = env('MAIL_USERNAME');
+                $hasRealEnvMailer = (! empty($envUser) || (! empty($envHost) && $envHost !== '127.0.0.1') || in_array($envDriver, ['log', 'sendmail', 'mailgun', 'ses', 'postmark', 'resend']));
 
-                if ($connection->transport !== 'smtp') {
-                    config(["mail.mailers.{$connection->transport}" => $mailerConfig]);
-                    config(['mail.default' => $connection->transport]);
-                } else {
-                    config(['mail.default' => 'smtp']);
-                }
+                if (! ($isDbDummy && $hasRealEnvMailer)) {
+                    $mailerConfig = $connection->toMailerConfig();
+                    config(['mail.mailers.smtp' => $mailerConfig]);
 
-                // Purge resolved mailers to force reload
-                if (app()->bound('mail.manager')) {
-                    app('mail.manager')->purge('smtp');
                     if ($connection->transport !== 'smtp') {
-                        app('mail.manager')->purge($connection->transport);
+                        config(["mail.mailers.{$connection->transport}" => $mailerConfig]);
+                        config(['mail.default' => $connection->transport]);
+                    } else {
+                        config(['mail.default' => 'smtp']);
+                    }
+
+                    // Purge resolved mailers to force reload
+                    if (app()->bound('mail.manager')) {
+                        app('mail.manager')->purge('smtp');
+                        if ($connection->transport !== 'smtp') {
+                            app('mail.manager')->purge($connection->transport);
+                        }
                     }
                 }
             }
@@ -162,10 +172,10 @@ class EmailRoutingService
                 ->where('is_active', true)
                 ->first();
 
-            if ($sender) {
+            if ($sender && ! empty($sender->email)) {
                 config([
                     'mail.from.address' => $sender->email,
-                    'mail.from.name' => $sender->name,
+                    'mail.from.name' => $sender->name ?: config('mail.from.name'),
                 ]);
             }
         } catch (\Throwable $e) {

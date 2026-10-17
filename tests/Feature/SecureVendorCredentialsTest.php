@@ -48,6 +48,7 @@ class SecureVendorCredentialsTest extends TestCase
             'password' => bcrypt('password'),
             'vendor_id' => $vendor->id,
             'role' => 'vendor_owner',
+            'email_verified_at' => now(),
         ]);
 
         return [$vendor, $user];

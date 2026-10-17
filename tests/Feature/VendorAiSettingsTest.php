@@ -45,6 +45,7 @@ class VendorAiSettingsTest extends TestCase
             'password' => bcrypt('password'),
             'vendor_id' => $this->vendor->id,
             'role' => 'vendor_owner',
+            'email_verified_at' => now(),
         ]);
     }
 

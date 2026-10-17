@@ -121,7 +121,7 @@ class AsyncJobsTest extends TestCase
         });
     }
 
-    public function test_vendor_registration_queues_welcome_mail(): void
+    public function test_vendor_registration_sends_welcome_mail(): void
     {
         $this->seed();
         Mail::fake();
@@ -145,7 +145,7 @@ class AsyncJobsTest extends TestCase
 
         $response->assertRedirect('/email/verify');
 
-        Mail::assertQueued(VendorWelcomeVerificationMail::class, function ($mail) {
+        Mail::assertSent(VendorWelcomeVerificationMail::class, function ($mail) {
             return $mail->hasTo('info@veronahotel.am');
         });
     }

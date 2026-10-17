@@ -48,6 +48,7 @@ class VendorSettingsTest extends TestCase
             'password' => bcrypt('password'),
             'vendor_id' => $vendor->id,
             'role' => 'vendor_owner',
+            'email_verified_at' => now(),
         ]);
 
         $response = $this->actingAs($user)->get(route('admin.settings.index'));
@@ -95,6 +96,7 @@ class VendorSettingsTest extends TestCase
             'password' => bcrypt('password'),
             'vendor_id' => $vendor->id,
             'role' => 'vendor_owner',
+            'email_verified_at' => now(),
         ]);
 
         $response = $this->actingAs($user)->get(route('admin.settings.index', ['location_id' => $loc2->id]));
@@ -131,6 +133,7 @@ class VendorSettingsTest extends TestCase
             'password' => bcrypt('password'),
             'vendor_id' => $vendor->id,
             'role' => 'vendor_owner',
+            'email_verified_at' => now(),
         ]);
 
         $response = $this->actingAs($user)->post(route('admin.settings.update'), [
@@ -179,6 +182,7 @@ class VendorSettingsTest extends TestCase
             'password' => bcrypt('password'),
             'vendor_id' => $vendor->id,
             'role' => 'vendor_owner',
+            'email_verified_at' => now(),
         ]);
 
         $response = $this->actingAs($user)->post(route('admin.settings.update'), [
@@ -227,6 +231,7 @@ class VendorSettingsTest extends TestCase
             'password' => bcrypt('password'),
             'vendor_id' => $vendor->id,
             'role' => 'vendor_owner',
+            'email_verified_at' => now(),
         ]);
 
         $response = $this->actingAs($user)->post(route('admin.settings.update'), [
@@ -306,6 +311,7 @@ class VendorSettingsTest extends TestCase
             'password' => bcrypt('password'),
             'vendor_id' => $vendor->id,
             'role' => 'vendor_owner',
+            'email_verified_at' => now(),
         ]);
 
         $response = $this->actingAs($user)->post(route('admin.settings.update'), [
@@ -350,6 +356,7 @@ class VendorSettingsTest extends TestCase
             'password' => bcrypt('password'),
             'vendor_id' => $vendor->id,
             'role' => 'vendor_owner',
+            'email_verified_at' => now(),
         ]);
 
         $response = $this->actingAs($user)->post(route('admin.settings.update'), [
@@ -396,6 +403,7 @@ class VendorSettingsTest extends TestCase
             'password' => bcrypt('password'),
             'vendor_id' => $vendor->id,
             'role' => 'vendor_owner',
+            'email_verified_at' => now(),
         ]);
 
         $response = $this->actingAs($user)->get(route('admin.settings.index'));

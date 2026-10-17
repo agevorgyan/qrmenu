@@ -242,7 +242,7 @@ class LocalizedEmailTest extends TestCase
         });
     }
 
-    public function test_partner_registration_in_russian_queues_welcome_mail_in_russian(): void
+    public function test_partner_registration_in_russian_sends_welcome_mail_in_russian(): void
     {
         Mail::fake();
 
@@ -273,7 +273,7 @@ class LocalizedEmailTest extends TestCase
         $this->assertNotNull($createdUser);
         $this->assertEquals('ru', $createdUser->locale);
 
-        Mail::assertQueued(VendorWelcomeVerificationMail::class, function ($mail) {
+        Mail::assertSent(VendorWelcomeVerificationMail::class, function ($mail) {
             return $mail->hasTo('ivan@russiancafe.com')
                 && $mail->locale === 'ru'
                 && str_contains($mail->envelope()->subject, 'Добро пожаловать');

@@ -58,8 +58,8 @@ class PartnerRegistrationAndEmailVerificationTest extends TestCase
         $this->assertNotNull($cachedCode);
         $this->assertEquals(6, strlen($cachedCode));
 
-        // Welcome mail was queued with code and verification link
-        Mail::assertQueued(VendorWelcomeVerificationMail::class, function ($mail) use ($user, $cachedCode) {
+        // Welcome mail was sent synchronously with code and verification link
+        Mail::assertSent(VendorWelcomeVerificationMail::class, function ($mail) use ($user, $cachedCode) {
             return $mail->hasTo('tigran@tavern.am')
                 && $mail->user->id === $user->id
                 && $mail->otpCode === $cachedCode;
@@ -284,7 +284,7 @@ class PartnerRegistrationAndEmailVerificationTest extends TestCase
         $newCode = cache()->get('email_verify_code_'.$user->id);
         $this->assertNotNull($newCode);
 
-        Mail::assertQueued(VendorWelcomeVerificationMail::class, function ($mail) use ($newCode) {
+        Mail::assertSent(VendorWelcomeVerificationMail::class, function ($mail) use ($newCode) {
             return $mail->hasTo('resend@test.am')
                 && $mail->otpCode === $newCode;
         });

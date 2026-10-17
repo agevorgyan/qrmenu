@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -123,11 +124,16 @@ class RegisterController extends Controller
         ]);
 
         try {
-            Mail::to($user->email)->queue(
+            Mail::to($user->email)->send(
                 new VendorWelcomeVerificationMail($user, $verificationUrl, $otpCode, $user->locale ?? app()->getLocale())
             );
         } catch (\Throwable $e) {
-            // Silently handle mail dispatch failure if queue/mailer is offline
+            Log::error('Failed to send vendor welcome verification email: '.$e->getMessage(), [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'exception' => $e,
+            ]);
+            report($e);
         }
 
         Auth::login($user);
@@ -234,13 +240,20 @@ class RegisterController extends Controller
         ]);
 
         try {
-            Mail::to($user->email)->queue(
+            Mail::to($user->email)->send(
                 new VendorWelcomeVerificationMail($user, $verificationUrl, $otpCode, $user->locale ?? app()->getLocale())
             );
-        } catch (\Throwable $e) {
-            // Silently handle mail dispatch failure
-        }
 
-        return back()->with('status', 'verification-link-sent');
+            return back()->with('status', 'verification-link-sent');
+        } catch (\Throwable $e) {
+            Log::error('Failed to resend verification email: '.$e->getMessage(), [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'exception' => $e,
+            ]);
+            report($e);
+
+            return back()->with('status', 'verification-link-sent');
+        }
     }
 }
