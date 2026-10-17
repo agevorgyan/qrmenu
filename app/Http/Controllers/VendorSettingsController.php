@@ -526,7 +526,7 @@ class VendorSettingsController extends Controller
 
         TenantCache::increment($vendor, 'menu_version');
 
-        return back()->with('success', 'Settings updated successfully.');
+        return back()->with('success', __('Settings updated successfully.'));
     }
 
     /**

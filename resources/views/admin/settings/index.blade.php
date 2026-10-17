@@ -225,23 +225,23 @@
                             @endphp
                             <label style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-body); border: 1.5px solid {{ $dWidth === '480px' ? 'var(--primary)' : 'var(--border-color)' }}; border-radius: 10px; padding: 0.6rem 0.8rem; cursor: pointer;">
                                 <input type="radio" name="desktop_max_width" value="480px" {{ $dWidth === '480px' ? 'checked' : '' }}>
-                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">480px (Compact)</span>
+                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">{{ __('480px (Compact)') }}</span>
                             </label>
                             <label style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-body); border: 1.5px solid {{ $dWidth === '600px' ? 'var(--primary)' : 'var(--border-color)' }}; border-radius: 10px; padding: 0.6rem 0.8rem; cursor: pointer;">
                                 <input type="radio" name="desktop_max_width" value="600px" {{ $dWidth === '600px' ? 'checked' : '' }}>
-                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">600px (Recommended)</span>
+                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">{{ __('600px (Recommended)') }}</span>
                             </label>
                             <label style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-body); border: 1.5px solid {{ $dWidth === '680px' ? 'var(--primary)' : 'var(--border-color)' }}; border-radius: 10px; padding: 0.6rem 0.8rem; cursor: pointer;">
                                 <input type="radio" name="desktop_max_width" value="680px" {{ $dWidth === '680px' ? 'checked' : '' }}>
-                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">680px (Large Mobile)</span>
+                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">{{ __('680px (Large Mobile)') }}</span>
                             </label>
                             <label style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-body); border: 1.5px solid {{ $dWidth === '768px' ? 'var(--primary)' : 'var(--border-color)' }}; border-radius: 10px; padding: 0.6rem 0.8rem; cursor: pointer;">
                                 <input type="radio" name="desktop_max_width" value="768px" {{ $dWidth === '768px' ? 'checked' : '' }}>
-                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">768px (Tablet)</span>
+                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">{{ __('768px (Tablet)') }}</span>
                             </label>
                             <label style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-body); border: 1.5px solid {{ $dWidth === '100%' ? 'var(--primary)' : 'var(--border-color)' }}; border-radius: 10px; padding: 0.6rem 0.8rem; cursor: pointer;">
                                 <input type="radio" name="desktop_max_width" value="100%" {{ $dWidth === '100%' ? 'checked' : '' }}>
-                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">100% (Full Width)</span>
+                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">{{ __('100% (Full Width)') }}</span>
                             </label>
                         </div>
                         <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
@@ -321,15 +321,18 @@
                             <span style="color: #ef4444;">*</span>
                         </label>
                         <select name="currency" id="vendor_currency" class="form-input" onchange="onCurrencyChanged(this.value)" style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); cursor: pointer;">
-                            @foreach($currencies ?? [
-                                'AMD' => 'AMD (֏ - ՀՀ Դրամ)',
-                                'USD' => 'USD ($ - US Dollar)',
-                                'EUR' => 'EUR (€ - Euro)',
-                                'RUB' => 'RUB (₽ - Российский рубль)',
-                                'GEL' => 'GEL (₾ - Georgian Lari)',
-                                'GBP' => 'GBP (£ - British Pound)',
-                                'AED' => 'AED (د.إ - UAE Dirham)',
-                            ] as $currCode => $currLabel)
+                            @php
+                                $currencyOptions = [
+                                    'AMD' => 'AMD (֏ - ' . __('Armenian Dram') . ')',
+                                    'USD' => 'USD ($ - ' . __('US Dollar') . ')',
+                                    'EUR' => 'EUR (€ - ' . __('Euro') . ')',
+                                    'RUB' => 'RUB (₽ - ' . __('Russian Ruble') . ')',
+                                    'GEL' => 'GEL (₾ - ' . __('Georgian Lari') . ')',
+                                    'GBP' => 'GBP (£ - ' . __('British Pound') . ')',
+                                    'AED' => 'AED (د.إ - ' . __('UAE Dirham') . ')',
+                                ];
+                            @endphp
+                            @foreach($currencyOptions as $currCode => $currLabel)
                                 <option value="{{ $currCode }}" {{ strtoupper($currentCurrency) === $currCode ? 'selected' : '' }}>
                                     {{ $currLabel }}
                                 </option>
@@ -347,12 +350,15 @@
                             <span>{{ __('Քաշի չափման միավոր') }}</span>
                         </label>
                         <select name="weight_unit" id="vendor_weight_unit" class="form-input" style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); cursor: pointer;">
-                            @foreach($weightUnits ?? [
-                                'g' => 'Գրամ (գ / g)',
-                                'kg' => 'Կիլոգրամ (կգ / kg)',
-                                'oz' => 'Ունցիա (oz)',
-                                'lb' => 'Ֆունտ (lb)',
-                            ] as $wKey => $wLabel)
+                            @php
+                                $weightUnitOptions = [
+                                    'g' => __('Gram (g)'),
+                                    'kg' => __('Kilogram (kg)'),
+                                    'oz' => __('Ounce (oz)'),
+                                    'lb' => __('Pound (lb)'),
+                                ];
+                            @endphp
+                            @foreach($weightUnitOptions as $wKey => $wLabel)
                                 <option value="{{ $wKey }}" {{ $currentWeightUnit === $wKey ? 'selected' : '' }}>
                                     {{ $wLabel }}
                                 </option>
@@ -370,11 +376,14 @@
                             <span>{{ __('Ծավալի չափման միավոր') }}</span>
                         </label>
                         <select name="volume_unit" id="vendor_volume_unit" class="form-input" style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); cursor: pointer;">
-                            @foreach($volumeUnits ?? [
-                                'ml' => 'Միլիլիտր (մլ / ml)',
-                                'l' => 'Լիտր (լ / l)',
-                                'fl_oz' => 'Հեղուկ ունցիա (fl oz)',
-                            ] as $vKey => $vLabel)
+                            @php
+                                $volumeUnitOptions = [
+                                    'ml' => __('Milliliter (ml)'),
+                                    'l' => __('Liter (l)'),
+                                    'fl_oz' => __('Fluid Ounce (fl oz)'),
+                                ];
+                            @endphp
+                            @foreach($volumeUnitOptions as $vKey => $vLabel)
                                 <option value="{{ $vKey }}" {{ $currentVolumeUnit === $vKey ? 'selected' : '' }}>
                                     {{ $vLabel }}
                                 </option>
@@ -486,7 +495,7 @@
                                     @foreach($dayNames as $dayKey => $dayLabel)
                                         <label style="display: inline-flex; align-items: center; gap: 0.35rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.35rem 0.65rem; font-size: 0.82rem; font-weight: 700; color: var(--text-main); cursor: pointer;">
                                             <input type="checkbox" name="dine_in_days[]" value="{{ $dayKey }}" class="dine_in_day_cb" {{ in_array($dayKey, $locDineInDays) ? 'checked' : '' }} style="accent-color: var(--primary);">
-                                            <span>{{ $dayLabel }}</span>
+                                            <span>{{ __($dayLabel) }}</span>
                                         </label>
                                     @endforeach
                                 </div>
@@ -539,7 +548,7 @@
                                     @foreach($dayNames as $dayKey => $dayLabel)
                                         <label style="display: inline-flex; align-items: center; gap: 0.35rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.35rem 0.65rem; font-size: 0.82rem; font-weight: 700; color: var(--text-main); cursor: pointer;">
                                             <input type="checkbox" name="delivery_days[]" value="{{ $dayKey }}" class="delivery_day_cb" {{ in_array($dayKey, $locDeliveryDays) ? 'checked' : '' }} style="accent-color: var(--primary);">
-                                            <span>{{ $dayLabel }}</span>
+                                            <span>{{ __($dayLabel) }}</span>
                                         </label>
                                     @endforeach
                                 </div>
@@ -592,7 +601,7 @@
                                     @foreach($dayNames as $dayKey => $dayLabel)
                                         <label style="display: inline-flex; align-items: center; gap: 0.35rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.35rem 0.65rem; font-size: 0.82rem; font-weight: 700; color: var(--text-main); cursor: pointer;">
                                             <input type="checkbox" name="takeaway_days[]" value="{{ $dayKey }}" class="takeaway_day_cb" {{ in_array($dayKey, $locTakeawayDays) ? 'checked' : '' }} style="accent-color: var(--primary);">
-                                            <span>{{ $dayLabel }}</span>
+                                            <span>{{ __($dayLabel) }}</span>
                                         </label>
                                     @endforeach
                                 </div>
@@ -622,18 +631,18 @@
                                     {{ __('Show warning how many minutes in advance') }}
                                 </label>
                                 <select name="closing_warning_minutes" class="form-control" style="width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.92rem; font-weight: 700;">
-                                    <option value="15" {{ $locWarningMinutes == 15 ? 'selected' : '' }}>15 minutes before</option>
-                                    <option value="30" {{ $locWarningMinutes == 30 ? 'selected' : '' }}>30 minutes before (Recommended)</option>
-                                    <option value="45" {{ $locWarningMinutes == 45 ? 'selected' : '' }}>45 minutes before</option>
-                                    <option value="60" {{ $locWarningMinutes == 60 ? 'selected' : '' }}>60 minutes before (1 hour)</option>
-                                    <option value="90" {{ $locWarningMinutes == 90 ? 'selected' : '' }}>90 minutes before (1.5 hours)</option>
+                                    <option value="15" {{ $locWarningMinutes == 15 ? 'selected' : '' }}>{{ __('15 minutes before') }}</option>
+                                    <option value="30" {{ $locWarningMinutes == 30 ? 'selected' : '' }}>{{ __('30 minutes before (Recommended)') }}</option>
+                                    <option value="45" {{ $locWarningMinutes == 45 ? 'selected' : '' }}>{{ __('45 minutes before') }}</option>
+                                    <option value="60" {{ $locWarningMinutes == 60 ? 'selected' : '' }}>{{ __('60 minutes before (1 hour)') }}</option>
+                                    <option value="90" {{ $locWarningMinutes == 90 ? 'selected' : '' }}>{{ __('90 minutes before (1.5 hours)') }}</option>
                                 </select>
                             </div>
                             <div>
                                 <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem;">
                                     {{ __('Custom Warning Message (Optional)') }}
                                 </label>
-                                <input type="text" name="closing_warning_message" value="{{ $locWarningMessage }}" placeholder="e.g. The kitchen is closing soon, please finalize your order" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.92rem; font-weight: 600;">
+                                <input type="text" name="closing_warning_message" value="{{ $locWarningMessage }}" placeholder="{{ __('e.g. The kitchen is closing soon, please finalize your order') }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.92rem; font-weight: 600;">
                             </div>
                         </div>
                     </div>
@@ -761,23 +770,23 @@
                         <!-- Step 1: TXT Verification -->
                         <div style="background: rgba(15, 23, 42, 0.5); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
                             <div style="font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem;">
-                                1. Ownership Verification (TXT Record)
+                                {{ __('1. Ownership Verification (TXT Record)') }}
                             </div>
                             <p style="margin: 0 0 0.5rem 0; line-height: 1.4;">
-                                Add a <strong>TXT Record</strong> in your domain DNS with the Host and Value above, then click <strong>"Verify Ownership"</strong>:
+                                {{ __('Add a TXT Record in your domain DNS with the Host and Value above, then click "Verify Ownership":') }}
                             </p>
                             <div style="font-size: 0.78rem; color: #a5f3fc;">
-                                <i class="fa-solid fa-lock"></i> This ensures that only the verified domain owner can link it to their restaurant.
+                                <i class="fa-solid fa-lock"></i> {{ __('This ensures that only the verified domain owner can link it to their restaurant.') }}
                             </div>
                         </div>
 
                         <!-- Step 2: DNS Routing -->
                         <div style="background: rgba(15, 23, 42, 0.5); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
                             <div style="font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem;">
-                                2. DNS Routing (A or CNAME)
+                                {{ __('2. DNS Routing (A or CNAME)') }}
                             </div>
                             <p style="margin: 0 0 0.5rem 0; line-height: 1.4;">
-                                Add an <strong>A Record</strong> in your domain DNS pointing to:
+                                {{ __('Add an A Record in your domain DNS pointing to:') }}
                             </p>
                             <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.3); padding: 0.4rem 0.65rem; border-radius: 6px; font-family: monospace; color: #a5f3fc; font-size: 0.82rem;">
                                 <span>A &rarr; {{ $_SERVER['SERVER_ADDR'] ?? gethostbyname('menu.elab.am') }}</span>
@@ -786,20 +795,20 @@
                                 </button>
                             </div>
                             <div style="margin-top: 0.4rem; font-size: 0.78rem;">
-                                or <strong>CNAME</strong> to <code>menu.elab.am</code>
+                                {{ __('or CNAME to') }} <code>menu.elab.am</code>
                             </div>
                         </div>
 
                         <!-- Step 3: cPanel / SSL -->
                         <div style="background: rgba(15, 23, 42, 0.5); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
                             <div style="font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem;">
-                                3. cPanel & SSL Certificate
+                                {{ __('3. cPanel & SSL Certificate') }}
                             </div>
                             <p style="margin: 0 0 0.5rem 0; line-height: 1.4;">
-                                In cPanel create a new Domain/Alias with the same Document Root (e.g. <code>menu.elab.am/public</code>).
+                                {{ __('In cPanel create a new Domain/Alias with the same Document Root (e.g. menu.elab.am/public).') }}
                             </p>
                             <div style="font-size: 0.78rem; color: #a5f3fc;">
-                                <i class="fa-solid fa-shield"></i> In cPanel's <strong>SSL/TLS Status</strong>, run <strong>AutoSSL</strong> for a free HTTPS certificate.
+                                <i class="fa-solid fa-shield"></i> {{ __('In cPanel SSL/TLS Status, run AutoSSL for a free HTTPS certificate.') }}
                             </div>
                         </div>
                     </div>
@@ -1004,7 +1013,7 @@
                             {{ __('Legal Business Name') }}
                         </label>
                         <div style="position: relative; display: flex; align-items: center;">
-                            <input type="text" name="legal_name" value="{{ old('legal_name', $vendor->legal_name) }}" class="form-control" placeholder="e.g. "Bistro Group" LLC" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
+                            <input type="text" name="legal_name" value="{{ old('legal_name', $vendor->legal_name) }}" class="form-control" placeholder="{{ __('e.g. \"Bistro Group\" LLC') }}" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
                             <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
                                 <i class="fa-solid fa-building"></i>
                             </span>
@@ -1030,7 +1039,7 @@
                             {{ __('Operating Address') }}
                         </label>
                         <div style="position: relative; display: flex; align-items: center;">
-                            <input type="text" name="operating_address" value="{{ old('operating_address', $vendor->operating_address ?? ($location?->address ?? $vendor->legal_address)) }}" class="form-control" placeholder="Physical operating address" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
+                            <input type="text" name="operating_address" value="{{ old('operating_address', $vendor->operating_address ?? ($location?->address ?? $vendor->legal_address)) }}" class="form-control" placeholder="{{ __('Physical operating address') }}" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
                             <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
                                 <i class="fa-solid fa-map-pin"></i>
                             </span>
@@ -1043,7 +1052,7 @@
                             {{ __('Director (Full Name)') }}
                         </label>
                         <div style="position: relative; display: flex; align-items: center;">
-                            <input type="text" name="director_name" value="{{ old('director_name', $vendor->director_name) }}" class="form-control" placeholder="Director's Name" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
+                            <input type="text" name="director_name" value="{{ old('director_name', $vendor->director_name) }}" class="form-control" placeholder="{{ __("Director's Name") }}" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
                             <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
                                 <i class="fa-solid fa-user-tie"></i>
                             </span>
@@ -1068,7 +1077,7 @@
                             {{ __('Manager / Contact Person') }}
                         </label>
                         <div style="position: relative; display: flex; align-items: center;">
-                            <input type="text" name="contact_person_name" value="{{ old('contact_person_name', $vendor->contact_person_name) }}" class="form-control" placeholder="Manager's Name" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
+                            <input type="text" name="contact_person_name" value="{{ old('contact_person_name', $vendor->contact_person_name) }}" class="form-control" placeholder="{{ __("Manager's Name") }}" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
                             <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
                                 <i class="fa-solid fa-user-gear"></i>
                             </span>

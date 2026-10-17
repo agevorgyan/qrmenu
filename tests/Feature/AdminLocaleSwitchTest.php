@@ -298,4 +298,123 @@ class AdminLocaleSwitchTest extends TestCase
         $resHy->assertSee('Սեղանների և առաքման նոր պատվերներն ավտոմատ կհայտնվեն այստեղ իրական ժամանակում:');
         $resHy->assertSee('Թարգմանություններ և AI');
     }
+
+    public function test_analytics_subscription_and_settings_render_in_selected_locale(): void
+    {
+        $plan = SubscriptionPlan::where('slug', 'pro')->first();
+
+        $vendor = Vendor::create([
+            'name' => 'Cascades Main Branch',
+            'slug' => 'cascades-main',
+            'email' => 'cascades@example.com',
+            'subscription_plan' => 'pro',
+            'subscription_plan_id' => $plan->id,
+            'is_active' => true,
+        ]);
+
+        $loc = Location::create([
+            'vendor_id' => $vendor->id,
+            'name' => 'Cascades Main Branch',
+            'slug' => 'cascades-main-loc',
+            'is_active' => true,
+        ]);
+
+        $user = User::create([
+            'vendor_id' => $vendor->id,
+            'location_id' => $loc->id,
+            'name' => 'Owner',
+            'email' => 'owner@cascades.com',
+            'password' => bcrypt('password'),
+            'role' => 'vendor_owner',
+            'email_verified_at' => now(),
+            'locale' => 'ru',
+        ]);
+
+        // 1. Analytics in Russian
+        $resRuAnalytics = $this->actingAs($user)
+            ->withSession(['admin_locale' => 'ru', 'app_locale' => 'ru'])
+            ->get(route('admin.analytics.index'));
+
+        $resRuAnalytics->assertOk();
+        $resRuAnalytics->assertSee('Аналитика и Трафик');
+        $resRuAnalytics->assertSee('Всего просмотров меню');
+        $resRuAnalytics->assertSee('Популярные блюда');
+        $resRuAnalytics->assertSee('Сравнение каналов');
+        $resRuAnalytics->assertSee('Последние 7 дней');
+        $resRuAnalytics->assertSee('QR-сканы столов');
+
+        // Analytics in Armenian
+        $resHyAnalytics = $this->actingAs($user)
+            ->withSession(['admin_locale' => 'hy', 'app_locale' => 'hy'])
+            ->get(route('admin.analytics.index'));
+
+        $resHyAnalytics->assertOk();
+        $resHyAnalytics->assertSee('Վերլուծություն և Տրաֆիկ');
+        $resHyAnalytics->assertSee('Մենյուի ընդհանուր դիտումներ');
+        $resHyAnalytics->assertSee('Վերջին 7 օր');
+
+        // 2. Subscription in Russian
+        $resRuSub = $this->actingAs($user)
+            ->withSession(['admin_locale' => 'ru', 'app_locale' => 'ru'])
+            ->get(route('admin.subscription'));
+
+        $resRuSub->assertOk();
+        $resRuSub->assertSee('Все возможности тарифа Basic');
+        $resRuSub->assertSee('Онлайн-заказы');
+        $resRuSub->assertSee('Кошелек Idram / QR');
+        $resRuSub->assertSee('/ мес');
+
+        // Subscription in Armenian
+        $resHySub = $this->actingAs($user)
+            ->withSession(['admin_locale' => 'hy', 'app_locale' => 'hy'])
+            ->get(route('admin.subscription'));
+
+        $resHySub->assertOk();
+        $resHySub->assertSee('Basic-ի բոլոր հնարավորությունները');
+        $resHySub->assertSee('Օնլայն պատվերներ');
+        $resHySub->assertSee('/ ամիս');
+
+        // 3. Settings in Russian
+        $resRuSettings = $this->actingAs($user)
+            ->withSession(['admin_locale' => 'ru', 'app_locale' => 'ru'])
+            ->get(route('admin.settings.index'));
+
+        $resRuSettings->assertOk();
+        $resRuSettings->assertSee('Армянский драм');
+        $resRuSettings->assertSee('Грамм (г / g)');
+        $resRuSettings->assertSee('Миллилитр (мл / ml)');
+        $resRuSettings->assertSee('Пн');
+        $resRuSettings->assertSee('Вт');
+        $resRuSettings->assertSee('Ср');
+        $resRuSettings->assertSee('За 30 минут (Рекомендуется)');
+
+        // Settings in Armenian
+        $resHySettings = $this->actingAs($user)
+            ->withSession(['admin_locale' => 'hy', 'app_locale' => 'hy'])
+            ->get(route('admin.settings.index'));
+
+        $resHySettings->assertOk();
+        $resHySettings->assertSee('ՀՀ Դրամ');
+        $resHySettings->assertSee('Երկ');
+        $resHySettings->assertSee('Երք');
+        $resHySettings->assertSee('Չրք');
+        $resHySettings->assertSee('30 րոպե առաջ (Խորհուրդ է տրվում)');
+
+        // 4. Settings update flash message in Russian
+        $resUpdateRu = $this->actingAs($user)
+            ->withSession(['admin_locale' => 'ru', 'app_locale' => 'ru'])
+            ->post(route('admin.settings.update'), [
+                'name' => 'Cascades Main Branch Updated',
+                'currency' => 'AMD',
+                'weight_unit' => 'g',
+                'volume_unit' => 'ml',
+                'service_fee_type' => 'percent',
+                'service_fee_value' => 10,
+                'delivery_fee' => 0,
+                'delivery_min_amount' => 0,
+            ]);
+
+        $resUpdateRu->assertRedirect();
+        $resUpdateRu->assertSessionHas('success', 'Настройки успешно сохранены.');
+    }
 }

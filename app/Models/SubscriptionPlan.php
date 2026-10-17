@@ -47,9 +47,9 @@ class SubscriptionPlan extends Model
     public function getFormattedPriceAttribute(): string
     {
         if ($this->is_custom || $this->price <= 0) {
-            return 'Պայմանագրային';
+            return __('Custom / Negotiated');
         }
 
-        return number_format($this->price, 0, '.', ' ').' '.$this->currency.' / ամիս';
+        return number_format($this->price, 0, '.', ' ').' '.$this->currency.' / '.__('month');
     }
 }

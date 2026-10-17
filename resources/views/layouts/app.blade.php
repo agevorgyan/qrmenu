@@ -1201,21 +1201,21 @@
         <main class="content-body">
             @if(session('success'))
                 <div class="alert alert-success">
-                    <span style="display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-circle-check"></i> {{ session('success') }}</span>
+                    <span style="display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-circle-check"></i> {{ __(session('success')) }}</span>
                     <button onclick="this.parentElement.remove()" style="background:none; border:none; color:inherit; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             @endif
 
             @if(session('warning'))
                 <div class="alert" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #f59e0b;">
-                    <span style="display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-triangle-exclamation"></i> {{ session('warning') }}</span>
+                    <span style="display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-triangle-exclamation"></i> {{ __(session('warning')) }}</span>
                     <button onclick="this.parentElement.remove()" style="background:none; border:none; color:inherit; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             @endif
 
             @if(session('error'))
                 <div class="alert" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444;">
-                    <span style="display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-circle-exclamation"></i> {{ session('error') }}</span>
+                    <span style="display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-circle-exclamation"></i> {{ __(session('error')) }}</span>
                     <button onclick="this.parentElement.remove()" style="background:none; border:none; color:inherit; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             @endif

@@ -47,7 +47,7 @@
                 <div>
                     <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">{{ __('Current Plan') }}</span>
                     <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin: 0.2rem 0 0 0; word-break: break-word;">
-                        {{ $vendor->plan?->name ?? strtoupper($vendor->subscription_plan) }}
+                        {{ __($vendor->plan?->name ?? strtoupper($vendor->subscription_plan)) }}
                     </h3>
                 </div>
                 @if($vendor->isExpired())
@@ -120,7 +120,7 @@
         @foreach($vendor->plan?->features ?? ['QR Menu', 'Product, Image & Price Management', 'Multilingual Menu', 'QR Code Generator', 'Analytics Dashboard'] as $feat)
             <div style="display: flex; align-items: center; gap: 0.65rem; background: var(--bg-body); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 12px; font-size: 0.88rem; color: var(--text-main); font-weight: 600;">
                 <i class="fa-solid fa-circle-check" style="color: #10b981; flex-shrink: 0;"></i>
-                <span style="word-break: break-word;">{{ $feat }}</span>
+                <span style="word-break: break-word;">{{ __($feat) }}</span>
             </div>
         @endforeach
     </div>
@@ -141,18 +141,18 @@
                     </span>
                 @endif
                 <div>
-                    <h4 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin: 0;">{{ $plan->name }}</h4>
+                    <h4 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin: 0;">{{ __($plan->name) }}</h4>
                     <div style="font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--primary); margin: 0.4rem 0;">
                         {{ $plan->formatted_price }}
                     </div>
                     <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.5; word-break: break-word;">
-                        {{ $plan->description }}
+                        {{ __($plan->description) }}
                     </p>
                     <ul style="list-style: none; padding: 0; margin: 0 0 1.25rem 0; font-size: 0.82rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.4rem;">
                         @foreach($plan->features ?? [] as $f)
                             <li style="display: flex; align-items: flex-start; gap: 0.4rem; word-break: break-word;">
                                 <i class="fa-solid fa-check" style="color: #10b981; margin-top: 0.2rem; flex-shrink: 0;"></i>
-                                <span>{{ $f }}</span>
+                                <span>{{ __($f) }}</span>
                             </li>
                         @endforeach
                     </ul>
@@ -200,8 +200,8 @@
                         <label style="display: flex; flex-direction: column; padding: 0.85rem; border-radius: 12px; border: 2px solid; cursor: pointer; transition: all 0.2s;"
                                :style="selectedPlanId == {{ $p->id }} ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.05);' : 'border-color: var(--border-color); background: var(--bg-body);'">
                             <input type="radio" name="subscription_plan_id" value="{{ $p->id }}" x-model="selectedPlanId" style="display: none;">
-                            <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">{{ $p->name }}</span>
-                            <span style="font-size: 0.85rem; font-weight: 700; color: var(--primary); margin-top: 0.25rem;">{{ number_format($p->price, 0, '.', ' ') }} {{ $p->currency }}/mo</span>
+                            <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">{{ __($p->name) }}</span>
+                            <span style="font-size: 0.85rem; font-weight: 700; color: var(--primary); margin-top: 0.25rem;">{{ number_format($p->price, 0, '.', ' ') }} {{ $p->currency }}/{{ __('month') }}</span>
                         </label>
                     @endforeach
                 </div>
@@ -216,31 +216,31 @@
                     <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.75rem 0.5rem; border-radius: 12px; border: 2px solid; cursor: pointer; text-align: center; transition: all 0.2s;"
                            :style="periodMonths == 1 ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.05);' : 'border-color: var(--border-color); background: var(--bg-body);'">
                         <input type="radio" name="period_months" value="1" x-model="periodMonths" style="display: none;">
-                        <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">1 Month</span>
-                        <span style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">Standard</span>
+                        <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">{{ __('1 Month') }}</span>
+                        <span style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">{{ __('Standard') }}</span>
                     </label>
 
                     <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.75rem 0.5rem; border-radius: 12px; border: 2px solid; cursor: pointer; text-align: center; transition: all 0.2s;"
                            :style="periodMonths == 3 ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.05);' : 'border-color: var(--border-color); background: var(--bg-body);'">
                         <input type="radio" name="period_months" value="3" x-model="periodMonths" style="display: none;">
-                        <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">3 Months</span>
-                        <span style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">Quarterly</span>
+                        <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">{{ __('3 Months') }}</span>
+                        <span style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">{{ __('Quarterly') }}</span>
                     </label>
 
                     <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.75rem 0.5rem; border-radius: 12px; border: 2px solid; cursor: pointer; text-align: center; position: relative; transition: all 0.2s;"
                            :style="periodMonths == 6 ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.05);' : 'border-color: var(--border-color); background: var(--bg-body);'">
                         <input type="radio" name="period_months" value="6" x-model="periodMonths" style="display: none;">
                         <span style="position: absolute; top: -8px; right: 4px; background: #10b981; color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 4px; border-radius: 4px;">-10%</span>
-                        <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">6 Months</span>
-                        <span style="font-size: 0.7rem; color: #10b981; font-weight: 700; margin-top: 2px;">10% Off</span>
+                        <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">{{ __('6 Months') }}</span>
+                        <span style="font-size: 0.7rem; color: #10b981; font-weight: 700; margin-top: 2px;">{{ __('10% Off') }}</span>
                     </label>
 
                     <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.75rem 0.5rem; border-radius: 12px; border: 2px solid; cursor: pointer; text-align: center; position: relative; transition: all 0.2s;"
                            :style="periodMonths == 12 ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.05);' : 'border-color: var(--border-color); background: var(--bg-body);'">
                         <input type="radio" name="period_months" value="12" x-model="periodMonths" style="display: none;">
                         <span style="position: absolute; top: -8px; right: 4px; background: #ea580c; color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 4px; border-radius: 4px;">-20%</span>
-                        <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">12 Months</span>
-                        <span style="font-size: 0.7rem; color: #ea580c; font-weight: 700; margin-top: 2px;">20% Off</span>
+                        <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">{{ __('12 Months') }}</span>
+                        <span style="font-size: 0.7rem; color: #ea580c; font-weight: 700; margin-top: 2px;">{{ __('20% Off') }}</span>
                     </label>
                 </div>
             </div>
@@ -253,12 +253,12 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.6rem;">
                     @php
                         $paymentMethods = [
-                            ['code' => 'idram', 'name' => 'Idram Wallet / QR', 'icon' => 'fa-solid fa-wallet', 'color' => '#f97316'],
-                            ['code' => 'telcell', 'name' => 'Telcell Wallet', 'icon' => 'fa-solid fa-mobile-screen-button', 'color' => '#eab308'],
-                            ['code' => 'fastshift', 'name' => 'FastShift', 'icon' => 'fa-solid fa-bolt', 'color' => '#06b6d4'],
-                            ['code' => 'arca', 'name' => 'ArCa / Ameriabank', 'icon' => 'fa-solid fa-credit-card', 'color' => '#2563eb'],
-                            ['code' => 'stripe', 'name' => 'Stripe (Cards)', 'icon' => 'fa-brands fa-stripe', 'color' => '#6366f1'],
-                            ['code' => 'bank_transfer', 'name' => 'Bank Transfer', 'icon' => 'fa-solid fa-building-columns', 'color' => '#64748b'],
+                            ['code' => 'idram', 'name' => __('Idram Wallet / QR'), 'icon' => 'fa-solid fa-wallet', 'color' => '#f97316'],
+                            ['code' => 'telcell', 'name' => __('Telcell Wallet'), 'icon' => 'fa-solid fa-mobile-screen-button', 'color' => '#eab308'],
+                            ['code' => 'fastshift', 'name' => __('FastShift'), 'icon' => 'fa-solid fa-bolt', 'color' => '#06b6d4'],
+                            ['code' => 'arca', 'name' => __('ArCa / Ameriabank'), 'icon' => 'fa-solid fa-credit-card', 'color' => '#2563eb'],
+                            ['code' => 'stripe', 'name' => __('Stripe (Cards)'), 'icon' => 'fa-brands fa-stripe', 'color' => '#6366f1'],
+                            ['code' => 'bank_transfer', 'name' => __('Bank Transfer'), 'icon' => 'fa-solid fa-building-columns', 'color' => '#64748b'],
                         ];
                     @endphp
                     @foreach($paymentMethods as $pm)
@@ -278,7 +278,7 @@
             <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 16px; padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.86rem; color: var(--text-muted); margin-bottom: 0.4rem;">
                     <span>{{ __('Selected billing period:') }}</span>
-                    <span style="font-weight: 700; color: var(--text-main);" x-text="periodMonths + (periodMonths === 1 ? ' month' : ' months')"></span>
+                    <span style="font-weight: 700; color: var(--text-main);" x-text="periodMonths + ' ' + (periodMonths === 1 ? '{{ __('month') }}' : '{{ __('months') }}')"></span>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.86rem; color: var(--text-muted); margin-bottom: 0.65rem;">
                     <span>{{ __('Discount:') }}</span>
@@ -286,7 +286,7 @@
                 </div>
                 <div style="border-top: 1px dashed var(--border-color); padding-top: 0.65rem; display: flex; justify-content: space-between; align-items: center;">
                     <span style="font-weight: 800; font-size: 1rem; color: var(--text-main);">{{ __('Total Due:') }}</span>
-                    <span style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.35rem; color: var(--primary);" x-text="calculateTotal() + ' AMD'"></span>
+                    <span style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.35rem; color: var(--primary);" x-text="calculateTotal() + ' ' + '{{ $vendor->currency ?? 'AMD' }}'"></span>
                 </div>
             </div>
 
