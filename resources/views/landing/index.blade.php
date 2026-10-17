@@ -13,6 +13,17 @@
         $ogImage = \App\Models\SystemSetting::getOgImage();
         $loc = app()->getLocale();
 
+        // 3-way language translator helper: hy, ru, en
+        $tr = function (string $hy, string $ru, string $en) use ($loc): string {
+            if ($loc === 'hy') {
+                return $hy;
+            }
+            if ($loc === 'ru') {
+                return $ru;
+            }
+            return $en;
+        };
+
         // Dynamic CMS resolver: checks localized setting key ($key . '_' . $loc), then unlocalized ($key), then fallback
         $cms = function (string $key, $fallback = '') use ($settings, $loc) {
             $locKey = $key . '_' . $loc;
@@ -95,7 +106,7 @@
         }
 
         html, body {
-            overflow-x: hidden;
+            overflow-x: clip;
             width: 100%;
             max-width: 100vw;
         }
@@ -110,6 +121,7 @@
             font-family: 'Inter', sans-serif;
             line-height: 1.6;
             position: relative;
+            padding-top: 116px;
         }
 
         /* Ambient Glow Backgrounds */
@@ -145,37 +157,44 @@
             z-index: 1;
         }
 
-        /* Top Floating Capsule Header */
+        /* Top Floating Capsule Header (Sticky / Fixed) */
         .site-header {
-            position: sticky;
-            top: 16px;
+            position: fixed;
+            top: 14px;
+            left: 0;
+            right: 0;
+            width: 100%;
             z-index: 1000;
             padding: 0 1rem;
-            transition: all 0.3s ease;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .site-header .container {
             max-width: 1220px;
             padding: 0;
+            pointer-events: auto;
         }
         .nav-wrapper {
-            background: rgba(10, 15, 29, 0.82);
+            background: rgba(10, 15, 29, 0.85);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
             border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 999px;
             padding: 0.45rem 1.25rem;
-            min-height: 94px;
+            min-height: 88px;
             height: auto;
             box-shadow: 0 15px 40px -10px rgba(0, 0, 0, 0.65), 0 0 25px rgba(245, 158, 11, 0.08);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .site-header.scrolled .nav-wrapper {
-            background: rgba(7, 10, 20, 0.94);
-            border-color: rgba(245, 158, 11, 0.3);
-            box-shadow: 0 18px 45px -8px rgba(0, 0, 0, 0.8), 0 0 35px rgba(245, 158, 11, 0.15);
+            background: rgba(7, 10, 20, 0.95);
+            border-color: rgba(245, 158, 11, 0.35);
+            box-shadow: 0 18px 45px -8px rgba(0, 0, 0, 0.85), 0 0 35px rgba(245, 158, 11, 0.18);
+            min-height: 72px;
+            padding: 0.35rem 1.15rem;
         }
         .brand-logo {
             display: flex;
@@ -187,13 +206,17 @@
         }
         .brand-logo img,
         .landing-nav-logo {
-            height: 80px;
-            max-height: 80px;
+            height: 72px;
+            max-height: 72px;
             width: auto;
-            max-width: 280px;
+            max-width: 260px;
             object-fit: contain;
             display: block;
             transition: height 0.25s ease;
+        }
+        .site-header.scrolled .landing-nav-logo {
+            height: 56px;
+            max-height: 56px;
         }
         .logo-icon {
             width: 58px;
@@ -229,31 +252,33 @@
         .nav-burger-pill {
             display: inline-flex;
             align-items: center;
-            gap: 0.65rem;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            padding: 0.45rem 1.05rem;
-            border-radius: 999px;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 12px;
             color: var(--text-primary);
-            font-family: 'Outfit', sans-serif;
-            font-weight: 700;
-            font-size: 0.88rem;
             cursor: pointer;
-            transition: all 0.25s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.22s ease;
+            padding: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
         }
         .nav-burger-pill:hover, .nav-burger-pill.active {
-            background: rgba(245, 158, 11, 0.15);
-            border-color: rgba(245, 158, 11, 0.4);
+            background: rgba(245, 158, 11, 0.18);
+            border-color: rgba(245, 158, 11, 0.45);
             color: var(--accent-amber);
             transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.28);
         }
         .burger-bars-icon {
             display: flex;
             flex-direction: column;
+            justify-content: center;
+            align-items: center;
             gap: 3.5px;
-            width: 17px;
+            width: 16px;
         }
         .burger-bars-icon span {
             display: block;
@@ -261,7 +286,7 @@
             width: 100%;
             background: currentColor;
             border-radius: 2px;
-            transition: all 0.25s ease;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .nav-burger-pill.active .burger-bars-icon span:nth-child(1) {
             transform: translateY(5.5px) rotate(45deg);
@@ -272,14 +297,6 @@
         }
         .nav-burger-pill.active .burger-bars-icon span:nth-child(3) {
             transform: translateY(-5.5px) rotate(-45deg);
-        }
-        .burger-pill-badge {
-            background: rgba(245, 158, 11, 0.2);
-            color: var(--accent-amber);
-            font-size: 0.72rem;
-            font-weight: 700;
-            padding: 2px 7px;
-            border-radius: 999px;
         }
         .nav-quick-pills {
             display: flex;
@@ -317,7 +334,7 @@
             gap: 0.75rem;
         }
 
-        /* Language Switcher Pill */
+        /* Language Switcher Segmented Pill (Desktop) */
         .lang-switch {
             display: flex;
             align-items: center;
@@ -339,6 +356,107 @@
             background: var(--accent-amber);
             color: #000000;
             box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+        }
+
+        /* Mobile Compact Language Dropdown */
+        .landing-lang-dropdown {
+            position: relative;
+            display: none;
+        }
+        .landing-lang-trigger {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            height: 36px;
+            padding: 0 0.65rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 999px;
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+        .landing-lang-trigger:hover,
+        .landing-lang-dropdown.open .landing-lang-trigger {
+            background: rgba(245, 158, 11, 0.16);
+            border-color: rgba(245, 158, 11, 0.45);
+            color: var(--accent-amber);
+        }
+        .landing-lang-trigger .active-flag {
+            font-size: 0.95rem;
+            line-height: 1;
+        }
+        .landing-lang-trigger .active-code {
+            letter-spacing: 0.4px;
+        }
+        .landing-lang-trigger .lang-chevron {
+            font-size: 0.62rem;
+            opacity: 0.75;
+            transition: transform 0.25s ease;
+        }
+        .landing-lang-dropdown.open .landing-lang-trigger .lang-chevron {
+            transform: rotate(180deg);
+        }
+        .landing-lang-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            min-width: 148px;
+            background: rgba(13, 20, 36, 0.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 16px;
+            padding: 0.35rem;
+            box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.85), 0 0 24px rgba(245, 158, 11, 0.12);
+            z-index: 1050;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px) scale(0.96);
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+        .landing-lang-dropdown.open .landing-lang-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+        .landing-lang-option {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            padding: 0.55rem 0.75rem;
+            border-radius: 10px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 600;
+            transition: all 0.18s ease;
+        }
+        .landing-lang-option:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
+        .landing-lang-option.active {
+            background: rgba(245, 158, 11, 0.16);
+            color: var(--accent-amber);
+            font-weight: 700;
+        }
+        .landing-lang-option .lang-option-flag {
+            font-size: 1rem;
+            line-height: 1;
+        }
+        .landing-lang-option .lang-option-title {
+            flex: 1;
+        }
+        .landing-lang-option .active-check {
+            font-size: 0.75rem;
+            color: var(--accent-amber);
         }
 
         .btn-login {
@@ -487,10 +605,96 @@
             border-top: 1px solid rgba(255, 255, 255, 0.08);
             padding-top: 1.25rem;
             display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+        .drawer-contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.65rem;
+            width: 100%;
+        }
+        .drawer-contact-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.65rem 1rem;
+            border-radius: 12px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .drawer-contact-btn.btn-wa {
+            background: rgba(37, 211, 102, 0.15);
+            color: #25d366;
+            border: 1px solid rgba(37, 211, 102, 0.35);
+        }
+        .drawer-contact-btn.btn-wa:hover {
+            background: #25d366;
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+        }
+        .drawer-contact-btn.btn-tg {
+            background: rgba(0, 136, 204, 0.15);
+            color: #29b6f6;
+            border: 1px solid rgba(0, 136, 204, 0.35);
+        }
+        .drawer-contact-btn.btn-tg:hover {
+            background: #0088cc;
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(0, 136, 204, 0.4);
+        }
+        .drawer-cta-wrap {
+            width: 100%;
+        }
+        .drawer-btn-cta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.8rem 1.25rem;
+            border-radius: 999px;
+            background: var(--accent-gradient);
+            color: #ffffff;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.92rem;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: 0 4px 18px rgba(245, 158, 11, 0.35);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .drawer-btn-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(245, 158, 11, 0.5);
+        }
+        .drawer-bottom-bar {
+            display: flex;
             align-items: center;
             justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 1rem;
+            width: 100%;
+            gap: 0.75rem;
+            padding-top: 0.25rem;
+        }
+        .drawer-lang-switch {
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .drawer-login-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0.4rem 0.75rem;
+            border-radius: 8px;
+            transition: color 0.2s ease;
+        }
+        .drawer-login-link:hover {
+            color: var(--text-primary);
         }
 
         /* Hero Section */
@@ -1818,38 +2022,50 @@
         /* Tablet & Mobile Nav Header Re-layout */
         @media (max-width: 768px) {
             html {
-                scroll-padding-top: 85px;
+                scroll-padding-top: 72px;
+            }
+            body {
+                padding-top: 68px;
             }
             .site-header {
                 top: 8px;
                 padding: 0 0.5rem;
             }
             .nav-wrapper {
-                min-height: 75px;
-                height: auto;
-                padding: 0.35rem 0.75rem;
+                min-height: 52px;
+                height: 52px;
+                padding: 0.35rem 0.65rem;
                 border-radius: 999px;
-                gap: 0.5rem;
+                gap: 0.45rem;
+            }
+            .site-header.scrolled .nav-wrapper {
+                min-height: 52px;
+                height: 52px;
+                padding: 0.35rem 0.65rem;
             }
             .brand-logo {
-                gap: 0.45rem;
+                gap: 0.4rem;
                 flex-shrink: 0;
             }
             .brand-logo img,
             .landing-nav-logo {
-                height: 65px !important;
-                max-height: 65px !important;
+                height: 36px !important;
+                max-height: 36px !important;
                 width: auto;
-                max-width: 190px;
+                max-width: 140px;
+            }
+            .site-header.scrolled .landing-nav-logo {
+                height: 36px !important;
+                max-height: 36px !important;
             }
             .logo-icon {
-                width: 48px;
-                height: 48px;
-                font-size: 1.35rem;
-                border-radius: 13px;
+                width: 34px;
+                height: 34px;
+                font-size: 1rem;
+                border-radius: 9px;
             }
             .brand-text {
-                font-size: 1.15rem;
+                font-size: 1.05rem;
             }
             .nav-center-group {
                 order: 3;
@@ -1859,12 +2075,14 @@
                 display: none;
             }
             .nav-burger-pill {
-                padding: 0.4rem 0.8rem;
-                font-size: 0.82rem;
-                gap: 0.45rem;
+                width: 36px;
+                height: 36px;
+                min-width: 36px;
+                padding: 0;
+                border-radius: 10px;
             }
             .burger-bars-icon {
-                width: 15px;
+                width: 16px;
             }
             .nav-actions {
                 order: 2;
@@ -1875,13 +2093,11 @@
             .nav-actions .btn-register-top {
                 display: none !important;
             }
-            .lang-switch {
-                padding: 2px;
-                border-radius: 20px;
+            .landing-lang-segmented {
+                display: none !important;
             }
-            .lang-btn {
-                padding: 2px 7px;
-                font-size: 0.72rem;
+            .landing-lang-dropdown {
+                display: inline-block !important;
             }
         }
 
@@ -2402,33 +2618,38 @@
                 font-size: 0.74rem;
             }
             .command-modal-footer {
-                flex-direction: column;
-                align-items: stretch;
                 gap: 0.75rem;
-                padding-top: 1rem;
+                padding-top: 0.95rem;
             }
-            .command-modal-footer > div {
-                width: 100%;
-            }
-            .command-modal-footer .btn-register-top,
-            .command-modal-footer .btn-login {
-                width: 100%;
-                text-align: center;
-                justify-content: center;
+            .esc-badge {
+                display: none !important;
             }
         }
 
         /* Ultra-small phones (< 390px) */
         @media (max-width: 390px) {
+            .nav-wrapper {
+                padding: 0.3rem 0.5rem;
+                gap: 0.35rem;
+            }
+            .brand-logo img,
+            .landing-nav-logo {
+                height: 32px !important;
+                max-height: 32px !important;
+                max-width: 120px;
+            }
             .brand-text {
-                font-size: 1rem;
+                font-size: 0.95rem;
+            }
+            .landing-lang-trigger {
+                height: 34px;
+                padding: 0 0.5rem;
+                font-size: 0.74rem;
             }
             .nav-burger-pill {
-                padding: 0.35rem 0.6rem;
-                font-size: 0.76rem;
-            }
-            .burger-pill-badge {
-                display: none;
+                width: 34px;
+                height: 34px;
+                min-width: 34px;
             }
             .hero-title {
                 font-size: 1.7rem;
@@ -2454,7 +2675,7 @@
             <div class="nav-wrapper">
                 <a href="{{ route('landing') }}" class="brand-logo" style="text-decoration: none; display: flex; align-items: center; gap: 0.65rem;">
                     @if($siteLogoDark)
-                        <img src="{{ $siteLogoDark }}" alt="{{ $siteName }}" class="landing-nav-logo" style="height: 80px; max-height: 80px; width: auto; object-fit: contain;">
+                        <img src="{{ $siteLogoDark }}" alt="{{ $siteName }}" class="landing-nav-logo">
                     @else
                         <div class="logo-icon">
                             <i class="fa-solid fa-qrcode"></i>
@@ -2465,14 +2686,12 @@
 
                 <!-- Center UI: Burger Capsule & Quick Jumps -->
                 <div class="nav-center-group">
-                    <button type="button" class="nav-burger-pill" id="commandMenuBtn" onclick="toggleCommandDrawer()" aria-label="Menu & Sections">
+                    <button type="button" class="nav-burger-pill" id="commandMenuBtn" onclick="toggleCommandDrawer()" aria-label="Menu">
                         <span class="burger-bars-icon">
                             <span></span>
                             <span></span>
                             <span></span>
                         </span>
-                        <span>{{ $loc === 'hy' ? 'Բաժիններ' : 'Explore' }}</span>
-                        <span class="burger-pill-badge"><i class="fa-solid fa-compass"></i></span>
                     </button>
 
                     <div class="nav-quick-pills">
@@ -2484,10 +2703,47 @@
                 </div>
 
                 <div class="nav-actions">
-                    <div class="lang-switch" id="landingLangSwitch">
-                        <a href="{{ route('lang.switch', 'hy') }}" class="lang-btn {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">🇦🇲 ՀԱՅ</a>
-                        <a href="{{ route('lang.switch', 'en') }}" class="lang-btn {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">🇬🇧 ENG</a>
-                        <a href="{{ route('lang.switch', 'ru') }}" class="lang-btn {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">🇷🇺 РУС</a>
+                    <!-- Desktop Segmented Language Switcher -->
+                    <div class="lang-switch landing-lang-segmented" id="landingLangSwitch">
+                        <a href="{{ route('lang.switch', 'hy') }}" class="lang-btn {{ $loc === 'hy' ? 'active' : '' }}" title="Հայերեն">🇦🇲 ՀԱՅ</a>
+                        <a href="{{ route('lang.switch', 'ru') }}" class="lang-btn {{ $loc === 'ru' ? 'active' : '' }}" title="Русский">🇷🇺 РУС</a>
+                        <a href="{{ route('lang.switch', 'en') }}" class="lang-btn {{ $loc === 'en' ? 'active' : '' }}" title="English">🇬🇧 ENG</a>
+                    </div>
+
+                    <!-- Mobile Compact Language Dropdown -->
+                    <div class="landing-lang-dropdown" id="landingLangDropdown">
+                        <button type="button" class="landing-lang-trigger" id="landingLangTrigger" onclick="toggleLandingLang(event)" aria-label="Select Language" aria-expanded="false">
+                            <span class="active-flag">
+                                @if($loc === 'hy') 🇦🇲
+                                @elseif($loc === 'ru') 🇷🇺
+                                @else 🇬🇧
+                                @endif
+                            </span>
+                            <span class="active-code">
+                                @if($loc === 'hy') ՀԱՅ
+                                @elseif($loc === 'ru') РУС
+                                @else ENG
+                                @endif
+                            </span>
+                            <i class="fa-solid fa-chevron-down lang-chevron"></i>
+                        </button>
+                        <div class="landing-lang-menu" id="landingLangMenu">
+                            <a href="{{ route('lang.switch', 'hy') }}" class="landing-lang-option {{ $loc === 'hy' ? 'active' : '' }}">
+                                <span class="lang-option-flag">🇦🇲</span>
+                                <span class="lang-option-title">Հայերեն</span>
+                                @if($loc === 'hy') <i class="fa-solid fa-check active-check"></i> @endif
+                            </a>
+                            <a href="{{ route('lang.switch', 'ru') }}" class="landing-lang-option {{ $loc === 'ru' ? 'active' : '' }}">
+                                <span class="lang-option-flag">🇷🇺</span>
+                                <span class="lang-option-title">Русский</span>
+                                @if($loc === 'ru') <i class="fa-solid fa-check active-check"></i> @endif
+                            </a>
+                            <a href="{{ route('lang.switch', 'en') }}" class="landing-lang-option {{ $loc === 'en' ? 'active' : '' }}">
+                                <span class="lang-option-flag">🇬🇧</span>
+                                <span class="lang-option-title">English</span>
+                                @if($loc === 'en') <i class="fa-solid fa-check active-check"></i> @endif
+                            </a>
+                        </div>
                     </div>
 
                     @auth
@@ -2521,16 +2777,16 @@
                     </div>
                     <div>
                         <div id="commandModalTitle" style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: #fff;">
-                            {{ $loc === 'hy' ? 'Համակարգի Բաժիններ' : 'Navigation & Services' }}
+                            {{ $tr('Համակարգի Բաժիններ', 'Разделы и Инструменты', 'Navigation & Services') }}
                         </div>
                         <div style="font-size: 0.75rem; color: var(--text-secondary);">
-                            {{ $loc === 'hy' ? 'Արագ անցում դեպի լենդինգի գլխավոր հնարավորությունները' : 'Fast-track to key features and tools' }}
+                            {{ $tr('Արագ անցում դեպի լենդինգի գլխավոր հնարավորությունները', 'Быстрый переход к ключевым возможностям системы', 'Fast-track to key features and tools') }}
                         </div>
                     </div>
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <span style="font-size: 0.72rem; color: var(--text-muted); background: rgba(255, 255, 255, 0.05); padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1);">ESC</span>
+                    <span class="esc-badge" style="font-size: 0.72rem; color: var(--text-muted); background: rgba(255, 255, 255, 0.05); padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1);">ESC</span>
                     <button type="button" class="command-modal-close" onclick="closeCommandDrawer()" aria-label="Close Navigation">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
@@ -2545,7 +2801,7 @@
                     </div>
                     <div>
                         <div class="command-card-title">{{ $cms('vs_badge', __('nav_comparison')) }}</div>
-                        <p class="command-card-desc">{{ $loc === 'hy' ? 'Թղթե մենյուի և թվային QR մենյուի համեմատություն' : 'Paper vs Intelligent QR Menu comparison' }}</p>
+                        <p class="command-card-desc">{{ $tr('Թղթե մենյուի և թվային QR մենյուի համեմատություն', 'Сравнение бумажного меню и умного QR-меню', 'Paper vs Intelligent QR Menu comparison') }}</p>
                     </div>
                 </a>
 
@@ -2555,7 +2811,7 @@
                     </div>
                     <div>
                         <div class="command-card-title">{{ $cms('ai_section_badge', __('nav_ai')) }}</div>
-                        <p class="command-card-desc">{{ $loc === 'hy' ? 'Խելացի AI մատուցող & սոմելիե, ավտոմատ upsell' : 'AI Waiter & Sommelier cross-selling simulator' }}</p>
+                        <p class="command-card-desc">{{ $tr('Խելացի AI մատուցող & սոմելիե, ավտոմատ upsell', 'Умный AI официант и сомелье, автоматический upsell', 'AI Waiter & Sommelier cross-selling simulator') }}</p>
                     </div>
                 </a>
 
@@ -2565,7 +2821,7 @@
                     </div>
                     <div>
                         <div class="command-card-title">{{ $cms('calc_badge', __('nav_calculator')) }}</div>
-                        <p class="command-card-desc">{{ $loc === 'hy' ? 'Հաշվեք հավելյալ շահույթն ու տնտեսումները' : 'Estimate your monthly profit lift and print savings' }}</p>
+                        <p class="command-card-desc">{{ $tr('Հաշվեք հավելյալ շահույթն ու տնտեսումները', 'Рассчитайте рост прибыли и экономию на печати', 'Estimate your monthly profit lift and print savings') }}</p>
                     </div>
                 </a>
 
@@ -2575,7 +2831,7 @@
                     </div>
                     <div>
                         <div class="command-card-title">{{ $cms('features_badge', __('nav_features')) }}</div>
-                        <p class="command-card-desc">{{ $loc === 'hy' ? 'KDS խոհանոց, կանչ, բազմալեզվություն & QR ստուդիա' : 'PWA, Kitchen Display, Waiter Call & QR Studio' }}</p>
+                        <p class="command-card-desc">{{ $tr('KDS խոհանոց, կանչ, բազմալեզվություն & QR ստուդիա', 'PWA, кухонный KDS, вызов официанта и QR-студия', 'PWA, Kitchen Display, Waiter Call & QR Studio') }}</p>
                     </div>
                 </a>
 
@@ -2585,7 +2841,7 @@
                     </div>
                     <div>
                         <div class="command-card-title">{{ $cms('pricing_badge', __('nav_pricing')) }}</div>
-                        <p class="command-card-desc">{{ $loc === 'hy' ? 'Սակագնային պլաններ և 14 օր անվճար փորձաշրջան' : 'Transparent pricing plans with free 14-day trial' }}</p>
+                        <p class="command-card-desc">{{ $tr('Սակագնային պլաններ և 14 օր անվճար փորձաշրջան', 'Тарифные планы и 14 дней бесплатного периода', 'Transparent pricing plans with free 14-day trial') }}</p>
                     </div>
                 </a>
 
@@ -2595,7 +2851,7 @@
                     </div>
                     <div>
                         <div class="command-card-title">{{ $cms('faq_badge', __('nav_faq')) }}</div>
-                        <p class="command-card-desc">{{ $loc === 'hy' ? 'Հաճախ տրվող հարցերի պատասխաններ' : 'Frequently asked questions & integration details' }}</p>
+                        <p class="command-card-desc">{{ $tr('Հաճախ տրվող հարցերի պատասխաններ', 'Ответы на частые вопросы и детали интеграции', 'Frequently asked questions & integration details') }}</p>
                     </div>
                 </a>
 
@@ -2605,49 +2861,56 @@
                     </div>
                     <div>
                         <div class="command-card-title">{{ __('footer_contact_us') }}</div>
-                        <p class="command-card-desc">{{ $loc === 'hy' ? 'Կապ մեր մասնագետների հետ, WhatsApp & Telegram խորհրդատվություն' : 'Connect with our team directly via WhatsApp or Telegram' }}</p>
+                        <p class="command-card-desc">{{ $tr('Կապ մեր մասնագետների հետ, WhatsApp & Telegram խորհրդատվություն', 'Связь с экспертами, консультация в WhatsApp и Telegram', 'Connect with our team directly via WhatsApp or Telegram') }}</p>
                     </div>
                 </a>
             </div>
 
             <!-- Drawer Footer Quick Actions -->
-            <div class="command-modal-footer" style="flex-wrap: wrap; gap: 1rem;">
-                <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-                    <div class="lang-switch" style="background: rgba(255, 255, 255, 0.08); padding: 3px;">
-                        <a href="{{ route('lang.switch', 'hy') }}" class="lang-btn {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">🇦🇲 ՀԱՅ</a>
-                        <a href="{{ route('lang.switch', 'en') }}" class="lang-btn {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">🇬🇧 ENG</a>
-                        <a href="{{ route('lang.switch', 'ru') }}" class="lang-btn {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">🇷🇺 РУС</a>
-                    </div>
-                    @php
-                        $rawPhone = $settings['contact_phone'] ?? '+37455776066';
-                        $cleanPhone = preg_replace('/[^0-9]/', '', $settings['contact_whatsapp'] ?? $rawPhone);
-                        $tgHandle = str_replace('@', '', $settings['contact_telegram'] ?? '+37455776066');
-                    @endphp
-                    <a href="https://wa.me/{{ $cleanPhone }}" target="_blank" class="btn-whatsapp" style="padding: 0.55rem 1.15rem; font-size: 0.82rem;">
+            <div class="command-modal-footer">
+                @php
+                    $rawPhone = $settings['contact_phone'] ?? '+37455776066';
+                    $cleanPhone = preg_replace('/[^0-9]/', '', $settings['contact_whatsapp'] ?? $rawPhone);
+                    $tgHandle = str_replace('@', '', $settings['contact_telegram'] ?? '+37455776066');
+                @endphp
+                <div class="drawer-contact-grid">
+                    <a href="https://wa.me/{{ $cleanPhone }}" target="_blank" class="drawer-contact-btn btn-wa">
                         <i class="fa-brands fa-whatsapp"></i> WhatsApp
                     </a>
-                    <a href="https://t.me/{{ $tgHandle }}" target="_blank" class="btn-telegram" style="padding: 0.55rem 1.15rem; font-size: 0.82rem;">
+                    <a href="https://t.me/{{ $tgHandle }}" target="_blank" class="drawer-contact-btn btn-tg">
                         <i class="fa-brands fa-telegram"></i> Telegram
                     </a>
                 </div>
 
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div class="drawer-cta-wrap">
                     @auth
                         @if(Auth::user()->isSuperAdmin())
-                            <a href="{{ route('superadmin.dashboard') }}" class="btn-register-top" style="font-size: 0.82rem;">
-                                SuperAdmin <i class="fa-solid fa-arrow-right"></i>
+                            <a href="{{ route('superadmin.dashboard') }}" class="drawer-btn-cta">
+                                <i class="fa-solid fa-gauge-high"></i> SuperAdmin <i class="fa-solid fa-arrow-right"></i>
                             </a>
                         @else
-                            <a href="{{ route('admin.dashboard') }}" class="btn-register-top" style="font-size: 0.82rem;">
-                                {{ __('Dashboard') }} <i class="fa-solid fa-arrow-right"></i>
+                            <a href="{{ route('admin.dashboard') }}" class="drawer-btn-cta">
+                                <i class="fa-solid fa-gauge-high"></i> {{ __('Dashboard') }} <i class="fa-solid fa-arrow-right"></i>
                             </a>
                         @endif
                     @else
-                        <a href="{{ route('login') }}" class="btn-login" style="font-size: 0.82rem;">{{ __('nav_login') }}</a>
-                        <a href="{{ route('register.show') }}" class="btn-register-top" style="font-size: 0.82rem;">
+                        <a href="{{ route('register.show') }}" class="drawer-btn-cta">
                             {{ __('nav_register_cta') }} <i class="fa-solid fa-arrow-right"></i>
                         </a>
                     @endauth
+                </div>
+
+                <div class="drawer-bottom-bar">
+                    <div class="lang-switch drawer-lang-switch">
+                        <a href="{{ route('lang.switch', 'hy') }}" class="lang-btn {{ $loc === 'hy' ? 'active' : '' }}" title="Հայերեն">🇦🇲 ՀԱՅ</a>
+                        <a href="{{ route('lang.switch', 'ru') }}" class="lang-btn {{ $loc === 'ru' ? 'active' : '' }}" title="Русский">🇷🇺 РУС</a>
+                        <a href="{{ route('lang.switch', 'en') }}" class="lang-btn {{ $loc === 'en' ? 'active' : '' }}" title="English">🇬🇧 ENG</a>
+                    </div>
+                    @guest
+                        <a href="{{ route('login') }}" class="drawer-login-link">
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i> {{ __('nav_login') }}
+                        </a>
+                    @endguest
                 </div>
             </div>
         </div>
@@ -3398,10 +3661,38 @@
             }
         }
 
+        // Mobile Language Dropdown Toggle
+        function toggleLandingLang(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            const dropdown = document.getElementById('landingLangDropdown');
+            const trigger = document.getElementById('landingLangTrigger');
+            if (!dropdown) return;
+            const isOpen = dropdown.classList.toggle('open');
+            if (trigger) {
+                trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('landingLangDropdown');
+            if (dropdown && dropdown.classList.contains('open')) {
+                if (!dropdown.contains(e.target)) {
+                    dropdown.classList.remove('open');
+                    const trigger = document.getElementById('landingLangTrigger');
+                    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+                }
+            }
+        });
+
         // Close on ESC key
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeCommandDrawer();
+                const dropdown = document.getElementById('landingLangDropdown');
+                if (dropdown) dropdown.classList.remove('open');
             }
         });
 
@@ -3409,7 +3700,7 @@
         window.addEventListener('scroll', function() {
             const header = document.getElementById('siteHeader');
             if (!header) return;
-            if (window.scrollY > 40) {
+            if (window.scrollY > 30) {
                 header.classList.add('scrolled');
             } else {
                 header.classList.remove('scrolled');
@@ -3420,21 +3711,25 @@
         const dishData = {
             steak: {
                 hy: "«Տավարի Սթեյքի հյութեղությունը հիանալի կընդգծի Areni Noir պահուստային կարմիր գինին (3 200 AMD) և ջեռոցում բոված հազարաթերթ բանջարեղենը։»",
+                ru: "«Сочность стейка Рибай идеально подчеркнет выдержанное красное вино Areni Noir (3 200 AMD) и запеченные на гриле овощи.»",
                 en: "\"To elevate this Prime Ribeye, we recommend pairing it with a glass of Areni Noir Reserve Red Wine and char-grilled asparagus.\"",
                 lift: "+32% Check Lift"
             },
             pizza: {
                 hy: "«Դիավոլա պիցցայի կծվությունը իդեալական մեղմացնում է մեր թարմ իտալական ցիտրուսային լիմոնադը (1 400 AMD) կամ սառը սպիտակ գինին։»",
+                ru: "«Пикантную остроту пиццы Диавола прекрасно сбалансирует домашний цитрусовый лимонад (1 400 AMD) или охлажденное белое вино.»",
                 en: "\"For spicy Diavola pizza, the AI suggests our homemade San Pellegrino citrus spritz or chilled Italian Pinot Grigio.\"",
                 lift: "+28% Check Lift"
             },
             salad: {
                 hy: "«Թարմ Բուրատա աղցանի հետ հիանալի համադրվում են իտալական տաք ֆոկաչիան (1 200 AMD) և թեթև ռոզե գինին։»",
+                ru: "«К свежей буррате изумительно подходит теплая фокачча с розмарином (1 200 AMD) и бокал освежающего прованского розе.»",
                 en: "\"Pairing Burrata salad with crispy rosemary focaccia and Provence Rosé wine increases satisfaction and check value.\"",
                 lift: "+24% Check Lift"
             },
             dessert: {
                 hy: "«Շոկոլադե Ֆոնդանի տաք շոկոլադի հետ անհրաժեշտ է թարմ աղացած էսպրեսսո (900 AMD) և վանիլային պաղպաղակի գնդիկ։»",
+                ru: "«К горячему шоколадному фондану AI мгновенно предложит чашку ароматного двойного эспрессо (900 AMD) и шарик мороженого.»",
                 en: "\"For Chocolate Fondant, AI automatically offers a freshly roasted Double Espresso and artisanal vanilla gelato.\"",
                 lift: "+35% Check Lift"
             }
