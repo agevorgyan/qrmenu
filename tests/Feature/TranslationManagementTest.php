@@ -101,7 +101,7 @@ class TranslationManagementTest extends TestCase
         $response = $this->actingAs($this->userA)->get(route('admin.translations.index', ['locale' => 'hy']));
 
         $response->assertStatus(200);
-        $response->assertSee('Translations & AI Localization');
+        $response->assertSee(__('Translations & AI Localization'));
         $response->assertSee('Signature Steak');
     }
 

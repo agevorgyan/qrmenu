@@ -404,7 +404,7 @@ class Product extends Model
             $timeText = "{$s} - {$e}";
         } elseif ($this->discount_start_time) {
             $s = substr($this->discount_start_time, 0, 5);
-            $timeText = "սկսած {$s}-ից";
+            $timeText = $locale === 'hy' ? "սկսած {$s}-ից" : ($locale === 'ru' ? "С {$s}" : "From {$s}");
         }
 
         if ($timeText) {

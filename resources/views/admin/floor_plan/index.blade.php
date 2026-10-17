@@ -16,7 +16,7 @@
                         {{ __('Interactive Table Floor Plan') }}
                     </h1>
                     <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0.2rem 0 0 0;">
-                        Real-time visual map of halls and tables ({{ $location?->name ?? 'Main Branch' }})
+                        {{ __('Real-time visual map of halls and tables') }} ({{ $location?->name ?? __('Main Branch') }})
                     </p>
                 </div>
             </div>
@@ -25,10 +25,10 @@
         <!-- Controls: Save Layout & Add Table -->
         <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
             <button type="button" onclick="addNewTableModal()" class="btn btn-secondary" style="border-radius: 12px; font-weight: 600; font-size: 0.88rem; display: flex; align-items: center; gap: 0.45rem;">
-                <i class="fa-solid fa-plus" style="color: var(--primary);"></i> <span>Add Table</span>
+                <i class="fa-solid fa-plus" style="color: var(--primary);"></i> <span>{{ __('Add Table') }}</span>
             </button>
             <button type="button" onclick="saveFloorPlanChanges()" id="btnSaveFloorPlan" class="btn btn-primary" style="border-radius: 12px; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);">
-                <i class="fa-solid fa-floppy-disk"></i> <span>Save Layout</span>
+                <i class="fa-solid fa-floppy-disk"></i> <span>{{ __('Save Layout') }}</span>
             </button>
         </div>
     </div>
@@ -41,7 +41,7 @@
                 <i class="fa-solid fa-chair"></i>
             </div>
             <div>
-                <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Total Tables</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">{{ __('Total Tables') }}</div>
                 <div style="font-size: 1.45rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit';">{{ $totalTables }}</div>
             </div>
         </div>
@@ -52,7 +52,7 @@
                 <i class="fa-solid fa-circle-check"></i>
             </div>
             <div>
-                <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Available Tables</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">{{ __('Available Tables') }}</div>
                 <div style="font-size: 1.45rem; font-weight: 800; color: #10b981; font-family: 'Outfit';">{{ $availableCount }}</div>
             </div>
         </div>
@@ -63,7 +63,7 @@
                 <i class="fa-solid fa-fire"></i>
             </div>
             <div>
-                <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Occupied / Active</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">{{ __('Occupied / Active') }}</div>
                 <div style="font-size: 1.45rem; font-weight: 800; color: #ef4444; font-family: 'Outfit';">{{ $occupiedCount }}</div>
             </div>
         </div>
@@ -74,7 +74,7 @@
                 <i class="fa-solid fa-bell"></i>
             </div>
             <div>
-                <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Waiter Calls</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">{{ __('Waiter Calls') }}</div>
                 <div style="font-size: 1.45rem; font-weight: 800; color: #f59e0b; font-family: 'Outfit';">{{ $waiterCallCount }}</div>
             </div>
         </div>
@@ -84,7 +84,7 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
             <button type="button" class="hall-tab-btn active" data-hall="all" onclick="filterHall('all')">
-                <i class="fa-solid fa-border-all"></i> All Halls
+                <i class="fa-solid fa-border-all"></i> {{ __('All Halls') }}
             </button>
             @foreach($halls as $hall)
                 <button type="button" class="hall-tab-btn" data-hall="{{ $hall['id'] }}" onclick="filterHall('{{ $hall['id'] }}')">
@@ -97,13 +97,13 @@
         <!-- Legend -->
         <div style="display: flex; gap: 1rem; align-items: center; font-size: 0.8rem; color: var(--text-muted); flex-wrap: wrap;">
             <span style="display: inline-flex; align-items: center; gap: 0.35rem;">
-                <span style="width: 10px; height: 10px; border-radius: 50%; background: #10b981;"></span> Available
+                <span style="width: 10px; height: 10px; border-radius: 50%; background: #10b981;"></span> {{ __('Available') }}
             </span>
             <span style="display: inline-flex; align-items: center; gap: 0.35rem;">
-                <span style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444;"></span> Occupied (Order)
+                <span style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444;"></span> {{ __('Occupied (Order)') }}
             </span>
             <span style="display: inline-flex; align-items: center; gap: 0.35rem;">
-                <span style="width: 10px; height: 10px; border-radius: 50%; background: #f59e0b;"></span> Call / Bill
+                <span style="width: 10px; height: 10px; border-radius: 50%; background: #f59e0b;"></span> {{ __('Call / Bill') }}
             </span>
         </div>
     </div>
@@ -137,7 +137,7 @@
                      onclick="openTableDetails({{ json_encode($table) }})">
 
                     @if($hasCall)
-                        <div class="table-call-badge" title="Waiter Call">
+                        <div class="table-call-badge" title="{{ __('Waiter Call') }}">
                             <i class="fa-solid fa-bell"></i>
                         </div>
                     @endif
@@ -155,7 +155,7 @@
                                 <div class="table-order-time">⏱️ {{ $order['elapsed_minutes'] }}m</div>
                             </div>
                         @else
-                            <div class="table-status-label">Available</div>
+                            <div class="table-status-label">{{ __('Available') }}</div>
                         @endif
                     </div>
                 </div>
@@ -173,8 +173,8 @@
                     <i class="fa-solid fa-chair"></i>
                 </span>
                 <div>
-                    <h3 id="modalTableTitle" style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit';">Table #</h3>
-                    <div id="modalTableSubtitle" style="font-size: 0.8rem; color: var(--text-muted);">Status</div>
+                    <h3 id="modalTableTitle" style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit';">{{ __('Table') }} #</h3>
+                    <div id="modalTableSubtitle" style="font-size: 0.8rem; color: var(--text-muted);">{{ __('Status') }}</div>
                 </div>
             </div>
             <button type="button" onclick="closeTableDetailsModal()" style="background: none; border: none; font-size: 1.25rem; color: var(--text-muted); cursor: pointer;">
@@ -188,7 +188,7 @@
 
         <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); background: var(--bg-body); display: flex; gap: 0.6rem; justify-content: flex-end;">
             <button type="button" onclick="closeTableDetailsModal()" class="btn btn-secondary" style="border-radius: 12px; font-size: 0.85rem;">
-                Close
+                {{ __('Close') }}
             </button>
             <div id="modalTableActionBtns" style="display: flex; gap: 0.5rem;">
                 <!-- Actions injected by JS -->
@@ -201,7 +201,7 @@
 <div id="addTableModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(6px); padding: 1rem;">
     <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; max-width: 400px; width: 100%; box-shadow: 0 25px 50px rgba(0,0,0,0.3); overflow: hidden;">
         <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit';">Add New Table</h3>
+            <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit';">{{ __('Add New Table') }}</h3>
             <button type="button" onclick="closeAddTableModal()" style="background: none; border: none; font-size: 1.25rem; color: var(--text-muted); cursor: pointer;">
                 <i class="fa-solid fa-xmark"></i>
             </button>
@@ -209,12 +209,12 @@
 
         <div style="padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
             <div>
-                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">Table Number</label>
-                <input type="text" id="newTableNumber" placeholder="e.g. 13 or VIP-2" class="form-control" style="width: 100%; padding: 0.65rem 1rem; border-radius: 12px;">
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">{{ __('Table Number') }}</label>
+                <input type="text" id="newTableNumber" placeholder="{{ __('e.g. 13 or VIP-2') }}" class="form-control" style="width: 100%; padding: 0.65rem 1rem; border-radius: 12px;">
             </div>
 
             <div>
-                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">Hall</label>
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">{{ __('Hall') }}</label>
                 <select id="newTableHall" class="form-control" style="width: 100%; padding: 0.65rem 1rem; border-radius: 12px;">
                     @foreach($halls as $hall)
                         <option value="{{ $hall['id'] }}">{{ $hall['name'] }}</option>
@@ -224,22 +224,22 @@
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
                 <div>
-                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">Capacity</label>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">{{ __('Capacity') }}</label>
                     <input type="number" id="newTableCapacity" value="4" min="1" max="20" class="form-control" style="width: 100%; padding: 0.65rem 1rem; border-radius: 12px;">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">Shape</label>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">{{ __('Shape') }}</label>
                     <select id="newTableShape" class="form-control" style="width: 100%; padding: 0.65rem 1rem; border-radius: 12px;">
-                        <option value="square">Square</option>
-                        <option value="round">Round</option>
+                        <option value="square">{{ __('Square') }}</option>
+                        <option value="round">{{ __('Round') }}</option>
                     </select>
                 </div>
             </div>
         </div>
 
         <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); background: var(--bg-body); display: flex; gap: 0.6rem; justify-content: flex-end;">
-            <button type="button" onclick="closeAddTableModal()" class="btn btn-secondary" style="border-radius: 12px;">Cancel</button>
-            <button type="button" onclick="createNewTable()" class="btn btn-primary" style="border-radius: 12px; font-weight: 700;">Add</button>
+            <button type="button" onclick="closeAddTableModal()" class="btn btn-secondary" style="border-radius: 12px;">{{ __('Cancel') }}</button>
+            <button type="button" onclick="createNewTable()" class="btn btn-primary" style="border-radius: 12px; font-weight: 700;">{{ __('Add') }}</button>
         </div>
     </div>
 </div>
@@ -467,7 +467,7 @@ function initDragAndDrop() {
 async function saveFloorPlanChanges() {
     const btn = document.getElementById('btnSaveFloorPlan');
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> {{ __('Saving...') }}';
 
     try {
         const res = await fetch('{{ route("admin.floor_plan.save") }}', {
@@ -485,15 +485,15 @@ async function saveFloorPlanChanges() {
 
         const data = await res.json();
         if (data.success) {
-            alert(data.message || 'Floor plan layout saved successfully.');
+            alert(data.message || '{{ __('Floor plan layout saved successfully.') }}');
         } else {
-            alert('Error saving layout.');
+            alert('{{ __('Error saving layout.') }}');
         }
     } catch (e) {
-        alert('Network error.');
+        alert('{{ __('Network error.') }}');
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Layout';
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> {{ __('Save Layout') }}';
     }
 }
 
@@ -507,15 +507,15 @@ function openTableDetails(table) {
     const icon = document.getElementById('modalTableIcon');
     const actionBtns = document.getElementById('modalTableActionBtns');
 
-    title.textContent = `Table #${table.number}`;
+    title.textContent = `{{ __('Table') }} #${table.number}`;
 
     const hall = floorHalls.find(h => h.id === table.hall_id);
-    const hallName = hall ? hall.name : 'Hall';
+    const hallName = hall ? hall.name : '{{ __('Hall') }}';
 
     if (table.status === 'occupied' && table.order) {
         icon.style.background = 'rgba(239, 68, 68, 0.15)';
         icon.style.color = '#ef4444';
-        subtitle.innerHTML = `<span style="color: #ef4444; font-weight: 700;">Occupied</span> &bull; ${hallName}`;
+        subtitle.innerHTML = `<span style="color: #ef4444; font-weight: 700;">{{ __('Occupied') }}</span> &bull; ${hallName}`;
 
         let callNotice = '';
         if (table.has_waiter_call && table.waiter_call) {
@@ -523,7 +523,7 @@ function openTableDetails(table) {
                 <div style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 0.75rem 1rem; margin-bottom: 1rem; color: #f59e0b; display: flex; align-items: center; gap: 0.6rem;">
                     <i class="fa-solid fa-bell fa-bounce"></i>
                     <div>
-                        <strong>Active Call:</strong> ${table.waiter_call.type_label} (${table.waiter_call.created_at_time})
+                        <strong>{{ __('Active Call:') }}</strong> ${table.waiter_call.type_label} (${table.waiter_call.created_at_time})
                     </div>
                 </div>
             `;
@@ -533,40 +533,40 @@ function openTableDetails(table) {
             ${callNotice}
             <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem; margin-bottom: 1rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <span style="font-size: 0.85rem; color: var(--text-muted);">Order Number</span>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">{{ __('Order Number') }}</span>
                     <strong style="color: var(--text-main); font-family: 'Outfit';">${table.order.order_number}</strong>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <span style="font-size: 0.85rem; color: var(--text-muted);">Total Amount</span>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">{{ __('Total Amount') }}</span>
                     <strong style="color: #10b981; font-size: 1.1rem; font-family: 'Outfit';">${Number(table.order.total_amount).toLocaleString()} {{ $vendor->currency }}</strong>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <span style="font-size: 0.85rem; color: var(--text-muted);">Duration</span>
-                    <span style="color: #ef4444; font-weight: 700; font-size: 0.88rem;">⏱️ ${table.order.elapsed_minutes} min</span>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">{{ __('Duration') }}</span>
+                    <span style="color: #ef4444; font-weight: 700; font-size: 0.88rem;">⏱️ ${table.order.elapsed_minutes} {{ __('min') }}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 0.85rem; color: var(--text-muted);">Guest Name</span>
-                    <span style="font-weight: 600; color: var(--text-main);">${table.order.customer_name || 'Guest'}</span>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">{{ __('Guest Name') }}</span>
+                    <span style="font-weight: 600; color: var(--text-main);">${table.order.customer_name || '{{ __('Guest') }}'}</span>
                 </div>
             </div>
         `;
 
         actionBtns.innerHTML = `
             <a href="{{ route('admin.orders.index') }}" class="btn btn-primary" style="border-radius: 12px; font-size: 0.85rem; text-decoration: none;">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i> View Order
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> {{ __('View Order') }}
             </a>
         `;
     } else {
         icon.style.background = 'rgba(16, 185, 129, 0.15)';
         icon.style.color = '#10b981';
-        subtitle.innerHTML = `<span style="color: #10b981; font-weight: 700;">Available</span> &bull; ${hallName}`;
+        subtitle.innerHTML = `<span style="color: #10b981; font-weight: 700;">{{ __('Available') }}</span> &bull; ${hallName}`;
 
         body.innerHTML = `
             <div style="text-align: center; padding: 1.5rem 0;">
                 <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🟢</div>
-                <h4 style="margin: 0; color: var(--text-main); font-weight: 800;">Table is Available</h4>
+                <h4 style="margin: 0; color: var(--text-main); font-weight: 800;">{{ __('Table is Available') }}</h4>
                 <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0.35rem 0 0 0;">
-                    Table status updates automatically when new orders arrive.
+                    {{ __('Table status updates automatically when new orders arrive.') }}
                 </p>
             </div>
         `;
@@ -591,7 +591,7 @@ function closeAddTableModal() {
 function createNewTable() {
     const num = document.getElementById('newTableNumber').value.trim();
     if (!num) {
-        alert('Please enter a table number.');
+        alert('{{ __('Please enter a table number.') }}');
         return;
     }
 
@@ -634,7 +634,7 @@ function createNewTable() {
         <div class="table-inner">
             <div class="table-number">#${num}</div>
             <div class="table-capacity"><i class="fa-solid fa-user-group"></i> ${capacity}</div>
-            <div class="table-status-label">Available</div>
+            <div class="table-status-label">{{ __('Available') }}</div>
         </div>
     `;
 

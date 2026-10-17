@@ -55,9 +55,9 @@
                 </label>
                 <select name="target_locale" class="form-control" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main);">
                     <option value="">{{ __('All Supported Languages') }}</option>
-                    <option value="hy">🇦🇲 Armenian (hy)</option>
-                    <option value="en">🇬🇧 English (en)</option>
-                    <option value="ru">🇷🇺 Russian (ru)</option>
+                    <option value="hy">🇦🇲 {{ __('Armenian') }} (hy)</option>
+                    <option value="en">🇬🇧 {{ __('English') }} (en)</option>
+                    <option value="ru">🇷🇺 {{ __('Russian') }} (ru)</option>
                 </select>
             </div>
 
@@ -135,7 +135,7 @@
                                 <form action="{{ route('admin.translations.glossary.destroy', $rule) }}" method="POST" style="margin: 0;">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" onclick="return confirm('Delete this glossary rule?');">
+                                    <button type="submit" class="btn" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" onclick="return confirm('{{ __('Delete this glossary rule?') }}');">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </form>

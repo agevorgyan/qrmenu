@@ -305,15 +305,15 @@
                 </summary>
                 <div style="margin-top: 0.75rem; display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 0.6rem;">
                     <div>
-                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.2rem;">ISO Code (e.g. pt)</label>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.2rem;">{{ __('ISO Code (e.g. pt)') }}</label>
                         <input type="text" name="new_code" placeholder="pt" maxlength="10" class="form-control" style="font-size: 0.85rem; padding: 0.45rem 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-main);">
                     </div>
                     <div>
-                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.2rem;">Language Name</label>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.2rem;">{{ __('Language Name') }}</label>
                         <input type="text" name="new_name" placeholder="Portuguese" maxlength="60" class="form-control" style="font-size: 0.85rem; padding: 0.45rem 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-main);">
                     </div>
                     <div>
-                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.2rem;">Flag Emoji</label>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.2rem;">{{ __('Flag Emoji') }}</label>
                         <input type="text" name="new_flag" placeholder="🇵🇹" maxlength="10" class="form-control" style="font-size: 0.85rem; padding: 0.45rem 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-main);">
                     </div>
                 </div>

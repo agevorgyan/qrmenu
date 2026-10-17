@@ -1128,28 +1128,28 @@ class Vendor extends Model
     public function getSubscriptionStatusLabelAttribute(): string
     {
         if ($this->subscription_status === 'suspended') {
-            return 'Կասեցված (Suspended)';
+            return __('Suspended');
         }
         if ($this->isInGracePeriod()) {
-            return 'Արտոնյալ ժամկետ (Grace Period)';
+            return __('Grace Period');
         }
         if ($this->isExpired()) {
-            return 'Ավարտված / Անջատված';
+            return __('Expired');
         }
         if ($this->isTrialing()) {
-            return 'Փորձնական (14 օր)';
+            return __('Trial (14 days)');
         }
         if ($this->subscription_status === 'active') {
-            return 'Ակտիվ';
+            return __('Active');
         }
         if ($this->subscription_status === 'cancelled') {
-            return 'Չեղարկված';
+            return __('Cancelled');
         }
         if ($this->subscription_status === 'past_due') {
-            return 'Ժամկետանց';
+            return __('Past Due');
         }
 
-        return ucfirst($this->subscription_status ?? 'Active');
+        return __(ucfirst($this->subscription_status ?? 'Active'));
     }
 
     public function hasFeature(string $feature): bool

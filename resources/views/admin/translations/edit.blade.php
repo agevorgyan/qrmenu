@@ -190,7 +190,7 @@
                             @if($idx > 0)
                                 <form action="{{ route('admin.translations.restore', ['translation' => $translation, 'history' => $history->id]) }}" method="POST" style="margin: 0;">
                                     @csrf
-                                    <button type="submit" class="btn" style="padding: 0.15rem 0.5rem; font-size: 0.72rem; border-color: var(--border-color); color: var(--text-muted);" onclick="return confirm('Restore this version to draft?');">
+                                    <button type="submit" class="btn" style="padding: 0.15rem 0.5rem; font-size: 0.72rem; border-color: var(--border-color); color: var(--text-muted);" onclick="return confirm('{{ __('Restore this version to draft?') }}');">
                                         <i class="fa-solid fa-rotate-left"></i> {{ __('Restore') }}
                                     </button>
                                 </form>

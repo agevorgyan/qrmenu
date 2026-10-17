@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Menu Builder - ' . $vendor->name)
+@section('title', __('Menu Builder') . ' - ' . $vendor->name)
 
 @section('styles')
 <style>
@@ -114,19 +114,19 @@
                 <i class="fa-solid fa-utensils"></i>
             </span>
             <h1 style="font-size: 1.75rem; font-weight: 800; margin: 0; color: var(--text-main);">
-                Menu Builder
+                {{ __('Menu Builder') }}
             </h1>
         </div>
         <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.35rem;">
-            Manage categories, dish offerings, pricing portions, allergens, and happy hour discount schedules.
+            {{ __('Manage categories, dish offerings, pricing portions, allergens, and happy hour discount schedules.') }}
         </p>
     </div>
     <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
         <button class="btn btn-secondary" onclick="document.getElementById('newCategoryModal').style.display='flex'">
-            <i class="fa-solid fa-folder-plus" style="color: var(--primary);"></i> New Category
+            <i class="fa-solid fa-folder-plus" style="color: var(--primary);"></i> {{ __('New Category') }}
         </button>
         <button class="btn btn-primary" onclick="openNewProductModal()">
-            <i class="fa-solid fa-plus"></i> Add New Dish
+            <i class="fa-solid fa-plus"></i> {{ __('Add New Dish') }}
         </button>
     </div>
 </div>
@@ -140,17 +140,17 @@
             </span>
             <div>
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <strong style="font-size: 1.05rem; color: var(--text-main);">Branch Menu Availability</strong>
-                    <span class="badge badge-indigo" style="font-size: 0.72rem;">{{ $activeLocation?->name ?? 'Default Branch' }}</span>
+                    <strong style="font-size: 1.05rem; color: var(--text-main);">{{ __('Branch Menu Availability') }}</strong>
+                    <span class="badge badge-indigo" style="font-size: 0.72rem;">{{ $activeLocation?->name ?? __('Default Branch') }}</span>
                 </div>
                 <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">
-                    The «In Stock / Out of Stock» toggles and stock settings below apply to the selected branch:
+                    {{ __('The «In Stock / Out of Stock» toggles and stock settings below apply to the selected branch:') }}
                 </div>
             </div>
         </div>
         <div style="display: flex; align-items: center; gap: 0.65rem;">
             <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); white-space: nowrap;">
-                <i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> Branch:
+                <i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> {{ __('Branch:') }}
             </label>
             <form method="GET" action="{{ route('admin.menu.index') }}" id="branchScopeFilterForm" style="display: flex; align-items: center; margin: 0;">
                 <select name="location_id" onchange="document.getElementById('branchScopeFilterForm').submit()" class="form-select" style="min-width: 220px; font-weight: 700; padding: 0.5rem 0.85rem; border-radius: 10px; border-color: rgba(99, 102, 241, 0.4);">
@@ -170,16 +170,16 @@
         <div style="width: 64px; height: 64px; border-radius: 20px; background: rgba(245, 158, 11, 0.15); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 1.25rem;">
             <i class="fa-solid fa-utensils"></i>
         </div>
-        <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-main);">Your menu is empty</h2>
+        <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-main);">{{ __('Your menu is empty') }}</h2>
         <p style="color: var(--text-muted); margin-bottom: 1.75rem; max-width: 440px; margin-left: auto; margin-right: auto; line-height: 1.5;">
-            Start creating categories and dishes, or use our AI Menu Import tool to digitize existing paper/PDF menus in seconds.
+            {{ __('Start creating categories and dishes, or use our AI Menu Import tool to digitize existing paper/PDF menus in seconds.') }}
         </p>
         <div style="display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap;">
             <a href="{{ route('admin.ai.import') }}" class="btn btn-primary">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> AI Menu Import
+                <i class="fa-solid fa-wand-magic-sparkles"></i> {{ __('AI Menu Import') }}
             </a>
             <button class="btn btn-secondary" onclick="document.getElementById('newCategoryModal').style.display='flex'">
-                <i class="fa-solid fa-plus"></i> Create Category
+                <i class="fa-solid fa-plus"></i> {{ __('Create Category') }}
             </button>
         </div>
     </div>
@@ -201,7 +201,7 @@
                             </span>
                         @endif
                         <span class="badge badge-indigo" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;">
-                            {{ $category->products->count() }} dishes
+                            {{ $category->products->count() }} {{ __('dishes') }}
                         </span>
                     </div>
                     @if($category->description)
@@ -211,12 +211,12 @@
 
                 <div style="display: flex; gap: 0.45rem; align-items: center; flex-shrink: 0;">
                     <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem;" onclick="editCategory({{ json_encode($category) }})">
-                        <i class="fa-solid fa-pen"></i> Edit Category
+                        <i class="fa-solid fa-pen"></i> {{ __('Edit Category') }}
                     </button>
-                    <form action="{{ route('admin.menu.categories.destroy', $category->id) }}" method="POST" onsubmit="return confirm('Delete category {{ $category->name }} and all its dishes?')">
+                    <form action="{{ route('admin.menu.categories.destroy', $category->id) }}" method="POST" onsubmit="return confirm('{{ __('Delete Category') }}?')">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-danger" style="padding: 0.35rem 0.65rem; font-size: 0.78rem;" title="Delete Category">
+                        <button type="submit" class="btn btn-danger" style="padding: 0.35rem 0.65rem; font-size: 0.78rem;" title="{{ __('Delete Category') }}">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </form>
@@ -237,12 +237,12 @@
                                     
                                     @if($vendor->featured_dish_enabled && $vendor->featured_product_id == $product->id)
                                         <span class="badge" style="background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; font-size: 0.7rem; font-weight: 800;">
-                                            <i class="fa-solid fa-fire-flame-curved"></i> {{ $vendor->featured_dish_badge ?: 'SPECIAL OF THE DAY' }}
+                                            <i class="fa-solid fa-fire-flame-curved"></i> {{ $vendor->featured_dish_badge ?: __('SPECIAL OF THE DAY') }}
                                         </span>
                                     @endif
                                     
                                     @if($product->is_featured)
-                                        <span class="badge badge-amber" style="font-size: 0.7rem; font-weight: 700;">★ FEATURED</span>
+                                        <span class="badge badge-amber" style="font-size: 0.7rem; font-weight: 700;">★ {{ __('FEATURED') }}</span>
                                     @endif
 
                                     @if(!empty($product->dietary_tags))
@@ -253,15 +253,15 @@
 
                                     @if($product->available_start_time || $product->available_end_time || !empty($product->available_days))
                                         <span class="badge badge-amber" style="font-size: 0.68rem;">
-                                            <i class="fa-regular fa-clock"></i> {{ $product->getAvailabilityScheduleSummary('en') }}
+                                            <i class="fa-regular fa-clock"></i> {{ $product->getAvailabilityScheduleSummary(app()->getLocale()) }}
                                         </span>
                                     @endif
 
                                     @if(!$product->available_for_dine_in || !$product->available_for_takeaway || !$product->available_for_delivery)
                                         <span class="badge badge-indigo" style="font-size: 0.68rem;">
-                                            @if($product->available_for_dine_in) 🍽️ Dine-in @endif
-                                            @if($product->available_for_takeaway) 🥡 Takeaway @endif
-                                            @if($product->available_for_delivery) 🛵 Delivery @endif
+                                            @if($product->available_for_dine_in) 🍽️ {{ __('Dine-in') }} @endif
+                                            @if($product->available_for_takeaway) 🥡 {{ __('Takeaway') }} @endif
+                                            @if($product->available_for_delivery) 🛵 {{ __('Delivery') }} @endif
                                         </span>
                                     @endif
 
@@ -275,7 +275,7 @@
                                     @endphp
                                     @if($locUnavailableCount > 0 && $locUnavailableCount < $locations->count())
                                         <span class="badge badge-rose" style="font-size: 0.68rem;">
-                                            <i class="fa-solid fa-store-slash"></i> Disabled in {{ $locUnavailableCount }} branches
+                                            <i class="fa-solid fa-store-slash"></i> {{ __('Disabled in :count branches', ['count' => $locUnavailableCount]) }}
                                         </span>
                                     @endif
                                 </div>
@@ -293,13 +293,13 @@
                                     @if($hasCustomVariations)
                                         <div style="margin-top: 0.65rem; padding: 0.5rem 0.75rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; width: 100%; box-sizing: border-box;">
                                             <div style="font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.35rem;">
-                                                <i class="fa-solid fa-sliders" style="color: var(--primary);"></i> Portions & Variations ({{ $product->variations->count() }}):
+                                                <i class="fa-solid fa-sliders" style="color: var(--primary);"></i> {{ __('Portions & Variations') }} ({{ $product->variations->count() }}):
                                             </div>
                                             <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
                                                 @foreach($product->variations as $var)
                                                     <div style="display: inline-flex; align-items: center; gap: 0.35rem; background: var(--input-bg); border: 1px solid {{ $var->is_default ? 'var(--primary)' : 'var(--border-color)' }}; padding: 0.2rem 0.55rem; border-radius: 8px; font-size: 0.75rem; white-space: nowrap;">
                                                         @if($var->is_default)
-                                                            <i class="fa-solid fa-circle-check" style="color: var(--primary); font-size: 0.75rem;" title="Default Portion"></i>
+                                                            <i class="fa-solid fa-circle-check" style="color: var(--primary); font-size: 0.75rem;" title="{{ __('Default Portion') }}"></i>
                                                         @else
                                                             <i class="fa-regular fa-circle" style="color: var(--text-muted); font-size: 0.7rem;"></i>
                                                         @endif
@@ -325,13 +325,13 @@
 
                                 <div style="display: flex; gap: 0.85rem; align-items: center; margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap;">
                                     @if($product->calories)
-                                        <span><i class="fa-solid fa-fire" style="color: var(--primary);"></i> {{ $product->calories }} kcal</span>
+                                        <span><i class="fa-solid fa-fire" style="color: var(--primary);"></i> {{ $product->calories }} {{ __('kcal') }}</span>
                                     @endif
                                     @if($product->preparation_time_min)
-                                        <span><i class="fa-solid fa-clock"></i> {{ $product->preparation_time_min }} mins</span>
+                                        <span><i class="fa-solid fa-clock"></i> {{ $product->preparation_time_min }} {{ __('mins') }}</span>
                                     @endif
                                     @if($product->allergens->count() > 0)
-                                        <span><i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i> Allergens: {{ $product->allergens->pluck('icon')->join(' ') }}</span>
+                                        <span><i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i> {{ __('Allergens:') }} {{ $product->allergens->pluck('icon')->join(' ') }}</span>
                                     @endif
                                 </div>
                             </div>
@@ -350,7 +350,7 @@
                                         <div>
                                             <span>{{ number_format($product->price) }} {{ $vendor->currency }}</span>
                                             <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">
-                                                (Discount: {{ number_format($product->discount_price) }} {{ $vendor->currency }})
+                                                ({{ __('Discount:') }} {{ number_format($product->discount_price) }} {{ $vendor->currency }})
                                             </div>
                                         </div>
                                     @elseif($product->variations->count() > 1)
@@ -363,22 +363,22 @@
                                 @if($product->isDiscountActive())
                                     <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; justify-content: flex-end;">
                                         <span class="badge badge-rose" style="font-size: 0.7rem;">
-                                            <i class="fa-solid fa-tag"></i> -{{ $product->getDiscountPercentage() }}% Off
+                                            <i class="fa-solid fa-tag"></i> -{{ $product->getDiscountPercentage() }}% {{ __('Off') }}
                                         </span>
                                         <span class="badge badge-emerald" style="font-size: 0.7rem;">
-                                            <i class="fa-regular fa-clock"></i> {{ $product->getDiscountScheduleSummary('en') }}
+                                            <i class="fa-regular fa-clock"></i> {{ $product->getDiscountScheduleSummary(app()->getLocale()) }}
                                         </span>
                                     </div>
                                 @elseif($product->discount_price)
                                     <div style="font-size: 0.7rem; color: var(--text-muted);">
-                                        <i class="fa-regular fa-clock"></i> {{ $product->getDiscountScheduleSummary('en') }} <span style="opacity: 0.7;">(off hours)</span>
+                                        <i class="fa-regular fa-clock"></i> {{ $product->getDiscountScheduleSummary(app()->getLocale()) }} <span style="opacity: 0.7;">({{ __('off hours') }})</span>
                                     </div>
                                 @endif
                             </div>
 
                             <div class="dish-actions-mobile">
                                 <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.7rem; font-size: 0.78rem;" onclick="editProduct({{ json_encode($product->load(['allergens', 'variations', 'overrides'])) }})">
-                                    <i class="fa-solid fa-pen"></i> Edit
+                                    <i class="fa-solid fa-pen"></i> {{ __('Edit') }}
                                 </button>
 
                                 @php
@@ -387,20 +387,20 @@
                                 <form action="{{ route('admin.menu.products.toggle', $product->id) }}" method="POST" style="margin: 0;">
                                     @csrf
                                     <input type="hidden" name="location_id" value="{{ $activeLocationId }}">
-                                    <button type="submit" class="btn btn-secondary" style="padding: 0.35rem 0.7rem; font-size: 0.78rem;" title="Toggle stock status for {{ $activeLocation?->name }}">
+                                    <button type="submit" class="btn btn-secondary" style="padding: 0.35rem 0.7rem; font-size: 0.78rem;" title="{{ __('Toggle stock status for :name', ['name' => $activeLocation?->name]) }}">
                                         @if($isInStockCurrentBranch)
-                                            <span style="color: #10b981;"><i class="fa-solid fa-toggle-on"></i> In Stock</span>
+                                            <span style="color: #10b981;"><i class="fa-solid fa-toggle-on"></i> {{ __('In Stock') }}</span>
                                         @else
-                                            <span style="color: #ef4444;"><i class="fa-solid fa-toggle-off"></i> Out of Stock</span>
+                                            <span style="color: #ef4444;"><i class="fa-solid fa-toggle-off"></i> {{ __('Out of Stock') }}</span>
                                         @endif
-                                        <small style="opacity: 0.7; font-size: 0.7rem; display: block;">({{ Str::limit($activeLocation?->name ?? 'Branch', 12) }})</small>
+                                        <small style="opacity: 0.7; font-size: 0.7rem; display: block;">({{ Str::limit($activeLocation?->name ?? __('Branch'), 12) }})</small>
                                     </button>
                                 </form>
 
-                                <form action="{{ route('admin.menu.products.destroy', $product->id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Delete dish {{ $product->name }}?')">
+                                <form action="{{ route('admin.menu.products.destroy', $product->id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('{{ __('Delete dish') }} {{ $product->name }}?')">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-danger" style="padding: 0.35rem 0.65rem; font-size: 0.78rem;" title="Delete dish">
+                                    <button type="submit" class="btn btn-danger" style="padding: 0.35rem 0.65rem; font-size: 0.78rem;" title="{{ __('Delete dish') }}">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </form>
@@ -409,7 +409,7 @@
                     </div>
                 @empty
                     <div style="text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.9rem;">
-                        No dishes added to this category yet.
+                        {{ __('No dishes added to this category yet.') }}
                     </div>
                 @endforelse
             </div>
@@ -503,14 +503,14 @@
 <div id="newProductModal" class="modern-modal-overlay" style="display: none;">
     <div class="modal-box-responsive">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0;">Add New Menu Dish</h3>
+            <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0;">{{ __('Add New Menu Dish') }}</h3>
             <button onclick="document.getElementById('newProductModal').style.display='none'" style="background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
         <form action="{{ route('admin.menu.products.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <div style="margin-bottom: 1rem;">
-                <label class="form-label">Category *</label>
+                <label class="form-label">{{ __('Category') }} *</label>
                 <select name="category_id" required class="form-select">
                     @foreach($categories as $cat)
                         <option value="{{ $cat->id }}">{{ $cat->name }}</option>
@@ -524,14 +524,14 @@
                     <input type="text" name="name" required class="form-input">
                 </div>
                 <div>
-                    <label class="form-label">Price ({{ $vendor->currency }}) *</label>
+                    <label class="form-label">{{ __('Price') }} ({{ $vendor->currency }}) *</label>
                     <input type="number" name="price" step="100" required class="form-input">
                 </div>
                 <div>
                     <label class="form-label" style="color: #ef4444;">
-                        <i class="fa-solid fa-tag"></i> Discounted Price
+                        <i class="fa-solid fa-tag"></i> {{ __('Discounted Price') }}
                     </label>
-                    <input type="number" name="discount_price" step="100" placeholder="e.g. 2500" class="form-input" style="border-color: rgba(239, 68, 68, 0.4);">
+                    <input type="number" name="discount_price" step="100" placeholder="{{ __('e.g. 2500') }}" class="form-input" style="border-color: rgba(239, 68, 68, 0.4);">
                 </div>
             </div>
 
@@ -543,35 +543,35 @@
                             <i class="fa-solid fa-clock"></i>
                         </span>
                         <div>
-                            <strong style="font-size: 0.85rem; color: var(--text-main);">Discount Schedule (Happy Hour)</strong>
-                            <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">Set active days and hours for the discount</small>
+                            <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Discount Schedule (Happy Hour)') }}</strong>
+                            <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('Set active days and hours for the discount') }}</small>
                         </div>
                     </div>
                     <label style="font-size: 0.78rem; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; color: var(--text-main); font-weight: 600;">
-                        <input type="checkbox" name="is_discount_active" value="1" checked> Enable Discount
+                        <input type="checkbox" name="is_discount_active" value="1" checked> {{ __('Enable Discount') }}
                     </label>
                 </div>
 
                 <!-- Day Selector Chips -->
                 <div style="margin-bottom: 0.75rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.35rem;">
-                        <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Days of the Week</label>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">{{ __('Days of the Week') }}</label>
                         <div style="display: flex; gap: 0.35rem;">
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('new', 'all')">All</button>
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('new', 'weekdays')">Mon-Fri</button>
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('new', 'weekends')">Weekends</button>
+                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('new', 'all')">{{ __('All') }}</button>
+                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('new', 'weekdays')">{{ __('Mon-Fri') }}</button>
+                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('new', 'weekends')">{{ __('Weekends') }}</button>
                         </div>
                     </div>
                     <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
                         @php
                             $weekDays = [
-                                'mon' => 'Mon',
-                                'tue' => 'Tue',
-                                'wed' => 'Wed',
-                                'thu' => 'Thu',
-                                'fri' => 'Fri',
-                                'sat' => 'Sat',
-                                'sun' => 'Sun'
+                                'mon' => __('Mon'),
+                                'tue' => __('Tue'),
+                                'wed' => __('Wed'),
+                                'thu' => __('Thu'),
+                                'fri' => __('Fri'),
+                                'sat' => __('Sat'),
+                                'sun' => __('Sun')
                             ];
                         @endphp
                         @foreach($weekDays as $key => $lbl)
@@ -585,11 +585,11 @@
                 <!-- Time Window -->
                 <div class="grid-2" style="margin-bottom: 0.35rem;">
                     <div>
-                        <label class="form-label" style="font-size: 0.75rem;">Start Time</label>
+                        <label class="form-label" style="font-size: 0.75rem;">{{ __('Start Time') }}</label>
                         <input type="time" name="discount_start_time" class="form-input" style="padding: 0.45rem 0.75rem;">
                     </div>
                     <div>
-                        <label class="form-label" style="font-size: 0.75rem;">End Time</label>
+                        <label class="form-label" style="font-size: 0.75rem;">{{ __('End Time') }}</label>
                         <input type="time" name="discount_end_time" class="form-input" style="padding: 0.45rem 0.75rem;">
                     </div>
                 </div>
@@ -603,13 +603,13 @@
                             <i class="fa-solid fa-code-branch"></i>
                         </span>
                         <div>
-                            <strong style="font-size: 0.85rem; color: var(--text-main);">Branch Availability</strong>
-                            <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">Select which branches offer this dish</small>
+                            <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Branch Availability') }}</strong>
+                            <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('Select which branches offer this dish') }}</small>
                         </div>
                     </div>
                     <div style="display: flex; gap: 0.35rem;">
-                        <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setLocationsPreset('new', true)">Select All</button>
-                        <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setLocationsPreset('new', false)">Clear</button>
+                        <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setLocationsPreset('new', true)">{{ __('Select All') }}</button>
+                        <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setLocationsPreset('new', false)">{{ __('Clear') }}</button>
                     </div>
                 </div>
                 <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
@@ -628,27 +628,27 @@
                         <i class="fa-regular fa-clock"></i>
                     </span>
                     <div>
-                        <strong style="font-size: 0.85rem; color: var(--text-main);">Operating Hours (Lunch / Hours)</strong>
-                        <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">e.g., lunch available only 12:00 - 15:00 (leave empty for all day)</small>
+                        <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Operating Hours (Lunch / Hours)') }}</strong>
+                        <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('e.g., lunch available only 12:00 - 15:00 (leave empty for all day)') }}</small>
                     </div>
                 </div>
                 <div class="grid-2" style="margin-bottom: 0.75rem;">
                     <div>
-                        <label class="form-label" style="font-size: 0.75rem;">Available from (Start Time)</label>
+                        <label class="form-label" style="font-size: 0.75rem;">{{ __('Available from (Start Time)') }}</label>
                         <input type="time" name="available_start_time" class="form-input" style="padding: 0.45rem 0.75rem;">
                     </div>
                     <div>
-                        <label class="form-label" style="font-size: 0.75rem;">Until (End Time)</label>
+                        <label class="form-label" style="font-size: 0.75rem;">{{ __('Until (End Time)') }}</label>
                         <input type="time" name="available_end_time" class="form-input" style="padding: 0.45rem 0.75rem;">
                     </div>
                 </div>
                 <div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.35rem;">
-                        <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Available Days</label>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: gap: 0.35rem;">
+                        <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">{{ __('Available Days') }}</label>
                         <div style="display: flex; gap: 0.35rem;">
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('new', 'all')">All</button>
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('new', 'weekdays')">Mon-Fri</button>
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('new', 'weekends')">Weekends</button>
+                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('new', 'all')">{{ __('All') }}</button>
+                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('new', 'weekdays')">{{ __('Mon-Fri') }}</button>
+                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('new', 'weekends')">{{ __('Weekends') }}</button>
                         </div>
                     </div>
                     <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
@@ -668,22 +668,22 @@
                         <i class="fa-solid fa-truck-ramp-box"></i>
                     </span>
                     <div>
-                        <strong style="font-size: 0.85rem; color: var(--text-main);">Order Channels Availability</strong>
-                        <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">Select allowed order channels for this dish</small>
+                        <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Order Channels Availability') }}</strong>
+                        <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('Select allowed order channels for this dish') }}</small>
                     </div>
                 </div>
                 <div style="display: flex; flex-wrap: wrap; gap: 0.65rem;">
                     <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.45rem 0.8rem; border-radius: 10px; cursor: pointer; color: var(--text-main); font-weight: 600;">
                         <input type="hidden" name="available_for_dine_in" value="0">
-                        <input type="checkbox" name="available_for_dine_in" value="1" checked> 🍽️ Dine-in
+                        <input type="checkbox" name="available_for_dine_in" value="1" checked> 🍽️ {{ __('Dine-in') }}
                     </label>
                     <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.45rem 0.8rem; border-radius: 10px; cursor: pointer; color: var(--text-main); font-weight: 600;">
                         <input type="hidden" name="available_for_takeaway" value="0">
-                        <input type="checkbox" name="available_for_takeaway" value="1" checked> 🥡 Takeaway
+                        <input type="checkbox" name="available_for_takeaway" value="1" checked> 🥡 {{ __('Takeaway') }}
                     </label>
                     <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.45rem 0.8rem; border-radius: 10px; cursor: pointer; color: var(--text-main); font-weight: 600;">
                         <input type="hidden" name="available_for_delivery" value="0">
-                        <input type="checkbox" name="available_for_delivery" value="1" checked> 🛵 Delivery
+                        <input type="checkbox" name="available_for_delivery" value="1" checked> 🛵 {{ __('Delivery') }}
                     </label>
                 </div>
             </div>
@@ -706,16 +706,16 @@
 
             <div style="margin-bottom: 1rem;">
                 <label class="form-label">
-                    <i class="fa-solid fa-image" style="color: var(--primary);"></i> Dish Image (Upload File or Enter URL)
+                    <i class="fa-solid fa-image" style="color: var(--primary);"></i> {{ __('Dish Image (Upload File or Enter URL)') }}
                 </label>
                 <div class="grid-2" style="align-items: center;">
                     <div>
                         <input type="file" name="image_file" accept="image/*" class="form-input" style="padding: 0.45rem;">
-                        <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">📁 Upload file from device</small>
+                        <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">📁 {{ __('Upload file from device') }}</small>
                     </div>
                     <div>
                         <input type="text" name="image" placeholder="/storage/... or https://..." class="form-input">
-                        <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">🔗 Or image link / path</small>
+                        <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">🔗 {{ __('Or image link / path') }}</small>
                     </div>
                 </div>
             </div>
@@ -746,12 +746,12 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
                     <div>
                         <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-main);">
-                            <i class="fa-solid fa-sliders" style="color: var(--primary);"></i> Portions & Variations (Optional)
+                            <i class="fa-solid fa-sliders" style="color: var(--primary);"></i> {{ __('Portions & Variations (Optional)') }}
                         </label>
                         <small style="color: var(--text-muted); font-size: 0.72rem;">{{ __('Add sizes or portion options') }}</small>
                     </div>
                     <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.65rem; font-size: 0.75rem;" onclick="addVariationRow('new')">
-                        <i class="fa-solid fa-plus"></i> Add Portion
+                        <i class="fa-solid fa-plus"></i> {{ __('Add Portion') }}
                     </button>
                 </div>
                 <div id="new_variations_container" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
@@ -759,7 +759,7 @@
 
             <!-- Dietary & Allergens -->
             <div style="margin-bottom: 1rem;">
-                <label class="form-label">Dietary Tags</label>
+                <label class="form-label">{{ __('Dietary Tags') }}</label>
                 <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
                     @foreach(['vegan', 'vegetarian', 'gluten_free', 'halal', 'chef_special', 'spicy'] as $dtag)
                         <label style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.25rem 0.55rem; border-radius: 8px; cursor: pointer; color: var(--text-main);">
@@ -770,7 +770,7 @@
             </div>
 
             <div style="margin-bottom: 1rem;">
-                <label class="form-label">EU Allergens Tagging</label>
+                <label class="form-label">{{ __('EU Allergens Tagging') }}</label>
                 <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
                     @foreach($allergens as $allg)
                         <label style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.25rem 0.55rem; border-radius: 8px; cursor: pointer; color: var(--text-main);">
@@ -782,16 +782,16 @@
 
             <div class="grid-3" style="margin-bottom: 1.5rem;">
                 <div>
-                    <label class="form-label" style="font-size: 0.75rem;">Calories (kcal)</label>
+                    <label class="form-label" style="font-size: 0.75rem;">{{ __('Calories (kcal)') }}</label>
                     <input type="number" name="calories" placeholder="450" class="form-input">
                 </div>
                 <div>
-                    <label class="form-label" style="font-size: 0.75rem;">Prep Mins</label>
+                    <label class="form-label" style="font-size: 0.75rem;">{{ __('Prep Mins') }}</label>
                     <input type="number" name="preparation_time_min" placeholder="15" class="form-input">
                 </div>
                 <div style="display: flex; align-items: flex-end; padding-bottom: 0.35rem;">
                     <label style="font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
-                        <input type="checkbox" name="is_featured" value="1"> ★ Featured Dish
+                        <input type="checkbox" name="is_featured" value="1"> ★ {{ __('Featured Dish') }}
                     </label>
                 </div>
             </div>
@@ -800,46 +800,46 @@
             <div style="background: rgba(139, 92, 246, 0.05); border: 1.5px dashed rgba(139, 92, 246, 0.3); border-radius: 14px; padding: 1.1rem; margin-bottom: 1.5rem;">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
                     <div style="font-weight: 700; font-size: 0.88rem; color: #8b5cf6; display: flex; align-items: center; gap: 0.45rem;">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> AI Waiter Recommendation Settings
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> {{ __('AI Waiter Recommendation Settings') }}
                     </div>
                     <label style="font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; color: var(--text-main);">
-                        <input type="checkbox" name="ai_priority" value="1"> ★ AI Promoted
+                        <input type="checkbox" name="ai_priority" value="1"> ★ {{ __('AI Promoted') }}
                     </label>
                 </div>
                 <div class="grid-3" style="margin-bottom: 0.75rem;">
                     <div>
-                        <label class="form-label" style="font-size: 0.75rem;">AI Priority (1-100)</label>
+                        <label class="form-label" style="font-size: 0.75rem;">{{ __('AI Priority (1-100)') }}</label>
                         <input type="number" name="ai_priority_level" min="1" max="100" value="50" class="form-input" placeholder="50">
                     </div>
                     <div>
-                        <label class="form-label" style="font-size: 0.75rem;">AI Group</label>
+                        <label class="form-label" style="font-size: 0.75rem;">{{ __('AI Group') }}</label>
                         <select name="ai_group" class="form-select">
-                            <option value="">None (Standard)</option>
-                            <option value="bestseller">AI Bestseller</option>
-                            <option value="chef_choice">Chef Recommendation</option>
-                            <option value="high_margin">High Margin</option>
-                            <option value="new_arrival">New Product</option>
+                            <option value="">{{ __('None (Standard)') }}</option>
+                            <option value="bestseller">{{ __('AI Bestseller') }}</option>
+                            <option value="chef_choice">{{ __('Chef Recommendation') }}</option>
+                            <option value="high_margin">{{ __('High Margin') }}</option>
+                            <option value="new_arrival">{{ __('New Product') }}</option>
                         </select>
                     </div>
                     <div>
-                        <label class="form-label" style="font-size: 0.75rem;">Spiciness Level</label>
+                        <label class="form-label" style="font-size: 0.75rem;">{{ __('Spiciness Level') }}</label>
                         <select name="ai_spicy_level" class="form-select">
-                            <option value="0">0 - Not Spicy</option>
-                            <option value="1">1 - Mild / Light</option>
-                            <option value="2">2 - Medium Spicy</option>
-                            <option value="3">3 - Hot / Very Spicy</option>
+                            <option value="0">{{ __('0 - Not Spicy') }}</option>
+                            <option value="1">{{ __('1 - Mild / Light') }}</option>
+                            <option value="2">{{ __('2 - Medium Spicy') }}</option>
+                            <option value="3">{{ __('3 - Hot / Very Spicy') }}</option>
                         </select>
                     </div>
                 </div>
                 <div>
-                    <label class="form-label" style="font-size: 0.75rem;">AI Keywords / Flavor Tags (comma separated)</label>
-                    <input type="text" name="ai_tags" placeholder="e.g. meat, savory, juicy, dinner, signature" class="form-input">
+                    <label class="form-label" style="font-size: 0.75rem;">{{ __('AI Keywords / Flavor Tags (comma separated)') }}</label>
+                    <input type="text" name="ai_tags" placeholder="{{ __('e.g. meat, savory, juicy, dinner, signature') }}" class="form-input">
                 </div>
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
-                <button type="button" class="btn btn-secondary" onclick="document.getElementById('newProductModal').style.display='none'">Cancel</button>
-                <button type="submit" class="btn btn-primary">Create Dish</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('newProductModal').style.display='none'">{{ __('Cancel') }}</button>
+                <button type="submit" class="btn btn-primary">{{ __('Create Dish') }}</button>
             </div>
         </form>
     </div>
@@ -849,14 +849,14 @@
 <div id="editProductModal" class="modern-modal-overlay" style="display: none;">
     <div class="modal-box-responsive">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0;">Edit Dish</h3>
+            <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0;">{{ __('Edit Dish') }}</h3>
             <button onclick="document.getElementById('editProductModal').style.display='none'" style="background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
         <form id="editProductForm" method="POST" enctype="multipart/form-data">
             @csrf
             <div style="margin-bottom: 1rem;">
-                <label class="form-label">Category *</label>
+                <label class="form-label">{{ __('Category') }} *</label>
                 <select id="edit_prod_category_id" name="category_id" required class="form-select">
                     @foreach($categories as $cat)
                         <option value="{{ $cat->id }}">{{ $cat->name }}</option>
@@ -870,14 +870,14 @@
                     <input type="text" id="edit_prod_name" name="name" required class="form-input">
                 </div>
                 <div>
-                    <label class="form-label">Price ({{ $vendor->currency }}) *</label>
+                    <label class="form-label">{{ __('Price') }} ({{ $vendor->currency }}) *</label>
                     <input type="number" id="edit_prod_price" name="price" step="100" required class="form-input">
                 </div>
                 <div>
                     <label class="form-label" style="color: #ef4444;">
-                        <i class="fa-solid fa-tag"></i> Discount Price
+                        <i class="fa-solid fa-tag"></i> {{ __('Discount Price') }}
                     </label>
-                    <input type="number" id="edit_prod_discount_price" name="discount_price" step="100" placeholder="e.g. 2500" class="form-input" style="border-color: rgba(239, 68, 68, 0.4);">
+                    <input type="number" id="edit_prod_discount_price" name="discount_price" step="100" placeholder="{{ __('e.g. 2500') }}" class="form-input" style="border-color: rgba(239, 68, 68, 0.4);">
                 </div>
             </div>
 
@@ -889,23 +889,23 @@
                             <i class="fa-solid fa-clock"></i>
                         </span>
                         <div>
-                            <strong style="font-size: 0.85rem; color: var(--text-main);">Discount Schedule (Happy Hour)</strong>
-                            <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">Set the days and hours when the discount applies</small>
+                            <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Discount Schedule (Happy Hour)') }}</strong>
+                            <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('Set the days and hours when the discount applies') }}</small>
                         </div>
                     </div>
                     <label style="font-size: 0.78rem; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; color: var(--text-main); font-weight: 600;">
-                        <input type="checkbox" id="edit_prod_is_discount_active" name="is_discount_active" value="1"> Enable discount
+                        <input type="checkbox" id="edit_prod_is_discount_active" name="is_discount_active" value="1"> {{ __('Enable discount') }}
                     </label>
                 </div>
 
                 <!-- Day Selector Chips -->
                 <div style="margin-bottom: 0.75rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.35rem;">
-                        <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Days of Week</label>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">{{ __('Days of Week') }}</label>
                         <div style="display: flex; gap: 0.35rem;">
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('edit', 'all')">All</button>
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('edit', 'weekdays')">Mon-Fri</button>
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('edit', 'weekends')">Weekends</button>
+                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('edit', 'all')">{{ __('All') }}</button>
+                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('edit', 'weekdays')">{{ __('Mon-Fri') }}</button>
+                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('edit', 'weekends')">{{ __('Weekends') }}</button>
                         </div>
                     </div>
                     <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
@@ -920,11 +920,11 @@
                 <!-- Time Window -->
                 <div class="grid-2" style="margin-bottom: 0.35rem;">
                     <div>
-                        <label class="form-label" style="font-size: 0.75rem;">Start Time</label>
+                        <label class="form-label" style="font-size: 0.75rem;">{{ __('Start Time') }}</label>
                         <input type="time" id="edit_prod_discount_start_time" name="discount_start_time" class="form-input" style="padding: 0.45rem 0.75rem;">
                     </div>
                     <div>
-                        <label class="form-label" style="font-size: 0.75rem;">End Time</label>
+                        <label class="form-label" style="font-size: 0.75rem;">{{ __('End Time') }}</label>
                         <input type="time" id="edit_prod_discount_end_time" name="discount_end_time" class="form-input" style="padding: 0.45rem 0.75rem;">
                     </div>
                 </div>
@@ -938,13 +938,13 @@
                             <i class="fa-solid fa-code-branch"></i>
                         </span>
                         <div>
-                            <strong style="font-size: 0.85rem; color: var(--text-main);">Branch Availability</strong>
-                            <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">Select which branches this dish is available at</small>
+                            <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Branch Availability') }}</strong>
+                            <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('Select which branches this dish is available at') }}</small>
                         </div>
                     </div>
                     <div style="display: flex; gap: 0.35rem;">
-                        <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setLocationsPreset('edit', true)">All</button>
-                        <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setLocationsPreset('edit', false)">Clear</button>
+                        <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setLocationsPreset('edit', true)">{{ __('All') }}</button>
+                        <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setLocationsPreset('edit', false)">{{ __('Clear') }}</button>
                     </div>
                 </div>
                 <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
@@ -963,27 +963,27 @@
                         <i class="fa-regular fa-clock"></i>
                     </span>
                     <div>
-                        <strong style="font-size: 0.85rem; color: var(--text-main);">Hours & Daily Availability (Lunch / Hours)</strong>
-                        <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">e.g. lunch available only 12:00 - 15:00 (leave empty for all day)</small>
+                        <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Hours & Daily Availability (Lunch / Hours)') }}</strong>
+                        <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('e.g. lunch available only 12:00 - 15:00 (leave empty for all day)') }}</small>
                     </div>
                 </div>
                 <div class="grid-2" style="margin-bottom: 0.75rem;">
                     <div>
-                        <label class="form-label" style="font-size: 0.75rem;">Start Time</label>
+                        <label class="form-label" style="font-size: 0.75rem;">{{ __('Start Time') }}</label>
                         <input type="time" id="edit_prod_available_start_time" name="available_start_time" class="form-input" style="padding: 0.45rem 0.75rem;">
                     </div>
                     <div>
-                        <label class="form-label" style="font-size: 0.75rem;">End Time</label>
+                        <label class="form-label" style="font-size: 0.75rem;">{{ __('End Time') }}</label>
                         <input type="time" id="edit_prod_available_end_time" name="available_end_time" class="form-input" style="padding: 0.45rem 0.75rem;">
                     </div>
                 </div>
                 <div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.35rem;">
-                        <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Available Days</label>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">{{ __('Available Days') }}</label>
                         <div style="display: flex; gap: 0.35rem;">
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('edit', 'all')">All</button>
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('edit', 'weekdays')">Mon-Fri</button>
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('edit', 'weekends')">Weekends</button>
+                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('edit', 'all')">{{ __('All') }}</button>
+                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('edit', 'weekdays')">{{ __('Mon-Fri') }}</button>
+                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('edit', 'weekends')">{{ __('Weekends') }}</button>
                         </div>
                     </div>
                     <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
@@ -1003,22 +1003,22 @@
                         <i class="fa-solid fa-truck-ramp-box"></i>
                     </span>
                     <div>
-                        <strong style="font-size: 0.85rem; color: var(--text-main);">Order Channels Availability</strong>
-                        <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">Select order channels where this dish is available</small>
+                        <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Order Channels Availability') }}</strong>
+                        <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('Select order channels where this dish is available') }}</small>
                     </div>
                 </div>
                 <div style="display: flex; flex-wrap: wrap; gap: 0.65rem;">
                     <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.45rem 0.8rem; border-radius: 10px; cursor: pointer; color: var(--text-main); font-weight: 600;">
                         <input type="hidden" name="available_for_dine_in" value="0">
-                        <input type="checkbox" id="edit_prod_available_for_dine_in" name="available_for_dine_in" value="1"> 🍽️ Dine-in
+                        <input type="checkbox" id="edit_prod_available_for_dine_in" name="available_for_dine_in" value="1"> 🍽️ {{ __('Dine-in') }}
                     </label>
                     <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.45rem 0.8rem; border-radius: 10px; cursor: pointer; color: var(--text-main); font-weight: 600;">
                         <input type="hidden" name="available_for_takeaway" value="0">
-                        <input type="checkbox" id="edit_prod_available_for_takeaway" name="available_for_takeaway" value="1"> 🥡 Takeaway
+                        <input type="checkbox" id="edit_prod_available_for_takeaway" name="available_for_takeaway" value="1"> 🥡 {{ __('Takeaway') }}
                     </label>
                     <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.45rem 0.8rem; border-radius: 10px; cursor: pointer; color: var(--text-main); font-weight: 600;">
                         <input type="hidden" name="available_for_delivery" value="0">
-                        <input type="checkbox" id="edit_prod_available_for_delivery" name="available_for_delivery" value="1"> 🛵 Delivery
+                        <input type="checkbox" id="edit_prod_available_for_delivery" name="available_for_delivery" value="1"> 🛵 {{ __('Delivery') }}
                     </label>
                 </div>
             </div>
@@ -1041,16 +1041,16 @@
 
             <div style="margin-bottom: 1rem;">
                 <label class="form-label">
-                    <i class="fa-solid fa-image" style="color: var(--primary);"></i> Dish Image (Upload New File or Change URL)
+                    <i class="fa-solid fa-image" style="color: var(--primary);"></i> {{ __('Dish Image (Upload New File or Change URL)') }}
                 </label>
                 <div class="grid-2" style="align-items: center;">
                     <div>
                         <input type="file" name="image_file" accept="image/*" class="form-input" style="padding: 0.45rem;">
-                        <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">📁 Upload new image file</small>
+                        <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">📁 {{ __('Upload new image file') }}</small>
                     </div>
                     <div>
-                        <input type="text" id="edit_prod_image" name="image" placeholder="/storage/... or https://..." class="form-input">
-                        <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">🔗 Or edit image link / path</small>
+                        <input type="text" id="edit_prod_image" name="image" placeholder="{{ __('/storage/... or https://...') }}" class="form-input">
+                        <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">🔗 {{ __('Or edit image link / path') }}</small>
                     </div>
                 </div>
             </div>
@@ -1081,12 +1081,12 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
                     <div>
                         <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-main);">
-                            <i class="fa-solid fa-sliders" style="color: var(--primary);"></i> Portions & Variations (Optional)
+                            <i class="fa-solid fa-sliders" style="color: var(--primary);"></i> {{ __('Portions & Variations (Optional)') }}
                         </label>
                         <small style="color: var(--text-muted); font-size: 0.72rem;">{{ __('Add or edit portions and options') }}</small>
                     </div>
                     <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.65rem; font-size: 0.75rem;" onclick="addVariationRow('edit')">
-                        <i class="fa-solid fa-plus"></i> Add Portion
+                        <i class="fa-solid fa-plus"></i> {{ __('Add Portion') }}
                     </button>
                 </div>
                 <div id="edit_variations_container" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
@@ -1094,7 +1094,7 @@
 
             <!-- Dietary & Allergens -->
             <div style="margin-bottom: 1rem;">
-                <label class="form-label">Dietary Tags</label>
+                <label class="form-label">{{ __('Dietary Tags') }}</label>
                 <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
                     @foreach(['vegan', 'vegetarian', 'gluten_free', 'halal', 'chef_special', 'spicy'] as $dtag)
                         <label style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.25rem 0.55rem; border-radius: 8px; cursor: pointer; color: var(--text-main);">
@@ -1105,7 +1105,7 @@
             </div>
 
             <div style="margin-bottom: 1rem;">
-                <label class="form-label">EU Allergens Tagging</label>
+                <label class="form-label">{{ __('EU Allergens Tagging') }}</label>
                 <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
                     @foreach($allergens as $allg)
                         <label style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.25rem 0.55rem; border-radius: 8px; cursor: pointer; color: var(--text-main);">
@@ -1117,16 +1117,16 @@
 
             <div class="grid-3" style="margin-bottom: 1.5rem;">
                 <div>
-                    <label class="form-label" style="font-size: 0.75rem;">Calories (kcal)</label>
+                    <label class="form-label" style="font-size: 0.75rem;">{{ __('Calories (kcal)') }}</label>
                     <input type="number" id="edit_prod_calories" name="calories" placeholder="450" class="form-input">
                 </div>
                 <div>
-                    <label class="form-label" style="font-size: 0.75rem;">Prep Mins</label>
+                    <label class="form-label" style="font-size: 0.75rem;">{{ __('Prep Mins') }}</label>
                     <input type="number" id="edit_prod_preparation_time_min" name="preparation_time_min" placeholder="15" class="form-input">
                 </div>
                 <div style="display: flex; align-items: flex-end; padding-bottom: 0.35rem;">
                     <label style="font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
-                        <input type="checkbox" id="edit_prod_is_featured" name="is_featured" value="1"> ★ Featured Dish
+                        <input type="checkbox" id="edit_prod_is_featured" name="is_featured" value="1"> ★ {{ __('Featured Dish') }}
                     </label>
                 </div>
             </div>
@@ -1135,46 +1135,46 @@
             <div style="background: rgba(139, 92, 246, 0.05); border: 1.5px dashed rgba(139, 92, 246, 0.3); border-radius: 14px; padding: 1.1rem; margin-bottom: 1.5rem;">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
                     <div style="font-weight: 700; font-size: 0.88rem; color: #8b5cf6; display: flex; align-items: center; gap: 0.45rem;">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> AI Waiter Recommendation Settings
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> {{ __('AI Waiter Recommendation Settings') }}
                     </div>
                     <label style="font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; color: var(--text-main);">
-                        <input type="checkbox" id="edit_prod_ai_priority" name="ai_priority" value="1"> ★ AI Promoted
+                        <input type="checkbox" id="edit_prod_ai_priority" name="ai_priority" value="1"> ★ {{ __('AI Promoted') }}
                     </label>
                 </div>
                 <div class="grid-3" style="margin-bottom: 0.75rem;">
                     <div>
-                        <label class="form-label" style="font-size: 0.75rem;">AI Priority (1-100)</label>
+                        <label class="form-label" style="font-size: 0.75rem;">{{ __('AI Priority (1-100)') }}</label>
                         <input type="number" id="edit_prod_ai_priority_level" name="ai_priority_level" min="1" max="100" class="form-input" placeholder="50">
                     </div>
                     <div>
-                        <label class="form-label" style="font-size: 0.75rem;">AI Group</label>
+                        <label class="form-label" style="font-size: 0.75rem;">{{ __('AI Group') }}</label>
                         <select id="edit_prod_ai_group" name="ai_group" class="form-select">
-                            <option value="">None (Standard)</option>
-                            <option value="bestseller">AI Bestseller</option>
-                            <option value="chef_choice">Chef Recommendation</option>
-                            <option value="high_margin">High Margin</option>
-                            <option value="new_arrival">New Product</option>
+                            <option value="">{{ __('None (Standard)') }}</option>
+                            <option value="bestseller">{{ __('AI Bestseller') }}</option>
+                            <option value="chef_choice">{{ __('Chef Recommendation') }}</option>
+                            <option value="high_margin">{{ __('High Margin') }}</option>
+                            <option value="new_arrival">{{ __('New Product') }}</option>
                         </select>
                     </div>
                     <div>
-                        <label class="form-label" style="font-size: 0.75rem;">Spiciness Level</label>
+                        <label class="form-label" style="font-size: 0.75rem;">{{ __('Spiciness Level') }}</label>
                         <select id="edit_prod_ai_spicy_level" name="ai_spicy_level" class="form-select">
-                            <option value="0">0 - Not Spicy</option>
-                            <option value="1">1 - Mild / Light</option>
-                            <option value="2">2 - Medium Spicy</option>
-                            <option value="3">3 - Hot / Very Spicy</option>
+                            <option value="0">{{ __('0 - Not Spicy') }}</option>
+                            <option value="1">{{ __('1 - Mild / Light') }}</option>
+                            <option value="2">{{ __('2 - Medium Spicy') }}</option>
+                            <option value="3">{{ __('3 - Hot / Very Spicy') }}</option>
                         </select>
                     </div>
                 </div>
                 <div>
-                    <label class="form-label" style="font-size: 0.75rem;">AI Keywords / Flavor Tags (comma separated)</label>
-                    <input type="text" id="edit_prod_ai_tags" name="ai_tags" placeholder="e.g. meat, savory, juicy, dinner, signature" class="form-input">
+                    <label class="form-label" style="font-size: 0.75rem;">{{ __('AI Keywords / Flavor Tags (comma separated)') }}</label>
+                    <input type="text" id="edit_prod_ai_tags" name="ai_tags" placeholder="{{ __('e.g. meat, savory, juicy, dinner, signature') }}" class="form-input">
                 </div>
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
-                <button type="button" class="btn btn-secondary" onclick="document.getElementById('editProductModal').style.display='none'">Cancel</button>
-                <button type="submit" class="btn btn-primary">Update Dish</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('editProductModal').style.display='none'">{{ __('Cancel') }}</button>
+                <button type="submit" class="btn btn-primary">{{ __('Update Dish') }}</button>
             </div>
         </form>
     </div>
