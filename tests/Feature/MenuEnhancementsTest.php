@@ -54,6 +54,7 @@ class MenuEnhancementsTest extends TestCase
             'email' => 'admin@test.com',
             'password' => bcrypt('password123'),
             'role' => 'vendor_owner',
+            'email_verified_at' => now(),
         ]);
 
         $this->location = Location::create([

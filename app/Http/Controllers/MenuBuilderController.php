@@ -52,7 +52,7 @@ class MenuBuilderController extends Controller
 
         $this->menuService->createCategory(Auth::user()->vendor, $validated);
 
-        return back()->with('success', 'Category added successfully!');
+        return back()->with('success', __('Category added successfully!'));
     }
 
     public function updateCategory(UpdateCategoryRequest $request, Category $category)
@@ -63,7 +63,7 @@ class MenuBuilderController extends Controller
 
         $this->menuService->updateCategory($category, $validated);
 
-        return back()->with('success', 'Category updated successfully!');
+        return back()->with('success', __('Category updated successfully!'));
     }
 
     public function destroyCategory(Category $category)
@@ -72,7 +72,7 @@ class MenuBuilderController extends Controller
 
         $this->menuService->deleteCategory($category);
 
-        return back()->with('success', 'Category deleted successfully.');
+        return back()->with('success', __('Category deleted successfully.'));
     }
 
     public function storeProduct(StoreProductRequest $request)
@@ -88,10 +88,10 @@ class MenuBuilderController extends Controller
         } catch (\Throwable $e) {
             Log::error('Failed to create product dish: '.$e->getMessage(), ['exception' => $e]);
 
-            return back()->withInput()->with('error', 'Error creating dish: '.$e->getMessage());
+            return back()->withInput()->with('error', __('Error creating dish: :error', ['error' => $e->getMessage()]));
         }
 
-        return back()->with('success', 'Product dish created successfully!');
+        return back()->with('success', __('Product dish created successfully!'));
     }
 
     public function updateProduct(UpdateProductRequest $request, Product $product)
@@ -107,10 +107,10 @@ class MenuBuilderController extends Controller
         } catch (\Throwable $e) {
             Log::error("Failed to update product {$product->id}: ".$e->getMessage(), ['exception' => $e]);
 
-            return back()->withInput()->with('error', 'Error updating dish: '.$e->getMessage());
+            return back()->withInput()->with('error', __('Error updating dish: :error', ['error' => $e->getMessage()]));
         }
 
-        return back()->with('success', "Dish {$product->name} updated successfully!");
+        return back()->with('success', __('Dish :name updated successfully!', ['name' => $product->name]));
     }
 
     public function toggleAvailability(Request $request, Product $product)
@@ -128,7 +128,7 @@ class MenuBuilderController extends Controller
             return response()->json(['success' => true, 'is_available' => $isAvailable]);
         }
 
-        return back()->with('success', "Dish '{$product->name}' stock status updated.");
+        return back()->with('success', __("Dish ':name' stock status updated.", ['name' => $product->name]));
     }
 
     public function saveOverride(Request $request, Product $product)
@@ -143,7 +143,7 @@ class MenuBuilderController extends Controller
 
         $this->menuService->saveLocationOverride($product, $validated);
 
-        return back()->with('success', 'Location product settings updated!');
+        return back()->with('success', __('Location product settings updated!'));
     }
 
     public function destroyProduct(Product $product)
@@ -152,6 +152,6 @@ class MenuBuilderController extends Controller
 
         $this->menuService->deleteProduct($product);
 
-        return back()->with('success', 'Product deleted successfully.');
+        return back()->with('success', __('Product deleted successfully.'));
     }
 }

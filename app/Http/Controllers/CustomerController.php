@@ -157,7 +157,7 @@ class CustomerController extends Controller
 
         $this->customerService->createCustomer($vendor, $payload, $request->has('marketing_opt_in'));
 
-        return back()->with('success', 'Customer added successfully!');
+        return back()->with('success', __('Customer added successfully!'));
     }
 
     public function update(Request $request, Customer $customer)
@@ -179,7 +179,7 @@ class CustomerController extends Controller
 
         $this->customerService->updateCustomer($customer, $validated, $request->has('marketing_opt_in'));
 
-        return back()->with('success', "Customer {$customer->name} details updated successfully!");
+        return back()->with('success', __('Customer :name details updated successfully!', ['name' => $customer->name]));
     }
 
     public function destroy(Customer $customer)
@@ -188,7 +188,7 @@ class CustomerController extends Controller
 
         $this->customerService->deleteCustomer($customer);
 
-        return redirect()->route('admin.customers.index')->with('success', 'Customer record deleted.');
+        return redirect()->route('admin.customers.index')->with('success', __('Customer record deleted.'));
     }
 
     public function export(Request $request)
@@ -277,14 +277,14 @@ class CustomerController extends Controller
         $vendor = Auth::user()->vendor;
 
         if (empty($customer->phone)) {
-            return back()->with('error', 'Customer phone number is not specified.');
+            return back()->with('error', __('Customer phone number is not specified.'));
         }
 
         $res = $crmService->sendBirthdayGreeting($customer, $vendor);
         if ($res['success']) {
-            return back()->with('success', 'Birthday greeting SMS successfully sent to '.($customer->name ?? 'customer').'.');
+            return back()->with('success', __('Birthday greeting SMS successfully sent to :name.', ['name' => $customer->name ?? __('customer')]));
         }
 
-        return back()->with('error', 'Failed to send SMS: '.($res['error'] ?? ''));
+        return back()->with('error', __('Failed to send SMS: :error', ['error' => $res['error'] ?? '']));
     }
 }

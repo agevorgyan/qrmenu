@@ -38,7 +38,7 @@ class AiMenuController extends Controller
         ]);
 
         if (! $request->hasFile('menu_file') && ! $request->filled('website_url') && ! $request->filled('menu_text')) {
-            return back()->withInput()->with('error', 'Please upload a file, provide a website link, or paste menu text.');
+            return back()->withInput()->with('error', __('Please upload a file, provide a website link, or paste menu text.'));
         }
 
         try {
@@ -67,7 +67,7 @@ class AiMenuController extends Controller
                 $parsedMenu = $this->aiService->parseMenuFromText($request->input('menu_text', ''), $vendor);
             }
         } catch (\Throwable $e) {
-            return back()->withInput()->with('error', 'Menu extraction failed: '.$e->getMessage());
+            return back()->withInput()->with('error', __('Menu extraction failed: :error', ['error' => $e->getMessage()]));
         }
 
         if (empty($parsedMenu['categories'])) {
@@ -134,7 +134,7 @@ class AiMenuController extends Controller
             }
         }
 
-        return redirect()->route('admin.menu.index')->with('success', 'AI Menu successfully imported and published to your menu!');
+        return redirect()->route('admin.menu.index')->with('success', __('AI Menu successfully imported and published to your menu!'));
     }
 
     public function translateMenu(Request $request)
@@ -159,24 +159,24 @@ class AiMenuController extends Controller
             TranslateMenuJob::dispatchSync($vendor->id, $targetLang, $overwrite);
 
             $langLabels = [
-                'hy' => '🇦🇲 Armenian',
-                'en' => '🇬🇧 English',
-                'ru' => '🇷🇺 Russian',
-                'fr' => '🇫🇷 French',
-                'de' => '🇩🇪 German',
-                'es' => '🇪🇸 Spanish',
-                'it' => '🇮🇹 Italian',
-                'ge' => '🇬🇪 Georgian',
-                'ar' => '🇦🇪 Arabic',
-                'fa' => '🇮🇷 Persian',
+                'hy' => '🇦🇲 '.__('Armenian'),
+                'en' => '🇬🇧 '.__('English'),
+                'ru' => '🇷🇺 '.__('Russian'),
+                'fr' => '🇫🇷 '.__('French'),
+                'de' => '🇩🇪 '.__('German'),
+                'es' => '🇪🇸 '.__('Spanish'),
+                'it' => '🇮🇹 '.__('Italian'),
+                'ge' => '🇬🇪 '.__('Georgian'),
+                'ar' => '🇦🇪 '.__('Arabic'),
+                'fa' => '🇮🇷 '.__('Persian'),
             ];
             $selectedLabel = $langLabels[$targetLang] ?? strtoupper($targetLang);
 
-            return back()->with('success', "✨ All menu items, descriptions, and categories were successfully translated to [{$selectedLabel}] via AI.");
+            return back()->with('success', __('✨ All menu items, descriptions, and categories were successfully translated to [:target] via AI.', ['target' => $selectedLabel]));
         } catch (\Throwable $e) {
             Log::error('AI Menu Translation failed: '.$e->getMessage());
 
-            return back()->with('error', 'An error occurred during translation: '.$e->getMessage());
+            return back()->with('error', __('An error occurred during translation: :error', ['error' => $e->getMessage()]));
         }
     }
 
@@ -213,7 +213,7 @@ class AiMenuController extends Controller
 
         $vendor->syncLanguage($code, $name, $flag, isActive: true);
 
-        return back()->with('success', "Language '{$name}' ({$code}) saved successfully.");
+        return back()->with('success', __("Language ':name' (:code) saved successfully.", ['name' => $name, 'code' => $code]));
     }
 
     /**
@@ -233,9 +233,9 @@ class AiMenuController extends Controller
 
         $success = $vendor->removeLanguage($code);
         if (! $success) {
-            return back()->with('error', 'Cannot remove the last active language.');
+            return back()->with('error', __('Cannot remove the last active language.'));
         }
 
-        return back()->with('success', 'Language removed successfully.');
+        return back()->with('success', __('Language removed successfully.'));
     }
 }

@@ -613,7 +613,7 @@
                 <div class="alert-success">
                     <i class="fa-solid fa-circle-check" style="font-size: 1.1rem; margin-top: 0.1rem;"></i>
                     <div>
-                        {{ session('status') ?? session('success') }}
+                        {{ __(session('status') ?? session('success')) }}
                     </div>
                 </div>
             @endif

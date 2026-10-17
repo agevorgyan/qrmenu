@@ -118,7 +118,10 @@ class OrderController extends Controller
             return response()->json(['success' => true, 'status' => $order->status, 'message' => "Order #{$order->order_number} updated to {$order->status}."]);
         }
 
-        return back()->with('success', "Order #{$order->order_number} status updated to {$order->status}.");
+        return back()->with('success', __('Order #:number status updated to :status.', [
+            'number' => $order->order_number,
+            'status' => __($order->status),
+        ]));
     }
 
     public function updateWaiterCallStatus(Request $request, WaiterCall $waiterCall)
@@ -140,7 +143,7 @@ class OrderController extends Controller
             ]);
         }
 
-        return back()->with('success', "Table #{$waiterCall->table_number} call marked as attended.");
+        return back()->with('success', __('Table #:table call marked as attended.', ['table' => $waiterCall->table_number]));
     }
 
     /**

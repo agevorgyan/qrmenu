@@ -121,7 +121,7 @@ class SuperAdminEmailController extends Controller
             );
         });
 
-        return back()->with('success', 'Sender identity created successfully.');
+        return back()->with('success', __('Sender identity created successfully.'));
     }
 
     /**
@@ -174,7 +174,7 @@ class SuperAdminEmailController extends Controller
             );
         });
 
-        return back()->with('success', "Sender identity '{$sender->name}' updated successfully.");
+        return back()->with('success', __("Sender identity ':name' updated successfully.", ['name' => $sender->name]));
     }
 
     /**
@@ -183,7 +183,7 @@ class SuperAdminEmailController extends Controller
     public function toggleSender(EmailSenderIdentity $sender): RedirectResponse
     {
         if ($sender->is_default && $sender->is_active) {
-            return back()->with('error', 'The active default sender cannot be deactivated. Select a new default sender first.');
+            return back()->with('error', __('The active default sender cannot be deactivated. Select a new default sender first.'));
         }
 
         $sender->update(['is_active' => ! $sender->is_active]);
@@ -196,9 +196,9 @@ class SuperAdminEmailController extends Controller
             ['is_active' => $sender->is_active]
         );
 
-        $state = $sender->is_active ? 'activated' : 'deactivated';
+        $state = $sender->is_active ? __('activated') : __('deactivated');
 
-        return back()->with('success', "Sender identity '{$sender->name}' {$state}.");
+        return back()->with('success', __("Sender identity ':name' :state.", ['name' => $sender->name, 'state' => $state]));
     }
 
     /**
@@ -222,7 +222,7 @@ class SuperAdminEmailController extends Controller
             ['email' => $sender->email]
         );
 
-        return back()->with('success', "Sender identity '{$name}' safely removed.");
+        return back()->with('success', __("Sender identity ':name' safely removed.", ['name' => $name]));
     }
 
     /**
@@ -284,7 +284,7 @@ class SuperAdminEmailController extends Controller
             );
         });
 
-        return back()->with('success', 'SMTP connection configuration created.');
+        return back()->with('success', __('SMTP connection configuration created.'));
     }
 
     /**
@@ -340,7 +340,7 @@ class SuperAdminEmailController extends Controller
             );
         });
 
-        return back()->with('success', "Connection '{$connection->name}' updated successfully.");
+        return back()->with('success', __("Connection ':name' updated successfully.", ['name' => $connection->name]));
     }
 
     /**
@@ -402,7 +402,7 @@ class SuperAdminEmailController extends Controller
         // Immediately update runtime configuration
         $this->routingService->applyActiveMailConfiguration();
 
-        return back()->with('success', "'{$connection->name}' is now the primary active default mail connection.");
+        return back()->with('success', __("':name' is now the primary active default mail connection.", ['name' => $connection->name]));
     }
 
     /**
@@ -411,12 +411,12 @@ class SuperAdminEmailController extends Controller
     public function destroyConnection(EmailConnection $connection): RedirectResponse
     {
         if ($connection->is_default) {
-            return back()->with('error', 'Cannot delete the active default connection. Set another connection as default first.');
+            return back()->with('error', __('Cannot delete the active default connection. Set another connection as default first.'));
         }
 
         $activeSenders = $connection->senders()->where('is_active', true)->count();
         if ($activeSenders > 0) {
-            return back()->with('error', "Cannot delete connection: assigned to {$activeSenders} active sender identities.");
+            return back()->with('error', __('Cannot delete connection: assigned to :count active sender identities.', ['count' => $activeSenders]));
         }
 
         $name = $connection->name;
@@ -429,7 +429,7 @@ class SuperAdminEmailController extends Controller
             $name
         );
 
-        return back()->with('success', "Connection '{$name}' safely removed.");
+        return back()->with('success', __("Connection ':name' safely removed.", ['name' => $name]));
     }
 
     /**
@@ -487,7 +487,7 @@ class SuperAdminEmailController extends Controller
             $validated
         );
 
-        return back()->with('success', "Routing rule for '{$rule->name}' updated.");
+        return back()->with('success', __("Routing rule for ':name' updated.", ['name' => $rule->name]));
     }
 
     /**
@@ -517,7 +517,7 @@ class SuperAdminEmailController extends Controller
 
         $this->templateService->updateTemplate($template, $validated);
 
-        return back()->with('success', "Email template '{$template->name}' updated successfully (v{$template->version}).");
+        return back()->with('success', __("Email template ':name' updated successfully (v:version).", ['name' => $template->name, 'version' => $template->version]));
     }
 
     /**
@@ -715,6 +715,6 @@ class SuperAdminEmailController extends Controller
 
         EmailConfigurationAudit::log('settings_updated', 'SystemSetting', null, 'Email Settings', $validated);
 
-        return back()->with('success', 'Email management platform settings updated successfully.');
+        return back()->with('success', __('Email management platform settings updated successfully.'));
     }
 }

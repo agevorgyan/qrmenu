@@ -88,7 +88,7 @@ class BrandingController extends Controller
             } catch (\Throwable $e) {
                 Log::error('Branding logo upload failed: '.$e->getMessage(), ['exception' => $e]);
 
-                return back()->withInput()->with('error', 'Logo upload failed: '.$e->getMessage());
+                return back()->withInput()->with('error', __('Logo upload failed: :error', ['error' => $e->getMessage()]));
             }
         }
 
@@ -107,7 +107,7 @@ class BrandingController extends Controller
             } catch (\Throwable $e) {
                 Log::error('Branding cover upload failed: '.$e->getMessage(), ['exception' => $e]);
 
-                return back()->withInput()->with('error', 'Cover image upload failed: '.$e->getMessage());
+                return back()->withInput()->with('error', __('Cover image upload failed: :error', ['error' => $e->getMessage()]));
             }
         }
 
@@ -141,6 +141,6 @@ class BrandingController extends Controller
 
         $vendor->update($validated);
 
-        return back()->with('success', 'Storefront branding and theme successfully saved!');
+        return back()->with('success', __('Storefront branding and theme successfully saved!'));
     }
 }

@@ -22,7 +22,7 @@
 @if(session('success'))
     <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 1rem 1.25rem; border-radius: 12px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
         <i class="fa-solid fa-circle-check"></i>
-        <span>{{ session('success') }}</span>
+        <span>{{ __(session('success')) }}</span>
     </div>
 @endif
 

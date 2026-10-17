@@ -123,14 +123,14 @@ class SuperAdminController extends Controller
             ]);
         });
 
-        return back()->with('success', 'Vendor & Owner Account successfully created!');
+        return back()->with('success', __('Vendor & Owner Account successfully created!'));
     }
 
     public function toggleStatus(Vendor $vendor)
     {
         $vendor->update(['is_active' => ! $vendor->is_active]);
 
-        return back()->with('success', 'Vendor status updated successfully.');
+        return back()->with('success', __('Vendor status updated successfully.'));
     }
 
     // Plan Management
@@ -170,7 +170,7 @@ class SuperAdminController extends Controller
             'sort_order' => (SubscriptionPlan::max('sort_order') ?? 0) + 1,
         ]);
 
-        return back()->with('success', 'Բաժանորդագրության փաթեթը հաջողությամբ ստեղծվեց։');
+        return back()->with('success', __('Բաժանորդագրության փաթեթը հաջողությամբ ստեղծվեց։'));
     }
 
     public function updatePlan(Request $request, SubscriptionPlan $plan)
@@ -199,24 +199,24 @@ class SuperAdminController extends Controller
             'is_active' => $request->has('is_active'),
         ]);
 
-        return back()->with('success', 'Բաժանորդագրության փաթեթը թարմացվեց։');
+        return back()->with('success', __('Բաժանորդագրության փաթեթը թարմացվեց։'));
     }
 
     public function togglePlan(SubscriptionPlan $plan)
     {
         $plan->update(['is_active' => ! $plan->is_active]);
 
-        return back()->with('success', 'Փաթեթի կարգավիճակը թարմացվեց։');
+        return back()->with('success', __('Փաթեթի կարգավիճակը թարմացվեց։'));
     }
 
     public function destroyPlan(SubscriptionPlan $plan)
     {
         if ($plan->vendors()->count() > 0) {
-            return back()->with('error', 'Հնարավոր չէ ջնջել փաթեթը, քանի որ այն կցված է գործընկերների։');
+            return back()->with('error', __('Հնարավոր չէ ջնջել փաթեթը, քանի որ այն կցված է գործընկերների։'));
         }
         $plan->delete();
 
-        return back()->with('success', 'Փաթեթը հաջողությամբ ջնջվեց։');
+        return back()->with('success', __('Փաթեթը հաջողությամբ ջնջվեց։'));
     }
 
     // Vendor Subscriptions & Payment Logs
@@ -258,7 +258,7 @@ class SuperAdminController extends Controller
             $vendor->saveQuietly();
         }
 
-        return back()->with('success', "{$vendor->name}-ի բաժանորդագրությունը թարմացվեց։");
+        return back()->with('success', __(':name-ի բաժանորդագրությունը թարմացվեց։', ['name' => $vendor->name]));
     }
 
     public function storeVendorPayment(Request $request, Vendor $vendor)
@@ -301,7 +301,7 @@ class SuperAdminController extends Controller
             $subscriptionService->handlePaymentFailure($subscription, $subPayment);
         }
 
-        return back()->with('success', 'Վճարման գրանցումը հաջողությամբ պահպանվեց։');
+        return back()->with('success', __('Վճարման գրանցումը հաջողությամբ պահպանվեց։'));
     }
 
     public function settingsIndex()
@@ -389,7 +389,7 @@ class SuperAdminController extends Controller
             SystemSetting::set($key, $value, $group);
         }
 
-        return back()->with('success', 'Համակարգի, բրենդինգի և SEO կարգավորումները հաջողությամբ պահպանվեցին։');
+        return back()->with('success', __('Համակարգի, բրենդինգի և SEO կարգավորումները հաջողությամբ պահպանվեցին։'));
     }
 
     public function editVendor(Vendor $vendor)
@@ -462,7 +462,7 @@ class SuperAdminController extends Controller
 
         $vendor->update($validated);
 
-        return back()->with('success', 'Գործընկերոջ տվյալները և հղումները հաջողությամբ թարմացվեցին։');
+        return back()->with('success', __('Գործընկերոջ տվյալները և հղումները հաջողությամբ թարմացվեցին։'));
     }
 
     public function storeVendorLocation(Request $request, Vendor $vendor)
@@ -504,7 +504,7 @@ class SuperAdminController extends Controller
             'is_active' => true,
         ]);
 
-        return back()->with('success', 'Նոր մասնաճյուղը հաջողությամբ ավելացվեց։');
+        return back()->with('success', __('Նոր մասնաճյուղը հաջողությամբ ավելացվեց։'));
     }
 
     public function updateVendorLocation(Request $request, Vendor $vendor, Location $location)
@@ -536,7 +536,7 @@ class SuperAdminController extends Controller
 
         $location->update($validated);
 
-        return back()->with('success', "«{$location->name}» մասնաճյուղի տվյալները հաջողությամբ թարմացվեցին։");
+        return back()->with('success', __('«:name» մասնաճյուղի տվյալները հաջողությամբ թարմացվեցին։', ['name' => $location->name]));
     }
 
     public function destroyVendorLocation(Vendor $vendor, Location $location)
@@ -544,7 +544,7 @@ class SuperAdminController extends Controller
         abort_if($location->vendor_id !== $vendor->id, 403);
 
         if ($vendor->locations()->count() <= 1) {
-            return back()->with('error', 'Հնարավոր չէ ջնջել վերջին մնացած մասնաճյուղը։ Գործընկերը պետք է ունենա առնվազն մեկ ակտիվ մասնաճյուղ։');
+            return back()->with('error', __('Հնարավոր չէ ջնջել վերջին մնացած մասնաճյուղը։ Գործընկերը պետք է ունենա առնվազն մեկ ակտիվ մասնաճյուղ։'));
         }
 
         User::where('location_id', $location->id)->update(['location_id' => null]);
@@ -552,7 +552,7 @@ class SuperAdminController extends Controller
         $locationName = $location->name;
         $location->delete();
 
-        return back()->with('success', "«{$locationName}» մասնաճյուղը հաջողությամբ ջնջվեց։");
+        return back()->with('success', __('«:name» մասնաճյուղը հաջողությամբ ջնջվեց։', ['name' => $locationName]));
     }
 
     public function updateVendorLocationTables(Request $request, Vendor $vendor, Location $location)
@@ -565,7 +565,7 @@ class SuperAdminController extends Controller
 
         $location->update(['table_count' => $validated['table_count']]);
 
-        return back()->with('success', "«{$location->name}» մասնաճյուղի սեղանների քանակը փոխվեց՝ {$validated['table_count']}։");
+        return back()->with('success', __('«:name» մասնաճյուղի սեղանների քանակը փոխվեց՝ :count։', ['name' => $location->name, 'count' => $validated['table_count']]));
     }
 
     public function storeVendorUser(Request $request, Vendor $vendor)
@@ -594,7 +594,7 @@ class SuperAdminController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        return back()->with('success', 'Նոր աշխատակիցը/օգտատերը հաջողությամբ ավելացվեց։');
+        return back()->with('success', __('Նոր աշխատակիցը/օգտատերը հաջողությամբ ավելացվեց։'));
     }
 
     public function updateVendorUser(Request $request, Vendor $vendor, User $user)
@@ -629,7 +629,7 @@ class SuperAdminController extends Controller
 
         $user->update($updateData);
 
-        return back()->with('success', "«{$user->name}» օգտատիրոջ տվյալները հաջողությամբ թարմացվեցին։");
+        return back()->with('success', __('«:name» օգտատիրոջ տվյալները հաջողությամբ թարմացվեցին։', ['name' => $user->name]));
     }
 
     public function destroyVendorUser(Vendor $vendor, User $user)
@@ -637,17 +637,17 @@ class SuperAdminController extends Controller
         abort_if($user->vendor_id !== $vendor->id, 403);
 
         if ($user->id === auth()->id()) {
-            return back()->with('error', 'Հնարավոր չէ ջնջել ընթացիկ մուտք գործած հաշիվը։');
+            return back()->with('error', __('Հնարավոր չէ ջնջել ընթացիկ մուտք գործած հաշիվը։'));
         }
 
         if ($vendor->users()->count() <= 1) {
-            return back()->with('error', 'Հնարավոր չէ ջնջել գործընկերոջ վերջին մնացած օգտատիրոջը։');
+            return back()->with('error', __('Հնարավոր չէ ջնջել գործընկերոջ վերջին մնացած օգտատիրոջը։'));
         }
 
         $userName = $user->name;
         $user->delete();
 
-        return back()->with('success', "«{$userName}» օգտատերը հաջողությամբ ջնջվեց։");
+        return back()->with('success', __('«:name» օգտատերը հաջողությամբ ջնջվեց։', ['name' => $userName]));
     }
 
     public function updateProfileSecurity(Request $request)
@@ -687,7 +687,7 @@ class SuperAdminController extends Controller
 
         $user->update(['email' => $validated['email']]);
 
-        return back()->with('success', 'Ձեր էլ․ փոստի հասցեն հաջողությամբ թարմացվեց։');
+        return back()->with('success', __('Ձեր էլ․ փոստի հասցեն հաջողությամբ թարմացվեց։'));
     }
 
     protected function updateSecurityPassword(Request $request, User $user)
@@ -714,7 +714,7 @@ class SuperAdminController extends Controller
 
         $user->update(['password' => Hash::make($validated['password'])]);
 
-        return back()->with('success', 'Ձեր գաղտնաբառը հաջողությամբ փոխվեց։');
+        return back()->with('success', __('Ձեր գաղտնաբառը հաջողությամբ փոխվեց։'));
     }
 
     protected function enableTwoFactorSecurity(Request $request, User $user)
@@ -756,7 +756,7 @@ class SuperAdminController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Երկփուլային նույնականացումը (2FA) հաջողությամբ ակտիվացվեց։');
+        return back()->with('success', __('Երկփուլային նույնականացումը (2FA) հաջողությամբ ակտիվացվեց։'));
     }
 
     protected function disableTwoFactorSecurity(Request $request, User $user)
@@ -776,7 +776,7 @@ class SuperAdminController extends Controller
             'two_factor_confirmed_at' => null,
         ]);
 
-        return back()->with('success', 'Երկփուլային նույնականացումը (2FA) անջատվեց։');
+        return back()->with('success', __('Երկփուլային նույնականացումը (2FA) անջատվեց։'));
     }
 
     /**

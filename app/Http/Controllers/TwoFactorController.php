@@ -63,7 +63,7 @@ class TwoFactorController extends Controller
             TwoFactorAuthService::sendEmailCode($user);
         }
 
-        return back()->with('status', 'A new security code has been sent to your email.');
+        return back()->with('status', __('A new security code has been sent to your email.'));
     }
 
     /**

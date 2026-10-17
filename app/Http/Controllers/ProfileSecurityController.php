@@ -119,7 +119,7 @@ class ProfileSecurityController extends Controller
 
         app(SecurityAuditService::class)->logTwoFactorChange($user, 'enabled', $validated['type']);
 
-        return back()->with('success', 'Two-Factor Authentication (2FA) has been successfully enabled.');
+        return back()->with('success', __('Two-Factor Authentication (2FA) has been successfully enabled.'));
     }
 
     /**
@@ -148,7 +148,7 @@ class ProfileSecurityController extends Controller
 
         app(SecurityAuditService::class)->logTwoFactorChange($user, 'disabled');
 
-        return back()->with('success', 'Two-Factor Authentication (2FA) has been successfully disabled.');
+        return back()->with('success', __('Two-Factor Authentication (2FA) has been successfully disabled.'));
     }
 
     /**
@@ -189,7 +189,7 @@ class ProfileSecurityController extends Controller
 
         app(SecurityAuditService::class)->logPasswordChange($user, actor: $user);
 
-        return back()->with('success', 'Your password has been changed successfully.');
+        return back()->with('success', __('Your password has been changed successfully.'));
     }
 
     /**
@@ -227,7 +227,7 @@ class ProfileSecurityController extends Controller
             'email' => $validated['email'],
         ]);
 
-        return back()->with('success', 'Your email address has been updated successfully.');
+        return back()->with('success', __('Your email address has been updated successfully.'));
     }
 
     /**
@@ -244,7 +244,7 @@ class ProfileSecurityController extends Controller
 
         $user->update($validated);
 
-        return back()->with('success', 'Profile details have been saved successfully.');
+        return back()->with('success', __('Profile details have been saved successfully.'));
     }
 
     /**

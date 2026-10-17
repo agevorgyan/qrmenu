@@ -29,7 +29,7 @@
 
     @if(session('success'))
         <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 0.9rem 1.25rem; border-radius: 14px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.65rem; font-size: 0.88rem; font-weight: 600;">
-            <i class="fa-solid fa-circle-check"></i> {{ session('success') }}
+            <i class="fa-solid fa-circle-check"></i> {{ __(session('success')) }}
         </div>
     @endif
 

@@ -331,7 +331,7 @@
             @if(session('status'))
                 <div class="alert-success">
                     <i class="fa-solid fa-circle-check" style="font-size: 1.1rem;"></i>
-                    <div>{{ session('status') }}</div>
+                    <div>{{ __(session('status')) }}</div>
                 </div>
             @endif
 

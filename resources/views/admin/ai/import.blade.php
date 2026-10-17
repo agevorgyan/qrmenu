@@ -396,13 +396,13 @@
                         @endphp
                         <optgroup label="{{ __('Partner Active Languages') }}">
                             @foreach($supportedLangs as $lang)
-                                <option value="{{ $lang['code'] }}">{{ $lang['flag'] ?? '🌐' }} {{ $lang['name'] }} ({{ strtoupper($lang['code']) }})</option>
+                                <option value="{{ $lang['code'] }}">{{ $lang['flag'] ?? '🌐' }} {{ __($lang['name']) }} ({{ strtoupper($lang['code']) }})</option>
                             @endforeach
                         </optgroup>
                         <optgroup label="{{ __('Other Available Languages') }}">
                             @foreach($extraPresets as $extra)
                                 @if(!in_array($extra['code'], $existingCodes))
-                                    <option value="{{ $extra['code'] }}">{{ $extra['flag'] }} {{ $extra['name'] }}</option>
+                                    <option value="{{ $extra['code'] }}">{{ $extra['flag'] }} {{ __($extra['name']) }}</option>
                                 @endif
                             @endforeach
                         </optgroup>
@@ -498,7 +498,7 @@
                     <span style="font-size: 2rem; line-height: 1;">{{ $lang['flag'] ?? '🌐' }}</span>
                     <div>
                         <div style="font-weight: 800; color: var(--text-main); font-size: 1rem;">
-                            {{ $lang['name'] }}
+                            {{ __($lang['name']) }}
                         </div>
                         <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.2rem;">
                             <span class="badge badge-subtle" style="font-family: monospace; font-size: 0.72rem; text-transform: uppercase; font-weight: 700;">
@@ -564,7 +564,7 @@
                             class="format-chip badge-subtle" 
                             style="cursor: pointer; border: 1px solid var(--border-color); background: var(--bg-card); font-size: 0.8rem; padding: 0.4rem 0.75rem;">
                         <span>{{ $p['flag'] }}</span>
-                        <span>+ {{ $p['name'] }} ({{ strtoupper($p['code']) }})</span>
+                        <span>+ {{ __($p['name']) }} ({{ strtoupper($p['code']) }})</span>
                     </button>
                 @endif
             @endforeach

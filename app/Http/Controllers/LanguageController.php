@@ -85,7 +85,7 @@ class LanguageController extends Controller
                 $this->localeManager->clearCache();
 
                 return redirect()->route('superadmin.languages.index')
-                    ->with('success', "Language '{$existing->name}' ({$code}) updated and activated.");
+                    ->with('success', __("Language ':name' (:code) updated and activated.", ['name' => $existing->name, 'code' => $code]));
             }
 
             $validated['code'] = $code;
@@ -97,7 +97,7 @@ class LanguageController extends Controller
             $this->localeManager->clearCache();
 
             return redirect()->route('superadmin.languages.index')
-                ->with('success', "Language '{$validated['name']}' ({$code}) successfully registered.");
+                ->with('success', __("Language ':name' (:code) successfully registered.", ['name' => $validated['name'], 'code' => $code]));
         } catch (ValidationException $e) {
             return redirect()->route('superadmin.languages.index')
                 ->withErrors($e->validator)
@@ -106,7 +106,7 @@ class LanguageController extends Controller
             Log::error('LanguageController store error: '.$e->getMessage());
 
             return redirect()->route('superadmin.languages.index')
-                ->with('error', 'Failed to register language: '.$e->getMessage())
+                ->with('error', __('Failed to register language: :error', ['error' => $e->getMessage()]))
                 ->withInput();
         }
     }
@@ -126,7 +126,7 @@ class LanguageController extends Controller
         $this->localeManager->clearCache();
 
         return redirect()->route('superadmin.languages.index')
-            ->with('success', "Language '{$language->name}' updated successfully.");
+            ->with('success', __("Language ':name' updated successfully.", ['name' => $language->name]));
     }
 
     public function toggleActive(Language $language): RedirectResponse
@@ -135,7 +135,7 @@ class LanguageController extends Controller
 
         if ($language->is_default && $language->is_active) {
             return redirect()->route('superadmin.languages.index')
-                ->with('error', 'The system default language cannot be deactivated.');
+                ->with('error', __('The system default language cannot be deactivated.'));
         }
 
         $language->is_active = ! $language->is_active;
@@ -146,7 +146,7 @@ class LanguageController extends Controller
         $status = $language->is_active ? 'activated' : 'deactivated';
 
         return redirect()->route('superadmin.languages.index')
-            ->with('success', "Language '{$language->name}' is now {$status}.");
+            ->with('success', __("Language ':name' is now :status.", ['name' => $language->name, 'status' => __($status)]));
     }
 
     public function setDefault(Language $language): RedirectResponse
@@ -162,6 +162,6 @@ class LanguageController extends Controller
         $this->localeManager->clearCache();
 
         return redirect()->route('superadmin.languages.index')
-            ->with('success', "Language '{$language->name}' is now the system default.");
+            ->with('success', __("Language ':name' is now the system default.", ['name' => $language->name]));
     }
 }

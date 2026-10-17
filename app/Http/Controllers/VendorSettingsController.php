@@ -708,7 +708,7 @@ class VendorSettingsController extends Controller
             'ai_settings' => $newAiSettings,
         ]);
 
-        return redirect()->route('admin.settings.ai')->with('success', '✨ AI settings saved successfully.');
+        return redirect()->route('admin.settings.ai')->with('success', __('✨ AI settings saved successfully.'));
     }
 
     /**

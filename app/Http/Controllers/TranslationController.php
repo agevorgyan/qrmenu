@@ -178,14 +178,14 @@ class TranslationController extends Controller
                         $translation->metadata = $meta;
                         $translation->needs_review = false;
                         $translation->save();
-                        $msg = 'AI proposal applied into draft.';
+                        $msg = __('AI proposal applied into draft.');
                     } else {
-                        $msg = 'No pending proposal found.';
+                        $msg = __('No pending proposal found.');
                     }
                     break;
 
                 default:
-                    return back()->with('error', 'Unknown action.');
+                    return back()->with('error', __('Unknown action.'));
             }
 
             return redirect()->route('admin.translations.edit', $translation)->with('success', $msg);
@@ -203,7 +203,7 @@ class TranslationController extends Controller
             $this->translationService->restoreVersion($translation, $historyId, $user);
 
             return redirect()->route('admin.translations.edit', $translation)
-                ->with('success', "Restored version from history #{$historyId}.");
+                ->with('success', __('Restored version from history #:id.', ['id' => $historyId]));
         } catch (\Throwable $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -295,7 +295,7 @@ class TranslationController extends Controller
         $this->localeManager->clearCache();
 
         return redirect()->route('admin.translations.index')
-            ->with('success', 'Restaurant language settings updated successfully.');
+            ->with('success', __('Restaurant language settings updated successfully.'));
     }
 
     public function glossaryIndex(Request $request): View
@@ -335,7 +335,7 @@ class TranslationController extends Controller
         TranslationGlossary::create($validated);
 
         return redirect()->route('admin.translations.glossary.index')
-            ->with('success', "Glossary rule for '{$validated['term']}' added.");
+            ->with('success', __("Glossary rule for ':term' added.", ['term' => $validated['term']]));
     }
 
     public function glossaryDestroy(TranslationGlossary $glossary): RedirectResponse
@@ -346,6 +346,6 @@ class TranslationController extends Controller
         $glossary->delete();
 
         return redirect()->route('admin.translations.glossary.index')
-            ->with('success', 'Glossary rule deleted.');
+            ->with('success', __('Glossary rule deleted.'));
     }
 }

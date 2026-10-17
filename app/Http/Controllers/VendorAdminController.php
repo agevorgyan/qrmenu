@@ -115,7 +115,7 @@ class VendorAdminController extends Controller
             'is_active' => true,
         ]);
 
-        return back()->with('success', 'New Location added successfully!');
+        return back()->with('success', __('New Location added successfully!'));
     }
 
     public function teamIndex()
@@ -159,7 +159,7 @@ class VendorAdminController extends Controller
             'role' => $validated['role'],
         ]);
 
-        return back()->with('success', 'Team member invited successfully!');
+        return back()->with('success', __('Team member invited successfully!'));
     }
 
     public function subscriptionIndex()
@@ -210,13 +210,19 @@ class VendorAdminController extends Controller
         if ($result->type === 'redirect' && $result->redirectUrl) {
             return redirect($result->redirectUrl)->with(
                 'info',
-                "Payment request created ({$selectedMethodName}). Invoice: {$payment->invoice_number}."
+                __('Payment request created (:method). Invoice: :invoice.', [
+                    'method' => __($selectedMethodName),
+                    'invoice' => $payment->invoice_number,
+                ])
             );
         }
 
         return back()->with(
             'success',
-            "Invoice created ({$selectedMethodName}). Invoice: {$payment->invoice_number}. Subscription will be activated upon payment confirmation."
+            __('Invoice created (:method). Invoice: :invoice. Subscription will be activated upon payment confirmation.', [
+                'method' => __($selectedMethodName),
+                'invoice' => $payment->invoice_number,
+            ])
         );
     }
 }

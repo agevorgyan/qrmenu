@@ -30,7 +30,7 @@
     @if (session('success'))
         <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; color: #10b981; display: flex; align-items: center; gap: 0.65rem; font-weight: 600;">
             <i class="fa-solid fa-circle-check" style="font-size: 1.2rem;"></i>
-            <span>{{ session('success') }}</span>
+            <span>{{ __(session('success')) }}</span>
         </div>
     @endif
 

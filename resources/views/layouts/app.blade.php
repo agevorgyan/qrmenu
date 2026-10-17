@@ -1206,6 +1206,20 @@
                 </div>
             @endif
 
+            @if(session('status'))
+                <div class="alert alert-success">
+                    <span style="display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-circle-check"></i> {{ __(session('status')) }}</span>
+                    <button onclick="this.parentElement.remove()" style="background:none; border:none; color:inherit; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            @endif
+
+            @if(session('info'))
+                <div class="alert" style="background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #3b82f6;">
+                    <span style="display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-circle-info"></i> {{ __(session('info')) }}</span>
+                    <button onclick="this.parentElement.remove()" style="background:none; border:none; color:inherit; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            @endif
+
             @if(session('warning'))
                 <div class="alert" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #f59e0b;">
                     <span style="display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-triangle-exclamation"></i> {{ __(session('warning')) }}</span>
