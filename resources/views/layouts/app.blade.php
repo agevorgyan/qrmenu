@@ -195,12 +195,104 @@
         }
 
         .sidebar-brand {
-            padding: 1.25rem 1.25rem;
+            padding: 1.15rem 1.15rem;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 0.85rem;
             border-bottom: 1px solid var(--border-color);
             min-height: 72px;
+        }
+
+        .sidebar-close-btn {
+            display: none;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+        .sidebar-close-btn:hover {
+            color: var(--text-main);
+            border-color: var(--primary);
+        }
+
+        /* Mobile Burger Menu Quick Panel */
+        .sidebar-quick-panel {
+            padding: 0.75rem 0.85rem;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 0.55rem;
+        }
+        @media (min-width: 993px) {
+            .sidebar-quick-panel {
+                display: none !important;
+            }
+        }
+        .sidebar-quick-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+        .sidebar-quick-action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            padding: 0.5rem 0.65rem;
+            background: var(--bg-sidebar);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-main);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .sidebar-quick-action-btn:hover {
+            border-color: var(--primary);
+            background: var(--nav-hover);
+        }
+        .sidebar-lang-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.35rem;
+            background: var(--bg-sidebar);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 3px;
+        }
+        .sidebar-lang-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            padding: 0.45rem 0.35rem;
+            border-radius: 7px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .sidebar-lang-pill:hover {
+            color: var(--text-main);
+        }
+        .sidebar-lang-pill.active {
+            background: var(--primary-gradient);
+            color: #ffffff;
+            box-shadow: 0 2px 6px var(--primary-glow);
         }
 
         .sidebar-menu {
@@ -716,6 +808,9 @@
             .hide-on-mobile {
                 display: none !important;
             }
+            .sidebar-close-btn {
+                display: inline-flex;
+            }
         }
     </style>
     @yield('styles')
@@ -733,7 +828,7 @@
                     $sysLogo = \App\Models\SystemSetting::getLogoDark();
                     $sysName = \App\Models\SystemSetting::getSiteName();
                 @endphp
-                <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
+                <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%; min-width: 0;">
                     @if($sysLogo)
                         <img src="{{ $sysLogo }}" alt="{{ $sysName }}" style="max-height: 38px; max-width: 140px; object-fit: contain;">
                     @else
@@ -774,6 +869,40 @@
                     </div>
                 </div>
             @endif
+
+            <button type="button" class="sidebar-close-btn" @click="mobileOpen = false" aria-label="Close menu">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Burger Menu Quick Controls: Language, Theme & 2FA -->
+        <div class="sidebar-quick-panel">
+            <div class="sidebar-quick-row">
+                <!-- Theme Switcher -->
+                <button type="button" class="sidebar-quick-action-btn" @click="toggleTheme()" title="Toggle Light / Dark Mode">
+                    <i class="fa-solid" :class="currentTheme === 'dark' ? 'fa-sun' : 'fa-moon'" style="color: var(--primary); font-size: 0.95rem;"></i>
+                    <span x-text="currentTheme === 'dark' ? '{{ __('Light') }}' : '{{ __('Dark') }}'"></span>
+                </button>
+
+                <!-- Security & 2FA Profile -->
+                <a href="{{ Auth::user()?->isSuperAdmin() ? route('superadmin.settings.index') . '#security-section' : route('admin.profile') }}" class="sidebar-quick-action-btn" title="{{ __('Security & 2FA') }}">
+                    <i class="fa-solid fa-shield-halved" style="color: {{ Auth::user()?->hasTwoFactorEnabled() ? '#10b981' : '#f59e0b' }}; font-size: 0.95rem;"></i>
+                    <span>{{ __('2FA & Profile') }}</span>
+                </a>
+            </div>
+
+            <!-- Language Switcher Segmented Pills -->
+            <div class="sidebar-lang-selector">
+                <a href="{{ route('lang.switch', 'hy') }}" class="sidebar-lang-pill {{ app()->getLocale() === 'hy' ? 'active' : '' }}">
+                    <span>🇦🇲</span> <span>ՀԱՅ</span>
+                </a>
+                <a href="{{ route('lang.switch', 'ru') }}" class="sidebar-lang-pill {{ app()->getLocale() === 'ru' ? 'active' : '' }}">
+                    <span>🇷🇺</span> <span>РУС</span>
+                </a>
+                <a href="{{ route('lang.switch', 'en') }}" class="sidebar-lang-pill {{ app()->getLocale() === 'en' ? 'active' : '' }}">
+                    <span>🇬🇧</span> <span>ENG</span>
+                </a>
+            </div>
         </div>
 
         <nav class="sidebar-menu">
@@ -1012,7 +1141,7 @@
 
             <div class="user-profile">
                 <!-- Platform Language Switcher Dropdown -->
-                <div class="lang-dropdown-wrapper" x-data="{ openLang: false }" @click.outside="openLang = false" style="position: relative;">
+                <div class="lang-dropdown-wrapper hide-on-mobile" x-data="{ openLang: false }" @click.outside="openLang = false" style="position: relative;">
                     <button type="button" @click="openLang = !openLang" class="theme-toggle-btn" style="border-radius: 10px; gap: 0.45rem; padding: 0.4rem 0.75rem;" title="{{ __('Select Language') }}">
                         @if(app()->getLocale() === 'hy')
                             <span style="font-size: 1.05rem; line-height: 1;">🇦🇲</span>
@@ -1043,13 +1172,13 @@
                 </div>
 
                 <!-- Light / Dark Theme Switcher Button -->
-                <button class="theme-toggle-btn" @click="toggleTheme()" title="Toggle Light / Dark Mode">
+                <button class="theme-toggle-btn hide-on-mobile" @click="toggleTheme()" title="Toggle Light / Dark Mode">
                     <i class="fa-solid" :class="currentTheme === 'dark' ? 'fa-sun' : 'fa-moon'" style="color: var(--primary);"></i>
                     <span class="hide-on-mobile" x-text="currentTheme === 'dark' ? '{{ __('Light') }}' : '{{ __('Dark') }}'"></span>
                 </button>
 
                 <!-- User Profile & 2FA Button -->
-                <a href="{{ Auth::user()?->isSuperAdmin() ? route('superadmin.settings.index') . '#security-section' : route('admin.profile') }}" class="theme-toggle-btn" style="text-decoration: none; border-radius: 10px;" title="{{ __('Security & 2FA') }}">
+                <a href="{{ Auth::user()?->isSuperAdmin() ? route('superadmin.settings.index') . '#security-section' : route('admin.profile') }}" class="theme-toggle-btn hide-on-mobile" style="text-decoration: none; border-radius: 10px;" title="{{ __('Security & 2FA') }}">
                     <i class="fa-solid fa-shield-halved" style="color: {{ Auth::user()?->hasTwoFactorEnabled() ? '#10b981' : '#f59e0b' }};"></i>
                     <span class="hide-on-mobile">{{ __('2FA & Profile') }}</span>
                 </a>

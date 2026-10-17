@@ -50,6 +50,7 @@ class LiveKitchenOrdersTest extends TestCase
             'email' => 'mario@pizza.am',
             'password' => bcrypt('password'),
             'role' => 'manager',
+            'email_verified_at' => now(),
         ]);
 
         $order = Order::create([

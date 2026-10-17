@@ -77,10 +77,10 @@ class WaiterCall extends Model
     public function getTypeLabel(): string
     {
         return match ($this->type) {
-            'call_waiter' => 'Մատուցողի կանչ',
-            'bill_cash' => 'Հաշիվ (Կանխիկ)',
-            'bill_card' => 'Հաշիվ (Քարտով)',
-            default => 'Կանչ',
+            'call_waiter' => __('Waiter Call'),
+            'bill_cash' => __('Bill (Cash)'),
+            'bill_card' => __('Bill (Card)'),
+            default => __('Call'),
         };
     }
 

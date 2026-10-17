@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Live Kitchen Orders - ' . $vendor->name)
+@section('title', __('Live Kitchen Orders') . ' - ' . $vendor->name)
 
 @section('content')
 <!-- Load Pusher & Laravel Echo for Reverb WebSockets -->
@@ -14,11 +14,11 @@
                 <i class="fa-solid fa-bell-concierge"></i>
             </span>
             <h1 style="font-size: 1.75rem; font-weight: 800; margin: 0; color: var(--text-main);">
-                Kitchen Orders Display
+                {{ __('Kitchen Orders Display') }}
             </h1>
         </div>
         <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.35rem;">
-            Real-time table and delivery orders for <strong style="color: var(--primary);">{{ $location?->name ?? 'All Branches' }}</strong>.
+            {{ __('Real-time table and delivery orders for') }} <strong style="color: var(--primary);">{{ $location?->name ?? __('All Branches') }}</strong>.
         </p>
     </div>
 
@@ -27,17 +27,17 @@
         <!-- Live Status Pill -->
         <div id="liveStatusPill" style="display: flex; gap: 0.5rem; align-items: center; background: rgba(16, 185, 129, 0.12); color: #10b981; padding: 0.5rem 1rem; border-radius: 9999px; font-size: 0.82rem; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.28); transition: all 0.3s ease;">
             <span class="pulse-dot" style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block;"></span>
-            <span id="liveStatusText">⚡ WebSockets Live</span>
+            <span id="liveStatusText">{{ __('⚡ WebSockets Live') }}</span>
         </div>
 
         <!-- Audio Toggle Button -->
         <button id="soundToggleBtn" onclick="toggleKitchenSound()" class="btn btn-secondary" style="padding: 0.5rem 0.9rem; font-size: 0.82rem; display: flex; align-items: center; gap: 0.45rem; border-radius: 12px;">
             <i id="soundIcon" class="fa-solid fa-volume-high" style="color: var(--primary);"></i>
-            <span id="soundText">Sound On</span>
+            <span id="soundText">{{ __('Sound On') }}</span>
         </button>
 
         <!-- Test Sound Button -->
-        <button onclick="playKitchenChime(true)" class="btn btn-secondary" style="padding: 0.5rem 0.75rem; font-size: 0.82rem; border-radius: 12px;" title="Test notification sound">
+        <button onclick="playKitchenChime(true)" class="btn btn-secondary" style="padding: 0.5rem 0.75rem; font-size: 0.82rem; border-radius: 12px;" title="{{ __('Test notification sound') }}">
             <i class="fa-solid fa-bell" style="color: #f59e0b;"></i>
         </button>
     </div>
@@ -48,12 +48,12 @@
     <div style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
         <span style="font-size: 1.5rem; animation: ringBell 0.8s infinite alternate;">🔔</span>
         <div style="min-width: 0;">
-            <strong style="font-size: 1.05rem; font-family: 'Outfit';">NEW ORDER RECEIVED!</strong>
-            <div style="font-size: 0.82rem; opacity: 0.95;" id="newOrderBannerText">New order received from table.</div>
+            <strong style="font-size: 1.05rem; font-family: 'Outfit';">{{ __('NEW ORDER RECEIVED!') }}</strong>
+            <div style="font-size: 0.82rem; opacity: 0.95;" id="newOrderBannerText">{{ __('New order received from table.') }}</div>
         </div>
     </div>
     <button onclick="dismissNewOrderBanner()" style="background: rgba(255,255,255,0.25); border: none; color: #fff; padding: 0.4rem 0.9rem; border-radius: 10px; font-weight: 700; cursor: pointer;">
-        Dismiss
+        {{ __('Dismiss') }}
     </button>
 </div>
 
@@ -62,11 +62,11 @@
     <div style="display: flex; align-items: center; gap: 0.65rem;">
         <i class="fa-solid fa-volume-high" style="font-size: 1.1rem;"></i>
         <div style="font-size: 0.85rem;">
-            <strong>Order Alert Audio:</strong> Click to enable sound notifications for new orders in this browser.
+            <strong>{{ __('Order Alert Audio:') }}</strong> {{ __('Click to enable sound notifications for new orders in this browser.') }}
         </div>
     </div>
     <button type="button" onclick="enableAndTestAudio()" class="btn btn-primary" style="padding: 0.4rem 0.9rem; font-size: 0.8rem; border-radius: 10px;">
-        <i class="fa-solid fa-bell"></i> Enable Sound
+        <i class="fa-solid fa-bell"></i> {{ __('Enable Sound') }}
     </button>
 </div>
 
@@ -74,28 +74,28 @@
 <div class="card" style="padding: 0.85rem 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
     <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center;">
         <a href="?status=all" class="btn {{ request('status', 'all') == 'all' ? 'btn-primary' : 'btn-secondary' }}" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 10px;">
-            All Orders
+            {{ __('All Orders') }}
         </a>
         <a href="?status=pending" class="btn {{ request('status') == 'pending' ? 'btn-primary' : 'btn-secondary' }}" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 10px;">
-            ⏳ Pending
+            ⏳ {{ __('Pending') }}
             @if(isset($pendingCount) && $pendingCount > 0)
                 <span style="background: #ef4444; color: #fff; padding: 0.1rem 0.45rem; border-radius: 9999px; font-size: 0.7rem; margin-left: 0.35rem; font-weight: 800;">{{ $pendingCount }}</span>
             @endif
         </a>
         <a href="?status=preparing" class="btn {{ request('status') == 'preparing' ? 'btn-primary' : 'btn-secondary' }}" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 10px;">
-            🔥 Preparing
+            🔥 {{ __('Preparing') }}
         </a>
         <a href="?status=ready" class="btn {{ request('status') == 'ready' ? 'btn-primary' : 'btn-secondary' }}" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 10px;">
-            🔔 Ready
+            🔔 {{ __('Ready') }}
         </a>
         <a href="?status=completed" class="btn {{ request('status') == 'completed' ? 'btn-primary' : 'btn-secondary' }}" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 10px;">
-            ✅ Completed
+            ✅ {{ __('Completed') }}
         </a>
     </div>
 
     <div id="pollInfoContainer" style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem;">
         <span style="color: #10b981; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
-            <i class="fa-solid fa-bolt text-xs"></i> <span>Real-time (WebSockets)</span>
+            <i class="fa-solid fa-bolt text-xs"></i> <span>{{ __('Real-time (WebSockets)') }}</span>
         </span>
     </div>
 </div>
@@ -120,8 +120,8 @@
                     <i class="fa-solid fa-print"></i>
                 </span>
                 <div>
-                    <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800; color: var(--text-main);" id="receiptModalTitle">Print Receipt</h3>
-                    <div style="font-size: 0.78rem; color: var(--text-muted);">ESC/POS Thermal Printer</div>
+                    <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800; color: var(--text-main);" id="receiptModalTitle">{{ __('Print Receipt') }}</h3>
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">{{ __('ESC/POS Thermal Printer') }}</div>
                 </div>
             </div>
             <button type="button" onclick="closeThermalReceiptModal()" style="background: none; border: none; font-size: 1.25rem; color: var(--text-muted); cursor: pointer;">
@@ -138,14 +138,14 @@
         <div style="padding: 1rem 1.25rem; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 0.6rem; background: var(--bg-body);">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
                 <button type="button" onclick="printViaBluetooth()" id="btnBluetoothPrint" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.65rem; font-size: 0.82rem; border-radius: 12px;">
-                    <i class="fa-brands fa-bluetooth-b"></i> Web Bluetooth
+                    <i class="fa-brands fa-bluetooth-b"></i> {{ __('Web Bluetooth') }}
                 </button>
                 <a id="btnRawBtPrint" href="#" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.65rem; font-size: 0.82rem; border-radius: 12px; text-decoration: none;">
-                    <i class="fa-solid fa-mobile-screen"></i> RawBT (Android)
+                    <i class="fa-solid fa-mobile-screen"></i> {{ __('RawBT (Android)') }}
                 </a>
             </div>
             <button type="button" onclick="printViaBrowser()" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.65rem; font-size: 0.85rem; border-radius: 12px;">
-                <i class="fa-solid fa-print"></i> Print via Browser (System Dialog)
+                <i class="fa-solid fa-print"></i> {{ __('Print via Browser (System Dialog)') }}
             </button>
         </div>
     </div>
@@ -180,6 +180,31 @@ let isPolling = false;
 let audioCtx = null;
 let pollTimer = null;
 
+const orderTranslations = {
+    soundOn: @json(__('Sound On')),
+    soundOff: @json(__('Sound Off')),
+    wsLive: @json(__('⚡ WebSockets Live')),
+    wsActive: @json(__('⚡ WebSockets (Reverb) Active')),
+    wsConnecting: @json(__('⚡ WebSockets Connecting...')),
+    pollingMode: @json(__('⚠️ Polling Mode')),
+    pollingActive: @json(__('Polling active')),
+    connectionError: @json(__('Connection error (retrying...)')),
+    realTimeWs: @json(__('Real-time (WebSockets)')),
+    nextUpdateIn: @json(__('Next update in:')),
+    newOrderReceived: @json(__('New order received')),
+    pendingColon: @json(__('pending:')),
+    newOrderExcl: @json(__('NEW ORDER!')),
+    liveKitchenOrders: @json(__('Live Kitchen Orders')),
+    orderStatusUpdateFailed: @json(__('Failed to update order status.')),
+    sessionExpired: @json(__('Session expired or error occurred.')),
+    receiptLoadFailed: @json(__('Failed to load receipt.')),
+    receipt: @json(__('Receipt')),
+    callFrom: @json(__('Call from')),
+    table: @json(__('Table')),
+    takeaway: @json(__('Takeaway')),
+    totalColon: @json(__('Total:')),
+};
+
 // Initialize Sound Button
 function updateSoundUI() {
     const icon = document.getElementById('soundIcon');
@@ -187,11 +212,11 @@ function updateSoundUI() {
     if (isSoundEnabled) {
         icon.className = 'fa-solid fa-volume-high';
         icon.style.color = '#10b981';
-        text.innerText = 'Sound On';
+        text.innerText = orderTranslations.soundOn;
     } else {
         icon.className = 'fa-solid fa-volume-xmark';
         icon.style.color = '#ef4444';
-        text.innerText = 'Sound Off';
+        text.innerText = orderTranslations.soundOff;
     }
 }
 updateSoundUI();
@@ -348,14 +373,14 @@ async function fetchKitchenFeed(silent = false) {
                     const banner = document.getElementById('newOrderBanner');
                     const bannerText = document.getElementById('newOrderBannerText');
                     if (banner && bannerText) {
-                        bannerText.innerText = `New order received (pending: ${data.pending_count}).`;
+                        bannerText.innerText = `${orderTranslations.newOrderReceived} (${orderTranslations.pendingColon} ${data.pending_count}).`;
                         banner.style.display = 'flex';
                     }
 
                     // Update Title with Alert
-                    document.title = `(1) 🔔 NEW ORDER! - ${@json($vendor->name)}`;
+                    document.title = `(1) 🔔 ${orderTranslations.newOrderExcl} - ${@json($vendor->name)}`;
                     setTimeout(() => {
-                        document.title = 'Live Kitchen Orders - ' + @json($vendor->name);
+                        document.title = `${orderTranslations.liveKitchenOrders} - ${@json($vendor->name)}`;
                     }, 8000);
                 }
 
@@ -374,7 +399,7 @@ async function fetchKitchenFeed(silent = false) {
                 if (!isWebSocketConnected) {
                     const statusText = document.getElementById('liveStatusText');
                     if (statusText) {
-                        statusText.innerText = `Polling active (${new Date().toLocaleTimeString()})`;
+                        statusText.innerText = `${orderTranslations.pollingActive} (${new Date().toLocaleTimeString()})`;
                     }
                 }
             }
@@ -384,7 +409,7 @@ async function fetchKitchenFeed(silent = false) {
         if (!isWebSocketConnected) {
             const statusText = document.getElementById('liveStatusText');
             if (statusText) {
-                statusText.innerText = 'Connection error (retrying...)';
+                statusText.innerText = orderTranslations.connectionError;
             }
         }
     } finally {
@@ -431,7 +456,7 @@ async function changeOrderStatus(orderId, newStatus) {
             // Silently refresh the list
             fetchKitchenFeed(true);
         } else {
-            alert('Failed to update order status.');
+            alert(orderTranslations.orderStatusUpdateFailed);
         }
     } catch (e) {
         console.error('Order status update error:', e);
@@ -526,7 +551,7 @@ function initEcho() {
             window.Echo.connector.pusher.connection.bind('connecting', () => {
                 const text = document.getElementById('liveStatusText');
                 if (text && !isWebSocketConnected) {
-                    text.innerText = '⚡ WebSockets Connecting...';
+                    text.innerText = orderTranslations.wsConnecting;
                 }
             });
 
@@ -565,9 +590,9 @@ function updateConnectionStatus(connected) {
             dot.style.background = '#10b981';
             dot.className = 'pulse-dot';
         }
-        if (text) text.innerHTML = '⚡ WebSockets (Reverb) Active';
+        if (text) text.innerHTML = orderTranslations.wsActive;
         if (pollInfo) {
-            pollInfo.innerHTML = '<span style="color: #10b981; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;"><i class="fa-solid fa-bolt text-xs"><\/i> <span>Real-time (WebSockets)<\/span><\/span>';
+            pollInfo.innerHTML = '<span style="color: #10b981; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;"><i class="fa-solid fa-bolt text-xs"><\/i> <span>' + orderTranslations.realTimeWs + '<\/span><\/span>';
         }
         pollSecondsRemaining = 120;
     } else {
@@ -580,9 +605,9 @@ function updateConnectionStatus(connected) {
             dot.style.background = '#f59e0b';
             dot.className = '';
         }
-        if (text) text.innerHTML = '⚠️ Polling Mode';
+        if (text) text.innerHTML = orderTranslations.pollingMode;
         if (pollInfo) {
-            pollInfo.innerHTML = '<span style="color: #f59e0b; display: inline-flex; align-items: center; gap: 0.35rem;"><i class="fa-solid fa-rotate text-xs"><\/i> <span>Next update in: <strong id="pollCounter">' + pollSecondsRemaining + '<\/strong>s<\/span><\/span>';
+            pollInfo.innerHTML = '<span style="color: #f59e0b; display: inline-flex; align-items: center; gap: 0.35rem;"><i class="fa-solid fa-rotate text-xs"><\/i> <span>' + orderTranslations.nextUpdateIn + ' <strong id="pollCounter">' + pollSecondsRemaining + '<\/strong>s<\/span><\/span>';
         }
         pollSecondsRemaining = 6;
     }
@@ -593,12 +618,12 @@ function handleWebSocketOrderCreated(data) {
     const banner = document.getElementById('newOrderBanner');
     const bannerText = document.getElementById('newOrderBannerText');
     if (banner && bannerText) {
-        bannerText.innerText = `New order #${data.order_number} (${data.table_number ? 'Table ' + data.table_number : 'Takeaway'}) — Total: ${Number(data.total_amount).toLocaleString()} ${@json($vendor->currency)}.`;
+        bannerText.innerText = `${orderTranslations.newOrderReceived} #${data.order_number} (${data.table_number ? orderTranslations.table + ' ' + data.table_number : orderTranslations.takeaway}) — ${orderTranslations.totalColon} ${Number(data.total_amount).toLocaleString()} ${@json($vendor->currency)}.`;
         banner.style.display = 'flex';
     }
-    document.title = `(1) 🔔 NEW ORDER #${data.order_number}!`;
+    document.title = `(1) 🔔 ${orderTranslations.newOrderExcl} #${data.order_number}!`;
     setTimeout(() => {
-        document.title = 'Live Kitchen Orders - ' + @json($vendor->name);
+        document.title = `${orderTranslations.liveKitchenOrders} - ` + @json($vendor->name);
     }, 8000);
     @if(!empty($vendor->getThermalPrinterSettings()['auto_print_live_orders']))
     if (data.order_id) {
@@ -613,7 +638,7 @@ function handleWebSocketWaiterCalled(data) {
     const banner = document.getElementById('newOrderBanner');
     const bannerText = document.getElementById('newOrderBannerText');
     if (banner && bannerText) {
-        bannerText.innerText = `🔔 Call from ${data.table_number ? 'Table ' + data.table_number : 'Table'}: ${data.type_label}.`;
+        bannerText.innerText = `🔔 ${orderTranslations.callFrom} ${data.table_number ? orderTranslations.table + ' ' + data.table_number : orderTranslations.table}: ${data.type_label}.`;
         banner.style.display = 'flex';
     }
     fetchKitchenFeed(true);
@@ -632,7 +657,7 @@ async function printOrderReceipt(orderId, isAuto = false) {
         });
         const contentType = res.headers.get("content-type");
         if (contentType && contentType.indexOf("application/json") === -1) {
-            alert('Session expired or error occurred.');
+            alert(orderTranslations.sessionExpired);
             return;
         }
         const data = await res.json();
@@ -640,7 +665,7 @@ async function printOrderReceipt(orderId, isAuto = false) {
             currentReceiptText = data.receipt_text;
             currentReceiptOrderNumber = data.order_number;
 
-            document.getElementById('receiptModalTitle').textContent = `Receipt #${data.order_number}`;
+            document.getElementById('receiptModalTitle').textContent = `${orderTranslations.receipt} #${data.order_number}`;
             document.getElementById('receiptTextPreview').textContent = data.receipt_text;
             document.getElementById('btnRawBtPrint').href = data.rawbt_url;
             document.getElementById('thermalReceiptModal').style.display = 'flex';
@@ -651,7 +676,7 @@ async function printOrderReceipt(orderId, isAuto = false) {
         }
     } catch (e) {
         console.error('Failed to load receipt:', e);
-        alert('Failed to load receipt.');
+        alert(orderTranslations.receiptLoadFailed);
     }
 }
 

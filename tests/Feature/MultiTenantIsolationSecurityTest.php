@@ -100,6 +100,7 @@ class MultiTenantIsolationSecurityTest extends TestCase
             'password' => bcrypt('password123'),
             'vendor_id' => $this->vendorA->id,
             'role' => 'vendor_owner',
+            'email_verified_at' => now(),
         ]);
 
         $this->managerA = User::create([
@@ -108,6 +109,7 @@ class MultiTenantIsolationSecurityTest extends TestCase
             'password' => bcrypt('password123'),
             'vendor_id' => $this->vendorA->id,
             'role' => 'manager',
+            'email_verified_at' => now(),
         ]);
 
         $this->staffA = User::create([
@@ -116,6 +118,7 @@ class MultiTenantIsolationSecurityTest extends TestCase
             'password' => bcrypt('password123'),
             'vendor_id' => $this->vendorA->id,
             'role' => 'staff',
+            'email_verified_at' => now(),
         ]);
 
         $this->locationA = Location::create([
@@ -202,6 +205,7 @@ class MultiTenantIsolationSecurityTest extends TestCase
             'password' => bcrypt('password123'),
             'vendor_id' => $this->vendorB->id,
             'role' => 'vendor_owner',
+            'email_verified_at' => now(),
         ]);
 
         $this->managerB = User::create([
@@ -210,6 +214,7 @@ class MultiTenantIsolationSecurityTest extends TestCase
             'password' => bcrypt('password123'),
             'vendor_id' => $this->vendorB->id,
             'role' => 'manager',
+            'email_verified_at' => now(),
         ]);
 
         $this->staffB = User::create([
@@ -218,6 +223,7 @@ class MultiTenantIsolationSecurityTest extends TestCase
             'password' => bcrypt('password123'),
             'vendor_id' => $this->vendorB->id,
             'role' => 'staff',
+            'email_verified_at' => now(),
         ]);
 
         $this->locationB = Location::create([

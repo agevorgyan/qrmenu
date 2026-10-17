@@ -46,6 +46,7 @@ class OrderBroadcastingTest extends TestCase
             'password' => bcrypt('password123'),
             'vendor_id' => $this->vendor->id,
             'role' => 'vendor_owner',
+            'email_verified_at' => now(),
         ]);
 
         $this->location = Location::create([

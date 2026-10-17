@@ -3,7 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Language;
+use App\Models\Location;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
+use App\Models\Vendor;
+use Database\Seeders\SubscriptionPlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -28,6 +32,8 @@ class AdminLocaleSwitchTest extends TestCase
             ['code' => 'ru'],
             ['name' => 'Russian', 'native_name' => 'Русский', 'flag' => '🇷🇺', 'direction' => 'ltr', 'is_active' => true, 'is_default' => false, 'sort_order' => 3]
         );
+
+        $this->seed(SubscriptionPlanSeeder::class);
     }
 
     public function test_default_system_locale_is_english(): void
@@ -227,5 +233,69 @@ class AdminLocaleSwitchTest extends TestCase
         $res->assertSee('auth-lang-trigger');
         $res->assertSee('auth-lang-menu');
         $res->assertSee('toggleAuthLang');
+    }
+
+    public function test_kitchen_orders_page_renders_localized_translations_in_russian(): void
+    {
+        $plan = SubscriptionPlan::where('slug', 'pro')->first();
+
+        $vendor = Vendor::create([
+            'name' => 'Mario Pizza',
+            'slug' => 'mario-pizza',
+            'email' => 'mario@pizza.am',
+            'subscription_plan' => 'pro',
+            'subscription_plan_id' => $plan->id,
+            'is_active' => true,
+        ]);
+
+        $loc = Location::create([
+            'vendor_id' => $vendor->id,
+            'name' => 'Main',
+            'slug' => 'main',
+            'is_active' => true,
+        ]);
+
+        $user = User::create([
+            'vendor_id' => $vendor->id,
+            'location_id' => $loc->id,
+            'name' => 'Chef Mario',
+            'email' => 'chef@pizza.am',
+            'password' => bcrypt('password'),
+            'role' => 'vendor_owner',
+            'email_verified_at' => now(),
+            'locale' => 'ru',
+        ]);
+
+        $res = $this->actingAs($user)
+            ->withSession(['admin_locale' => 'ru', 'app_locale' => 'ru'])
+            ->get(route('admin.orders.index'));
+
+        $res->assertOk();
+        $res->assertSee('Экран заказов кухни');
+        $res->assertSee('Заказы со столов и на доставку в реальном времени для');
+        $res->assertSee('Звук включен');
+        $res->assertSee('Включить звук');
+        $res->assertSee('Все заказы');
+        $res->assertSee('Готовится');
+        $res->assertSee('Готово');
+        $res->assertSee('Заказов не найдено');
+        $res->assertSee('Новые заказы со столов и на доставку будут автоматически появляться здесь в реальном времени.');
+        $res->assertSee('Переводы и AI');
+
+        $resHy = $this->actingAs($user)
+            ->withSession(['admin_locale' => 'hy', 'app_locale' => 'hy'])
+            ->get(route('admin.orders.index'));
+
+        $resHy->assertOk();
+        $resHy->assertSee('Խոհանոցի պատվերների էկրան');
+        $resHy->assertSee('Սեղանների և առաքման պատվերներ իրական ժամանակում՝');
+        $resHy->assertSee('Ձայնը միացված');
+        $resHy->assertSee('Միացնել ձայնը');
+        $resHy->assertSee('Բոլոր պատվերները');
+        $resHy->assertSee('Պատրաստվում է');
+        $resHy->assertSee('Պատրաստ է');
+        $resHy->assertSee('Պատվերներ չեն գտնվել');
+        $resHy->assertSee('Սեղանների և առաքման նոր պատվերներն ավտոմատ կհայտնվեն այստեղ իրական ժամանակում:');
+        $resHy->assertSee('Թարգմանություններ և AI');
     }
 }
