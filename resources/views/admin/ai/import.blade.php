@@ -206,10 +206,10 @@
             <span style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6; width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
                 <i class="fa-solid fa-wand-magic-sparkles"></i>
             </span>
-            <span>AI Menu Toolkit</span>
+            <span>{{ __('AI Menu Toolkit') }}</span>
         </h1>
         <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0.35rem 0 0; word-break: break-word;">
-            Extract menus from PDF/Word files or instantly translate your entire menu with 1 click
+            {{ __('Extract menus from PDF/Word files or instantly translate your entire menu with 1 click') }}
         </p>
     </div>
 </div>
@@ -225,10 +225,10 @@
                 <i class="fa-solid fa-wand-magic-sparkles fa-spin"></i>
             </div>
             <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.4rem;">
-                AI is extracting menu...
+                {{ __('AI is extracting menu...') }}
             </h3>
             <p style="font-size: 0.85rem; color: var(--text-muted); max-width: 320px; margin: 0; line-height: 1.5;">
-                Structuring dishes, prices, descriptions, and categories. Please wait.
+                {{ __('Structuring dishes, prices, descriptions, and categories. Please wait.') }}
             </p>
         </div>
 
@@ -242,20 +242,20 @@
                         1. {{ __('AI Smart Import (Omni-Extractor)') }}
                     </h3>
                     <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.2rem;">
-                        <span class="badge badge-amber" style="font-size: 0.68rem;">Excel, Word, CSV, Images, PDF & Web URL</span>
+                        <span class="badge badge-amber" style="font-size: 0.68rem;">{{ __('Excel, Word, CSV, Images, PDF & Web URL') }}</span>
                     </div>
                 </div>
             </div>
 
             <p style="font-size: 0.86rem; color: var(--text-muted); margin: 0 0 1.35rem 0; line-height: 1.5; word-break: break-word;">
-                Upload any file format, attach a restaurant website URL, or paste menu text. AI will automatically generate categories, dishes, prices, and descriptions.
+                {{ __('Upload any file format, attach a restaurant website URL, or paste menu text. AI will automatically generate categories, dishes, prices, and descriptions.') }}
             </p>
 
             <!-- Segmented Control Tabs -->
             <div class="ai-tabs-strip">
                 <button type="button" @click="tab = 'file'" class="ai-tab-btn" :class="{ 'active': tab === 'file' }">
                     <i class="fa-solid fa-file-arrow-up" style="color: #10b981;"></i>
-                    <span>Files</span>
+                    <span>{{ __('Files') }}</span>
                 </button>
                 <button type="button" @click="tab = 'url'" class="ai-tab-btn" :class="{ 'active': tab === 'url' }">
                     <i class="fa-solid fa-globe" style="color: #3b82f6;"></i>
@@ -263,7 +263,7 @@
                 </button>
                 <button type="button" @click="tab = 'text'" class="ai-tab-btn" :class="{ 'active': tab === 'text' }">
                     <i class="fa-solid fa-align-left" style="color: #f59e0b;"></i>
-                    <span>Text</span>
+                    <span>{{ __('Text') }}</span>
                 </button>
             </div>
 
@@ -275,7 +275,7 @@
                 <div x-show="tab === 'file'" style="margin-bottom: 1.5rem;">
                     <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
                         <i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary); margin-right: 0.35rem;"></i>
-                        Upload Menu File
+                        {{ __('Upload Menu File') }}
                     </label>
 
                     <div class="ai-dropzone">
@@ -284,9 +284,9 @@
                             <div style="width: 50px; height: 50px; border-radius: 50%; background: var(--input-bg); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--primary); margin: 0 auto 0.75rem;">
                                 <i class="fa-solid fa-file-circle-plus"></i>
                             </div>
-                            <div style="font-size: 0.92rem; font-weight: 800; color: var(--text-main);" x-text="fileName ? 'Selected file: ' + fileName : 'Click or drag file here'"></div>
+                            <div style="font-size: 0.92rem; font-weight: 800; color: var(--text-main);" x-text="fileName ? ('{{ __('Selected file:') }} ' + fileName) : '{{ __('Click or drag file here') }}'"></div>
                             <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem;">
-                                Maximum size: 20 MB. All formats supported.
+                                {{ __('Maximum size: 20 MB. All formats supported.') }}
                             </div>
                         </div>
                     </div>
@@ -294,22 +294,22 @@
                     <!-- Supported Format Badges -->
                     <div class="format-chips-grid">
                         <span class="format-chip badge-emerald">
-                            <i class="fa-solid fa-file-excel"></i> Excel (.xlsx, .xls)
+                            <i class="fa-solid fa-file-excel"></i> {{ __('Excel (.xlsx, .xls)') }}
                         </span>
                         <span class="format-chip badge-cyan">
-                            <i class="fa-solid fa-file-csv"></i> CSV (.csv)
+                            <i class="fa-solid fa-file-csv"></i> {{ __('CSV (.csv)') }}
                         </span>
                         <span class="format-chip badge-indigo">
-                            <i class="fa-solid fa-file-word"></i> Word (.docx, .doc)
+                            <i class="fa-solid fa-file-word"></i> {{ __('Word (.docx, .doc)') }}
                         </span>
                         <span class="format-chip badge-purple">
-                            <i class="fa-solid fa-image"></i> Images (.jpg, .png, .webp)
+                            <i class="fa-solid fa-image"></i> {{ __('Images (.jpg, .png, .webp)') }}
                         </span>
                         <span class="format-chip badge-rose">
-                            <i class="fa-solid fa-file-pdf"></i> PDF (.pdf)
+                            <i class="fa-solid fa-file-pdf"></i> {{ __('PDF (.pdf)') }}
                         </span>
                         <span class="format-chip badge-amber">
-                            <i class="fa-solid fa-file-lines"></i> TXT / JSON
+                            <i class="fa-solid fa-file-lines"></i> {{ __('TXT / JSON') }}
                         </span>
                     </div>
                 </div>
@@ -318,7 +318,7 @@
                 <div x-show="tab === 'url'" style="margin-bottom: 1.5rem;" x-cloak>
                     <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
                         <i class="fa-solid fa-link" style="color: #3b82f6; margin-right: 0.35rem;"></i>
-                        Restaurant or Menu Website URL
+                        {{ __('Restaurant or Menu Website URL') }}
                     </label>
 
                     <div class="ai-input-wrap">
@@ -328,7 +328,7 @@
 
                     <div class="ai-info-banner" style="background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(59, 130, 246, 0.25); color: var(--text-muted); margin-top: 0.85rem;">
                         <i class="fa-solid fa-wand-magic-sparkles" style="color: #3b82f6; margin-top: 0.15rem; flex-shrink: 0;"></i>
-                        <span>Paste the official website, online menu, or delivery page link. AI will analyze the site structure and extract dishes.</span>
+                        <span>{{ __('Paste the official website, online menu, or delivery page link. AI will analyze the site structure and extract dishes.') }}</span>
                     </div>
                 </div>
 
@@ -336,14 +336,14 @@
                 <div x-show="tab === 'text'" style="margin-bottom: 1.5rem;" x-cloak>
                     <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
                         <i class="fa-solid fa-paste" style="color: var(--primary); margin-right: 0.35rem;"></i>
-                        Paste Menu Text or Price List
+                        {{ __('Paste Menu Text or Price List') }}
                     </label>
                     <textarea name="menu_text" rows="7" class="ai-textarea" placeholder="STARTERS&#10;Truffle Hummus 3500 AMD&#10;Fried Calamari 4500 AMD&#10;&#10;MAINS&#10;Ribeye Steak 12500 AMD"></textarea>
                 </div>
 
                 <button type="submit" class="btn btn-primary" style="width: 100%; box-sizing: border-box; justify-content: center; border-radius: 12px; font-weight: 800; padding: 0.85rem 1.5rem; font-size: 0.95rem; box-shadow: 0 4px 14px var(--primary-glow); gap: 0.5rem;">
                     <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    <span>Extract & Review Menu</span>
+                    <span>{{ __('Extract & Review Menu') }}</span>
                 </button>
             </form>
         </div>
@@ -360,23 +360,23 @@
                 </span>
                 <div>
                     <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0;">
-                        2. AI 1-Click Translation
+                        2. {{ __('AI 1-Click Translation') }}
                     </h3>
                     <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.2rem;">
-                        <span class="badge badge-indigo" style="font-size: 0.68rem;">Multilingual Deep Translation</span>
+                        <span class="badge badge-indigo" style="font-size: 0.68rem;">{{ __('Multilingual Deep Translation') }}</span>
                     </div>
                 </div>
             </div>
 
             <p style="font-size: 0.86rem; color: var(--text-muted); margin: 0 0 1.35rem 0; line-height: 1.5; word-break: break-word;">
-                Instantly translate your existing dish names, descriptions, and categories into any selected language so international guests can order with confidence:
+                {{ __('Instantly translate your existing dish names, descriptions, and categories into any selected language so international guests can order with confidence:') }}
             </p>
 
             <form id="translateMenuForm" action="{{ route('admin.ai.translate') }}" method="POST">
                 @csrf
                 <div style="margin-bottom: 1.25rem;">
                     <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                        Select Target Language
+                        {{ __('Select Target Language') }}
                     </label>
                     <select name="target_language" required style="width: 100%; box-sizing: border-box; padding: 0.85rem 1rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; color: var(--text-main); font-size: 0.92rem; font-weight: 700; outline: none; cursor: pointer;">
                         @php
@@ -394,12 +394,12 @@
                                 ['code' => 'ar', 'name' => 'Arabic', 'flag' => '🇦🇪'],
                             ];
                         @endphp
-                        <optgroup label="Partner Active Languages">
+                        <optgroup label="{{ __('Partner Active Languages') }}">
                             @foreach($supportedLangs as $lang)
                                 <option value="{{ $lang['code'] }}">{{ $lang['flag'] ?? '🌐' }} {{ $lang['name'] }} ({{ strtoupper($lang['code']) }})</option>
                             @endforeach
                         </optgroup>
-                        <optgroup label="Other Available Languages">
+                        <optgroup label="{{ __('Other Available Languages') }}">
                             @foreach($extraPresets as $extra)
                                 @if(!in_array($extra['code'], $existingCodes))
                                     <option value="{{ $extra['code'] }}">{{ $extra['flag'] }} {{ $extra['name'] }}</option>
@@ -412,26 +412,26 @@
                 <div style="margin-bottom: 1.25rem; display: flex; align-items: flex-start; gap: 0.75rem; background: var(--bg-body); padding: 0.85rem 1rem; border-radius: 12px; border: 1px solid var(--border-color);">
                     <input type="checkbox" id="overwrite_existing" name="overwrite_existing" value="1" checked style="width: 18px; height: 18px; margin-top: 2px; accent-color: #3b82f6; cursor: pointer;">
                     <label for="overwrite_existing" style="font-size: 0.84rem; font-weight: 600; color: var(--text-main); cursor: pointer; line-height: 1.4;">
-                        <span>Fix / Overwrite existing translations</span>
+                        <span>{{ __('Fix / Overwrite existing translations') }}</span>
                         <span style="display: block; font-size: 0.76rem; color: var(--text-muted); font-weight: normal; margin-top: 2px;">
-                            If checked, already translated items and descriptions will be re-translated and updated via AI.
+                            {{ __('If checked, already translated items and descriptions will be re-translated and updated via AI.') }}
                         </span>
                     </label>
                 </div>
 
                 <div class="ai-info-banner" style="background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(59, 130, 246, 0.25); color: var(--text-muted); margin-bottom: 1.5rem;">
                     <i class="fa-solid fa-circle-info" style="color: #3b82f6; margin-top: 0.15rem; flex-shrink: 0;"></i>
-                    <span>After translation completes, all dishes, descriptions, and categories will receive translated versions for the selected menu language.</span>
+                    <span>{{ __('After translation completes, all dishes, descriptions, and categories will receive translated versions for the selected menu language.') }}</span>
                 </div>
 
                 <button type="submit" id="btnTranslateMenu" class="btn btn-primary" style="width: 100%; box-sizing: border-box; justify-content: center; background: linear-gradient(135deg, #3b82f6, #2563eb); border-color: #2563eb; color: #fff; border-radius: 12px; font-weight: 800; padding: 0.85rem 1.5rem; font-size: 0.95rem; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35); gap: 0.5rem; transition: all 0.2s ease;">
                     <i class="fa-solid fa-language"></i>
-                    <span>Translate / Update Full Menu Now</span>
+                    <span>{{ __('Translate / Update Full Menu Now') }}</span>
                 </button>
 
                 <div id="translateStatusBox" style="display: none; align-items: center; gap: 0.85rem; margin-top: 1.25rem; padding: 1rem 1.2rem; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 14px; color: var(--text-main); font-size: 0.88rem; font-weight: 600; line-height: 1.4;">
                     <i class="fa-solid fa-circle-notch fa-spin" style="color: #3b82f6; font-size: 1.35rem; flex-shrink: 0;"></i>
-                    <span>AI is translating dishes, categories, and descriptions. Please wait and do not close this page...</span>
+                    <span>{{ __('AI is translating dishes, categories, and descriptions. Please wait and do not close this page...') }}</span>
                 </div>
             </form>
         </div>
@@ -476,17 +476,17 @@
             </span>
             <div>
                 <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0;">
-                    3. Menu Language Management
+                    3. {{ __('Menu Language Management') }}
                 </h3>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0.2rem 0 0 0;">
-                    Add new languages, customize display names and flags, or remove unused languages:
+                    {{ __('Add new languages, customize display names and flags, or remove unused languages:') }}
                 </p>
             </div>
         </div>
 
         <button type="button" @click="openCreate()" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 700; border-radius: 12px; padding: 0.65rem 1.25rem;">
             <i class="fa-solid fa-plus"></i>
-            <span>Add New Language</span>
+            <span>{{ __('Add New Language') }}</span>
         </button>
     </div>
 
@@ -505,7 +505,7 @@
                                 {{ $lang['code'] }}
                             </span>
                             <span style="font-size: 0.75rem; color: var(--text-muted);">
-                                Active language
+                                {{ __('Active language') }}
                             </span>
                         </div>
                     </div>
@@ -516,19 +516,19 @@
                     <button type="button" 
                             @click="openEdit({{ json_encode($lang) }})" 
                             class="btn-icon" 
-                            title="Edit"
+                            title="{{ __('Edit') }}"
                             style="width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s;">
                         <i class="fa-solid fa-pen-to-square"></i>
                     </button>
 
                     <!-- Delete Button -->
                     @if(count($supportedLangs) > 1)
-                        <form action="{{ route('admin.ai.languages.destroy', $lang['code']) }}" method="POST" onsubmit="return confirm('Are you sure you want to remove this language?')">
+                        <form action="{{ route('admin.ai.languages.destroy', $lang['code']) }}" method="POST" onsubmit="return confirm('{{ __('Are you sure you want to remove this language?') }}')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" 
                                     class="btn-icon" 
-                                    title="Remove"
+                                    title="{{ __('Remove') }}"
                                     style="width: 36px; height: 36px; border-radius: 10px; border: 1px solid rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.06); color: #ef4444; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s;">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
@@ -543,7 +543,7 @@
     <div style="background: var(--input-bg); border: 1px dashed var(--border-color); border-radius: 14px; padding: 1rem 1.25rem;">
         <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 0.6rem;">
             <i class="fa-solid fa-bolt" style="color: var(--primary); margin-right: 0.35rem;"></i>
-            Quick add popular languages:
+            {{ __('Quick add popular languages:') }}
         </span>
         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
             @php
@@ -575,7 +575,7 @@
     <div x-show="modalOpen" x-cloak style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 999; display: flex; align-items: center; justify-content: center; padding: 1.5rem;">
         <div @click.away="modalOpen = false" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; width: 100%; max-width: 480px; box-shadow: 0 20px 40px rgba(0,0,0,0.25); overflow: hidden;">
             <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-                <h4 style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: var(--text-main);" x-text="isEdit ? 'Edit Language' : 'Add New Language'"></h4>
+                <h4 style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: var(--text-main);" x-text="isEdit ? '{{ __('Edit Language') }}' : '{{ __('Add New Language') }}'"></h4>
                 <button type="button" @click="modalOpen = false" style="background: transparent; border: none; font-size: 1.2rem; color: var(--text-muted); cursor: pointer;">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
@@ -587,32 +587,32 @@
 
                 <div style="margin-bottom: 1rem;">
                     <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">
-                        Language Code (e.g. fr, de, it, ge) <span style="color: #ef4444;">*</span>
+                        {{ __('Language Code (e.g. fr, de, it, ge)') }} <span style="color: #ef4444;">*</span>
                     </label>
                     <input type="text" name="code" x-model="code" required pattern="[a-zA-Z]{2,5}" maxlength="5" placeholder="fr" style="width: 100%; box-sizing: border-box; padding: 0.75rem 1rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-weight: 700; font-family: monospace;">
                 </div>
 
                 <div style="margin-bottom: 1rem;">
                     <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">
-                        Language Name (e.g. Français, Deutsch) <span style="color: #ef4444;">*</span>
+                        {{ __('Language Name (e.g. Français, Deutsch)') }} <span style="color: #ef4444;">*</span>
                     </label>
                     <input type="text" name="name" x-model="name" required maxlength="50" placeholder="Français" style="width: 100%; box-sizing: border-box; padding: 0.75rem 1rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-weight: 700;">
                 </div>
 
                 <div style="margin-bottom: 1.5rem;">
                     <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">
-                        Flag Emoji or Icon (e.g. 🇫🇷, 🇩🇪)
+                        {{ __('Flag Emoji or Icon (e.g. 🇫🇷, 🇩🇪)') }}
                     </label>
                     <input type="text" name="flag" x-model="flag" maxlength="10" placeholder="🇫🇷" style="width: 100%; box-sizing: border-box; padding: 0.75rem 1rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 1.2rem;">
                 </div>
 
                 <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
                     <button type="button" @click="modalOpen = false" class="btn btn-secondary" style="border-radius: 10px; font-weight: 700; padding: 0.65rem 1.25rem;">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button type="submit" class="btn btn-primary" style="border-radius: 10px; font-weight: 800; padding: 0.65rem 1.5rem;">
                         <i class="fa-solid fa-check"></i>
-                        <span>Save</span>
+                        <span>{{ __('Save') }}</span>
                     </button>
                 </div>
             </form>
@@ -631,7 +631,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 btn.disabled = true;
                 btn.style.opacity = '0.75';
                 btn.style.cursor = 'not-allowed';
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Translating via AI (please wait)...</span>';
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>{{ __('Translating via AI (please wait)...') }}</span>';
             }
             if (statusBox) {
                 statusBox.style.display = 'flex';

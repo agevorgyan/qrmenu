@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Table QR Code Studio - ' . $vendor->name)
+@section('title', __('Table QR Code Studio') . ' - ' . $vendor->name)
 
 @section('content')
 <style>
@@ -26,15 +26,15 @@
                 <i class="fa-solid fa-qrcode"></i>
             </span>
             <h1 style="font-size: 1.75rem; font-weight: 800; margin: 0; color: var(--text-main);">
-                Table QR Code Studio
+                {{ __('Table QR Code Studio') }}
             </h1>
         </div>
         <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.35rem;">
-            Generate printable Dine-In table stand flyers for <strong style="color: var(--primary);">{{ $location?->name ?? 'All Locations' }}</strong>.
+            {{ __('Generate printable Dine-In table stand flyers for') }} <strong style="color: var(--primary);">{{ $location?->name ?? __('All Locations') }}</strong>.
         </p>
     </div>
     <button onclick="window.print()" class="btn btn-primary">
-        <i class="fa-solid fa-print"></i> Print Table Stand Flyer
+        <i class="fa-solid fa-print"></i> {{ __('Print Table Stand Flyer') }}
     </button>
 </div>
 
@@ -42,27 +42,27 @@
     <!-- QR Customizer Controls -->
     <div class="card" style="height: fit-content;">
         <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 1.25rem; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
-            <i class="fa-solid fa-sliders" style="color: var(--primary);"></i> Stand Configuration
+            <i class="fa-solid fa-sliders" style="color: var(--primary);"></i> {{ __('Stand Configuration') }}
         </h3>
 
         <div style="margin-bottom: 1.25rem;">
-            <label class="form-label">Table Number</label>
+            <label class="form-label">{{ __('Table Number') }}</label>
             <input type="text" x-model="tableNum" class="form-input" style="font-size: 1.15rem; font-weight: 800; font-family: 'Outfit';">
         </div>
 
         <div style="margin-bottom: 1.25rem;">
-            <label class="form-label">QR Code Purpose</label>
+            <label class="form-label">{{ __('QR Code Purpose') }}</label>
             <select x-model="qrType" class="form-select">
-                <option value="dine_in">Dine-In Table Menu (Scan to browse & order)</option>
-                <option value="ordering">Dedicated WhatsApp / Takeaway Order QR</option>
+                <option value="dine_in">{{ __('Dine-In Table Menu (Scan to browse & order)') }}</option>
+                <option value="ordering">{{ __('Dedicated WhatsApp / Takeaway Order QR') }}</option>
             </select>
         </div>
 
         <div style="background: var(--input-bg); border: 1px solid var(--border-color); padding: 1.15rem; border-radius: 14px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;">
             <div style="font-weight: 700; color: var(--primary); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.4rem;">
-                <i class="fa-solid fa-lightbulb"></i> Pro Tip
+                <i class="fa-solid fa-lightbulb"></i> {{ __('Pro Tip') }}
             </div>
-            Print a stand flyer for each table (Table 1 to Table {{ $location?->table_count ?? 20 }}). When guests scan at the table, the table number automatically locks onto their order for the kitchen!
+            {{ __('Print a stand flyer for each table (Table 1 to Table :max). When guests scan at the table, the table number automatically locks onto their order for the kitchen!', ['max' => $location?->table_count ?? 20]) }}
         </div>
     </div>
 
@@ -72,10 +72,10 @@
         <img src="{{ $vendor->logo ?? 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=150&q=80' }}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); margin-bottom: 1rem; box-shadow: 0 4px 15px var(--primary-glow);" alt="{{ $vendor->name }}">
 
         <h2 style="font-size: 1.75rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.25rem; word-break: break-word;">{{ $vendor->name }}</h2>
-        <div style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">{{ $location?->name ?? 'Main Branch' }}</div>
+        <div style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">{{ $location?->name ?? __('Main Branch') }}</div>
 
         <!-- Table Badge -->
-        <div style="background: var(--primary-gradient); color: #ffffff; font-weight: 900; font-size: 1.2rem; padding: 0.35rem 1.5rem; border-radius: 9999px; font-family: 'Outfit'; margin-bottom: 1.25rem; letter-spacing: 0.05em; box-shadow: 0 4px 12px var(--primary-glow);" x-text="'TABLE ' + tableNum">
+        <div style="background: var(--primary-gradient); color: #ffffff; font-weight: 900; font-size: 1.2rem; padding: 0.35rem 1.5rem; border-radius: 9999px; font-family: 'Outfit'; margin-bottom: 1.25rem; letter-spacing: 0.05em; box-shadow: 0 4px 12px var(--primary-glow);" x-text="'{{ __('TABLE') }} ' + tableNum">
             TABLE 4
         </div>
 
@@ -85,14 +85,14 @@
         </div>
 
         <div style="font-family: 'Outfit'; font-weight: 800; font-size: 1.05rem; color: var(--text-main); margin-bottom: 0.25rem;">
-            📱 SCAN TO VIEW DIGITAL MENU
+            📱 {{ __('SCAN TO VIEW DIGITAL MENU') }}
         </div>
         <div style="font-size: 0.8rem; color: var(--text-muted);">
-            Point phone camera to view menu & place order
+            {{ __('Point phone camera to view menu & place order') }}
         </div>
 
         <div style="margin-top: 1.75rem; font-size: 0.7rem; color: var(--text-muted); opacity: 0.75;">
-            Powered by QRMenu SaaS Platform
+            {{ __('Powered by QRMenu SaaS Platform') }}
         </div>
     </div>
 </div>

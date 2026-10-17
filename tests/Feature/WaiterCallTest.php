@@ -250,7 +250,7 @@ class WaiterCallTest extends TestCase
             'waiter_calls_count' => 1,
         ]);
         $this->assertStringContainsString('Table 99', $response->json('waiter_calls_html'));
-        $this->assertStringContainsString('Հաշիվ (Քարտով)', $response->json('waiter_calls_html'));
+        $this->assertStringContainsString(__('Bill (Card)'), $response->json('waiter_calls_html'));
     }
 
     public function test_vendor_staff_can_mark_call_as_attended(): void

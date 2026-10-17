@@ -228,7 +228,7 @@ class TranslationController extends Controller
         );
 
         return redirect()->route('admin.translations.index', ['locale' => $targetLocale])
-            ->with('success', "Batch AI translation job queued for {$targetLocale}. Items are being translated in the background.");
+            ->with('success', __('Batch AI translation job queued for :locale. Items are being translated in the background.', ['locale' => $targetLocale]));
     }
 
     public function syncVendorLanguages(Request $request): RedirectResponse

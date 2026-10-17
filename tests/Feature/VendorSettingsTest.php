@@ -409,11 +409,11 @@ class VendorSettingsTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.settings.index'));
 
         $response->assertStatus(200);
-        $response->assertSee('Տարածաշրջանային և տեղայնացման կարգավորումներ');
-        $response->assertSee('Ժամային գոտի (Timezone)');
-        $response->assertSee('Հիմնական արժույթ');
-        $response->assertSee('Քաշի չափման միավոր');
-        $response->assertSee('Ծավալի չափման միավոր');
+        $response->assertSee(__('Տարածաշրջանային և տեղայնացման կարգավորումներ'));
+        $response->assertSee(__('Ժամային գոտի (Timezone)'));
+        $response->assertSee(__('Հիմնական արժույթ'));
+        $response->assertSee(__('Քաշի չափման միավոր'));
+        $response->assertSee(__('Ծավալի չափման միավոր'));
         $response->assertSee('value="America/New_York" selected', false);
         $response->assertSee('value="USD" selected', false);
         $response->assertSee('value="oz" selected', false);

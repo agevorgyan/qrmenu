@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Theme & Storefront Branding - ' . $vendor->name)
+@section('title', __('Theme & Storefront Branding') . ' - ' . $vendor->name)
 
 @section('content')
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem; flex-wrap: wrap; gap: 1rem;">
@@ -9,16 +9,16 @@
             <span style="background: rgba(245, 158, 11, 0.15); color: var(--primary); width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.25rem;">
                 <i class="fa-solid fa-wand-magic-sparkles"></i>
             </span>
-            Split-Screen Live Customizer
+            {{ __('Split-Screen Live Customizer') }}
         </h1>
         <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0.35rem 0 0 0;">
-            Customize visual templates, brand colors, and identity with an instant real-time mobile preview.
+            {{ __('Customize visual templates, brand colors, and identity with an instant real-time mobile preview.') }}
         </p>
     </div>
 
     <div style="display: flex; gap: 0.75rem;">
         <a href="{{ route('client.menu', ['vendor_slug' => $vendor->slug]) }}" target="_blank" class="btn btn-secondary" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none;">
-            <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Storefront
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> {{ __('Open Storefront') }}
         </a>
     </div>
 </div>
@@ -34,8 +34,8 @@
                 <div class="section-header">
                     <span class="step-num">1</span>
                     <div>
-                        <h3 class="section-title">Digital Menu Template</h3>
-                        <p class="section-desc">Select the storefront design architecture for your guests</p>
+                        <h3 class="section-title">{{ __('Digital Menu Template') }}</h3>
+                        <p class="section-desc">{{ __('Select the storefront design architecture for your guests.') }}</p>
                     </div>
                 </div>
 
@@ -46,12 +46,12 @@
                             <img src="{{ $tmpl->preview_image }}" alt="{{ $tmpl->name }}" class="template-thumb">
                             <div style="flex: 1;">
                                 <div style="display: flex; align-items: center; justify-content: space-between;">
-                                    <div style="font-weight: 700; color: var(--text-main); font-size: 0.98rem;">{{ $tmpl->name }}</div>
+                                    <div style="font-weight: 700; color: var(--text-main); font-size: 0.98rem;">{{ __($tmpl->name) }}</div>
                                     @if($vendor->menu_template_id == $tmpl->id)
-                                        <span class="active-badge"><i class="fa-solid fa-check"></i> Active</span>
+                                        <span class="active-badge"><i class="fa-solid fa-check"></i> {{ __('Active') }}</span>
                                     @endif
                                 </div>
-                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">{{ $tmpl->description }}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">{{ __($tmpl->description) }}</div>
                             </div>
                         </label>
                     @endforeach
@@ -63,36 +63,36 @@
                 <div class="section-header">
                     <span class="step-num">2</span>
                     <div>
-                        <h3 class="section-title">Brand Colors & Palette</h3>
-                        <p class="section-desc">Changes update live in the mobile preview iframe</p>
+                        <h3 class="section-title">{{ __('Brand Colors & Palette') }}</h3>
+                        <p class="section-desc">{{ __('Changes update live in the mobile preview iframe') }}</p>
                     </div>
                 </div>
 
                 <!-- Palette Quick-Presets -->
                 <div style="margin-bottom: 1.25rem;">
                     <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em;">
-                        Quick Palette Presets
+                        {{ __('Quick Palette Presets') }}
                     </label>
                     <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                         <button type="button" class="preset-pill" onclick="applyPreset('#e11d48', '#f59e0b', '#4f46e5')">
                             <span class="preset-dots" style="background: linear-gradient(135deg, #e11d48, #f59e0b);"></span>
-                            Ruby Bistro
+                            {{ __('Ruby Bistro') }}
                         </button>
                         <button type="button" class="preset-pill" onclick="applyPreset('#f59e0b', '#ef4444', '#10b981')">
                             <span class="preset-dots" style="background: linear-gradient(135deg, #f59e0b, #ef4444);"></span>
-                            Amber Gold
+                            {{ __('Amber Gold') }}
                         </button>
                         <button type="button" class="preset-pill" onclick="applyPreset('#10b981', '#06b6d4', '#6366f1')">
                             <span class="preset-dots" style="background: linear-gradient(135deg, #10b981, #06b6d4);"></span>
-                            Emerald Fresh
+                            {{ __('Emerald Fresh') }}
                         </button>
                         <button type="button" class="preset-pill" onclick="applyPreset('#06b6d4', '#3b82f6', '#8b5cf6')">
                             <span class="preset-dots" style="background: linear-gradient(135deg, #06b6d4, #3b82f6);"></span>
-                            Cyan Modern
+                            {{ __('Cyan Modern') }}
                         </button>
                         <button type="button" class="preset-pill" onclick="applyPreset('#d4af37', '#e2e8f0', '#71717a')">
                             <span class="preset-dots" style="background: linear-gradient(135deg, #d4af37, #71717a);"></span>
-                            Luxury Gold
+                            {{ __('Luxury Gold') }}
                         </button>
                     </div>
                 </div>
@@ -100,21 +100,21 @@
                 <!-- Color Pickers Grid -->
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
                     <div>
-                        <label class="color-label">Primary Color</label>
+                        <label class="color-label">{{ __('Primary Color') }}</label>
                         <div class="color-input-wrapper">
                             <input type="color" name="primary_color" id="primaryColorInput" value="{{ $vendor->primary_color ?? '#e11d48' }}" class="color-picker-wheel">
                             <input type="text" id="primaryColorHex" value="{{ $vendor->primary_color ?? '#e11d48' }}" class="color-hex-text">
                         </div>
                     </div>
                     <div>
-                        <label class="color-label">Accent Color</label>
+                        <label class="color-label">{{ __('Accent Color') }}</label>
                         <div class="color-input-wrapper">
                             <input type="color" name="accent_color" id="accentColorInput" value="{{ $vendor->accent_color ?? '#f59e0b' }}" class="color-picker-wheel">
                             <input type="text" id="accentColorHex" value="{{ $vendor->accent_color ?? '#f59e0b' }}" class="color-hex-text">
                         </div>
                     </div>
                     <div>
-                        <label class="color-label">Secondary Color</label>
+                        <label class="color-label">{{ __('Secondary Color') }}</label>
                         <div class="color-input-wrapper">
                             <input type="color" name="secondary_color" id="secondaryColorInput" value="{{ $vendor->secondary_color ?? '#4f46e5' }}" class="color-picker-wheel">
                             <input type="text" id="secondaryColorHex" value="{{ $vendor->secondary_color ?? '#4f46e5' }}" class="color-hex-text">
@@ -124,14 +124,14 @@
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div>
-                        <label class="color-label">Background Color</label>
+                        <label class="color-label">{{ __('Background Color') }}</label>
                         <div class="color-input-wrapper">
                             <input type="color" name="bg_color" id="bgColorInput" value="{{ $vendor->bg_color ?? ($vendor->theme_mode == 'light' ? '#f8fafc' : '#09090b') }}" class="color-picker-wheel">
                             <input type="text" id="bgColorHex" value="{{ $vendor->bg_color ?? ($vendor->theme_mode == 'light' ? '#f8fafc' : '#09090b') }}" class="color-hex-text">
                         </div>
                     </div>
                     <div>
-                        <label class="color-label">Text Color</label>
+                        <label class="color-label">{{ __('Text Color') }}</label>
                         <div class="color-input-wrapper">
                             <input type="color" name="text_color" id="textColorInput" value="{{ $vendor->text_color ?? ($vendor->theme_mode == 'light' ? '#0f172a' : '#f4f4f5') }}" class="color-picker-wheel">
                             <input type="text" id="textColorHex" value="{{ $vendor->text_color ?? ($vendor->theme_mode == 'light' ? '#0f172a' : '#f4f4f5') }}" class="color-hex-text">
@@ -145,8 +145,8 @@
                 <div class="section-header">
                     <span class="step-num">3</span>
                     <div>
-                        <h3 class="section-title">Storefront Theme Mode</h3>
-                        <p class="section-desc">Default ambience for visiting guests</p>
+                        <h3 class="section-title">{{ __('Storefront Theme Mode') }}</h3>
+                        <p class="section-desc">{{ __('Default ambience for visiting guests') }}</p>
                     </div>
                 </div>
 
@@ -155,16 +155,16 @@
                         <input type="radio" name="theme_mode" value="dark" {{ $vendor->theme_mode == 'dark' ? 'checked' : '' }} onchange="onThemeModeChange('dark')">
                         <i class="fa-solid fa-moon" style="font-size: 1.3rem; color: #f59e0b;"></i>
                         <div>
-                            <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">Sleek Dark Mode</div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted);">High-contrast dark luxury</div>
+                            <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">{{ __('Sleek Dark Mode') }}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">{{ __('High-contrast dark luxury') }}</div>
                         </div>
                     </label>
                     <label class="mode-choice-card {{ $vendor->theme_mode == 'light' ? 'selected' : '' }}">
                         <input type="radio" name="theme_mode" value="light" {{ $vendor->theme_mode == 'light' ? 'checked' : '' }} onchange="onThemeModeChange('light')">
                         <i class="fa-solid fa-sun" style="font-size: 1.3rem; color: #f59e0b;"></i>
                         <div>
-                            <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">Clean Light Mode</div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted);">Bright minimal daytime look</div>
+                            <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">{{ __('Clean Light Mode') }}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">{{ __('Bright minimal daytime look') }}</div>
                         </div>
                     </label>
                 </div>
@@ -175,8 +175,8 @@
                 <div class="section-header">
                     <span class="step-num">4</span>
                     <div>
-                        <h3 class="section-title">Desktop Frame Width</h3>
-                        <p class="section-desc">Set the maximum menu frame width when viewed on desktop and laptop screens</p>
+                        <h3 class="section-title">{{ __('Desktop Frame Width') }}</h3>
+                        <p class="section-desc">{{ __('Set the maximum menu frame width when viewed on desktop and laptop screens') }}</p>
                     </div>
                 </div>
 
@@ -190,7 +190,7 @@
                         <i class="fa-solid fa-mobile-screen" style="font-size: 1.25rem; color: var(--primary);"></i>
                         <div>
                             <div style="font-weight: 700; color: var(--text-main); font-size: 0.88rem;">480px</div>
-                            <div style="font-size: 0.7rem; color: var(--text-muted);">Compact</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">{{ __('Compact') }}</div>
                         </div>
                     </label>
 
@@ -198,8 +198,8 @@
                         <input type="radio" name="desktop_max_width" value="600px" {{ $currentMaxWidth === '600px' ? 'checked' : '' }} onchange="onDesktopWidthChange('600px')">
                         <i class="fa-solid fa-tablet-screen-button" style="font-size: 1.25rem; color: #10b981;"></i>
                         <div>
-                            <div style="font-weight: 700; color: var(--text-main); font-size: 0.88rem;">600px <span style="font-size: 0.6rem; background: #10b981; color: #fff; padding: 0.1rem 0.3rem; border-radius: 4px;">Top</span></div>
-                            <div style="font-size: 0.7rem; color: var(--text-muted);">Standard</div>
+                            <div style="font-weight: 700; color: var(--text-main); font-size: 0.88rem;">600px <span style="font-size: 0.6rem; background: #10b981; color: #fff; padding: 0.1rem 0.3rem; border-radius: 4px;">{{ __('Top') }}</span></div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">{{ __('Standard') }}</div>
                         </div>
                     </label>
 
@@ -208,7 +208,7 @@
                         <i class="fa-solid fa-tablet" style="font-size: 1.25rem; color: #3b82f6;"></i>
                         <div>
                             <div style="font-weight: 700; color: var(--text-main); font-size: 0.88rem;">680px</div>
-                            <div style="font-size: 0.7rem; color: var(--text-muted);">Wide Mobile</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">{{ __('Wide Mobile') }}</div>
                         </div>
                     </label>
 
@@ -217,7 +217,7 @@
                         <i class="fa-solid fa-tablets" style="font-size: 1.25rem; color: #8b5cf6;"></i>
                         <div>
                             <div style="font-weight: 700; color: var(--text-main); font-size: 0.88rem;">768px</div>
-                            <div style="font-size: 0.7rem; color: var(--text-muted);">Tablet</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">{{ __('Tablet') }}</div>
                         </div>
                     </label>
 
@@ -226,7 +226,7 @@
                         <i class="fa-solid fa-expand" style="font-size: 1.25rem; color: #64748b;"></i>
                         <div>
                             <div style="font-weight: 700; color: var(--text-main); font-size: 0.88rem;">100%</div>
-                            <div style="font-size: 0.7rem; color: var(--text-muted);">Full Width</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">{{ __('Full Width') }}</div>
                         </div>
                     </label>
                 </div>
@@ -237,8 +237,8 @@
                 <div class="section-header">
                     <span class="step-num">5</span>
                     <div>
-                        <h3 class="section-title">Brand Media & Identity</h3>
-                        <p class="section-desc">Upload logo and hero cover photo</p>
+                        <h3 class="section-title">{{ __('Brand Media & Identity') }}</h3>
+                        <p class="section-desc">{{ __('Upload logo and hero cover photo') }}</p>
                     </div>
                 </div>
 
@@ -246,16 +246,16 @@
                     <!-- Logo Upload / URL -->
                     <div>
                         <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem;">
-                            <i class="fa-solid fa-image" style="color: var(--primary);"></i> Restaurant Logo
+                            <i class="fa-solid fa-image" style="color: var(--primary);"></i> {{ __('Restaurant Logo') }}
                         </label>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; align-items: center;">
                             <div>
                                 <input type="file" name="logo_file" accept="image/*" class="file-input">
-                                <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 0.25rem;">📁 Upload file (PNG/JPG)</small>
+                                <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 0.25rem;">📁 {{ __('Upload file (PNG/JPG)') }}</small>
                             </div>
                             <div>
                                 <input type="text" name="logo" id="logoUrlInput" value="{{ $vendor->logo }}" placeholder="/storage/... or https://..." class="form-input-control" oninput="debounceReloadPreview()">
-                                <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 0.25rem;">🔗 Or image URL / path</small>
+                                <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 0.25rem;">🔗 {{ __('Or image URL / path') }}</small>
                             </div>
                         </div>
                     </div>
@@ -263,29 +263,29 @@
                     <!-- Cover Image Upload / URL -->
                     <div>
                         <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem;">
-                            <i class="fa-solid fa-panorama" style="color: var(--primary);"></i> Storefront Cover Header
+                            <i class="fa-solid fa-panorama" style="color: var(--primary);"></i> {{ __('Storefront Cover Header') }}
                         </label>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; align-items: center;">
                             <div>
                                 <input type="file" name="cover_file" accept="image/*" class="file-input">
-                                <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 0.25rem;">📁 Upload banner photo</small>
+                                <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 0.25rem;">📁 {{ __('Upload banner photo') }}</small>
                             </div>
                             <div>
                                 <input type="text" name="cover_image" id="coverUrlInput" value="{{ $vendor->cover_image }}" placeholder="/storage/... or https://..." class="form-input-control" oninput="debounceReloadPreview()">
-                                <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 0.25rem;">🔗 Or cover image URL / path</small>
+                                <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 0.25rem;">🔗 {{ __('Or cover image URL / path') }}</small>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 5. Custom CSS (Advanced) -->
+            <!-- 6. Custom CSS (Advanced) -->
             <div class="card" style="margin-bottom: 1.75rem;">
                 <div class="section-header">
                     <span class="step-num">6</span>
                     <div>
-                        <h3 class="section-title">Custom CSS Overrides</h3>
-                        <p class="section-desc">Advanced fine-tuning with custom style rules</p>
+                        <h3 class="section-title">{{ __('Custom CSS Overrides') }}</h3>
+                        <p class="section-desc">{{ __('Advanced fine-tuning with custom style rules') }}</p>
                     </div>
                 </div>
 
@@ -297,7 +297,7 @@
             <!-- Sticky Save Footer CTA -->
             <div style="position: sticky; bottom: 1.25rem; z-index: 30;">
                 <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 1.05rem; padding: 0.95rem; font-weight: 800; border-radius: 14px; box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4);">
-                    <i class="fa-solid fa-floppy-disk"></i> Save Theme & Branding
+                    <i class="fa-solid fa-floppy-disk"></i> {{ __('Save Theme & Branding') }}
                 </button>
             </div>
         </form>
