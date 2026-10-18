@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AdminReservationController;
+use App\Http\Controllers\AdminTableController;
 use App\Http\Controllers\AiMenuController;
 use App\Http\Controllers\AiWaiterController;
 use App\Http\Controllers\AnalyticsController;
@@ -20,6 +22,7 @@ use App\Http\Controllers\QrStudioController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\ReservationNotificationController;
 use App\Http\Controllers\ResetPasswordController;
+use App\Http\Controllers\StorefrontReservationController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\SuperAdminEmailController;
 use App\Http\Controllers\TranslationController;
@@ -55,6 +58,24 @@ Route::get('/sw.js', function (TenantContext $tenantContext) {
 
 Route::get('/m/{vendor_slug}/manifest.json', [ClientStorefrontController::class, 'manifest'])->name('client.manifest');
 Route::get('/m/{vendor_slug}/sw.js', [ClientStorefrontController::class, 'serviceWorker'])->name('client.sw');
+
+// Table Reservation & Pre-Order Storefront Routes
+Route::get('/m/{vendor_slug}/reserve/{location_slug?}', [StorefrontReservationController::class, 'showReservationForm'])
+    ->middleware('throttle:60,1')
+    ->name('client.reserve');
+Route::get('/m/{vendor_slug}/reservation/{reference}', [StorefrontReservationController::class, 'showReservationDetails'])
+    ->middleware('throttle:60,1')
+    ->name('client.reservation.show');
+Route::get('/api/m/{vendor_slug}/reserve/availability', [StorefrontReservationController::class, 'getAvailability'])
+    ->middleware('throttle:60,1')
+    ->name('client.reserve.availability');
+Route::post('/api/m/{vendor_slug}/reserve', [StorefrontReservationController::class, 'submitReservation'])
+    ->middleware('throttle:15,1')
+    ->name('client.reserve.submit');
+Route::post('/api/m/{vendor_slug}/reservation/{reference}/cancel', [StorefrontReservationController::class, 'cancelReservation'])
+    ->middleware('throttle:30,1')
+    ->name('client.reservation.cancel');
+
 Route::get('/m/{vendor_slug}/{location_slug?}', [ClientStorefrontController::class, 'showMenu'])
     ->middleware('throttle:120,1')
     ->name('client.menu');
@@ -364,6 +385,26 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cas
         // Interactive Table Floor Plan
         Route::get('/floor-plan', [FloorPlanController::class, 'index'])->name('floor_plan.index');
         Route::post('/floor-plan', [FloorPlanController::class, 'saveFloorPlan'])->name('floor_plan.save');
+    });
+
+    // Table Reservations & Pre-Orders (Pro / Business Plan Feature)
+    Route::middleware([EnsurePlanHasFeature::class.':reservations'])->group(function () {
+        Route::get('/reservations', [AdminReservationController::class, 'index'])->name('reservations.index');
+        Route::get('/reservations/{reservation}', [AdminReservationController::class, 'show'])->name('reservations.show');
+        Route::patch('/reservations/{reservation}/status', [AdminReservationController::class, 'updateStatus'])->name('reservations.status');
+        Route::post('/reservations/{reservation}/status', [AdminReservationController::class, 'updateStatus']);
+
+        // Restaurant Tables Management
+        Route::get('/tables', [AdminTableController::class, 'index'])->name('tables.index');
+        Route::post('/tables', [AdminTableController::class, 'store'])->name('tables.store');
+        Route::put('/tables/{table}', [AdminTableController::class, 'update'])->name('tables.update');
+        Route::post('/tables/{table}/toggle', [AdminTableController::class, 'toggleActive'])->name('tables.toggle');
+        Route::delete('/tables/{table}', [AdminTableController::class, 'destroy'])->name('tables.destroy');
+        Route::post('/tables/sync-floor-plan', [AdminTableController::class, 'syncFloorPlan'])->name('tables.sync_floor_plan');
+
+        // Reservation Settings
+        Route::get('/settings/reservations', [AdminReservationController::class, 'settingsIndex'])->name('settings.reservations');
+        Route::post('/settings/reservations', [AdminReservationController::class, 'updateSettings'])->name('settings.reservations.update');
     });
 
     // Branding & Theme Customizer

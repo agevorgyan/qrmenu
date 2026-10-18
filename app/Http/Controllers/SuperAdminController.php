@@ -15,13 +15,17 @@ use App\Models\SystemSetting;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Services\Security\ImageProcessor;
+use App\Services\SecurityAuditService;
 use App\Services\SubscriptionService;
 use App\Services\TelegramNotificationService;
+use App\Services\TenantCache;
 use App\Services\TwoFactorAuthService;
 use Carbon\Carbon;
 use Illuminate\Http\File;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -403,11 +407,19 @@ class SuperAdminController extends Controller
             'total_emails' => EmailLog::where('vendor_id', $vendor->id)->count(),
             'delivered' => EmailLog::where('vendor_id', $vendor->id)->whereIn('status', [EmailLog::STATUS_DELIVERED, EmailLog::STATUS_SENT])->count(),
             'failed' => EmailLog::where('vendor_id', $vendor->id)->where('status', EmailLog::STATUS_FAILED)->count(),
-            'queued' => EmailLog::where('vendor_id', $vendor->id)->whereIn('status', [EmailLog::STATUS_QUEUED, EmailLog::STATUS_PENDING])->count(),
+            'queued' => EmailLog::where('vendor_id', $vendor->id)->whereIn('status', [EmailLog::STATUS_QUEUED, EmailLog::STATUS_PROCESSING])->count(),
             'recent_logs' => EmailLog::where('vendor_id', $vendor->id)->latest()->take(10)->get(),
         ];
 
-        return view('superadmin.vendor_edit', compact('vendor', 'templates', 'plans', 'notificationStats'));
+        $featureAuditLogs = SecurityAuditLog::withoutGlobalScopes()
+            ->where('vendor_id', $vendor->id)
+            ->where('event', SecurityAuditLog::EVENT_SECURITY_CONFIG_CHANGED)
+            ->where('metadata->config_name', 'reservation_and_preorder_features')
+            ->latest('created_at')
+            ->take(10)
+            ->get();
+
+        return view('superadmin.vendor_edit', compact('vendor', 'templates', 'plans', 'notificationStats', 'featureAuditLogs'));
     }
 
     public function updateVendor(Request $request, Vendor $vendor)
@@ -479,19 +491,62 @@ class SuperAdminController extends Controller
      */
     public function updateVendorNotificationRestrictions(Request $request, Vendor $vendor): RedirectResponse
     {
-        $restrictions = [
-            'reservations_enabled' => $request->boolean('reservations_enabled'),
-            'preorders_enabled' => $request->boolean('preorders_enabled'),
+        $permittedMode = $request->input('permitted_mode', Vendor::RESERVATION_MODE_RESERVATION_AND_PREORDER);
+        if (! in_array($permittedMode, [
+            Vendor::RESERVATION_MODE_DISABLED,
+            Vendor::RESERVATION_MODE_RESERVATION_ONLY,
+            Vendor::RESERVATION_MODE_RESERVATION_AND_PREORDER,
+        ], true)) {
+            $permittedMode = Vendor::RESERVATION_MODE_RESERVATION_AND_PREORDER;
+        }
+
+        $reservationsEnabled = $request->has('reservations_enabled')
+            ? $request->boolean('reservations_enabled')
+            : ($permittedMode !== Vendor::RESERVATION_MODE_DISABLED);
+
+        $preordersEnabled = $request->has('preorders_enabled')
+            ? $request->boolean('preorders_enabled')
+            : ($permittedMode === Vendor::RESERVATION_MODE_RESERVATION_AND_PREORDER);
+
+        // If reservations are disabled, preorders must be disabled
+        if (! $reservationsEnabled) {
+            $preordersEnabled = false;
+            $permittedMode = Vendor::RESERVATION_MODE_DISABLED;
+        } elseif (! $preordersEnabled && $permittedMode === Vendor::RESERVATION_MODE_RESERVATION_AND_PREORDER) {
+            $permittedMode = Vendor::RESERVATION_MODE_RESERVATION_ONLY;
+        }
+
+        $restrictions = array_merge($vendor->superadmin_notification_restrictions, [
+            'permitted_mode' => $permittedMode,
+            'reservations_enabled' => $reservationsEnabled,
+            'preorders_enabled' => $preordersEnabled,
             'reservation_emails_enabled' => $request->boolean('reservation_emails_enabled'),
             'preorder_emails_enabled' => $request->boolean('preorder_emails_enabled'),
             'customer_reminders_enabled' => $request->boolean('customer_reminders_enabled'),
             'restaurant_reminders_enabled' => $request->boolean('restaurant_reminders_enabled'),
             'template_customization_allowed' => $request->boolean('template_customization_allowed'),
-        ];
+        ]);
 
         $vendor->update([
             'superadmin_notification_restrictions' => $restrictions,
         ]);
+
+        // Audit Logging: Record who changed feature configuration and when
+        app(SecurityAuditService::class)->logSecurityConfigChange(
+            vendor: $vendor,
+            configName: 'reservation_and_preorder_features',
+            summary: "Super Admin updated reservation features: mode={$permittedMode}, reservations=".($reservationsEnabled ? 'enabled' : 'disabled').', preorders='.($preordersEnabled ? 'enabled' : 'disabled'),
+            actor: Auth::user(),
+            metadata: [
+                'permitted_mode' => $permittedMode,
+                'reservations_enabled' => $reservationsEnabled,
+                'preorders_enabled' => $preordersEnabled,
+                'restrictions' => $restrictions,
+            ]
+        );
+
+        // Invalidate cached tenant data
+        TenantCache::invalidateAll($vendor);
 
         return back()->with('success', __('Գործընկերոջ ամրագրումների և ծանուցումների սահմանափակումները հաջողությամբ պահպանվեցին:'));
     }

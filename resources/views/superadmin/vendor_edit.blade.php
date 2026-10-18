@@ -649,6 +649,40 @@
 
             <form action="{{ route('superadmin.vendors.notifications', $vendor->id) }}" method="POST">
                 @csrf
+
+                <!-- Authoritative Operating Mode Control -->
+                <div style="background: rgba(99, 102, 241, 0.06); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 14px; padding: 1.25rem; margin-bottom: 1.25rem;">
+                    <div style="font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                        <i class="fa-solid fa-toggle-on" style="color: #6366f1;"></i> Թույլատրված Աշխատանքային Ռեժիմ (Authoritative Operating Mode)
+                    </div>
+                    <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.85rem;">
+                        Ընտրեք այս ռեստորանի համար Super Admin-ի կողմից լիազորված առավելագույն ռեժիմը։ Գործընկերը չի կարող գերազանցել այս սահմանափակումը։
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem;">
+                        <label style="display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.75rem 0.95rem; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); cursor: pointer;">
+                            <input type="radio" name="permitted_mode" value="disabled" {{ ($restrictions['permitted_mode'] ?? '') === 'disabled' ? 'checked' : '' }} style="margin-top: 0.2rem;">
+                            <div>
+                                <div style="font-size: 0.88rem; font-weight: 700; color: #ef4444;"><i class="fa-solid fa-ban"></i> Անջատված (Disabled)</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">Երկու մոդուլներն էլ արգելափակված են</div>
+                            </div>
+                        </label>
+                        <label style="display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.75rem 0.95rem; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); cursor: pointer;">
+                            <input type="radio" name="permitted_mode" value="reservation_only" {{ ($restrictions['permitted_mode'] ?? '') === 'reservation_only' ? 'checked' : '' }} style="margin-top: 0.2rem;">
+                            <div>
+                                <div style="font-size: 0.88rem; font-weight: 700; color: #f59e0b;"><i class="fa-solid fa-calendar-day"></i> Միայն Ամրագրումներ</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">Սեղանների ամրագրում՝ առանց նախապատվերի</div>
+                            </div>
+                        </label>
+                        <label style="display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.75rem 0.95rem; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); cursor: pointer;">
+                            <input type="radio" name="permitted_mode" value="reservation_and_preorder" {{ ($restrictions['permitted_mode'] ?? 'reservation_and_preorder') === 'reservation_and_preorder' ? 'checked' : '' }} style="margin-top: 0.2rem;">
+                            <div>
+                                <div style="font-size: 0.88rem; font-weight: 700; color: #10b981;"><i class="fa-solid fa-utensils"></i> Ամրագրումներ և Նախապատվերներ</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">Լիարժեք հասանելիություն երկու մոդուլներին</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
                     <!-- Reservations Module -->
                     <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
@@ -845,6 +879,73 @@
                             <tr>
                                 <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">
                                     Այս գործընկերոջ համար էլ․ փոստի առաքման գրառումներ դեռևս չկան։
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tenant Feature Configuration Audit Trail -->
+        <div class="ve-card" style="margin-top: 1.5rem;">
+            <div class="ve-section-title">
+                <i class="fa-solid fa-clock-rotate-left" style="color: #10b981;"></i>
+                <span>Ամրագրումների Կարգավորումների Փոփոխման Պատմություն (Audit Log)</span>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin: -0.5rem 0 1.25rem 0;">
+                Տվյալներ այն մասին, թե ով, երբ և ինչ փոփոխություններ է կատարել այս ռեստորանի ֆունկցիոնալ կարգավիճակներում։
+            </p>
+
+            <div class="table-responsive">
+                <table class="table modern-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Ամսաթիվ / Ժամ</th>
+                            <th>Կատարող (Admin)</th>
+                            <th>Գործողություն / Ամփոփում</th>
+                            <th>IP Հասցե</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($featureAuditLogs ?? [] as $audit)
+                            <tr>
+                                <td style="font-size: 0.82rem; color: var(--text-muted); white-space: nowrap;">
+                                    <i class="fa-solid fa-calendar-days" style="color: #6366f1; margin-right: 0.35rem;"></i>
+                                    {{ $audit->created_at->format('d.m.Y H:i:s') }}
+                                </td>
+                                <td>
+                                    <div style="font-weight: 700; color: var(--text-main);">
+                                        {{ $audit->actor?->name ?: ($audit->metadata['actor_email'] ?? 'Super Admin') }}
+                                    </div>
+                                    <div style="font-size: 0.72rem; color: var(--text-muted);">
+                                        {{ $audit->actor?->email ?: 'System' }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="font-size: 0.85rem; color: var(--text-main);">
+                                        {{ $audit->action }}
+                                    </div>
+                                    @if(!empty($audit->metadata['permitted_mode']))
+                                        <div style="margin-top: 0.25rem;">
+                                            <span class="badge badge-indigo">Mode: {{ $audit->metadata['permitted_mode'] }}</span>
+                                            <span class="badge {{ !empty($audit->metadata['reservations_enabled']) ? 'badge-emerald' : 'badge-rose' }}">
+                                                Res: {{ !empty($audit->metadata['reservations_enabled']) ? 'On' : 'Off' }}
+                                            </span>
+                                            <span class="badge {{ !empty($audit->metadata['preorders_enabled']) ? 'badge-emerald' : 'badge-rose' }}">
+                                                Pre-Order: {{ !empty($audit->metadata['preorders_enabled']) ? 'On' : 'Off' }}
+                                            </span>
+                                        </div>
+                                    @endif
+                                </td>
+                                <td style="font-size: 0.78rem; font-family: monospace; color: var(--text-muted);">
+                                    {{ $audit->ip_address ?: '—' }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" style="text-align: center; padding: 1.5rem; color: var(--text-muted);">
+                                    Այս գործընկերոջ կարգավորումների փոփոխման պատմություն դեռևս գրանցված չէ։
                                 </td>
                             </tr>
                         @endforelse

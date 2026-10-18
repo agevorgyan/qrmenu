@@ -987,6 +987,17 @@
                 </a>
                 @endcan
 
+                <div class="menu-category">{{ __('Reservations & Tables') }}</div>
+                <a href="{{ route('admin.reservations.index') }}" class="nav-item {{ request()->routeIs('admin.reservations.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-calendar-check" style="color: #ec4899;"></i> <span>{{ __('Reservations') }}</span>
+                </a>
+                <a href="{{ route('admin.tables.index') }}" class="nav-item {{ request()->routeIs('admin.tables.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-chair" style="color: #06b6d4;"></i> <span>{{ __('Restaurant Tables') }}</span>
+                </a>
+                <a href="{{ route('admin.settings.reservations') }}" class="nav-item {{ request()->routeIs('admin.settings.reservations*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-sliders" style="color: #8b5cf6;"></i> <span>{{ __('Booking Rules') }}</span>
+                </a>
+
                 @can('menu.view')
                 <div class="menu-category">{{ __('Menu & Content') }}</div>
                 <a href="{{ route('admin.menu.index') }}" class="nav-item {{ request()->routeIs('admin.menu.*') ? 'active' : '' }}">

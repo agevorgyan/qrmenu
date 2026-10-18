@@ -299,35 +299,43 @@ class TelegramNotificationService
             default => '🙋‍♂️',
         };
 
-        $html = "🛎️ <b>ՄԱՏՈՒՑՈՂԻ ԿԱՆՉ!</b>\n";
-        $html .= "━━━━━━━━━━━━━━━━━━━━\n";
-        $html .= "🏪 <b>Ռեստորան:</b> {$vendorName}{$locationName}\n";
-        $html .= "🪑 <b>Սեղան:</b> <b>Սեղան #{$tableNumber}</b>\n";
-        $html .= "⚡ <b>Տեսակը:</b> {$typeEmoji} <b>{$call->getTypeLabel()}</b>\n";
+        $adminLocale = $vendor->admin_locale ?: 'hy';
+        $prevLocale = app()->getLocale();
+        app()->setLocale($adminLocale);
 
-        if (! empty($call->notes)) {
-            $html .= "📝 <b>Նշում:</b> «{$this->escapeHtml($call->notes)}»\n";
-        }
+        try {
+            $html = "🛎️ <b>ՄԱՏՈՒՑՈՂԻ ԿԱՆՉ!</b>\n";
+            $html .= "━━━━━━━━━━━━━━━━━━━━\n";
+            $html .= "🏪 <b>Ռեստորան:</b> {$vendorName}{$locationName}\n";
+            $html .= "🪑 <b>Սեղան:</b> <b>Սեղան #{$tableNumber}</b>\n";
+            $html .= "⚡ <b>Տեսակը:</b> {$typeEmoji} <b>{$call->getTypeLabel()}</b>\n";
 
-        $createdAt = $call->created_at ? $call->created_at->format('H:i') : now()->format('H:i');
-        $html .= "⏱ <b>Ժամ:</b> {$createdAt}";
+            if (! empty($call->notes)) {
+                $html .= "📝 <b>Նշում:</b> «{$this->escapeHtml($call->notes)}»\n";
+            }
 
-        $adminUrl = url('/admin/orders');
+            $createdAt = $call->created_at ? $call->created_at->format('H:i') : now()->format('H:i');
+            $html .= "⏱ <b>Ժամ:</b> {$createdAt}";
 
-        $replyMarkup = [
-            'inline_keyboard' => [
-                [
+            $adminUrl = url('/admin/orders');
+
+            $replyMarkup = [
+                'inline_keyboard' => [
                     [
-                        'text' => '🛎️ Բացել Սրահի Պանելը',
-                        'url' => $adminUrl,
+                        [
+                            'text' => '🛎️ Բացել Սրահի Պանելը',
+                            'url' => $adminUrl,
+                        ],
                     ],
                 ],
-            ],
-        ];
+            ];
 
-        $result = $this->sendMessage($chatId, $html, $botToken, $topicId, $replyMarkup);
+            $result = $this->sendMessage($chatId, $html, $botToken, $topicId, $replyMarkup);
 
-        return $result['success'];
+            return $result['success'];
+        } finally {
+            app()->setLocale($prevLocale);
+        }
     }
 
     /**

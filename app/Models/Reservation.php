@@ -53,6 +53,8 @@ class Reservation extends Model
 
     public const STATUS_CONFIRMED = 'confirmed';
 
+    public const STATUS_SEATED = 'seated';
+
     public const STATUS_REJECTED = 'rejected';
 
     public const STATUS_MODIFIED = 'modified';
@@ -60,6 +62,8 @@ class Reservation extends Model
     public const STATUS_CANCELLED = 'cancelled';
 
     public const STATUS_COMPLETED = 'completed';
+
+    public const STATUS_NO_SHOW = 'no_show';
 
     protected $fillable = [
         'uuid',
@@ -74,9 +78,11 @@ class Reservation extends Model
         'table_number',
         'table_name',
         'table_id',
+        'restaurant_table_id',
         'reservation_date',
         'reservation_time',
         'reservation_datetime',
+        'duration_minutes',
         'status',
         'notes',
         'special_requests',
@@ -90,6 +96,8 @@ class Reservation extends Model
     {
         return [
             'guest_count' => 'integer',
+            'duration_minutes' => 'integer',
+            'restaurant_table_id' => 'integer',
             'reservation_datetime' => 'datetime',
             'reminders_sent' => 'array',
             'staff_reminders_sent' => 'array',
@@ -145,6 +153,11 @@ class Reservation extends Model
         return $this->hasOne(ReservationPreOrder::class, 'reservation_id');
     }
 
+    public function restaurantTable(): BelongsTo
+    {
+        return $this->belongsTo(RestaurantTable::class, 'restaurant_table_id');
+    }
+
     public function scopePending(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_PENDING);
@@ -155,10 +168,27 @@ class Reservation extends Model
         return $query->where('status', self::STATUS_CONFIRMED);
     }
 
+    public function scopeActiveHolds(Builder $query): Builder
+    {
+        return $query->whereIn('status', [self::STATUS_PENDING, self::STATUS_CONFIRMED, self::STATUS_SEATED]);
+    }
+
     public function scopeUpcoming(Builder $query): Builder
     {
         return $query->where('reservation_datetime', '>', now())
-            ->whereNotIn('status', [self::STATUS_CANCELLED, self::STATUS_REJECTED, self::STATUS_COMPLETED]);
+            ->whereNotIn('status', [self::STATUS_CANCELLED, self::STATUS_REJECTED, self::STATUS_COMPLETED, self::STATUS_NO_SHOW]);
+    }
+
+    /**
+     * Get reservation end time in UTC.
+     */
+    public function getEndDatetime(): ?Carbon
+    {
+        if (! $this->reservation_datetime) {
+            return null;
+        }
+
+        return $this->reservation_datetime->copy()->addMinutes($this->duration_minutes ?: 90);
     }
 
     /**

@@ -20,6 +20,12 @@ class Vendor extends Model
 {
     use HasFactory, SoftDeletes;
 
+    public const RESERVATION_MODE_DISABLED = 'disabled';
+
+    public const RESERVATION_MODE_RESERVATION_ONLY = 'reservation_only';
+
+    public const RESERVATION_MODE_RESERVATION_AND_PREORDER = 'reservation_and_preorder';
+
     protected $attributes = [
         'takeaway_enabled' => true,
         'delivery_enabled' => true,
@@ -104,6 +110,7 @@ class Vendor extends Model
         'thermal_printer_settings',
         'floor_plan_data',
         'telegram_settings',
+        'reservation_settings',
         'reservation_notification_settings',
         'superadmin_notification_restrictions',
         'dine_in_schedule_enabled',
@@ -165,6 +172,7 @@ class Vendor extends Model
         'thermal_printer_settings' => 'array',
         'floor_plan_data' => 'array',
         'telegram_settings' => 'array',
+        'reservation_settings' => 'array',
         'reservation_notification_settings' => 'array',
         'superadmin_notification_restrictions' => 'array',
         'allow_whatsapp_orders' => 'boolean',
@@ -436,6 +444,10 @@ class Vendor extends Model
         $token = app(CredentialService::class)->get($this, 'telegram', 'bot_token');
         if (! empty($token)) {
             return trim($token);
+        }
+
+        if (! empty($this->telegram_settings['bot_token'])) {
+            return trim((string) $this->telegram_settings['bot_token']);
         }
 
         return SystemSetting::get('telegram_bot_token')
@@ -835,6 +847,43 @@ class Vendor extends Model
         return $this->hasMany(Reservation::class);
     }
 
+    public function restaurantTables(): HasMany
+    {
+        return $this->hasMany(RestaurantTable::class);
+    }
+
+    /**
+     * Get effective reservation policy and booking rules merged with sensible defaults.
+     *
+     * @return array<string, mixed>
+     */
+    public function getReservationSettingsAttribute(): array
+    {
+        $settings = $this->getRawOriginal('reservation_settings');
+        $decoded = is_string($settings) ? json_decode($settings, true) : (is_array($settings) ? $settings : []);
+
+        return array_merge([
+            'enabled' => true,
+            'mode' => self::RESERVATION_MODE_RESERVATION_AND_PREORDER,
+            'auto_confirm' => false,
+            'default_duration_minutes' => 90,
+            'buffer_minutes' => 15,
+            'min_party_size' => 1,
+            'max_party_size' => 20,
+            'advance_booking_days' => 30,
+            'booking_cutoff_minutes' => 60,
+            'slot_interval_minutes' => 30,
+            'opening_time' => '10:00',
+            'closing_time' => '23:00',
+            'operating_days' => [0, 1, 2, 3, 4, 5, 6],
+            'pre_orders_mode' => 'optional', // 'disabled', 'optional', 'mandatory'
+            'cancellation_cutoff_hours' => 2,
+            'cancellation_policy' => '',
+            'reservation_notes' => '',
+            'admin_locale' => 'hy',
+        ], $decoded);
+    }
+
     /**
      * Get effective reservation notification settings merged with sensible defaults.
      *
@@ -883,7 +932,7 @@ class Vendor extends Model
     /**
      * Get effective superadmin restrictions with sensible defaults.
      *
-     * @return array<string, bool>
+     * @return array<string, mixed>
      */
     public function getSuperadminNotificationRestrictionsAttribute(): array
     {
@@ -891,6 +940,7 @@ class Vendor extends Model
         $decoded = is_string($restrictions) ? json_decode($restrictions, true) : (is_array($restrictions) ? $restrictions : []);
 
         return array_merge([
+            'permitted_mode' => self::RESERVATION_MODE_RESERVATION_AND_PREORDER,
             'reservations_enabled' => true,
             'preorders_enabled' => true,
             'reservation_emails_enabled' => true,
@@ -902,10 +952,217 @@ class Vendor extends Model
     }
 
     /**
+     * Get the Super Admin permitted operating mode for this vendor.
+     */
+    public function getSuperAdminPermittedMode(): string
+    {
+        $restrictions = $this->superadmin_notification_restrictions;
+
+        $resEnabled = (bool) ($restrictions['reservations_enabled'] ?? true);
+        $preEnabled = (bool) ($restrictions['preorders_enabled'] ?? true);
+
+        if (! $resEnabled) {
+            return self::RESERVATION_MODE_DISABLED;
+        }
+
+        $mode = (string) ($restrictions['permitted_mode'] ?? self::RESERVATION_MODE_RESERVATION_AND_PREORDER);
+
+        if (! in_array($mode, [
+            self::RESERVATION_MODE_DISABLED,
+            self::RESERVATION_MODE_RESERVATION_ONLY,
+            self::RESERVATION_MODE_RESERVATION_AND_PREORDER,
+        ], true)) {
+            $mode = self::RESERVATION_MODE_RESERVATION_AND_PREORDER;
+        }
+
+        if (! $preEnabled && $mode === self::RESERVATION_MODE_RESERVATION_AND_PREORDER) {
+            $mode = self::RESERVATION_MODE_RESERVATION_ONLY;
+        }
+
+        return $mode;
+    }
+
+    /**
+     * Get the subscription plan permitted operating mode.
+     */
+    public function getPlanPermittedMode(): string
+    {
+        if (! $this->hasFeature('reservations')) {
+            return self::RESERVATION_MODE_DISABLED;
+        }
+
+        if (! $this->hasFeature('preorders')) {
+            return self::RESERVATION_MODE_RESERVATION_ONLY;
+        }
+
+        return self::RESERVATION_MODE_RESERVATION_AND_PREORDER;
+    }
+
+    /**
+     * Get the maximum permitted reservation mode combining Plan and Super Admin authority.
+     */
+    public function getMaxPermittedReservationMode(): string
+    {
+        $planMode = $this->getPlanPermittedMode();
+        $saMode = $this->getSuperAdminPermittedMode();
+
+        if ($planMode === self::RESERVATION_MODE_DISABLED || $saMode === self::RESERVATION_MODE_DISABLED) {
+            return self::RESERVATION_MODE_DISABLED;
+        }
+
+        if ($planMode === self::RESERVATION_MODE_RESERVATION_ONLY || $saMode === self::RESERVATION_MODE_RESERVATION_ONLY) {
+            return self::RESERVATION_MODE_RESERVATION_ONLY;
+        }
+
+        return self::RESERVATION_MODE_RESERVATION_AND_PREORDER;
+    }
+
+    /**
+     * Get the partner requested operating mode.
+     */
+    public function getPartnerRequestedReservationMode(): string
+    {
+        $settings = $this->reservation_settings;
+        if (! ($settings['enabled'] ?? true)) {
+            return self::RESERVATION_MODE_DISABLED;
+        }
+
+        $mode = (string) ($settings['mode'] ?? '');
+        if ($mode === self::RESERVATION_MODE_DISABLED) {
+            return self::RESERVATION_MODE_DISABLED;
+        }
+        if ($mode === self::RESERVATION_MODE_RESERVATION_ONLY) {
+            return self::RESERVATION_MODE_RESERVATION_ONLY;
+        }
+        if ($mode === self::RESERVATION_MODE_RESERVATION_AND_PREORDER) {
+            return self::RESERVATION_MODE_RESERVATION_AND_PREORDER;
+        }
+
+        // Fallback for legacy pre_orders_mode config
+        if (($settings['pre_orders_mode'] ?? 'optional') === 'disabled') {
+            return self::RESERVATION_MODE_RESERVATION_ONLY;
+        }
+
+        return self::RESERVATION_MODE_RESERVATION_AND_PREORDER;
+    }
+
+    /**
+     * Get the effective reservation operating mode.
+     */
+    public function getEffectiveReservationMode(): string
+    {
+        $maxPermitted = $this->getMaxPermittedReservationMode();
+        if ($maxPermitted === self::RESERVATION_MODE_DISABLED) {
+            return self::RESERVATION_MODE_DISABLED;
+        }
+
+        $partnerMode = $this->getPartnerRequestedReservationMode();
+        if ($partnerMode === self::RESERVATION_MODE_DISABLED) {
+            return self::RESERVATION_MODE_DISABLED;
+        }
+
+        if ($maxPermitted === self::RESERVATION_MODE_RESERVATION_ONLY) {
+            return self::RESERVATION_MODE_RESERVATION_ONLY;
+        }
+
+        return $partnerMode;
+    }
+
+    /**
+     * Determine if table reservations are enabled and permitted.
+     */
+    public function isReservationFeatureEnabled(): bool
+    {
+        return $this->getEffectiveReservationMode() !== self::RESERVATION_MODE_DISABLED;
+    }
+
+    /**
+     * Determine if pre-orders are enabled and permitted.
+     */
+    public function isPreOrderFeatureEnabled(): bool
+    {
+        return $this->getEffectiveReservationMode() === self::RESERVATION_MODE_RESERVATION_AND_PREORDER;
+    }
+
+    /**
+     * Determine reason why table reservations are disabled, if any.
+     *
+     * @return 'subscription'|'superadmin'|'partner'|null
+     */
+    public function getReservationDisabledReason(): ?string
+    {
+        if (! $this->hasFeature('reservations')) {
+            return 'subscription';
+        }
+
+        $saMode = $this->getSuperAdminPermittedMode();
+        if ($saMode === self::RESERVATION_MODE_DISABLED) {
+            return 'superadmin';
+        }
+
+        if ($this->getPartnerRequestedReservationMode() === self::RESERVATION_MODE_DISABLED) {
+            return 'partner';
+        }
+
+        return null;
+    }
+
+    /**
+     * Determine reason why pre-orders are disabled, if any.
+     *
+     * @return 'subscription'|'superadmin'|'partner'|null
+     */
+    public function getPreOrderDisabledReason(): ?string
+    {
+        $resReason = $this->getReservationDisabledReason();
+        if ($resReason) {
+            return $resReason;
+        }
+
+        if (! $this->hasFeature('preorders')) {
+            return 'subscription';
+        }
+
+        $saMode = $this->getSuperAdminPermittedMode();
+        if ($saMode === self::RESERVATION_MODE_RESERVATION_ONLY) {
+            return 'superadmin';
+        }
+
+        if ($this->getPartnerRequestedReservationMode() === self::RESERVATION_MODE_RESERVATION_ONLY) {
+            return 'partner';
+        }
+
+        return null;
+    }
+
+    /**
+     * Get restaurant administration panel and operational notification locale.
+     */
+    public function getAdminLocaleAttribute(): string
+    {
+        $settings = $this->reservation_settings;
+        if (! empty($settings['admin_locale']) && in_array(strtolower((string) $settings['admin_locale']), ['hy', 'en', 'ru'], true)) {
+            return strtolower((string) $settings['admin_locale']);
+        }
+
+        return $this->getDefaultLanguageCode() ?: 'hy';
+    }
+
+    /**
      * Check if a specific notification event is allowed for this vendor.
      */
     public function isReservationNotificationAllowed(string $event, string $recipientType = 'customer'): bool
     {
+        // Feature flags take precedence over event sending
+        if (! $this->isReservationFeatureEnabled()) {
+            return false;
+        }
+
+        $isPreOrder = str_contains($event, 'preorder');
+        if ($isPreOrder && ! $this->isPreOrderFeatureEnabled()) {
+            return false;
+        }
+
         $restrictions = $this->superadmin_notification_restrictions;
 
         // Super Admin restrictions take absolute precedence
@@ -1388,6 +1645,7 @@ class Vendor extends Model
             case 'online_orders':
             case 'customers':
             case 'reservations':
+            case 'preorders':
                 return in_array($planSlug, ['pro', 'business', 'custom']);
 
             case 'locations':

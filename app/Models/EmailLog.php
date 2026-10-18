@@ -58,6 +58,8 @@ class EmailLog extends Model
 
     public const STATUS_QUEUED = 'queued';
 
+    public const STATUS_PENDING = 'queued'; // Alias for queued
+
     public const STATUS_PROCESSING = 'processing';
 
     public const STATUS_SENT = 'sent'; // Accepted by transport

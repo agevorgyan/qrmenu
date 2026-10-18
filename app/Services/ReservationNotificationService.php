@@ -371,4 +371,37 @@ class ReservationNotificationService
             'last_attempt_at' => now(),
         ]);
     }
+
+    /**
+     * Convenience aliases for dispatching notifications.
+     */
+    public function sendReservationNotification(Reservation $reservation, string $event, array $options = []): ?EmailLog
+    {
+        return $this->notifyCustomerReservation($reservation, $event, $options);
+    }
+
+    public function sendRestaurantReservationNotification(Reservation $reservation, string $event, array $options = []): array
+    {
+        return $this->notifyRestaurantReservation($reservation, $event, $options);
+    }
+
+    public function sendCustomerPreOrderNotification(ReservationPreOrder $preOrder, string $event, array $options = []): ?EmailLog
+    {
+        $reservation = $preOrder->reservation ?: Reservation::find($preOrder->reservation_id);
+        if (! $reservation) {
+            return null;
+        }
+
+        return $this->notifyCustomerPreOrder($reservation, $preOrder, $event, $options);
+    }
+
+    public function sendRestaurantPreOrderNotification(ReservationPreOrder $preOrder, string $event, array $options = []): array
+    {
+        $reservation = $preOrder->reservation ?: Reservation::find($preOrder->reservation_id);
+        if (! $reservation) {
+            return [];
+        }
+
+        return $this->notifyRestaurantPreOrder($reservation, $preOrder, $event, $options);
+    }
 }

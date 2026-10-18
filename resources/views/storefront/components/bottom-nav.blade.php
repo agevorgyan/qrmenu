@@ -117,7 +117,20 @@
             <span style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">{{ __('menu.view_cart') }}</span>
         </button>
 
-        <!-- 4. Info & WiFi -->
+        @if($vendor->isReservationFeatureEnabled())
+        <!-- 4. Table Reservation -->
+        <a href="{{ route('client.reserve', ['vendor_slug' => $vendor->slug, 'location_slug' => $location?->slug, 'lang' => app()->getLocale()]) }}" 
+           class="bottom-nav-item bottom-nav-reserve" 
+           title="{{ __('Reserve a Table') }}"
+           style="text-decoration: none; color: inherit;">
+            <div class="nav-icon-wrapper">
+                <i class="fa-solid fa-calendar-check"></i>
+            </div>
+            <span class="nav-label">{{ __('Reserve') }}</span>
+        </a>
+        @endif
+
+        <!-- 5. Info & WiFi -->
         <button type="button" 
                 class="bottom-nav-item" 
                 :class="{ 'active': showInfoModal }"
