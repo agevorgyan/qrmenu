@@ -582,7 +582,7 @@
                         </div>
                     @endif
                     <h1 class="vendor-title">{{ $customVendor->name }}</h1>
-                    <p class="brand-subtitle">{{ __('Dashboard') }}</p>
+                    <p class="brand-subtitle">{{ __('Կառավարման Վահանակ') }}</p>
                 @else
                     @if($siteLogoLight)
                         <div style="margin-bottom: 1.25rem;">

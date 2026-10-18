@@ -112,6 +112,7 @@ class RegisterController extends Controller
                 'role' => 'vendor_owner',
                 'phone' => $validated['phone'],
                 'locale' => app()->getLocale() ?: 'hy',
+                'email_verified_at' => null,
             ]);
         });
 
