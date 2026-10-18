@@ -53,6 +53,7 @@
             variationQty: 1,
             currentTab: 'menu',
             showInfoModal: false,
+            showScrollTop: false,
             showOrderTracker: false,
             hideTrackerPill: false,
             activeOrder: null,
@@ -241,6 +242,9 @@
                 window.addEventListener('pagehide', () => {
                     this.saveCartToStorage();
                 });
+                window.addEventListener('scroll', () => {
+                    this.showScrollTop = (window.pageYOffset > 280);
+                }, { passive: true });
             },
 
             setOrderType(type) {
@@ -958,6 +962,10 @@
                 this.showCartModal = false;
                 this.showInfoModal = false;
                 this.showOrderTracker = false;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            },
+
+            scrollToTop() {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             },
 

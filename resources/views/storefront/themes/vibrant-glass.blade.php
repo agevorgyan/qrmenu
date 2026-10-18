@@ -238,15 +238,24 @@
 
         <!-- Cafe Header -->
         <div class="cafe-header">
-        <img src="{{ $vendor->logo ?? 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&q=80' }}" class="cafe-logo">
-        <h1 style="font-size: 1.65rem; font-weight: 800; margin-top: 0.5rem; color: var(--text-main);">{{ $vendor->name }}</h1>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.15rem;">
-            <i class="fa-solid fa-mug-hot" style="color: var(--primary);"></i> {{ $location?->name ?? 'Cafe Spot' }}
-            @if($table)
-                • <span style="background: var(--primary); color: #fff; padding: 0.1rem 0.4rem; border-radius: 4px; font-weight: 700;">Table {{ $table }}</span>
-            @endif
-        </p>
-    </div>
+            <!-- Redesigned Top Info Button -->
+            <button type="button" 
+                    class="header-info-pill-btn" 
+                    style="position: absolute; top: 0; right: 0;"
+                    @click="showInfoModal = true" 
+                    title="{{ __('menu.nav_info') }}">
+                <i class="fa-solid fa-circle-info"></i>
+                <span class="info-btn-text">{{ __('menu.nav_info') }}</span>
+            </button>
+            <img src="{{ $vendor->logo ?? 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&q=80' }}" class="cafe-logo">
+            <h1 style="font-size: 1.65rem; font-weight: 800; margin-top: 0.5rem; color: var(--text-main);">{{ $vendor->name }}</h1>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.15rem;">
+                <i class="fa-solid fa-mug-hot" style="color: var(--primary);"></i> {{ $location?->name ?? 'Cafe Spot' }}
+                @if($table)
+                    • <span style="background: var(--primary); color: #fff; padding: 0.1rem 0.4rem; border-radius: 4px; font-weight: 700;">Table {{ $table }}</span>
+                @endif
+            </p>
+        </div>
 
     <!-- Order Type Selector Bar (Direct Visits: Delivery vs Takeaway, or Table QR badge) -->
     @include('storefront.components.order-type-header-toggle')

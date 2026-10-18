@@ -66,6 +66,7 @@ return [
     'nav_cart' => 'Զամբյուղ',
     'nav_info' => 'Տեղեկություն',
     'nav_tracker' => 'Կարգավիճակ',
+    'scroll_to_top' => 'Դեպի վեր',
 
     // Order Tracker
     'order_tracker_title' => 'Պատվերի կարգավիճակ',

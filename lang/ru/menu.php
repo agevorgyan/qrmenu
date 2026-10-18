@@ -66,6 +66,7 @@ return [
     'nav_cart' => 'Корзина',
     'nav_info' => 'Инфо',
     'nav_tracker' => 'Статус',
+    'scroll_to_top' => 'Наверх',
 
     // Order Tracker
     'order_tracker_title' => 'Статус заказа',

@@ -445,30 +445,40 @@
             <div class="cover-placeholder"></div>
         @endif
 
-        <div class="vendor-profile">
-            @if(!empty($vendor->logo))
-                <img src="{{ $vendor->logo }}" alt="{{ $vendor->name }}" class="vendor-logo">
-            @else
-                <div class="vendor-logo" style="display: flex; align-items: center; justify-content: center; font-size: 1.75rem; color: var(--text-muted); background: #f8fafc;">
-                    <i class="fa-solid fa-utensils"></i>
-                </div>
-            @endif
+        <div class="vendor-profile" style="display: flex; align-items: center; justify-content: space-between; gap: 0.85rem;">
+            <div style="display: flex; align-items: center; gap: 0.85rem; min-width: 0;">
+                @if(!empty($vendor->logo))
+                    <img src="{{ $vendor->logo }}" alt="{{ $vendor->name }}" class="vendor-logo" style="flex-shrink: 0;">
+                @else
+                    <div class="vendor-logo" style="display: flex; align-items: center; justify-content: center; font-size: 1.75rem; color: var(--text-muted); background: #f8fafc; flex-shrink: 0;">
+                        <i class="fa-solid fa-utensils"></i>
+                    </div>
+                @endif
 
-            <div class="vendor-info">
-                <h1 class="vendor-name">{{ $vendor->name }}</h1>
-                <div class="vendor-subline">
-                    <span class="status-pill">
-                        <span class="status-dot"></span>
-                        {{ __('menu.open') ?? 'Բաց է' }}
-                    </span>
-                    @if($location)
-                        <span><i class="fa-solid fa-location-dot" style="font-size: 0.7rem; color: var(--text-muted);"></i> {{ $location->name }}</span>
-                    @endif
-                    @if(!empty($table))
-                        <span style="font-weight: 700; color: var(--primary);">{{ __('Սեղան') }} #{{ $table }}</span>
-                    @endif
+                <div class="vendor-info" style="min-width: 0;">
+                    <h1 class="vendor-name">{{ $vendor->name }}</h1>
+                    <div class="vendor-subline">
+                        <span class="status-pill">
+                            <span class="status-dot"></span>
+                            {{ __('menu.open') ?? 'Բաց է' }}
+                        </span>
+                        @if($location)
+                            <span><i class="fa-solid fa-location-dot" style="font-size: 0.7rem; color: var(--text-muted);"></i> {{ $location->name }}</span>
+                        @endif
+                        @if(!empty($table))
+                            <span style="font-weight: 700; color: var(--primary);">{{ __('Սեղան') }} #{{ $table }}</span>
+                        @endif
+                    </div>
                 </div>
             </div>
+            <!-- Redesigned Top Info Button -->
+            <button type="button" 
+                    class="header-info-pill-btn" 
+                    @click="showInfoModal = true" 
+                    title="{{ __('menu.nav_info') }}">
+                <i class="fa-solid fa-circle-info"></i>
+                <span class="info-btn-text">{{ __('menu.nav_info') }}</span>
+            </button>
         </div>
     </header>
 

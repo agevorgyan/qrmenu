@@ -100,10 +100,10 @@
         }
 
         .storefront-bottom-nav {
-            max-width: var(--desktop-max-width) !important;
-            border-left: 1px solid var(--border-color);
-            border-right: 1px solid var(--border-color);
-            border-radius: 20px 20px 0 0 !important;
+            max-width: 440px !important;
+            width: calc(100% - 28px) !important;
+            border-radius: 9999px !important;
+            border: 1px solid rgba(255, 255, 255, 0.14) !important;
         }
 
         .active-order-floating-pill {
@@ -144,8 +144,7 @@
         }
 
         .toast-notification,
-        .storefront-bottom-nav-container,
-        .storefront-bottom-nav {
+        .storefront-bottom-nav-container {
             max-width: min(1180px, 94vw) !important;
         }
 
@@ -160,7 +159,8 @@
             max-height: 88vh !important;
         }
 
-        .ai-waiter-floating-bubble {
+        .ai-waiter-floating-bubble,
+        .storefront-scroll-top-btn {
             right: calc(50% - (min(1180px, 94vw) / 2) + 1.5rem) !important;
         }
 
@@ -171,4 +171,58 @@
     }
     @endif
     @endif
+
+    /* Header Info Button (iOS Pill Redesign) */
+    .header-info-pill-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.48rem 0.88rem;
+        border-radius: 9999px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        -webkit-tap-highlight-color: transparent;
+        text-decoration: none;
+    }
+
+    .header-info-pill-btn i {
+        font-size: 0.95rem;
+        color: var(--primary);
+        transition: transform 0.2s ease;
+    }
+
+    .header-info-pill-btn:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+        color: var(--primary);
+        box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 22%, transparent);
+    }
+
+    .header-info-pill-btn:active {
+        transform: scale(0.94);
+    }
+
+    .header-info-pill-btn .info-btn-text {
+        letter-spacing: -0.01em;
+    }
+
+    @media (max-width: 360px) {
+        .header-info-pill-btn .info-btn-text {
+            display: none;
+        }
+        .header-info-pill-btn {
+            padding: 0.5rem;
+            width: 36px;
+            height: 36px;
+            justify-content: center;
+        }
+    }
 </style>

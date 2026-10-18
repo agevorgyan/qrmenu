@@ -222,19 +222,30 @@
 
         <!-- Header Hero -->
         <div class="hero-bistro">
-        <div style="display: flex; align-items: center; gap: 1.25rem;">
-            <img src="{{ $vendor->logo ?? 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&q=80' }}" style="width: 70px; height: 70px; border-radius: 16px; object-fit: cover; border: 2px solid var(--primary);">
-            <div>
-                <h1 style="font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--text-main);">{{ $vendor->name }}</h1>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
-                    <i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> {{ $location?->name ?? 'Main Location' }}
-                    @if($table)
-                        • <span style="background: var(--primary); color: #fff; padding: 0.1rem 0.4rem; border-radius: 4px; font-weight: 700;">Table {{ $table }}</span>
-                    @endif
-                </p>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.85rem;">
+                <div style="display: flex; align-items: center; gap: 1.15rem; min-width: 0;">
+                    <img src="{{ $vendor->logo ?? 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&q=80' }}" style="width: 70px; height: 70px; border-radius: 16px; object-fit: cover; border: 2px solid var(--primary); flex-shrink: 0;">
+                    <div style="min-width: 0;">
+                        <h1 style="font-family: 'Outfit', sans-serif; font-size: 1.45rem; font-weight: 800; color: var(--text-main); line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $vendor->name }}</h1>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem; display: flex; align-items: center; gap: 0.35rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            <i class="fa-solid fa-location-dot" style="color: var(--primary); flex-shrink: 0;"></i> 
+                            <span>{{ $location?->name ?? 'Main Location' }}</span>
+                            @if($table)
+                                • <span style="background: var(--primary); color: #fff; padding: 0.1rem 0.4rem; border-radius: 4px; font-weight: 700; flex-shrink: 0;">Table {{ $table }}</span>
+                            @endif
+                        </p>
+                    </div>
+                </div>
+                <!-- Redesigned Top Info Button -->
+                <button type="button" 
+                        class="header-info-pill-btn" 
+                        @click="showInfoModal = true" 
+                        title="{{ __('menu.nav_info') }}">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span class="info-btn-text">{{ __('menu.nav_info') }}</span>
+                </button>
             </div>
         </div>
-    </div>
 
     <!-- Order Type Selector Bar (Direct Visits: Delivery vs Takeaway, or Table QR badge) -->
     @include('storefront.components.order-type-header-toggle')

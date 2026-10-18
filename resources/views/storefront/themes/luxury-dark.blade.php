@@ -271,17 +271,27 @@
     </div>
 
     <!-- Vendor Hero -->
-    <div class="vendor-hero">
-        <img src="{{ $vendor->logo ?? 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=300&q=80' }}" class="vendor-logo">
-        <div class="vendor-meta">
-            <h1>{{ $vendor->name }}</h1>
-            <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
-                <span><i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> {{ $location?->name ?? 'Main Branch' }}</span>
-                @if($table)
-                    <span style="background: var(--primary); color: #ffffff; padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 700;">Table {{ $table }}</span>
-                @endif
+    <div class="vendor-hero" style="display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem;">
+        <div style="display: flex; align-items: flex-end; gap: 1.25rem; min-width: 0;">
+            <img src="{{ $vendor->logo ?? 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=300&q=80' }}" class="vendor-logo" style="flex-shrink: 0;">
+            <div class="vendor-meta" style="min-width: 0;">
+                <h1 style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $vendor->name }}</h1>
+                <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <span><i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> {{ $location?->name ?? 'Main Branch' }}</span>
+                    @if($table)
+                        <span style="background: var(--primary); color: #ffffff; padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 700;">Table {{ $table }}</span>
+                    @endif
+                </div>
             </div>
         </div>
+        <!-- Redesigned Top Info Button -->
+        <button type="button" 
+                class="header-info-pill-btn" 
+                @click="showInfoModal = true" 
+                title="{{ __('menu.nav_info') }}">
+            <i class="fa-solid fa-circle-info"></i>
+            <span class="info-btn-text">{{ __('menu.nav_info') }}</span>
+        </button>
     </div>
 
     <!-- Order Type Selector Bar (Direct Visits: Delivery vs Takeaway, or Table QR badge) -->

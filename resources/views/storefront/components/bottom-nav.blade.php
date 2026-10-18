@@ -62,12 +62,32 @@
     </div>
     @endif
 
-    <!-- Bottom Navigation Bar -->
+    <!-- Floating Scroll-To-Top Button (iOS Glass) -->
+    <button type="button" 
+            class="storefront-scroll-top-btn" 
+            :class="{ 
+                'has-ai-bubble': {{ $vendor->ai_waiter_enabled ? 'true' : 'false' }} && !showAiWaiter && !showWelcomeModal && !showCartModal,
+                'has-active-order-pill': isOrderPillVisible()
+            }" 
+            x-show="showScrollTop" 
+            @click="scrollToTop()" 
+            x-transition:enter="transition ease-out duration-300" 
+            x-transition:enter-start="opacity-0 translate-y-4 scale-90" 
+            x-transition:enter-end="opacity-100 translate-y-0 scale-100" 
+            x-transition:leave="transition ease-in duration-200" 
+            x-transition:leave-start="opacity-100 translate-y-0 scale-100" 
+            x-transition:leave-end="opacity-0 translate-y-4 scale-90" 
+            title="{{ __('menu.scroll_to_top') }}" 
+            aria-label="{{ __('menu.scroll_to_top') }}">
+        <i class="fa-solid fa-arrow-up"></i>
+    </button>
+
+    <!-- Bottom Navigation Bar (iOS Floating Island Pill) -->
     <nav class="storefront-bottom-nav" aria-label="Storefront Mobile Navigation">
         <!-- 1. Home / Menu -->
         <button type="button" 
                 class="bottom-nav-item" 
-                :class="{ 'active': currentTab === 'menu' && !showCartModal && !showInfoModal && !showOrderTracker && !showAiWaiter }"
+                :class="{ 'active': currentTab === 'menu' && !showCartModal && !showOrderTracker && !showAiWaiter }"
                 @click="goToMenu()">
             <div class="nav-icon-wrapper">
                 <i class="fa-solid fa-utensils"></i>
@@ -102,7 +122,7 @@
         </button>
         @endif
 
-        <!-- 3. Cart -->
+        <!-- 4. Cart -->
         <button type="button" 
                 class="bottom-nav-item bottom-nav-cart" 
                 :class="{ 'active': showCartModal, 'has-items': cartTotalCount > 0, 'cart-bump': cartBump }"
@@ -118,7 +138,7 @@
         </button>
 
         @if($vendor->isReservationFeatureEnabled())
-        <!-- 4. Table Reservation -->
+        <!-- 5. Table Reservation -->
         <a href="{{ route('client.reserve', ['vendor_slug' => $vendor->slug, 'location_slug' => $location?->slug, 'lang' => app()->getLocale()]) }}" 
            class="bottom-nav-item bottom-nav-reserve" 
            title="{{ __('Reserve a Table') }}"
@@ -129,17 +149,6 @@
             <span class="nav-label">{{ __('Reserve') }}</span>
         </a>
         @endif
-
-        <!-- 5. Info & WiFi -->
-        <button type="button" 
-                class="bottom-nav-item" 
-                :class="{ 'active': showInfoModal }"
-                @click="showInfoModal = true">
-            <div class="nav-icon-wrapper">
-                <i class="fa-solid fa-circle-info"></i>
-            </div>
-            <span class="nav-label">{{ __('menu.nav_info') }}</span>
-        </button>
     </nav>
 </div>
 
@@ -151,42 +160,54 @@
         right: 0;
         z-index: 80;
         pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 
+    /* iOS Floating Island Pill Bar */
     .storefront-bottom-nav {
         pointer-events: auto;
-        background: var(--bg-glass);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-top: 1px solid var(--border-color);
+        background: rgba(26, 26, 29, 0.88);
+        backdrop-filter: blur(28px) saturate(190%);
+        -webkit-backdrop-filter: blur(28px) saturate(190%);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 9999px;
         display: flex;
         justify-content: space-around;
         align-items: center;
-        padding-top: 0.5rem;
-        padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
-        padding-left: 0.5rem;
-        padding-right: 0.5rem;
-        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.07);
-        max-width: var(--desktop-max-width, 600px);
-        margin: 0 auto;
+        gap: 4px;
+        padding: 6px 8px;
+        margin: 0 auto max(14px, env(safe-area-inset-bottom, 14px)) auto;
+        width: calc(100% - 28px);
+        max-width: 440px;
+        box-shadow: 0 16px 38px -4px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+        box-sizing: border-box;
     }
 
     .bottom-nav-item {
         pointer-events: auto;
         flex: 1;
+        min-width: 0;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         background: transparent;
         border: none;
-        padding: 0.35rem 0.2rem;
-        color: var(--text-muted);
+        border-radius: 9999px;
+        padding: 6px 8px;
+        color: rgba(255, 255, 255, 0.65);
         cursor: pointer;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.22s cubic-bezier(0.2, 0, 0, 1);
         position: relative;
         text-decoration: none;
         -webkit-tap-highlight-color: transparent;
+        user-select: none;
+    }
+
+    .bottom-nav-item:hover {
+        color: #ffffff;
     }
 
     .bottom-nav-item:active {
@@ -194,58 +215,178 @@
     }
 
     .bottom-nav-item.active {
-        color: var(--primary);
+        background: rgba(255, 255, 255, 0.14);
+        color: var(--primary, #38bdf8);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.22);
     }
 
     .bottom-nav-item .nav-icon-wrapper {
         position: relative;
         font-size: 1.25rem;
-        height: 26px;
+        height: 22px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 0.2rem;
-        transition: transform 0.2s ease;
+        margin-bottom: 2px;
+        transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
     }
 
     .bottom-nav-item.active .nav-icon-wrapper {
-        transform: translateY(-2px);
+        transform: translateY(-1px);
+        color: var(--primary, #38bdf8);
     }
 
     .bottom-nav-item .nav-label {
-        font-size: 0.72rem;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+        font-size: 0.68rem;
         font-weight: 600;
-        line-height: 1;
+        line-height: 1.1;
         letter-spacing: -0.01em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    .bottom-nav-item.active .nav-label {
+        font-weight: 700;
+        color: var(--primary, #38bdf8);
     }
 
     .bottom-nav-item.has-items {
-        color: var(--primary);
+        color: rgba(255, 255, 255, 0.9);
     }
 
-    .bottom-nav-item.has-items .nav-icon-wrapper i {
-        color: var(--primary);
+    .bottom-nav-item.has-items.active {
+        color: var(--primary, #38bdf8);
     }
 
     .nav-badge {
         position: absolute;
-        top: -6px;
-        right: -10px;
-        background: var(--primary);
+        top: -5px;
+        right: -8px;
+        background: #ef4444;
         color: #ffffff;
-        font-size: 0.72rem;
+        font-size: 0.66rem;
         font-weight: 800;
-        min-width: 19px;
-        height: 19px;
+        min-width: 18px;
+        height: 18px;
         border-radius: 9999px;
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 0 4px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 0 10px rgba(16, 185, 129, 0.5);
-        border: 2px solid var(--bg-card);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+        border: 2px solid #1a1a1d;
         animation: badgePulse 2s infinite;
         z-index: 5;
+    }
+
+    /* Floating Scroll Up Button (iOS style) */
+    .storefront-scroll-top-btn {
+        pointer-events: auto;
+        position: fixed;
+        bottom: calc(76px + max(14px, env(safe-area-inset-bottom, 14px)));
+        right: 1.25rem;
+        z-index: 76;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(26, 26, 29, 0.88);
+        backdrop-filter: blur(28px) saturate(190%);
+        -webkit-backdrop-filter: blur(28px) saturate(190%);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        color: #ffffff;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.05rem;
+        cursor: pointer;
+        transition: bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.2, 0, 0, 1), border-color 0.2s, color 0.2s;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .storefront-scroll-top-btn:hover {
+        transform: translateY(-2px);
+        color: var(--primary);
+        border-color: var(--primary);
+    }
+
+    .storefront-scroll-top-btn:active {
+        transform: scale(0.92);
+    }
+
+    .storefront-scroll-top-btn.has-ai-bubble {
+        bottom: calc(134px + max(14px, env(safe-area-inset-bottom, 14px)));
+    }
+
+    .storefront-scroll-top-btn.has-active-order-pill {
+        bottom: calc(146px + max(14px, env(safe-area-inset-bottom, 14px)));
+    }
+
+    .storefront-scroll-top-btn.has-ai-bubble.has-active-order-pill {
+        bottom: calc(204px + max(14px, env(safe-area-inset-bottom, 14px)));
+    }
+
+    @media (min-width: 601px) {
+        .storefront-scroll-top-btn {
+            right: calc(50% - (var(--desktop-max-width, 600px) / 2) + 1.25rem);
+        }
+    }
+
+    /* Header Info Button (iOS Pill Redesign) */
+    .header-info-pill-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.48rem 0.88rem;
+        border-radius: 9999px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        -webkit-tap-highlight-color: transparent;
+        text-decoration: none;
+    }
+
+    .header-info-pill-btn i {
+        font-size: 0.95rem;
+        color: var(--primary);
+        transition: transform 0.2s ease;
+    }
+
+    .header-info-pill-btn:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+        color: var(--primary);
+        box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 22%, transparent);
+    }
+
+    .header-info-pill-btn:active {
+        transform: scale(0.94);
+    }
+
+    .header-info-pill-btn .info-btn-text {
+        letter-spacing: -0.01em;
+    }
+
+    @media (max-width: 360px) {
+        .header-info-pill-btn .info-btn-text {
+            display: none;
+        }
+        .header-info-pill-btn {
+            padding: 0.5rem;
+            width: 36px;
+            height: 36px;
+            justify-content: center;
+        }
     }
 
     .cart-bump .nav-icon-wrapper {

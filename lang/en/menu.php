@@ -66,6 +66,7 @@ return [
     'nav_cart' => 'Cart',
     'nav_info' => 'Info',
     'nav_tracker' => 'Status',
+    'scroll_to_top' => 'Scroll to top',
 
     // Order Tracker
     'order_tracker_title' => 'Order Status',
