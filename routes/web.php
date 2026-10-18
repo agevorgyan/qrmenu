@@ -18,6 +18,7 @@ use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\ProfileSecurityController;
 use App\Http\Controllers\QrStudioController;
 use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\ReservationNotificationController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\SuperAdminEmailController;
@@ -208,6 +209,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::get('/vendors/{vendor}/edit', [SuperAdminController::class, 'editVendor'])->name('vendors.edit');
     Route::put('/vendors/{vendor}', [SuperAdminController::class, 'updateVendor'])->name('vendors.update');
     Route::post('/vendors/{vendor}/toggle', [SuperAdminController::class, 'toggleStatus'])->name('vendors.toggle');
+    Route::post('/vendors/{vendor}/notifications', [SuperAdminController::class, 'updateVendorNotificationRestrictions'])->name('vendors.notifications');
 
     // Vendor Locations & Tables Management
     Route::post('/vendors/{vendor}/locations', [SuperAdminController::class, 'storeVendorLocation'])->name('vendors.locations.store');
@@ -377,6 +379,12 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cas
     Route::get('/settings/ai', [VendorSettingsController::class, 'aiIndex'])->name('settings.ai');
     Route::post('/settings/ai', [VendorSettingsController::class, 'aiUpdate'])->name('settings.ai.update');
     Route::post('/settings/ai/test', [VendorSettingsController::class, 'testAiConnection'])->name('settings.ai.test');
+
+    // Settings → Reservations & Pre-Orders → Notifications
+    Route::get('/settings/reservations/notifications', [ReservationNotificationController::class, 'index'])->name('settings.reservations.notifications');
+    Route::post('/settings/reservations/notifications', [ReservationNotificationController::class, 'update'])->name('settings.reservations.notifications.update');
+    Route::post('/settings/reservations/notifications/test', [ReservationNotificationController::class, 'sendTestEmail'])->name('settings.reservations.notifications.test');
+    Route::get('/settings/reservations/notifications/preview', [ReservationNotificationController::class, 'previewTemplate'])->name('settings.reservations.notifications.preview');
 
     // QR Code Studio
     Route::get('/qr', [QrStudioController::class, 'index'])->name('qr.index');

@@ -2,8 +2,12 @@
 
 namespace App\Services;
 
+use App\Mail\CustomerPreOrderMail;
+use App\Mail\CustomerReservationMail;
 use App\Mail\OrderReceiptMail;
 use App\Mail\ResetPasswordMail;
+use App\Mail\RestaurantPreOrderMail;
+use App\Mail\RestaurantReservationMail;
 use App\Mail\SystemTestMail;
 use App\Mail\TwoFactorCodeMail;
 use App\Mail\VendorWelcomeVerificationMail;
@@ -13,6 +17,7 @@ use App\Models\EmailLog;
 use App\Models\EmailRoutingRule;
 use App\Models\EmailSenderIdentity;
 use App\Models\Order;
+use App\Models\Reservation;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -94,6 +99,8 @@ class EmailRoutingService
             ResetPasswordMail::class => EmailRoutingRule::CATEGORY_PASSWORD_RESET,
             TwoFactorCodeMail::class => EmailRoutingRule::CATEGORY_TWO_FACTOR,
             SystemTestMail::class => EmailRoutingRule::CATEGORY_SYSTEM_TEST,
+            CustomerReservationMail::class, RestaurantReservationMail::class => EmailRoutingRule::CATEGORY_RESERVATIONS,
+            CustomerPreOrderMail::class, RestaurantPreOrderMail::class => EmailRoutingRule::CATEGORY_PREORDERS,
             default => $this->detectCategoryFromSubject($subject),
         };
     }
@@ -114,6 +121,12 @@ class EmailRoutingService
         }
         if (str_contains($lower, 'password') || str_contains($lower, 'գաղտնաբառ') || str_contains($lower, 'парол')) {
             return EmailRoutingRule::CATEGORY_PASSWORD_RESET;
+        }
+        if (str_contains($lower, 'pre-order') || str_contains($lower, 'preorder') || str_contains($lower, 'նախնական պատվեր') || str_contains($lower, 'предзаказ')) {
+            return EmailRoutingRule::CATEGORY_PREORDERS;
+        }
+        if (str_contains($lower, 'reservation') || str_contains($lower, 'booking') || str_contains($lower, 'ամրագրում') || str_contains($lower, 'ամրագր') || str_contains($lower, 'бронирован') || str_contains($lower, 'столик')) {
+            return EmailRoutingRule::CATEGORY_RESERVATIONS;
         }
         if (str_contains($lower, 'order') || str_contains($lower, 'պատվեր') || str_contains($lower, 'заказ') || str_contains($lower, 'чек')) {
             return EmailRoutingRule::CATEGORY_ORDER_RECEIPT;
@@ -292,6 +305,30 @@ class EmailRoutingService
                         'hash' => sha1($user->getEmailForVerification()),
                     ]);
                     $newMailable = new VendorWelcomeVerificationMail($user, $verificationUrl, null, $user->locale ?? $log->metadata['locale'] ?? app()->getLocale());
+                }
+            } elseif ($mailableClass === CustomerReservationMail::class && $log->related_id) {
+                $reservation = Reservation::find($log->related_id);
+                if ($reservation) {
+                    $event = $log->metadata['event'] ?? 'confirmed';
+                    $newMailable = new CustomerReservationMail($reservation, $event, $log->metadata['locale'] ?? $reservation->locale);
+                }
+            } elseif ($mailableClass === RestaurantReservationMail::class && $log->related_id) {
+                $reservation = Reservation::find($log->related_id);
+                if ($reservation) {
+                    $event = $log->metadata['event'] ?? 'received';
+                    $newMailable = new RestaurantReservationMail($reservation, $event, $log->metadata['locale'] ?? ($reservation->vendor?->admin_locale ?? 'hy'));
+                }
+            } elseif ($mailableClass === CustomerPreOrderMail::class && $log->related_id) {
+                $reservation = Reservation::with('preOrder')->find($log->related_id);
+                if ($reservation && $reservation->preOrder) {
+                    $event = $log->metadata['event'] ?? 'received';
+                    $newMailable = new CustomerPreOrderMail($reservation, $reservation->preOrder, $event, $log->metadata['locale'] ?? $reservation->locale);
+                }
+            } elseif ($mailableClass === RestaurantPreOrderMail::class && $log->related_id) {
+                $reservation = Reservation::with('preOrder')->find($log->related_id);
+                if ($reservation && $reservation->preOrder) {
+                    $event = $log->metadata['event'] ?? 'received';
+                    $newMailable = new RestaurantPreOrderMail($reservation, $reservation->preOrder, $event, $log->metadata['locale'] ?? ($reservation->vendor?->admin_locale ?? 'hy'));
                 }
             } elseif ($mailableClass === SystemTestMail::class) {
                 $connection = $log->connection ?? EmailConnection::where('is_active', true)->first();

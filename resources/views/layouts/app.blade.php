@@ -1039,6 +1039,9 @@
                 <a href="{{ route('admin.settings.index') }}" class="nav-item {{ request()->routeIs('admin.settings.index') ? 'active' : '' }}">
                     <i class="fa-solid fa-sliders" style="color: #64748b;"></i> <span>{{ __('Settings') }}</span>
                 </a>
+                <a href="{{ route('admin.settings.reservations.notifications') }}" class="nav-item {{ request()->routeIs('admin.settings.reservations.notifications*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-bell-concierge" style="color: #6366f1;"></i> <span>{{ __('Reservation Notifications') }}</span>
+                </a>
                 @endcan
 
                 @can('ai.view')

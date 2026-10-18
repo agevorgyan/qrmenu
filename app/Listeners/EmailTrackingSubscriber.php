@@ -91,6 +91,10 @@ class EmailTrackingSubscriber
                 $relatedType = 'App\Models\Order';
                 $relatedId = $mailable->order->id ?? null;
                 $vendorId = $mailable->order->vendor_id ?? null;
+            } elseif ($mailable && isset($mailable->reservation) && is_object($mailable->reservation)) {
+                $relatedType = 'App\Models\Reservation';
+                $relatedId = $mailable->reservation->id ?? null;
+                $vendorId = $mailable->reservation->vendor_id ?? null;
             } elseif ($mailable && isset($mailable->user) && is_object($mailable->user)) {
                 $relatedType = 'App\Models\User';
                 $relatedId = $mailable->user->id ?? null;

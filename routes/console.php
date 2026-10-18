@@ -58,3 +58,8 @@ Schedule::call(function () {
  * Enforce documented data retention periods and IP anonymization daily.
  */
 Schedule::command('privacy:prune')->daily()->name('privacy-retention-prune');
+
+/**
+ * Dispatch upcoming customer and restaurant reservation reminders every 5 minutes.
+ */
+Schedule::command('reservations:send-reminders')->everyFiveMinutes()->name('reservations-send-reminders');

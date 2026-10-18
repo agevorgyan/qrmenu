@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\SubscriptionStatus;
 use App\Http\Requests\UpdateSystemSettingsRequest;
+use App\Models\EmailLog;
 use App\Models\Location;
 use App\Models\MenuTemplate;
 use App\Models\Order;
@@ -398,7 +399,15 @@ class SuperAdminController extends Controller
         $templates = MenuTemplate::all();
         $plans = SubscriptionPlan::where('is_active', true)->get();
 
-        return view('superadmin.vendor_edit', compact('vendor', 'templates', 'plans'));
+        $notificationStats = [
+            'total_emails' => EmailLog::where('vendor_id', $vendor->id)->count(),
+            'delivered' => EmailLog::where('vendor_id', $vendor->id)->whereIn('status', [EmailLog::STATUS_DELIVERED, EmailLog::STATUS_SENT])->count(),
+            'failed' => EmailLog::where('vendor_id', $vendor->id)->where('status', EmailLog::STATUS_FAILED)->count(),
+            'queued' => EmailLog::where('vendor_id', $vendor->id)->whereIn('status', [EmailLog::STATUS_QUEUED, EmailLog::STATUS_PENDING])->count(),
+            'recent_logs' => EmailLog::where('vendor_id', $vendor->id)->latest()->take(10)->get(),
+        ];
+
+        return view('superadmin.vendor_edit', compact('vendor', 'templates', 'plans', 'notificationStats'));
     }
 
     public function updateVendor(Request $request, Vendor $vendor)
@@ -463,6 +472,28 @@ class SuperAdminController extends Controller
         $vendor->update($validated);
 
         return back()->with('success', __('Գործընկերոջ տվյալները և հղումները հաջողությամբ թարմացվեցին։'));
+    }
+
+    /**
+     * Update SuperAdmin notification and reservation restrictions for a vendor.
+     */
+    public function updateVendorNotificationRestrictions(Request $request, Vendor $vendor): RedirectResponse
+    {
+        $restrictions = [
+            'reservations_enabled' => $request->boolean('reservations_enabled'),
+            'preorders_enabled' => $request->boolean('preorders_enabled'),
+            'reservation_emails_enabled' => $request->boolean('reservation_emails_enabled'),
+            'preorder_emails_enabled' => $request->boolean('preorder_emails_enabled'),
+            'customer_reminders_enabled' => $request->boolean('customer_reminders_enabled'),
+            'restaurant_reminders_enabled' => $request->boolean('restaurant_reminders_enabled'),
+            'template_customization_allowed' => $request->boolean('template_customization_allowed'),
+        ];
+
+        $vendor->update([
+            'superadmin_notification_restrictions' => $restrictions,
+        ]);
+
+        return back()->with('success', __('Գործընկերոջ ամրագրումների և ծանուցումների սահմանափակումները հաջողությամբ պահպանվեցին:'));
     }
 
     public function storeVendorLocation(Request $request, Vendor $vendor)

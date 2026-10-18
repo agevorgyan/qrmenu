@@ -45,6 +45,10 @@ class EmailRoutingRule extends Model
 
     public const CATEGORY_ORDER_RECEIPT = 'order_receipt';
 
+    public const CATEGORY_RESERVATIONS = 'reservations';
+
+    public const CATEGORY_PREORDERS = 'preorders';
+
     public const CATEGORY_SUBSCRIPTION_BILLING = 'subscription_billing';
 
     public const CATEGORY_ADMIN_ALERT = 'admin_alert';
@@ -122,6 +126,14 @@ class EmailRoutingRule extends Model
             self::CATEGORY_ORDER_RECEIPT => [
                 'label' => 'Order Confirmations & Receipts',
                 'description' => 'Customer receipts and kitchen order confirmations',
+            ],
+            self::CATEGORY_RESERVATIONS => [
+                'label' => 'Table Reservations & Reminders',
+                'description' => 'Customer reservation confirmations, status updates, and reminders',
+            ],
+            self::CATEGORY_PREORDERS => [
+                'label' => 'Reservation Pre-Orders',
+                'description' => 'Pre-order confirmations, preparation updates, and changes',
             ],
             self::CATEGORY_SUBSCRIPTION_BILLING => [
                 'label' => 'Subscription & Billing',

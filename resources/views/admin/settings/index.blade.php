@@ -19,6 +19,9 @@
         </div>
 
         <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+            <a href="{{ route('admin.settings.reservations.notifications') }}" class="btn btn-secondary" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 0.88rem;">
+                <i class="fa-solid fa-bell-concierge" style="color: #6366f1;"></i> {{ __('Reservation Notifications') }}
+            </a>
             <a href="{{ route('admin.profile') }}" class="btn btn-secondary" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 0.88rem;">
                 <i class="fa-solid fa-user-shield" style="color: {{ Auth::user()->hasTwoFactorEnabled() ? '#10b981' : '#f59e0b' }};"></i> {{ __('Security & 2FA') }}
             </a>

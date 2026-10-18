@@ -104,6 +104,8 @@ class Vendor extends Model
         'thermal_printer_settings',
         'floor_plan_data',
         'telegram_settings',
+        'reservation_notification_settings',
+        'superadmin_notification_restrictions',
         'dine_in_schedule_enabled',
         'dine_in_start_time',
         'dine_in_end_time',
@@ -163,6 +165,8 @@ class Vendor extends Model
         'thermal_printer_settings' => 'array',
         'floor_plan_data' => 'array',
         'telegram_settings' => 'array',
+        'reservation_notification_settings' => 'array',
+        'superadmin_notification_restrictions' => 'array',
         'allow_whatsapp_orders' => 'boolean',
         'supported_languages' => 'array',
         'dine_in_schedule_enabled' => 'boolean',
@@ -826,6 +830,203 @@ class Vendor extends Model
         return $this->hasMany(Order::class);
     }
 
+    public function reservations(): HasMany
+    {
+        return $this->hasMany(Reservation::class);
+    }
+
+    /**
+     * Get effective reservation notification settings merged with sensible defaults.
+     *
+     * @return array<string, mixed>
+     */
+    public function getReservationNotificationSettingsAttribute(): array
+    {
+        $settings = $this->getRawOriginal('reservation_notification_settings');
+        $decoded = is_string($settings) ? json_decode($settings, true) : (is_array($settings) ? $settings : []);
+
+        return array_merge([
+            'customer_notifications_enabled' => true,
+            'customer_events' => [
+                'request_received',
+                'confirmed',
+                'rejected',
+                'modified',
+                'cancelled',
+                'reminder',
+                'preorder_received',
+                'preorder_confirmed',
+                'preorder_status_changed',
+                'preorder_cancelled',
+            ],
+            'customer_reminder_enabled' => true,
+            'customer_reminder_intervals' => [1440, 180], // 24h, 3h in minutes
+            'customer_reminder_only_confirmed' => true,
+
+            'restaurant_notifications_enabled' => true,
+            'restaurant_recipients' => filled($this->email) ? [$this->email] : [],
+            'restaurant_events' => [
+                'received',
+                'awaiting_confirmation',
+                'action',
+                'modified',
+                'preorder_received',
+                'preorder_updated',
+                'reminder',
+            ],
+            'restaurant_reminder_enabled' => true,
+            'restaurant_reminder_intervals' => [180, 60], // 3h, 1h in minutes
+            'restaurant_reminder_only_confirmed' => true,
+        ], $decoded ?: []);
+    }
+
+    /**
+     * Get effective superadmin restrictions with sensible defaults.
+     *
+     * @return array<string, bool>
+     */
+    public function getSuperadminNotificationRestrictionsAttribute(): array
+    {
+        $restrictions = $this->getRawOriginal('superadmin_notification_restrictions');
+        $decoded = is_string($restrictions) ? json_decode($restrictions, true) : (is_array($restrictions) ? $restrictions : []);
+
+        return array_merge([
+            'reservations_enabled' => true,
+            'preorders_enabled' => true,
+            'reservation_emails_enabled' => true,
+            'preorder_emails_enabled' => true,
+            'customer_reminders_enabled' => true,
+            'restaurant_reminders_enabled' => true,
+            'template_customization_allowed' => true,
+        ], $decoded ?: []);
+    }
+
+    /**
+     * Check if a specific notification event is allowed for this vendor.
+     */
+    public function isReservationNotificationAllowed(string $event, string $recipientType = 'customer'): bool
+    {
+        $restrictions = $this->superadmin_notification_restrictions;
+
+        // Super Admin restrictions take absolute precedence
+        if (! ($restrictions['reservations_enabled'] ?? true)) {
+            return false;
+        }
+
+        $isPreOrder = str_contains($event, 'preorder');
+        if ($isPreOrder && ! ($restrictions['preorders_enabled'] ?? true)) {
+            return false;
+        }
+
+        if ($isPreOrder && ! ($restrictions['preorder_emails_enabled'] ?? true)) {
+            return false;
+        }
+
+        if (! $isPreOrder && ! ($restrictions['reservation_emails_enabled'] ?? true)) {
+            return false;
+        }
+
+        $settings = $this->reservation_notification_settings;
+
+        if ($recipientType === 'customer') {
+            if (! ($settings['customer_notifications_enabled'] ?? true)) {
+                return false;
+            }
+
+            $events = (array) ($settings['customer_events'] ?? []);
+            $cleanEvent = str_replace('reservation_', '', $event);
+            $fullEvent = str_starts_with($event, 'reservation_') ? $event : 'reservation_'.$event;
+
+            return in_array($event, $events, true)
+                || in_array($cleanEvent, $events, true)
+                || in_array($fullEvent, $events, true)
+                || ! empty($events[$event])
+                || ! empty($events[$cleanEvent])
+                || ! empty($events[$fullEvent]);
+        } else {
+            if (! ($settings['restaurant_notifications_enabled'] ?? true)) {
+                return false;
+            }
+
+            $events = (array) ($settings['restaurant_events'] ?? []);
+            $cleanEvent = str_replace(['restaurant_reservation_', 'restaurant_'], '', $event);
+            $fullEvent = str_starts_with($event, 'restaurant_') ? $event : 'restaurant_'.$event;
+            $fullResEvent = str_starts_with($event, 'restaurant_reservation_') ? $event : 'restaurant_reservation_'.$cleanEvent;
+
+            return in_array($event, $events, true)
+                || in_array($cleanEvent, $events, true)
+                || in_array($fullEvent, $events, true)
+                || in_array($fullResEvent, $events, true)
+                || ! empty($events[$event])
+                || ! empty($events[$cleanEvent])
+                || ! empty($events[$fullEvent])
+                || ! empty($events[$fullResEvent]);
+        }
+    }
+
+    /**
+     * Check if reminders are permitted for this vendor and recipient type.
+     */
+    public function isReminderAllowed(string $recipientType = 'customer'): bool
+    {
+        $restrictions = $this->superadmin_notification_restrictions;
+
+        if (! ($restrictions['reservations_enabled'] ?? true)) {
+            return false;
+        }
+
+        if ($recipientType === 'customer') {
+            if (! ($restrictions['customer_reminders_enabled'] ?? true)) {
+                return false;
+            }
+
+            $settings = $this->reservation_notification_settings;
+
+            return (bool) ($settings['customer_notifications_enabled'] ?? true)
+                && (bool) ($settings['customer_reminder_enabled'] ?? true);
+        } else {
+            if (! ($restrictions['restaurant_reminders_enabled'] ?? true)) {
+                return false;
+            }
+
+            $settings = $this->reservation_notification_settings;
+
+            return (bool) ($settings['restaurant_notifications_enabled'] ?? true)
+                && (bool) ($settings['restaurant_reminder_enabled'] ?? true);
+        }
+    }
+
+    /**
+     * Get validated list of restaurant recipient email addresses.
+     *
+     * @return array<int, string>
+     */
+    public function getNotificationRecipients(): array
+    {
+        $settings = $this->reservation_notification_settings;
+        $recipients = $settings['restaurant_recipients'] ?? ($settings['notification_recipients'] ?? []);
+
+        if (is_string($recipients)) {
+            $recipients = preg_split('/[\r\n,;]+/', $recipients);
+        }
+
+        $valid = [];
+        if (is_array($recipients)) {
+            foreach ($recipients as $email) {
+                $email = trim(strtolower((string) $email));
+                if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $valid[] = $email;
+                }
+            }
+        }
+
+        if (empty($valid) && filled($this->email) && filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
+            $valid[] = strtolower(trim($this->email));
+        }
+
+        return array_values(array_unique($valid));
+    }
+
     public function users()
     {
         return $this->hasMany(User::class);
@@ -1186,6 +1387,7 @@ class Vendor extends Model
             case 'orders':
             case 'online_orders':
             case 'customers':
+            case 'reservations':
                 return in_array($planSlug, ['pro', 'business', 'custom']);
 
             case 'locations':

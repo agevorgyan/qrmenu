@@ -229,6 +229,9 @@
         <button type="button" class="ve-tab-btn" :class="{ 'active': activeTab === 'users' }" @click="activeTab = 'users'">
             <i class="fa-solid fa-users"></i> Օգտատերեր և Աշխատակազմ ({{ $vendor->users->count() }})
         </button>
+        <button type="button" class="ve-tab-btn" :class="{ 'active': activeTab === 'notifications' }" @click="activeTab = 'notifications'">
+            <i class="fa-solid fa-bell"></i> Ծանուցումներ & Ամրագրումներ
+        </button>
     </div>
 
     <!-- TAB 1: DETAILS & LINKS -->
@@ -622,6 +625,229 @@
                                 </td>
                             </tr>
                         @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: RESERVATION & PRE-ORDER NOTIFICATION RESTRICTIONS -->
+    <div x-show="activeTab === 'notifications'" style="display: none;">
+        @php
+            $restrictions = $vendor->superadmin_notification_restrictions;
+        @endphp
+
+        <!-- Restrictions Card -->
+        <div class="ve-card">
+            <div class="ve-section-title">
+                <i class="fa-solid fa-shield-halved" style="color: #ef4444;"></i>
+                <span>Super Admin Սահմանափակումներ (Tenant Permissions & Overrides)</span>
+            </div>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin: -0.5rem 0 1.5rem 0;">
+                Այս կարգավորումներն ունեն գերակայություն ռեստորանի անձնական կարգավորումների նկատմամբ։ Եթե այստեղ որևէ ֆունկցիա անջատված է, ռեստորանը չի կարող այն միացնել։
+            </p>
+
+            <form action="{{ route('superadmin.vendors.notifications', $vendor->id) }}" method="POST">
+                @csrf
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
+                    <!-- Reservations Module -->
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+                            <div style="font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-calendar-check" style="color: #6366f1;"></i> Ամրագրումների Համակարգ
+                            </div>
+                            <label style="position: relative; display: inline-flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" name="reservations_enabled" value="1" {{ !empty($restrictions['reservations_enabled']) ? 'checked' : '' }} style="width: 1.2rem; height: 1.2rem; accent-color: var(--primary);">
+                            </label>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">
+                            Թույլատրել սեղանի ամրագրումների ընդունումը այս ռեստորանի մենյուում։
+                        </p>
+                    </div>
+
+                    <!-- Pre-orders Module -->
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+                            <div style="font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-utensils" style="color: #10b981;"></i> Նախապատվերներ (Pre-Orders)
+                            </div>
+                            <label style="position: relative; display: inline-flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" name="preorders_enabled" value="1" {{ !empty($restrictions['preorders_enabled']) ? 'checked' : '' }} style="width: 1.2rem; height: 1.2rem; accent-color: var(--primary);">
+                            </label>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">
+                            Թույլատրել ուտեստների նախապես ընտրությունը ամրագրման պահին։
+                        </p>
+                    </div>
+
+                    <!-- Reservation Emails -->
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+                            <div style="font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-envelope" style="color: #3b82f6;"></i> Ամրագրման Էլ․ Ծանուցումներ
+                            </div>
+                            <label style="position: relative; display: inline-flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" name="reservation_emails_enabled" value="1" {{ !empty($restrictions['reservation_emails_enabled']) ? 'checked' : '' }} style="width: 1.2rem; height: 1.2rem; accent-color: var(--primary);">
+                            </label>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">
+                            Թույլատրել հաստատման, փոփոխման և չեղարկման նամակների ուղարկումը։
+                        </p>
+                    </div>
+
+                    <!-- Pre-order Emails -->
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+                            <div style="font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-file-invoice" style="color: #8b5cf6;"></i> Նախապատվերի Էլ․ Ծանուցումներ
+                            </div>
+                            <label style="position: relative; display: inline-flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" name="preorder_emails_enabled" value="1" {{ !empty($restrictions['preorder_emails_enabled']) ? 'checked' : '' }} style="width: 1.2rem; height: 1.2rem; accent-color: var(--primary);">
+                            </label>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">
+                            Թույլատրել նախապատվերի մանրամասների էլ․ նամակները հաճախորդին և խոհանոցին։
+                        </p>
+                    </div>
+
+                    <!-- Customer Reminders -->
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+                            <div style="font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-clock" style="color: #f59e0b;"></i> Հաճախորդի Ավտոմատ Հիշեցումներ
+                            </div>
+                            <label style="position: relative; display: inline-flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" name="customer_reminders_enabled" value="1" {{ !empty($restrictions['customer_reminders_enabled']) ? 'checked' : '' }} style="width: 1.2rem; height: 1.2rem; accent-color: var(--primary);">
+                            </label>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">
+                            Թույլատրել պլանավորված հիշեցումների ուղարկումը ժամանումից առաջ։
+                        </p>
+                    </div>
+
+                    <!-- Staff Reminders -->
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+                            <div style="font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-bell-concierge" style="color: #ec4899;"></i> Աշխատակազմի Հիշեցումներ
+                            </div>
+                            <label style="position: relative; display: inline-flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" name="restaurant_reminders_enabled" value="1" {{ !empty($restrictions['restaurant_reminders_enabled']) ? 'checked' : '' }} style="width: 1.2rem; height: 1.2rem; accent-color: var(--primary);">
+                            </label>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">
+                            Թույլատրել գալիք ամրագրումների հիշեցումների առաքումը ադմինիստրատորին/մենեջերին։
+                        </p>
+                    </div>
+
+                    <!-- Template Customization -->
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem; grid-column: 1 / -1;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+                            <div style="font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-pen-to-square" style="color: #06b6d4;"></i> Թույլատրել Շաբլոնների Խմբագրում Ռեստորանի Կողմից
+                            </div>
+                            <label style="position: relative; display: inline-flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" name="template_customization_allowed" value="1" {{ !empty($restrictions['template_customization_allowed']) ? 'checked' : '' }} style="width: 1.2rem; height: 1.2rem; accent-color: var(--primary);">
+                            </label>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">
+                            Եթե ապաակտիվացված է, ռեստորանը կարող է միայն դիտել շաբլոնները և ուղարկել թեստային նամակ, սակայն չի կարող փոփոխել դրանց տեքստը կամ թեման։
+                        </p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+                    <button type="submit" class="btn btn-primary" style="border-radius: 12px; font-weight: 700; padding: 0.75rem 1.75rem;">
+                        <i class="fa-solid fa-floppy-disk"></i> Պահպանել Super Admin Սահմանափակումները
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tenant Notification Delivery Stats & Logs -->
+        <div class="ve-card">
+            <div class="ve-section-title">
+                <i class="fa-solid fa-chart-line" style="color: #6366f1;"></i>
+                <span>Ծանուցումների Առաքման Վիճակագրություն & Վերջին Լոգեր</span>
+            </div>
+
+            <!-- Stats grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.75rem;">
+                <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 14px; padding: 1.25rem;">
+                    <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Ընդհանուր Նամակներ</div>
+                    <div style="font-size: 1.75rem; font-weight: 800; color: #6366f1; margin-top: 0.35rem; font-family: 'Outfit';">
+                        {{ $notificationStats['total_emails'] ?? 0 }}
+                    </div>
+                </div>
+                <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 14px; padding: 1.25rem;">
+                    <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Հաջող Առաքված</div>
+                    <div style="font-size: 1.75rem; font-weight: 800; color: #10b981; margin-top: 0.35rem; font-family: 'Outfit';">
+                        {{ $notificationStats['delivered'] ?? 0 }}
+                    </div>
+                </div>
+                <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 14px; padding: 1.25rem;">
+                    <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Հերթում (Queued)</div>
+                    <div style="font-size: 1.75rem; font-weight: 800; color: #f59e0b; margin-top: 0.35rem; font-family: 'Outfit';">
+                        {{ $notificationStats['queued'] ?? 0 }}
+                    </div>
+                </div>
+                <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 14px; padding: 1.25rem;">
+                    <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Անհաջող (Failed)</div>
+                    <div style="font-size: 1.75rem; font-weight: 800; color: #ef4444; margin-top: 0.35rem; font-family: 'Outfit';">
+                        {{ $notificationStats['failed'] ?? 0 }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Logs Table -->
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Կարգավիճակ</th>
+                            <th>Ստացող</th>
+                            <th>Թեմա</th>
+                            <th>Կատեգորիա</th>
+                            <th>Ամսաթիվ</th>
+                            <th>Սխալ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($notificationStats['recent_logs'] ?? [] as $log)
+                            <tr>
+                                <td>
+                                    @if(in_array($log->status, ['sent', 'delivered']))
+                                        <span class="badge badge-emerald"><i class="fa-solid fa-check"></i> {{ ucfirst($log->status) }}</span>
+                                    @elseif($log->status === 'failed')
+                                        <span class="badge badge-rose"><i class="fa-solid fa-xmark"></i> Failed</span>
+                                    @elseif($log->status === 'queued')
+                                        <span class="badge badge-amber"><i class="fa-solid fa-clock"></i> Queued</span>
+                                    @else
+                                        <span class="badge">{{ ucfirst($log->status) }}</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div style="font-weight: 600; color: var(--text-main);">{{ $log->recipient_email }}</div>
+                                    @if($log->recipient_name)
+                                        <div style="font-size: 0.72rem; color: var(--text-muted);">{{ $log->recipient_name }}</div>
+                                    @endif
+                                </td>
+                                <td>{{ Str::limit($log->subject, 35) }}</td>
+                                <td><span class="badge badge-indigo">{{ $log->category }}</span></td>
+                                <td style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">
+                                    {{ $log->created_at->format('d.m.Y H:i') }}
+                                </td>
+                                <td style="font-size: 0.75rem; color: #ef4444;">
+                                    {{ $log->error_summary ?: '—' }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                                    Այս գործընկերոջ համար էլ․ փոստի առաքման գրառումներ դեռևս չկան։
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

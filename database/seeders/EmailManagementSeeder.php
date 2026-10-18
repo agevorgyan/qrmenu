@@ -264,5 +264,7 @@ class EmailManagementSeeder extends Seeder
                 $tpl
             );
         }
+
+        $this->call(ReservationEmailTemplateSeeder::class);
     }
 }
