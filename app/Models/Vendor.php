@@ -2253,11 +2253,29 @@ class Vendor extends Model
         return array_merge([
             'auto_print_live_orders' => false,
             'paper_width' => '80mm', // 58mm or 80mm
+            'font_size' => 'normal', // compact, normal, large
+            'design_style' => 'modern', // modern, classic
+            'receipt_language' => 'hy', // hy, en, ru, bilingual
             'header_title' => $this->name,
+            'header_subtitle' => '',
             'footer_text' => 'Շնորհակալություն այցելության համար!',
+            'show_logo' => true,
             'print_customer_info' => true,
+            'print_order_type' => true,
+            'print_payment_details' => true,
+            'print_item_notes' => true,
             'print_prices' => true,
+            'print_fee_breakdown' => true,
+            'print_qr_code' => true,
             'copies' => 1,
+            // Network / IP Printer
+            'network_printer_enabled' => false,
+            'network_printer_ip' => '',
+            'network_printer_port' => 9100,
+            'auto_print_on_network' => false,
+            // Customer Email Receipt
+            'email_receipt_enabled' => true,
+            'email_receipt_language' => 'bilingual', // bilingual, hy, en
         ], $this->thermal_printer_settings ?? []);
     }
 

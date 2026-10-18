@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\OrderStatusUpdated;
 use App\Http\Requests\UpdateOrderStatusRequest;
+use App\Mail\OrderReceiptMail;
 use App\Models\Order;
 use App\Models\WaiterCall;
 use App\Services\OrderService;
@@ -11,6 +12,7 @@ use App\Services\ThermalPrinterService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class OrderController extends Controller
 {
@@ -105,6 +107,7 @@ class OrderController extends Controller
             $this->authorize('update', $order);
         }
 
+        $previousStatus = $order->status;
         $order->update(['status' => $validated['status']]);
 
         // Broadcast real-time status update for kitchen screens & customer tracker
@@ -112,6 +115,11 @@ class OrderController extends Controller
             event(new OrderStatusUpdated($order));
         } catch (\Throwable $e) {
             Log::warning('OrderStatusUpdated broadcast failed: '.$e->getMessage());
+        }
+
+        // When order is marked completed, automatically send receipt email if customer email exists
+        if ($validated['status'] === 'completed' && $previousStatus !== 'completed') {
+            $this->dispatchCustomerReceiptEmail($order);
         }
 
         if ($request->wantsJson()) {
@@ -147,15 +155,17 @@ class OrderController extends Controller
     }
 
     /**
-     * Get ESC/POS formatted receipt text and RawBT URL for thermal printing.
+     * Get ESC/POS formatted receipt text, HTML slip, and RawBT URL for thermal printing.
      */
     public function receiptText(Order $order, ThermalPrinterService $printerService)
     {
         $this->authorize('view', $order);
 
         $order->load(['items.product', 'location', 'vendor']);
+        $settings = $order->vendor->getThermalPrinterSettings();
 
         $receiptText = $printerService->generateReceiptText($order);
+        $receiptHtml = $printerService->generateReceiptHtml($order);
         $rawBtUrl = $printerService->getRawBtUrl($order);
 
         return response()->json([
@@ -164,7 +174,98 @@ class OrderController extends Controller
             'order_id' => $order->id,
             'order_number' => $order->order_number,
             'receipt_text' => $receiptText,
+            'receipt_html' => $receiptHtml,
             'rawbt_url' => $rawBtUrl,
+            'customer_email' => $order->customer_email,
+            'network_printer_ip' => $settings['network_printer_ip'] ?? '',
+            'network_printer_port' => $settings['network_printer_port'] ?? 9100,
+            'network_printer_enabled' => ! empty($settings['network_printer_enabled']),
         ]);
+    }
+
+    /**
+     * Print receipt directly to ESC/POS network thermal printer over TCP socket.
+     */
+    public function printNetwork(Request $request, Order $order, ThermalPrinterService $printerService)
+    {
+        $this->authorize('view', $order);
+
+        $order->loadMissing(['items.product', 'location', 'vendor']);
+        $settings = $order->vendor->getThermalPrinterSettings();
+
+        $ip = trim((string) $request->input('ip', $settings['network_printer_ip'] ?? ''));
+        $port = intval($request->input('port', $settings['network_printer_port'] ?? 9100)) ?: 9100;
+
+        if (empty($ip)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ցանցային տպիչի IP հասցեն նշված չէ։ Խնդրում ենք լրացնել կարգավորումներում։',
+            ], 422);
+        }
+
+        $result = $printerService->printToNetworkPrinter($ip, $port, $order);
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    /**
+     * Manually send order receipt email to customer.
+     */
+    public function sendEmailReceipt(Request $request, Order $order)
+    {
+        $this->authorize('view', $order);
+
+        $recipientEmail = trim((string) $request->input('email', $order->customer_email));
+
+        if (empty($recipientEmail) || ! filter_var($recipientEmail, FILTER_VALIDATE_EMAIL)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Խնդրում ենք նշել վավեր էլ. փոստի հասցե։',
+            ], 422);
+        }
+
+        $order->loadMissing(['items.product', 'vendor', 'location']);
+        $settings = $order->vendor->getThermalPrinterSettings();
+        $lang = $request->input('lang', $settings['email_receipt_language'] ?? 'bilingual');
+
+        try {
+            Mail::to($recipientEmail)->queue(new OrderReceiptMail($order, $lang));
+
+            return response()->json([
+                'success' => true,
+                'message' => "Կտրոնը հաջողությամբ ուղարկվեց {$recipientEmail} հասցեին։",
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Send receipt email failed: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Էլ. փոստն ուղարկելիս առաջացավ սխալ՝ '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Dispatch customer receipt email if customer provided email and feature is enabled.
+     */
+    protected function dispatchCustomerReceiptEmail(Order $order): void
+    {
+        try {
+            if (empty($order->customer_email)) {
+                return;
+            }
+
+            $order->loadMissing(['items.product', 'vendor', 'location']);
+            $settings = $order->vendor->getThermalPrinterSettings();
+
+            if (! ($settings['email_receipt_enabled'] ?? true)) {
+                return;
+            }
+
+            $lang = $settings['email_receipt_language'] ?? 'bilingual';
+            Mail::to($order->customer_email)->queue(new OrderReceiptMail($order, $lang));
+        } catch (\Throwable $e) {
+            Log::warning('Automatic customer receipt email dispatch failed: '.$e->getMessage());
+        }
     }
 }

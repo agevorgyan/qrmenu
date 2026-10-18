@@ -419,4 +419,119 @@ class VendorSettingsTest extends TestCase
         $response->assertSee('value="oz" selected', false);
         $response->assertSee('value="fl_oz" selected', false);
     }
+
+    public function test_vendor_can_save_thermal_printer_and_receipt_customization_settings(): void
+    {
+        $plan = SubscriptionPlan::where('slug', 'pro')->first();
+
+        $vendor = Vendor::create([
+            'name' => 'Bistro Printer Test',
+            'slug' => 'bistro-printer',
+            'email' => 'printer@bistro.com',
+            'password' => bcrypt('password'),
+            'subscription_plan' => 'pro',
+            'subscription_plan_id' => $plan->id,
+            'subscription_expires_at' => now()->addDays(30),
+            'is_active' => true,
+        ]);
+
+        $user = User::create([
+            'name' => 'Owner',
+            'email' => 'printer@bistro.com',
+            'password' => bcrypt('password'),
+            'vendor_id' => $vendor->id,
+            'role' => 'vendor_owner',
+            'email_verified_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->post(route('admin.settings.update'), [
+            'service_fee_type' => 'percent',
+            'service_fee_value' => 10,
+            'delivery_fee' => 0,
+            'delivery_min_amount' => 0,
+            'thermal_printer_settings' => [
+                'paper_width' => '58mm',
+                'font_size' => 'compact',
+                'design_style' => 'modern',
+                'receipt_language' => 'bilingual',
+                'copies' => 2,
+                'header_title' => 'Custom Bistro Yerevan',
+                'header_subtitle' => 'Downtown Branch',
+                'footer_text' => 'See you again soon!',
+                'show_logo' => '1',
+                'print_customer_info' => '1',
+                'print_order_type' => '1',
+                'print_payment_details' => '1',
+                'print_item_notes' => '1',
+                'print_prices' => '1',
+                'print_fee_breakdown' => '1',
+                'print_qr_code' => '1',
+                'auto_print_live_orders' => '1',
+                'network_printer_enabled' => '1',
+                'network_printer_ip' => '192.168.1.188',
+                'network_printer_port' => 9100,
+                'auto_print_on_network' => '1',
+                'email_receipt_enabled' => '1',
+                'email_receipt_language' => 'bilingual',
+            ],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $vendor->refresh();
+        $settings = $vendor->getThermalPrinterSettings();
+
+        $this->assertEquals('58mm', $settings['paper_width']);
+        $this->assertEquals('compact', $settings['font_size']);
+        $this->assertEquals('modern', $settings['design_style']);
+        $this->assertEquals('bilingual', $settings['receipt_language']);
+        $this->assertEquals(2, $settings['copies']);
+        $this->assertEquals('Custom Bistro Yerevan', $settings['header_title']);
+        $this->assertEquals('Downtown Branch', $settings['header_subtitle']);
+        $this->assertEquals('See you again soon!', $settings['footer_text']);
+        $this->assertTrue($settings['network_printer_enabled']);
+        $this->assertEquals('192.168.1.188', $settings['network_printer_ip']);
+        $this->assertEquals(9100, $settings['network_printer_port']);
+        $this->assertTrue($settings['auto_print_on_network']);
+        $this->assertTrue($settings['email_receipt_enabled']);
+        $this->assertEquals('bilingual', $settings['email_receipt_language']);
+    }
+
+    public function test_printer_connection_endpoint_validates_ip(): void
+    {
+        $plan = SubscriptionPlan::where('slug', 'pro')->first();
+
+        $vendor = Vendor::create([
+            'name' => 'Bistro Printer Test 2',
+            'slug' => 'bistro-printer-2',
+            'email' => 'printer2@bistro.com',
+            'password' => bcrypt('password'),
+            'subscription_plan' => 'pro',
+            'subscription_plan_id' => $plan->id,
+            'subscription_expires_at' => now()->addDays(30),
+            'is_active' => true,
+        ]);
+
+        $user = User::create([
+            'name' => 'Owner',
+            'email' => 'printer2@bistro.com',
+            'password' => bcrypt('password'),
+            'vendor_id' => $vendor->id,
+            'role' => 'vendor_owner',
+            'email_verified_at' => now(),
+        ]);
+
+        // Missing IP
+        $response = $this->actingAs($user)->postJson(route('admin.settings.printer.test'), []);
+        $response->assertStatus(422);
+
+        // Dummy unreachable IP returns structured JSON without throwing uncaught 500
+        $response = $this->actingAs($user)->postJson(route('admin.settings.printer.test'), [
+            'ip' => '127.0.0.1',
+            'port' => 65432,
+        ]);
+        $response->assertStatus(200);
+        $response->assertJsonStructure(['success', 'message']);
+    }
 }

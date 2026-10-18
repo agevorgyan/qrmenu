@@ -114,39 +114,61 @@
 <div id="thermalReceiptModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(6px); padding: 1rem;">
     <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; max-width: 480px; width: 100%; box-shadow: 0 25px 50px rgba(0,0,0,0.3); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh;">
         <!-- Modal Header -->
-        <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+        <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-card);">
             <div style="display: flex; align-items: center; gap: 0.6rem;">
                 <span style="width: 36px; height: 36px; border-radius: 10px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
-                    <i class="fa-solid fa-print"></i>
+                    <i class="fa-solid fa-receipt"></i>
                 </span>
                 <div>
-                    <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800; color: var(--text-main);" id="receiptModalTitle">{{ __('Print Receipt') }}</h3>
-                    <div style="font-size: 0.78rem; color: var(--text-muted);">{{ __('ESC/POS Thermal Printer') }}</div>
+                    <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-main);" id="receiptModalTitle">{{ __('Print Receipt') }}</h3>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">{{ __('Modern Thermal Receipt & ESC/POS') }}</div>
                 </div>
             </div>
-            <button type="button" onclick="closeThermalReceiptModal()" style="background: none; border: none; font-size: 1.25rem; color: var(--text-muted); cursor: pointer;">
+            <button type="button" onclick="closeThermalReceiptModal()" style="background: none; border: none; font-size: 1.25rem; color: var(--text-muted); cursor: pointer; padding: 0.25rem;" aria-label="Close">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
 
-        <!-- Receipt Mono Preview -->
-        <div style="padding: 1.25rem; overflow-y: auto; flex: 1; background: #fff; color: #111;">
-            <pre id="receiptTextPreview" style="font-family: 'Courier New', Courier, monospace; font-size: 0.82rem; line-height: 1.35; white-space: pre-wrap; word-break: break-word; margin: 0; padding: 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; color: #111;"></pre>
+        <!-- Receipt Mode Tabs -->
+        <div style="display: flex; gap: 0.5rem; padding: 0.4rem 1.25rem 0; background: var(--bg-body); border-bottom: 1px solid var(--border-color);">
+            <button type="button" id="tabModernReceipt" onclick="switchReceiptTab('modern')" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; font-weight: 800; border: none; border-bottom: 2px solid var(--primary); background: none; color: var(--primary); cursor: pointer; display: flex; align-items: center; gap: 0.35rem;">
+                <i class="fa-solid fa-receipt"></i> {{ __('Մոդեռն Կտրոն') }}
+            </button>
+            <button type="button" id="tabMonoReceipt" onclick="switchReceiptTab('mono')" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; font-weight: 700; border: none; border-bottom: 2px solid transparent; background: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 0.35rem;">
+                <i class="fa-solid fa-code"></i> {{ __('ESC/POS (Mono)') }}
+            </button>
+        </div>
+
+        <!-- Receipt Preview Body -->
+        <div style="padding: 1.25rem 1rem; overflow-y: auto; flex: 1; background: #cbd5e1; text-align: center;">
+            <!-- Modern HTML Slip Container -->
+            <div id="receiptHtmlPreview" style="display: block; box-shadow: 0 12px 30px rgba(0,0,0,0.14); border-radius: 12px; overflow: hidden; background: #fff; margin: 0 auto; text-align: left;"></div>
+            
+            <!-- Mono ESC/POS Text Preview -->
+            <pre id="receiptTextPreview" style="display: none; text-align: left; font-family: 'Courier New', Courier, monospace; font-size: 0.82rem; line-height: 1.35; white-space: pre-wrap; word-break: break-word; margin: 0 auto; padding: 0.85rem; background: #f8fafc; border: 1px solid #94a3b8; border-radius: 8px; color: #111; max-width: 360px; box-shadow: 0 8px 20px rgba(0,0,0,0.1);"></pre>
         </div>
 
         <!-- Print Actions Footer -->
-        <div style="padding: 1rem 1.25rem; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 0.6rem; background: var(--bg-body);">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
-                <button type="button" onclick="printViaBluetooth()" id="btnBluetoothPrint" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.65rem; font-size: 0.82rem; border-radius: 12px;">
-                    <i class="fa-brands fa-bluetooth-b"></i> {{ __('Web Bluetooth') }}
+        <div style="padding: 0.85rem 1.25rem; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 0.5rem; background: var(--bg-body);">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                <button type="button" onclick="printViaBrowser()" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.65rem; font-size: 0.84rem; border-radius: 12px; font-weight: 700;">
+                    <i class="fa-solid fa-print"></i> {{ __('Տպել բրաուզերով') }}
                 </button>
-                <a id="btnRawBtPrint" href="#" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.65rem; font-size: 0.82rem; border-radius: 12px; text-decoration: none;">
-                    <i class="fa-solid fa-mobile-screen"></i> {{ __('RawBT (Android)') }}
+                <button type="button" onclick="printViaNetworkPrinter()" id="btnNetworkPrint" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.65rem; font-size: 0.84rem; border-radius: 12px; font-weight: 700; color: #0284c7; border-color: rgba(2, 132, 199, 0.3);">
+                    <i class="fa-solid fa-network-wired"></i> <span id="btnNetworkPrintText">{{ __('Ցանցային տպիչ (IP)') }}</span>
+                </button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.4rem;">
+                <button type="button" onclick="sendReceiptEmail()" id="btnEmailReceipt" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 0.35rem; padding: 0.55rem; font-size: 0.78rem; border-radius: 10px;">
+                    <i class="fa-solid fa-envelope"></i> {{ __('Email-ով') }}
+                </button>
+                <button type="button" onclick="printViaBluetooth()" id="btnBluetoothPrint" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 0.35rem; padding: 0.55rem; font-size: 0.78rem; border-radius: 10px;">
+                    <i class="fa-brands fa-bluetooth-b"></i> {{ __('Bluetooth') }}
+                </button>
+                <a id="btnRawBtPrint" href="#" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 0.35rem; padding: 0.55rem; font-size: 0.78rem; border-radius: 10px; text-decoration: none;">
+                    <i class="fa-solid fa-mobile-screen"></i> {{ __('RawBT') }}
                 </a>
             </div>
-            <button type="button" onclick="printViaBrowser()" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.65rem; font-size: 0.85rem; border-radius: 12px;">
-                <i class="fa-solid fa-print"></i> {{ __('Print via Browser (System Dialog)') }}
-            </button>
         </div>
     </div>
 </div>
@@ -644,8 +666,39 @@ function handleWebSocketWaiterCalled(data) {
     fetchKitchenFeed(true);
 }
 
+let currentReceiptOrderId = null;
+let currentReceiptHtml = '';
 let currentReceiptText = '';
 let currentReceiptOrderNumber = '';
+let currentReceiptCustomerEmail = '';
+let currentReceiptNetworkIp = '';
+let currentReceiptNetworkPort = 9100;
+let currentReceiptNetworkEnabled = false;
+
+function switchReceiptTab(tab) {
+    const modernTab = document.getElementById('tabModernReceipt');
+    const monoTab = document.getElementById('tabMonoReceipt');
+    const htmlPreview = document.getElementById('receiptHtmlPreview');
+    const textPreview = document.getElementById('receiptTextPreview');
+
+    if (!modernTab || !monoTab || !htmlPreview || !textPreview) return;
+
+    if (tab === 'modern') {
+        modernTab.style.color = 'var(--primary)';
+        modernTab.style.borderBottomColor = 'var(--primary)';
+        monoTab.style.color = 'var(--text-muted)';
+        monoTab.style.borderBottomColor = 'transparent';
+        htmlPreview.style.display = 'block';
+        textPreview.style.display = 'none';
+    } else {
+        monoTab.style.color = 'var(--primary)';
+        monoTab.style.borderBottomColor = 'var(--primary)';
+        modernTab.style.color = 'var(--text-muted)';
+        modernTab.style.borderBottomColor = 'transparent';
+        htmlPreview.style.display = 'none';
+        textPreview.style.display = 'block';
+    }
+}
 
 async function printOrderReceipt(orderId, isAuto = false) {
     try {
@@ -662,12 +715,33 @@ async function printOrderReceipt(orderId, isAuto = false) {
         }
         const data = await res.json();
         if (data.success) {
-            currentReceiptText = data.receipt_text;
+            currentReceiptOrderId = data.order_id;
+            currentReceiptHtml = data.receipt_html || '';
+            currentReceiptText = data.receipt_text || '';
             currentReceiptOrderNumber = data.order_number;
+            currentReceiptCustomerEmail = data.customer_email || '';
+            currentReceiptNetworkIp = data.network_printer_ip || '';
+            currentReceiptNetworkPort = data.network_printer_port || 9100;
+            currentReceiptNetworkEnabled = !!data.network_printer_enabled;
 
             document.getElementById('receiptModalTitle').textContent = `${orderTranslations.receipt} #${data.order_number}`;
-            document.getElementById('receiptTextPreview').textContent = data.receipt_text;
-            document.getElementById('btnRawBtPrint').href = data.rawbt_url;
+            document.getElementById('receiptHtmlPreview').innerHTML = data.receipt_html || '';
+            document.getElementById('receiptTextPreview').textContent = data.receipt_text || '';
+            document.getElementById('btnRawBtPrint').href = data.rawbt_url || '#';
+
+            const netBtn = document.getElementById('btnNetworkPrint');
+            const netBtnText = document.getElementById('btnNetworkPrintText');
+            if (netBtn && netBtnText) {
+                if (currentReceiptNetworkIp) {
+                    netBtnText.textContent = `Տպել IP (${currentReceiptNetworkIp})`;
+                    netBtn.title = `Print directly to ${currentReceiptNetworkIp}:${currentReceiptNetworkPort}`;
+                } else {
+                    netBtnText.textContent = 'Ցանցային տպիչ (IP)';
+                    netBtn.title = 'Configure printer IP in Settings';
+                }
+            }
+
+            switchReceiptTab('modern');
             document.getElementById('thermalReceiptModal').style.display = 'flex';
 
             if (isAuto) {
@@ -685,7 +759,7 @@ function closeThermalReceiptModal() {
 }
 
 function printViaBrowser() {
-    if (!currentReceiptText) return;
+    if (!currentReceiptText && !currentReceiptHtml) return;
 
     let iframe = document.getElementById('thermal_receipt_print_frame');
     if (!iframe) {
@@ -702,25 +776,141 @@ function printViaBrowser() {
 
     try {
         const doc = iframe.contentWindow.document;
-        const safeReceipt = (currentReceiptText || '')
-            .replace(new RegExp('<', 'g'), '&lt;')
-            .replace(new RegExp('>', 'g'), '&gt;');
+        doc.open();
+        if (currentReceiptHtml) {
+            doc.write([
+                '<!DOCTYPE html>',
+                '<html>',
+                '<head>',
+                '<meta charset="utf-8">',
+                '<title>Receipt ' + (currentReceiptOrderNumber || '') + '<\/title>',
+                '<\/head>',
+                '<body style="margin: 0; padding: 0;">',
+                currentReceiptHtml,
+                '<\/body>',
+                '<\/html>'
+            ].join(''));
+        } else {
+            const safeReceipt = (currentReceiptText || '')
+                .replace(new RegExp('<', 'g'), '&lt;')
+                .replace(new RegExp('>', 'g'), '&gt;');
+            doc.write([
+                '<!DOCTYPE html>',
+                '<html>',
+                '<head>',
+                '<meta charset="utf-8">',
+                '<title>Receipt ' + (currentReceiptOrderNumber || '') + '<\/title>',
+                '<style>',
+                '@page { margin: 0; size: auto; }',
+                'body { font-family: "Courier New", Courier, monospace; font-size: 12px; line-height: 1.35; margin: 8px; padding: 0; color: #000; width: 76mm; }',
+                'pre { white-space: pre-wrap; word-break: break-word; margin: 0; font-family: inherit; }',
+                '<\/style>',
+                '<\/head>',
+                '<body>',
+                '<pre>' + safeReceipt + '<\/pre>',
+                '<\/body>',
+                '<\/html>'
+            ].join(''));
+        }
+        doc.close();
 
-        doc.write([
-            '<!DOCTYPE html>',
-            '<html>',
-            '<head>',
-            '<title>Receipt ' + (currentReceiptOrderNumber || '') + '<\/title>',
-            '<style>',
-            '@page { margin: 0; size: auto; }',
-            'body { font-family: "Courier New", Courier, monospace; font-size: 12px; line-height: 1.35; margin: 8px; padding: 0; color: #000; width: 76mm; }',
-            'pre { white-space: pre-wrap; word-break: break-word; margin: 0; font-family: inherit; }',
-            '<\/style>',
-            '<\/head>',
-            '<body>',
-            '<pre>' + safeReceipt + '<\/pre>',
-            '<\/body>',
-            '<\/html>'
+        setTimeout(() => {
+            try {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+            } catch (e) {
+                console.error('Print dialog error:', e);
+            }
+        }, 300);
+    } catch (e) {
+        console.error('Failed to prepare print iframe:', e);
+    }
+}
+
+async function printViaNetworkPrinter() {
+    if (!currentReceiptOrderId) return;
+
+    if (!currentReceiptNetworkIp) {
+        const inputIp = prompt('Մուտքագրեք ցանցային տպիչի IP հասցեն (օրինակ՝ 192.168.1.200)։ Կարող եք նաև պահպանել Կարգավորումներում:', '192.168.1.200');
+        if (!inputIp) return;
+        currentReceiptNetworkIp = inputIp.trim();
+    }
+
+    const netBtn = document.getElementById('btnNetworkPrint');
+    const originalHtml = netBtn.innerHTML;
+    netBtn.disabled = true;
+    netBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Ուղարկվում է...';
+
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        const res = await fetch(`/admin/orders/${currentReceiptOrderId}/print-network`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                ip: currentReceiptNetworkIp,
+                port: currentReceiptNetworkPort
+            })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            alert('✓ ' + (data.message || 'Կտրոնը հաջողությամբ ուղարկվեց տպիչին:'));
+        } else {
+            alert('⚠ ' + (data.message || 'Չհաջողվեց տպել ցանցային տպիչով:'));
+        }
+    } catch (e) {
+        console.error('Network print error:', e);
+        alert('Սխալ ցանցային տպիչին միանալիս: Ստուգեք IP հասցեն և ցանցը:');
+    } finally {
+        netBtn.disabled = false;
+        netBtn.innerHTML = originalHtml;
+    }
+}
+
+async function sendReceiptEmail() {
+    if (!currentReceiptOrderId) return;
+
+    const email = prompt('Մուտքագրեք հաճախորդի էլ. փոստի հասցեն՝', currentReceiptCustomerEmail || '');
+    if (!email) return;
+
+    const btn = document.getElementById('btnEmailReceipt');
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>...';
+
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        const res = await fetch(`/admin/orders/${currentReceiptOrderId}/send-email-receipt`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ email: email.trim() })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            alert('✓ ' + (data.message || 'Կտրոնը հաջողությամբ ուղարկվեց:'));
+            currentReceiptCustomerEmail = email.trim();
+        } else {
+            alert('⚠ ' + (data.message || 'Չհաջողվեց ուղարկել էլ. փոստը:'));
+        }
+    } catch (e) {
+        console.error('Email send error:', e);
+        alert('Սխալ էլ. փոստն ուղարկելիս:');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+    }
+}
         ].join(''));
         doc.close();
 

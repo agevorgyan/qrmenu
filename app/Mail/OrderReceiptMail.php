@@ -57,9 +57,13 @@ class OrderReceiptMail extends Mailable implements ShouldQueue
         }
 
         if (empty($subject)) {
-            $subject = __('Your order #:order_number has been successfully received', [
-                'order_number' => $this->order->order_number,
-            ], $targetLocale);
+            if ($targetLocale === 'bilingual') {
+                $subject = "Պատվերի կտրոն #{$this->order->order_number} • Order Receipt #{$this->order->order_number}";
+            } elseif ($targetLocale === 'en') {
+                $subject = "Order Receipt #{$this->order->order_number} - ".($this->order->vendor?->name ?? 'QRMenu');
+            } else {
+                $subject = "Պատվերի կտրոն #{$this->order->order_number} - ".($this->order->vendor?->name ?? 'QRMenu');
+            }
         }
 
         return new Envelope(

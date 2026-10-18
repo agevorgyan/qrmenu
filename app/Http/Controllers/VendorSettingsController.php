@@ -14,6 +14,7 @@ use App\Services\CustomDomainService;
 use App\Services\SecurityAuditService;
 use App\Services\TelegramNotificationService;
 use App\Services\TenantCache;
+use App\Services\ThermalPrinterService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -426,17 +427,35 @@ class VendorSettingsController extends Controller
             ];
         }
 
-        // Thermal Printer Settings
+        // Thermal Printer & Receipt Settings
         if ($request->has('thermal_printer_settings')) {
             $printerInput = $request->input('thermal_printer_settings', []);
             $vendorUpdate['thermal_printer_settings'] = [
                 'auto_print_live_orders' => ! empty($printerInput['auto_print_live_orders']),
                 'paper_width' => in_array($printerInput['paper_width'] ?? '', ['58mm', '80mm']) ? $printerInput['paper_width'] : '80mm',
+                'font_size' => in_array($printerInput['font_size'] ?? '', ['compact', 'normal', 'large']) ? $printerInput['font_size'] : 'normal',
+                'design_style' => in_array($printerInput['design_style'] ?? '', ['modern', 'classic']) ? $printerInput['design_style'] : 'modern',
+                'receipt_language' => in_array($printerInput['receipt_language'] ?? '', ['hy', 'en', 'ru', 'bilingual']) ? $printerInput['receipt_language'] : 'hy',
                 'header_title' => (string) ($printerInput['header_title'] ?? $vendor->name),
-                'footer_text' => (string) ($printerInput['footer_text'] ?? 'Thank you for your visit!'),
+                'header_subtitle' => (string) ($printerInput['header_subtitle'] ?? ''),
+                'footer_text' => (string) ($printerInput['footer_text'] ?? 'Շնորհակալություն այցելության համար!'),
+                'show_logo' => ! empty($printerInput['show_logo']),
                 'print_customer_info' => ! empty($printerInput['print_customer_info']),
+                'print_order_type' => ! empty($printerInput['print_order_type']),
+                'print_payment_details' => ! empty($printerInput['print_payment_details']),
+                'print_item_notes' => ! empty($printerInput['print_item_notes']),
                 'print_prices' => ! empty($printerInput['print_prices']),
+                'print_fee_breakdown' => ! empty($printerInput['print_fee_breakdown']),
+                'print_qr_code' => ! empty($printerInput['print_qr_code']),
                 'copies' => max(1, min(5, intval($printerInput['copies'] ?? 1))),
+                // Network / IP Printer
+                'network_printer_enabled' => ! empty($printerInput['network_printer_enabled']),
+                'network_printer_ip' => trim((string) ($printerInput['network_printer_ip'] ?? '')),
+                'network_printer_port' => intval($printerInput['network_printer_port'] ?? 9100) ?: 9100,
+                'auto_print_on_network' => ! empty($printerInput['auto_print_on_network']),
+                // Customer Email Receipt
+                'email_receipt_enabled' => ! empty($printerInput['email_receipt_enabled']),
+                'email_receipt_language' => in_array($printerInput['email_receipt_language'] ?? '', ['bilingual', 'hy', 'en']) ? $printerInput['email_receipt_language'] : 'bilingual',
             ];
         }
 
@@ -908,6 +927,29 @@ class VendorSettingsController extends Controller
         if (! empty($result['success'])) {
             app(CredentialService::class)->markVerified($vendor, 'telegram', 'bot_token');
         }
+
+        return response()->json($result);
+    }
+
+    /**
+     * Test ESC/POS Network IP Printer connection.
+     */
+    public function testPrinterConnection(Request $request, ThermalPrinterService $printerService): JsonResponse
+    {
+        $vendor = Auth::user()->vendor;
+        $this->authorize('manageSettings', $vendor);
+
+        $ip = trim((string) $request->input('ip'));
+        $port = intval($request->input('port', 9100)) ?: 9100;
+
+        if (empty($ip)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Խնդրում ենք նշել տպիչի IP հասցեն։',
+            ], 422);
+        }
+
+        $result = $printerService->sendTestPrint($ip, $port, $vendor->name);
 
         return response()->json($result);
     }

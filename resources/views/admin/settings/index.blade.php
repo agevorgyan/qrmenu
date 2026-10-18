@@ -1531,71 +1531,404 @@
                 </div>
             </div>
 
-            <!-- 6. ESC/POS THERMAL PRINTERS -->
+            <!-- 6. ESC/POS THERMAL PRINTERS & RECEIPT STUDIO -->
             <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                     <div style="display: flex; align-items: center; gap: 0.9rem;">
-                        <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
-                            <i class="fa-solid fa-print"></i>
+                        <span style="width: 44px; height: 44px; border-radius: 14px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.3)); color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);">
+                            <i class="fa-solid fa-receipt"></i>
                         </span>
                         <div>
-                            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
-                                {{ __('ESC/POS Thermal Printers (Kitchen & Bar Printers)') }}
-                            </h3>
-                            <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
-                                {{ __('Automatic order receipt printing on kitchen or bar printers via Web Bluetooth, RawBT, or PrintNode') }}
+                            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
+                                    {{ __('Կտրոնի Դիզայն և ESC/POS Ջերմային Տպիչներ') }}
+                                </h3>
+                                <span style="font-size: 0.72rem; font-weight: 700; background: rgba(99, 102, 241, 0.12); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.25); padding: 0.15rem 0.55rem; border-radius: 20px;">
+                                    Receipt Studio
+                                </span>
+                            </div>
+                            <p style="margin: 0.25rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
+                                {{ __('Կարգավորեք կտրոնի մոդեռն տեսքը, չափսերը (80մմ / 58մմ), լեզուն, տպվող տարրերը, խոհանոցի/բարի IP տպիչը և email ծանուցումները') }}
                             </p>
                         </div>
                     </div>
 
-                    <label class="switch" style="position: relative; display: inline-block; width: 48px; height: 26px;">
-                        <input type="checkbox" name="thermal_printer_settings[auto_print_live_orders]" value="1" {{ !empty($printerSettings['auto_print_live_orders']) ? 'checked' : '' }}>
-                        <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
-                    </label>
-                </div>
-
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
-                    <div>
-                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                            {{ __('Paper Width') }}
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">{{ __('Ավտոմատ տպում') }}</span>
+                        <label class="switch" style="position: relative; display: inline-block; width: 48px; height: 26px;">
+                            <input type="checkbox" name="thermal_printer_settings[auto_print_live_orders]" value="1" {{ !empty($printerSettings['auto_print_live_orders']) ? 'checked' : '' }}>
+                            <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
                         </label>
-                        <select name="thermal_printer_settings[paper_width]" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.7rem 1rem; border-radius: 12px; font-weight: 600; font-size: 0.92rem;">
-                            <option value="80mm" {{ ($printerSettings['paper_width'] ?? '80mm') === '80mm' ? 'selected' : '' }}>80 mm (Standard restaurant size)</option>
-                            <option value="58mm" {{ ($printerSettings['paper_width'] ?? '') === '58mm' ? 'selected' : '' }}>58 mm (Compact size)</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                            {{ __('Number of Printed Copies') }}
-                        </label>
-                        <input type="number" min="1" max="5" name="thermal_printer_settings[copies]" value="{{ $printerSettings['copies'] ?? 1 }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.7rem 1rem; border-radius: 12px; font-weight: 600; font-size: 0.92rem;">
-                    </div>
-
-                    <div>
-                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                            {{ __('Receipt Header') }}
-                        </label>
-                        <input type="text" name="thermal_printer_settings[header_title]" value="{{ $printerSettings['header_title'] ?? $vendor->name }}" placeholder="Restaurant name" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.7rem 1rem; border-radius: 12px; font-weight: 600; font-size: 0.92rem;">
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
-                    <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; font-weight: 600; cursor: pointer;">
-                        <input type="checkbox" name="thermal_printer_settings[print_customer_info]" value="1" {{ !empty($printerSettings['print_customer_info']) ? 'checked' : '' }} style="accent-color: var(--primary);">
-                        <span>{{ __('Include customer details (phone, address)') }}</span>
-                    </label>
-                    <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; font-weight: 600; cursor: pointer;">
-                        <input type="checkbox" name="thermal_printer_settings[print_prices]" value="1" {{ !empty($printerSettings['print_prices']) ? 'checked' : '' }} style="accent-color: var(--primary);">
-                        <span>{{ __('Print item prices and order total') }}</span>
-                    </label>
-                </div>
+                <!-- 2-COLUMN LAYOUT: SETTINGS ON LEFT, LIVE PREVIEW ON RIGHT -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 1.75rem; align-items: start;">
+                    
+                    <!-- LEFT COLUMN: CONTROLS -->
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        
+                        <!-- 1. Sizing & Typography -->
+                        <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; color: var(--text-main); font-weight: 700; font-size: 0.95rem;">
+                                <i class="fa-solid fa-sliders" style="color: #6366f1;"></i>
+                                <span>{{ __('Չափսեր, Դիզայն և Լեզու') }}</span>
+                            </div>
 
-                <div>
-                    <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                        {{ __('Receipt Footer Text') }}
-                    </label>
-                    <input type="text" name="thermal_printer_settings[footer_text]" value="{{ $printerSettings['footer_text'] ?? 'Thank you for visiting!' }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.7rem 1rem; border-radius: 12px; font-weight: 600; font-size: 0.92rem;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                                <div>
+                                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">
+                                        {{ __('Թղթի Չափս (Paper Width)') }}
+                                    </label>
+                                    <select id="receiptPaperWidthSelect" name="thermal_printer_settings[paper_width]" onchange="updateReceiptLivePreview()" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.65rem 0.9rem; border-radius: 10px; font-weight: 600; font-size: 0.88rem;">
+                                        <option value="80mm" {{ ($printerSettings['paper_width'] ?? '80mm') === '80mm' ? 'selected' : '' }}>80 mm (Ստանդարտ ռեստորանային)</option>
+                                        <option value="58mm" {{ ($printerSettings['paper_width'] ?? '') === '58mm' ? 'selected' : '' }}>58 mm (Կոմպակտ մինի)</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">
+                                        {{ __('Դիզայնի Ոճ (Design Style)') }}
+                                    </label>
+                                    <select id="receiptDesignStyleSelect" name="thermal_printer_settings[design_style]" onchange="updateReceiptLivePreview()" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.65rem 0.9rem; border-radius: 10px; font-weight: 600; font-size: 0.88rem;">
+                                        <option value="modern" {{ ($printerSettings['design_style'] ?? 'modern') === 'modern' ? 'selected' : '' }}>✨ Մոդեռն Մինիմալիստական (Modern Minimal)</option>
+                                        <option value="classic" {{ ($printerSettings['design_style'] ?? '') === 'classic' ? 'selected' : '' }}>📟 Կլասիկ ESC/POS (Monospace)</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">
+                                        {{ __('Կտրոնի Լեզու (Receipt Language)') }}
+                                    </label>
+                                    <select id="receiptLanguageSelect" name="thermal_printer_settings[receipt_language]" onchange="updateReceiptLivePreview()" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.65rem 0.9rem; border-radius: 10px; font-weight: 600; font-size: 0.88rem;">
+                                        <option value="bilingual" {{ ($printerSettings['receipt_language'] ?? 'bilingual') === 'bilingual' ? 'selected' : '' }}>🌐 Երկլեզու (Հայերեն + English)</option>
+                                        <option value="hy" {{ ($printerSettings['receipt_language'] ?? '') === 'hy' ? 'selected' : '' }}>🇦🇲 Հայերեն միայն (Armenian)</option>
+                                        <option value="en" {{ ($printerSettings['receipt_language'] ?? '') === 'en' ? 'selected' : '' }}>🇬🇧 English only</option>
+                                        <option value="ru" {{ ($printerSettings['receipt_language'] ?? '') === 'ru' ? 'selected' : '' }}>🇷🇺 Русский</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">
+                                        {{ __('Տառաչափ (Font Size)') }}
+                                    </label>
+                                    <select id="receiptFontSizeSelect" name="thermal_printer_settings[font_size]" onchange="updateReceiptLivePreview()" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.65rem 0.9rem; border-radius: 10px; font-weight: 600; font-size: 0.88rem;">
+                                        <option value="compact" {{ ($printerSettings['font_size'] ?? '') === 'compact' ? 'selected' : '' }}>Կոմպակտ / Խտացված</option>
+                                        <option value="normal" {{ ($printerSettings['font_size'] ?? 'normal') === 'normal' ? 'selected' : '' }}>Ստանդարտ (Օպտիմալ)</option>
+                                        <option value="large" {{ ($printerSettings['font_size'] ?? '') === 'large' ? 'selected' : '' }}>Խոշոր / Ընդարձակ</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Header & Footer texts -->
+                        <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; color: var(--text-main); font-weight: 700; font-size: 0.95rem;">
+                                <i class="fa-solid fa-heading" style="color: #10b981;"></i>
+                                <span>{{ __('Վերնագիր և Տողատակ (Header & Footer)') }}</span>
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; gap: 0.9rem;">
+                                <div>
+                                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem;">
+                                        {{ __('Գլխագիր Վերնագիր (Ռեստորանի անվանում)') }}
+                                    </label>
+                                    <input type="text" id="receiptHeaderTitleInput" name="thermal_printer_settings[header_title]" value="{{ $printerSettings['header_title'] ?? $vendor->name }}" oninput="updateReceiptLivePreview()" placeholder="{{ $vendor->name }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.65rem 0.9rem; border-radius: 10px; font-weight: 600; font-size: 0.88rem;">
+                                </div>
+
+                                <div>
+                                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem;">
+                                        {{ __('Ենթավերնագիր (Մասնաճյուղ, կարգախոս կամ հասցե)') }}
+                                    </label>
+                                    <input type="text" id="receiptHeaderSubtitleInput" name="thermal_printer_settings[header_subtitle]" value="{{ $printerSettings['header_subtitle'] ?? '' }}" oninput="updateReceiptLivePreview()" placeholder="օր. Կասկադ մասնաճյուղ / Cascade Branch" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.65rem 0.9rem; border-radius: 10px; font-weight: 600; font-size: 0.88rem;">
+                                </div>
+
+                                <div>
+                                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem;">
+                                        {{ __('Տողատակի Տեքստ (Footer message)') }}
+                                    </label>
+                                    <input type="text" id="receiptFooterTextInput" name="thermal_printer_settings[footer_text]" value="{{ $printerSettings['footer_text'] ?? 'Շնորհակալություն այցելության համար!' }}" oninput="updateReceiptLivePreview()" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.65rem 0.9rem; border-radius: 10px; font-weight: 600; font-size: 0.88rem;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Element Visibility Toggles -->
+                        <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-main); font-weight: 700; font-size: 0.95rem;">
+                                    <i class="fa-solid fa-eye" style="color: #f59e0b;"></i>
+                                    <span>{{ __('Ցուցադրվող Տարրեր (Show / Hide Elements)') }}</span>
+                                </div>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">{{ __('Անհատական կարգավորում') }}</span>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.85rem;">
+                                <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: var(--text-main); background: var(--bg-card); padding: 0.6rem 0.8rem; border-radius: 10px; border: 1px solid var(--border-color);">
+                                    <input type="checkbox" id="toggleShowLogo" name="thermal_printer_settings[show_logo]" value="1" onchange="updateReceiptLivePreview()" {{ !empty($printerSettings['show_logo']) ? 'checked' : '' }} style="accent-color: #6366f1; width: 17px; height: 17px;">
+                                    <span>{{ __('Ռեստորանի լոգո') }}</span>
+                                </label>
+
+                                <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: var(--text-main); background: var(--bg-card); padding: 0.6rem 0.8rem; border-radius: 10px; border: 1px solid var(--border-color);">
+                                    <input type="checkbox" id="toggleCustomerInfo" name="thermal_printer_settings[print_customer_info]" value="1" onchange="updateReceiptLivePreview()" {{ !empty($printerSettings['print_customer_info']) ? 'checked' : '' }} style="accent-color: #6366f1; width: 17px; height: 17px;">
+                                    <span>{{ __('Հաճախորդի տվյալներ') }}</span>
+                                </label>
+
+                                <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: var(--text-main); background: var(--bg-card); padding: 0.6rem 0.8rem; border-radius: 10px; border: 1px solid var(--border-color);">
+                                    <input type="checkbox" id="toggleOrderType" name="thermal_printer_settings[print_order_type]" value="1" onchange="updateReceiptLivePreview()" {{ !empty($printerSettings['print_order_type']) ? 'checked' : '' }} style="accent-color: #6366f1; width: 17px; height: 17px;">
+                                    <span>{{ __('Պատվերի տեսակ & Սեղան') }}</span>
+                                </label>
+
+                                <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: var(--text-main); background: var(--bg-card); padding: 0.6rem 0.8rem; border-radius: 10px; border: 1px solid var(--border-color);">
+                                    <input type="checkbox" id="togglePaymentDetails" name="thermal_printer_settings[print_payment_details]" value="1" onchange="updateReceiptLivePreview()" {{ !empty($printerSettings['print_payment_details']) ? 'checked' : '' }} style="accent-color: #6366f1; width: 17px; height: 17px;">
+                                    <span>{{ __('Վճարման եղանակ') }}</span>
+                                </label>
+
+                                <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: var(--text-main); background: var(--bg-card); padding: 0.6rem 0.8rem; border-radius: 10px; border: 1px solid var(--border-color);">
+                                    <input type="checkbox" id="togglePrices" name="thermal_printer_settings[print_prices]" value="1" onchange="updateReceiptLivePreview()" {{ !empty($printerSettings['print_prices']) ? 'checked' : '' }} style="accent-color: #6366f1; width: 17px; height: 17px;">
+                                    <span>{{ __('Ապրանքների գներ և ընդհանուր') }}</span>
+                                </label>
+
+                                <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: var(--text-main); background: var(--bg-card); padding: 0.6rem 0.8rem; border-radius: 10px; border: 1px solid var(--border-color);">
+                                    <input type="checkbox" id="toggleItemNotes" name="thermal_printer_settings[print_item_notes]" value="1" onchange="updateReceiptLivePreview()" {{ !empty($printerSettings['print_item_notes']) ? 'checked' : '' }} style="accent-color: #6366f1; width: 17px; height: 17px;">
+                                    <span>{{ __('Հաճախորդի նշումներ (Notes)') }}</span>
+                                </label>
+
+                                <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: var(--text-main); background: var(--bg-card); padding: 0.6rem 0.8rem; border-radius: 10px; border: 1px solid var(--border-color);">
+                                    <input type="checkbox" id="toggleFeeBreakdown" name="thermal_printer_settings[print_fee_breakdown]" value="1" onchange="updateReceiptLivePreview()" {{ !empty($printerSettings['print_fee_breakdown']) ? 'checked' : '' }} style="accent-color: #6366f1; width: 17px; height: 17px;">
+                                    <span>{{ __('Սպասարկման / Առաքման վճար') }}</span>
+                                </label>
+
+                                <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: var(--text-main); background: var(--bg-card); padding: 0.6rem 0.8rem; border-radius: 10px; border: 1px solid var(--border-color);">
+                                    <input type="checkbox" id="toggleQrCode" name="thermal_printer_settings[print_qr_code]" value="1" onchange="updateReceiptLivePreview()" {{ !empty($printerSettings['print_qr_code']) ? 'checked' : '' }} style="accent-color: #6366f1; width: 17px; height: 17px;">
+                                    <span>{{ __('Թվային կտրոնի QR կոդ') }}</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- 4. Network / IP Thermal Printer (Kitchen & Bar) -->
+                        <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(99, 102, 241, 0.08)); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 16px; padding: 1.25rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+                                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <span style="width: 32px; height: 32px; border-radius: 8px; background: rgba(59, 130, 246, 0.15); color: #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 1rem;">
+                                        <i class="fa-solid fa-network-wired"></i>
+                                    </span>
+                                    <div>
+                                        <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-main);">
+                                            {{ __('Խոհանոցի և Բարի Ցանցային Տպիչներ (IP Printer)') }}
+                                        </div>
+                                        <div style="font-size: 0.78rem; color: var(--text-muted);">
+                                            {{ __('Ուղիղ TCP Socket տպում տեղային ցանցի (Wi-Fi/LAN) ջերմային տպիչին') }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                                    <input type="checkbox" name="thermal_printer_settings[network_printer_enabled]" value="1" {{ !empty($printerSettings['network_printer_enabled']) ? 'checked' : '' }} id="networkPrinterToggle">
+                                    <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
+                                </label>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.9rem; margin-bottom: 0.9rem;">
+                                <div>
+                                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem;">
+                                        {{ __('Տպիչի IP Հասցե (IP Address)') }}
+                                    </label>
+                                    <div style="position: relative;">
+                                        <i class="fa-solid fa-server" style="position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem;"></i>
+                                        <input type="text" id="printerIpInput" name="thermal_printer_settings[network_printer_ip]" value="{{ $printerSettings['network_printer_ip'] ?? '' }}" placeholder="օր. 192.168.1.200" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.65rem 0.9rem 0.65rem 2.25rem; border-radius: 10px; font-weight: 600; font-size: 0.88rem; font-family: monospace;">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem;">
+                                        {{ __('Պորտ (Port)') }}
+                                    </label>
+                                    <input type="number" id="printerPortInput" name="thermal_printer_settings[network_printer_port]" value="{{ $printerSettings['network_printer_port'] ?? 9100 }}" placeholder="9100" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.65rem 0.9rem; border-radius: 10px; font-weight: 600; font-size: 0.88rem; font-family: monospace;">
+                                </div>
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                                <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.83rem; font-weight: 600; cursor: pointer; color: var(--text-main);">
+                                    <input type="checkbox" name="thermal_printer_settings[auto_print_on_network]" value="1" {{ !empty($printerSettings['auto_print_on_network']) ? 'checked' : '' }} style="accent-color: #3b82f6;">
+                                    <span>{{ __('Պատվեր ստանալիս ավտոմատ ուղարկել IP տպիչին') }}</span>
+                                </label>
+
+                                <button type="button" id="testPrinterBtn" onclick="testPrinterConnection()" class="btn" style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; border: none; padding: 0.55rem 1rem; border-radius: 10px; font-weight: 700; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);">
+                                    <i class="fa-solid fa-plug"></i>
+                                    <span>{{ __('Ստուգել կապը և Տպել թեստ') }}</span>
+                                </button>
+                            </div>
+
+                            <div id="printerTestResult" style="display: none; margin-top: 0.9rem; padding: 0.75rem 1rem; border-radius: 10px; font-size: 0.85rem; font-weight: 600;"></div>
+                        </div>
+
+                        <!-- 5. Automatic Email Receipt Upon Order Close -->
+                        <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(5, 150, 105, 0.08)); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 16px; padding: 1.25rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.9rem; flex-wrap: wrap; gap: 0.75rem;">
+                                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <span style="width: 32px; height: 32px; border-radius: 8px; background: rgba(16, 185, 129, 0.15); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1rem;">
+                                        <i class="fa-solid fa-paper-plane"></i>
+                                    </span>
+                                    <div>
+                                        <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-main);">
+                                            {{ __('Էլ. Փոստով Կտրոնի Ուղարկում (Email Receipts)') }}
+                                        </div>
+                                        <div style="font-size: 0.78rem; color: var(--text-muted);">
+                                            {{ __('Պատվերի փակումից հետո (Completed) կտրոնն ավտոմատ ուղարկվում է հաճախորդին') }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                                    <input type="checkbox" name="thermal_printer_settings[email_receipt_enabled]" value="1" {{ !empty($printerSettings['email_receipt_enabled']) ? 'checked' : '' }}>
+                                    <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
+                                </label>
+                            </div>
+
+                            <div>
+                                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem;">
+                                    {{ __('Էլ. Փոստի Կտրոնի Լեզու') }}
+                                </label>
+                                <select name="thermal_printer_settings[email_receipt_language]" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.65rem 0.9rem; border-radius: 10px; font-weight: 600; font-size: 0.88rem;">
+                                    <option value="bilingual" {{ ($printerSettings['email_receipt_language'] ?? 'bilingual') === 'bilingual' ? 'selected' : '' }}>🌐 Երկլեզու՝ Հայերեն և English (Խորհուրդ է տրվում)</option>
+                                    <option value="hy" {{ ($printerSettings['email_receipt_language'] ?? '') === 'hy' ? 'selected' : '' }}>🇦🇲 Հայերեն տարբերակ (Armenian only)</option>
+                                    <option value="en" {{ ($printerSettings['email_receipt_language'] ?? '') === 'en' ? 'selected' : '' }}>🇬🇧 English version only</option>
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- RIGHT COLUMN: INTERACTIVE LIVE PREVIEW -->
+                    <div style="position: sticky; top: 1.5rem; display: flex; flex-direction: column; align-items: center;">
+                        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding: 0 0.5rem;">
+                            <span style="font-size: 0.82rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                                <i class="fa-solid fa-eye" style="margin-right: 0.35rem; color: #6366f1;"></i> {{ __('Կենդանի Նախադիտում (Live Preview)') }}
+                            </span>
+                            <span id="previewWidthBadge" style="font-size: 0.75rem; font-weight: 700; background: rgba(99, 102, 241, 0.12); color: #6366f1; padding: 0.15rem 0.55rem; border-radius: 12px;">
+                                80 mm
+                            </span>
+                        </div>
+
+                        <!-- RECEIPT SLIP PAPER WRAPPER -->
+                        <div id="receiptSlipContainer" style="width: 100%; max-width: 380px; background: #ffffff; color: #111827; border-radius: 16px; box-shadow: 0 20px 45px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.06); padding: 24px 20px 28px; position: relative; transition: all 0.25s ease; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                            
+                            <!-- HEADER -->
+                            <div style="text-align: center; margin-bottom: 14px;">
+                                @if(!empty($vendor->logo))
+                                    <div id="previewLogo" style="margin-bottom: 8px; {{ empty($printerSettings['show_logo']) ? 'display: none;' : '' }}">
+                                        <img src="{{ asset('storage/' . $vendor->logo) }}" alt="Logo" style="max-height: 48px; max-width: 120px; object-fit: contain; filter: grayscale(100%) contrast(140%);">
+                                    </div>
+                                @endif
+                                <h4 id="previewTitle" style="margin: 0; font-size: 16px; font-weight: 800; color: #000; letter-spacing: -0.3px;">
+                                    {{ $printerSettings['header_title'] ?? $vendor->name }}
+                                </h4>
+                                <div id="previewSubtitle" style="font-size: 11px; color: #6b7280; margin-top: 2px;">
+                                    {{ $printerSettings['header_subtitle'] ?? 'Կասկադ մասնաճյուղ • Yerevan' }}
+                                </div>
+                            </div>
+
+                            <div style="border-top: 1px dashed #d1d5db; margin: 12px 0;"></div>
+
+                            <!-- ORDER METADATA -->
+                            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                                <span style="font-weight: 700; color: #111;">ՊԱՏՎԵՐ #ORD-1042</span>
+                                <span style="color: #6b7280;">{{ date('d.m.Y H:i') }}</span>
+                            </div>
+
+                            <div id="previewOrderTypeRow" style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; {{ empty($printerSettings['print_order_type']) ? 'display: none;' : '' }}">
+                                <span style="color: #6b7280;">Տեսակ / Սեղան:</span>
+                                <span style="font-weight: 600; color: #111;">Սրահ (Dine-in) • Սեղան #4</span>
+                            </div>
+
+                            <div id="previewCustomerRow" style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; {{ empty($printerSettings['print_customer_info']) ? 'display: none;' : '' }}">
+                                <span style="color: #6b7280;">Հաճախորդ:</span>
+                                <span style="font-weight: 600; color: #111;">Գագիկ Հովհաննիսյան (+37494112233)</span>
+                            </div>
+
+                            <div id="previewPaymentRow" style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; {{ empty($printerSettings['print_payment_details']) ? 'display: none;' : '' }}">
+                                <span style="color: #6b7280;">Վճարում:</span>
+                                <span style="font-weight: 700; color: #059669;">Կանխիկ (Վճարված)</span>
+                            </div>
+
+                            <div style="border-top: 1px dashed #d1d5db; margin: 12px 0;"></div>
+
+                            <!-- ITEMS TABLE -->
+                            <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 8px;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid #e5e7eb; color: #6b7280; font-size: 11px;">
+                                        <th style="text-align: left; padding: 4px 0; font-weight: 700;">ԱՊՐԱՆՔ</th>
+                                        <th style="text-align: center; padding: 4px 0; font-weight: 700; width: 35px;">ՔԱՆ.</th>
+                                        <th class="previewPriceCol" style="text-align: right; padding: 4px 0; font-weight: 700; {{ empty($printerSettings['print_prices']) ? 'display: none;' : '' }}">ԳԻՆ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="padding: 6px 0; font-weight: 600; color: #111;">
+                                            Truffle Burger
+                                            <div id="previewItemNotes" style="font-size: 10px; color: #d97706; margin-top: 2px; {{ empty($printerSettings['print_item_notes']) ? 'display: none;' : '' }}">
+                                                ↳ Առանց սոխ, medium rare
+                                            </div>
+                                        </td>
+                                        <td style="text-align: center; padding: 6px 0; color: #374151;">x2</td>
+                                        <td class="previewPriceCol" style="text-align: right; padding: 6px 0; font-weight: 600; color: #111; {{ empty($printerSettings['print_prices']) ? 'display: none;' : '' }}">7,000 ֏</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 6px 0; font-weight: 600; color: #111;">
+                                            Parmesan Fries
+                                        </td>
+                                        <td style="text-align: center; padding: 6px 0; color: #374151;">x1</td>
+                                        <td class="previewPriceCol" style="text-align: right; padding: 6px 0; font-weight: 600; color: #111; {{ empty($printerSettings['print_prices']) ? 'display: none;' : '' }}">1,800 ֏</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 6px 0; font-weight: 600; color: #111;">
+                                            Berry Lemonade
+                                        </td>
+                                        <td style="text-align: center; padding: 6px 0; color: #374151;">x2</td>
+                                        <td class="previewPriceCol" style="text-align: right; padding: 6px 0; font-weight: 600; color: #111; {{ empty($printerSettings['print_prices']) ? 'display: none;' : '' }}">2,400 ֏</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div style="border-top: 1px dashed #d1d5db; margin: 10px 0;"></div>
+
+                            <!-- TOTALS & FEES -->
+                            <div id="previewFeeBreakdown" style="{{ empty($printerSettings['print_fee_breakdown']) ? 'display: none;' : '' }}">
+                                <div style="display: flex; justify-content: space-between; font-size: 11px; color: #6b7280; margin-bottom: 3px;">
+                                    <span>Միջանկյալ / Subtotal:</span>
+                                    <span>11,200 ֏</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 11px; color: #6b7280; margin-bottom: 3px;">
+                                    <span>Սպասարկում / Service (10%):</span>
+                                    <span>1,120 ֏</span>
+                                </div>
+                            </div>
+
+                            <div class="previewPriceCol" style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px; padding-top: 6px; border-top: 1px solid #111; {{ empty($printerSettings['print_prices']) ? 'display: none;' : '' }}">
+                                <span style="font-size: 14px; font-weight: 800; color: #000; letter-spacing: -0.2px;">ԸՆԴԱՄԵՆԸ / TOTAL:</span>
+                                <span style="font-size: 17px; font-weight: 900; color: #000;">12,320 ֏</span>
+                            </div>
+
+                            <!-- QR CODE -->
+                            <div id="previewQrBlock" style="text-align: center; margin-top: 16px; padding-top: 12px; border-top: 1px dashed #d1d5db; {{ empty($printerSettings['print_qr_code']) ? 'display: none;' : '' }}">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=https%3A%2F%2Fqrmenu.test%2Forder%2FORD-1042" alt="QR" style="width: 80px; height: 80px; margin: 0 auto; display: block; border-radius: 6px;">
+                                <div style="font-size: 10px; color: #6b7280; margin-top: 4px;">Սկանավորեք թվային կտրոնի համար</div>
+                            </div>
+
+                            <!-- FOOTER TEXT -->
+                            <div id="previewFooter" style="text-align: center; font-size: 11px; color: #4b5563; font-style: italic; margin-top: 14px;">
+                                {{ $printerSettings['footer_text'] ?? 'Շնորհակալություն այցելության համար!' }}
+                            </div>
+
+                            <!-- ZIGZAG PAPER TEAR BOTTOM EFFECT -->
+                            <div style="position: absolute; bottom: -8px; left: 0; right: 0; height: 8px; background: radial-gradient(circle, transparent, transparent 50%, #ffffff 50%, #ffffff 100%); background-size: 12px 12px;"></div>
+                        </div>
+
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 1.25rem; text-align: center;">
+                            <i class="fa-solid fa-circle-info"></i> {{ __('Փոփոխություններն ավտոմատ արտացոլվում են նախադիտման մեջ:') }}
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -2434,5 +2767,163 @@ function setChannelDays(channel, preset) {
         }
     });
 }
+
+function updateReceiptLivePreview() {
+    const container = document.getElementById('receiptSlipContainer');
+    if (!container) return;
+
+    const widthSelect = document.getElementById('receiptPaperWidthSelect');
+    const widthBadge = document.getElementById('previewWidthBadge');
+    if (widthSelect && widthBadge) {
+        if (widthSelect.value === '58mm') {
+            container.style.maxWidth = '290px';
+            container.style.padding = '16px 14px 22px';
+            widthBadge.innerText = '58 mm';
+        } else {
+            container.style.maxWidth = '380px';
+            container.style.padding = '24px 20px 28px';
+            widthBadge.innerText = '80 mm';
+        }
+    }
+
+    const styleSelect = document.getElementById('receiptDesignStyleSelect');
+    if (styleSelect) {
+        if (styleSelect.value === 'classic') {
+            container.style.fontFamily = 'monospace, "Courier New", Courier';
+            container.style.background = '#fafafa';
+        } else {
+            container.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+            container.style.background = '#ffffff';
+        }
+    }
+
+    const titleInput = document.getElementById('receiptHeaderTitleInput');
+    const previewTitle = document.getElementById('previewTitle');
+    if (titleInput && previewTitle) {
+        previewTitle.innerText = titleInput.value.trim() || 'Restaurant Name';
+    }
+
+    const subtitleInput = document.getElementById('receiptHeaderSubtitleInput');
+    const previewSubtitle = document.getElementById('previewSubtitle');
+    if (subtitleInput && previewSubtitle) {
+        previewSubtitle.innerText = subtitleInput.value.trim();
+        previewSubtitle.style.display = subtitleInput.value.trim() ? 'block' : 'none';
+    }
+
+    const footerInput = document.getElementById('receiptFooterTextInput');
+    const previewFooter = document.getElementById('previewFooter');
+    if (footerInput && previewFooter) {
+        previewFooter.innerText = footerInput.value.trim();
+        previewFooter.style.display = footerInput.value.trim() ? 'block' : 'none';
+    }
+
+    const toggleLogo = document.getElementById('toggleShowLogo');
+    const previewLogo = document.getElementById('previewLogo');
+    if (toggleLogo && previewLogo) {
+        previewLogo.style.display = toggleLogo.checked ? 'block' : 'none';
+    }
+
+    const toggleCust = document.getElementById('toggleCustomerInfo');
+    const previewCust = document.getElementById('previewCustomerRow');
+    if (toggleCust && previewCust) {
+        previewCust.style.display = toggleCust.checked ? 'flex' : 'none';
+    }
+
+    const toggleOrdType = document.getElementById('toggleOrderType');
+    const previewOrdType = document.getElementById('previewOrderTypeRow');
+    if (toggleOrdType && previewOrdType) {
+        previewOrdType.style.display = toggleOrdType.checked ? 'flex' : 'none';
+    }
+
+    const togglePayment = document.getElementById('togglePaymentDetails');
+    const previewPayment = document.getElementById('previewPaymentRow');
+    if (togglePayment && previewPayment) {
+        previewPayment.style.display = togglePayment.checked ? 'flex' : 'none';
+    }
+
+    const togglePrices = document.getElementById('togglePrices');
+    const priceCols = document.querySelectorAll('.previewPriceCol');
+    if (togglePrices) {
+        priceCols.forEach(col => {
+            col.style.display = togglePrices.checked ? (col.tagName === 'DIV' ? 'flex' : '') : 'none';
+        });
+    }
+
+    const toggleNotes = document.getElementById('toggleItemNotes');
+    const previewNotes = document.getElementById('previewItemNotes');
+    if (toggleNotes && previewNotes) {
+        previewNotes.style.display = toggleNotes.checked ? 'block' : 'none';
+    }
+
+    const toggleFee = document.getElementById('toggleFeeBreakdown');
+    const previewFee = document.getElementById('previewFeeBreakdown');
+    if (toggleFee && previewFee) {
+        previewFee.style.display = toggleFee.checked ? 'block' : 'none';
+    }
+
+    const toggleQr = document.getElementById('toggleQrCode');
+    const previewQr = document.getElementById('previewQrBlock');
+    if (toggleQr && previewQr) {
+        previewQr.style.display = toggleQr.checked ? 'block' : 'none';
+    }
+}
+
+function testPrinterConnection() {
+    const ip = document.getElementById('printerIpInput').value.trim();
+    const port = document.getElementById('printerPortInput').value.trim() || 9100;
+    const btn = document.getElementById('testPrinterBtn');
+    const resultBox = document.getElementById('printerTestResult');
+
+    if (!ip) {
+        alert('{{ __("Խնդրում ենք նշել տպիչի IP հասցեն:") }}');
+        document.getElementById('printerIpInput').focus();
+        return;
+    }
+
+    const origHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> {{ __("Ստուգում...") }}';
+    resultBox.style.display = 'none';
+
+    fetch('{{ route("admin.settings.printer.test") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ ip: ip, port: port })
+    })
+    .then(res => res.json())
+    .then(data => {
+        resultBox.style.display = 'block';
+        if (data.success) {
+            resultBox.style.background = 'rgba(16, 185, 129, 0.12)';
+            resultBox.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+            resultBox.style.color = '#10b981';
+            resultBox.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + (data.message || '{{ __("Կապը հաջողությամբ հաստատվեց:") }}');
+        } else {
+            resultBox.style.background = 'rgba(239, 68, 68, 0.12)';
+            resultBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+            resultBox.style.color = '#ef4444';
+            resultBox.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ' + (data.message || '{{ __("Չհաջողվեց միանալ տպիչին:") }}');
+        }
+    })
+    .catch(err => {
+        resultBox.style.display = 'block';
+        resultBox.style.background = 'rgba(239, 68, 68, 0.12)';
+        resultBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+        resultBox.style.color = '#ef4444';
+        resultBox.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Սխալ: ' + err.message;
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    updateReceiptLivePreview();
+});
 </script>
 @endsection

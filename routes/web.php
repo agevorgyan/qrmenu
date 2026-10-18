@@ -380,6 +380,8 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cas
         Route::get('/orders/feed', [OrderController::class, 'feed'])->name('orders.feed');
         Route::get('/orders/{order}/receipt-text', [OrderController::class, 'receiptText'])->name('orders.receipt_text');
         Route::post('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
+        Route::post('/orders/{order}/print-network', [OrderController::class, 'printNetwork'])->name('orders.print_network');
+        Route::post('/orders/{order}/send-email-receipt', [OrderController::class, 'sendEmailReceipt'])->name('orders.send_email_receipt');
         Route::post('/waiter-calls/{waiterCall}/status', [OrderController::class, 'updateWaiterCallStatus'])->name('waiter_calls.status');
 
         // Interactive Table Floor Plan
@@ -415,6 +417,7 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cas
     Route::get('/settings', [VendorSettingsController::class, 'index'])->name('settings.index');
     Route::post('/settings', [VendorSettingsController::class, 'update'])->name('settings.update');
     Route::post('/settings/telegram/test', [VendorSettingsController::class, 'testTelegramConnection'])->name('settings.telegram.test');
+    Route::post('/settings/printer/test', [VendorSettingsController::class, 'testPrinterConnection'])->name('settings.printer.test');
     Route::post('/settings/domain/check', [VendorSettingsController::class, 'checkDomainDns'])->name('settings.domain.check');
     Route::post('/settings/domain/verify', [VendorSettingsController::class, 'verifyDomainOwnership'])->name('settings.domain.verify');
     Route::get('/settings/ai', [VendorSettingsController::class, 'aiIndex'])->name('settings.ai');
