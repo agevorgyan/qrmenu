@@ -38,16 +38,77 @@ class AdminReservationController extends Controller
         $todayStr = Carbon::now($tz)->format('Y-m-d');
 
         $status = $request->input('status');
-        $date = $request->input('date', $todayStr);
         $locationId = $request->input('location_id');
         $search = trim((string) $request->input('search'));
 
-        $query = Reservation::where('vendor_id', $vendor->id)
-            ->with(['restaurantTable', 'location', 'preOrder'])
-            ->latest('reservation_datetime');
+        // Resolve date range preset & boundaries (Requirement 3: upcoming 30 days default)
+        $datePreset = $request->input('date_preset');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
 
-        if ($date && $date !== 'all') {
-            $query->where('reservation_date', $date);
+        // Backward compatibility for single 'date' query parameter
+        if ($request->has('date') && ! $request->has('date_preset') && ! $request->has('date_from')) {
+            $legacyDate = $request->input('date');
+            if ($legacyDate === 'all') {
+                $datePreset = 'all';
+            } else {
+                $datePreset = 'custom';
+                $dateFrom = $legacyDate;
+                $dateTo = $legacyDate;
+            }
+        }
+
+        if (! $datePreset) {
+            $datePreset = 'upcoming_30';
+        }
+
+        switch ($datePreset) {
+            case 'today':
+                $dateFrom = $todayStr;
+                $dateTo = $todayStr;
+                break;
+            case 'tomorrow':
+                $dateFrom = Carbon::tomorrow($tz)->format('Y-m-d');
+                $dateTo = Carbon::tomorrow($tz)->format('Y-m-d');
+                break;
+            case 'next_7_days':
+                $dateFrom = $todayStr;
+                $dateTo = Carbon::now($tz)->addDays(7)->format('Y-m-d');
+                break;
+            case 'this_month':
+                $dateFrom = Carbon::now($tz)->startOfMonth()->format('Y-m-d');
+                $dateTo = Carbon::now($tz)->endOfMonth()->format('Y-m-d');
+                break;
+            case 'upcoming_30':
+                $dateFrom = $todayStr;
+                $dateTo = Carbon::now($tz)->addDays(30)->format('Y-m-d');
+                break;
+            case 'custom':
+                $dateFrom = $dateFrom ?: $todayStr;
+                $dateTo = $dateTo ?: Carbon::now($tz)->addDays(30)->format('Y-m-d');
+                break;
+            case 'all':
+                $dateFrom = null;
+                $dateTo = null;
+                break;
+            default:
+                $datePreset = 'upcoming_30';
+                $dateFrom = $todayStr;
+                $dateTo = Carbon::now($tz)->addDays(30)->format('Y-m-d');
+                break;
+        }
+
+        $query = Reservation::where('vendor_id', $vendor->id)
+            ->with(['restaurantTable', 'location', 'preOrder']);
+
+        if ($datePreset !== 'all') {
+            if ($dateFrom && $dateTo) {
+                $query->whereBetween('reservation_date', [$dateFrom, $dateTo]);
+            } elseif ($dateFrom) {
+                $query->where('reservation_date', '>=', $dateFrom);
+            } elseif ($dateTo) {
+                $query->where('reservation_date', '<=', $dateTo);
+            }
         }
 
         if ($status && $status !== 'all') {
@@ -68,15 +129,30 @@ class AdminReservationController extends Controller
             });
         }
 
-        $reservations = $query->paginate(20)->withQueryString();
+        // Sort upcoming reservations chronologically
+        $reservations = $query->orderBy('reservation_date', 'asc')
+            ->orderBy('reservation_time', 'asc')
+            ->orderBy('id', 'asc')
+            ->paginate(25)
+            ->withQueryString();
 
-        // Metric counts for today
+        // Metrics calculations
+        $periodQuery = Reservation::where('vendor_id', $vendor->id);
+        if ($datePreset !== 'all' && $dateFrom && $dateTo) {
+            $periodQuery->whereBetween('reservation_date', [$dateFrom, $dateTo]);
+        }
+
         $metrics = [
+            'period_bookings' => (clone $periodQuery)->count(),
             'total_today' => Reservation::where('vendor_id', $vendor->id)->where('reservation_date', $todayStr)->count(),
             'pending' => Reservation::where('vendor_id', $vendor->id)->where('status', Reservation::STATUS_PENDING)->count(),
-            'confirmed' => Reservation::where('vendor_id', $vendor->id)->where('reservation_date', $todayStr)->where('status', Reservation::STATUS_CONFIRMED)->count(),
+            'confirmed' => (clone $periodQuery)->where('status', Reservation::STATUS_CONFIRMED)->count(),
             'seated' => Reservation::where('vendor_id', $vendor->id)->where('reservation_date', $todayStr)->where('status', Reservation::STATUS_SEATED)->count(),
-            'preorders_count' => ReservationPreOrder::where('vendor_id', $vendor->id)->whereHas('reservation', fn ($q) => $q->where('reservation_date', $todayStr))->count(),
+            'preorders_count' => ReservationPreOrder::where('vendor_id', $vendor->id)->whereHas('reservation', function ($q) use ($datePreset, $dateFrom, $dateTo) {
+                if ($datePreset !== 'all' && $dateFrom && $dateTo) {
+                    $q->whereBetween('reservation_date', [$dateFrom, $dateTo]);
+                }
+            })->count(),
         ];
 
         $locations = $vendor->locations;
@@ -88,7 +164,9 @@ class AdminReservationController extends Controller
             'metrics',
             'locations',
             'tables',
-            'date',
+            'datePreset',
+            'dateFrom',
+            'dateTo',
             'status',
             'locationId',
             'search',

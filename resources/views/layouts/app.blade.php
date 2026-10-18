@@ -587,7 +587,7 @@
             margin-bottom: 0.4rem;
         }
 
-        .form-input, .form-select, .form-textarea {
+        .form-input, .form-select, .form-textarea, .form-control {
             width: 100%;
             background: var(--input-bg);
             color: var(--text-main);
@@ -596,18 +596,72 @@
             border-radius: 12px;
             font-size: 0.875rem;
             outline: none;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
             box-sizing: border-box;
+            font-family: inherit;
         }
 
-        .form-input:focus, .form-select:focus, .form-textarea:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-glow);
+        .form-input:focus, .form-select:focus, .form-textarea:focus, .form-control:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px var(--primary-glow) !important;
+            background: var(--bg-card);
         }
 
-        .form-select option {
+        select.form-control, .form-select {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1rem;
+            padding-right: 2.25rem;
+            cursor: pointer;
+        }
+
+        .form-select option, select.form-control option {
             background: var(--bg-card);
             color: var(--text-main);
+        }
+
+        /* Modern iOS-style toggle switches */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 26px;
+            flex-shrink: 0;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute;
+        }
+        .slider.round {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background-color: var(--border-color, #cbd5e1);
+            transition: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            border-radius: 34px;
+        }
+        .slider.round:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .switch input:checked + .slider.round {
+            background-color: var(--primary, #2563eb);
+        }
+        .switch input:checked + .slider.round:before {
+            transform: translateX(22px);
         }
 
         /* Responsive Data Tables */

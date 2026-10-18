@@ -25,9 +25,17 @@ class AdminTableController extends Controller
     public function index(Request $request): View
     {
         $vendor = Auth::user()->vendor;
+        $adminLocale = session('admin_locale') ?: ($vendor->admin_locale ?: 'hy');
+        app()->setLocale($adminLocale);
+
         $this->availabilityService->ensureTablesExistForVendor($vendor);
 
-        $locationId = $request->input('location_id');
+        if ($request->has('location_id')) {
+            $locationId = $request->input('location_id');
+        } else {
+            $locationId = session('active_location_id', $vendor->locations->first()?->id);
+        }
+
         $section = $request->input('section');
 
         $query = RestaurantTable::where('vendor_id', $vendor->id)
@@ -37,7 +45,7 @@ class AdminTableController extends Controller
             ->orderBy('sort_order')
             ->orderBy('table_number');
 
-        if ($locationId) {
+        if ($locationId !== null && $locationId !== '') {
             $query->where('location_id', (int) $locationId);
         }
 

@@ -267,6 +267,10 @@ class ReservationAvailabilityService
      */
     public function ensureTablesExistForVendor(Vendor $vendor, ?Location $location = null): void
     {
+        if (! $location && $vendor->locations()->exists()) {
+            $location = $vendor->locations()->first();
+        }
+
         $hasTables = RestaurantTable::withoutGlobalScopes()
             ->where('vendor_id', $vendor->id)
             ->when($location, fn ($q) => $q->where('location_id', $location->id))

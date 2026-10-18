@@ -32,6 +32,9 @@ class ReservationNotificationController extends Controller
         $vendor = Auth::user()->vendor;
         $this->authorize('viewSettings', $vendor);
 
+        $adminLocale = session('admin_locale') ?: ($vendor->admin_locale ?: 'hy');
+        app()->setLocale($adminLocale);
+
         $settings = $vendor->reservation_notification_settings;
         $restrictions = $vendor->superadmin_notification_restrictions;
 

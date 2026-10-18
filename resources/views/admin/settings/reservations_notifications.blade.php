@@ -102,9 +102,9 @@
                         </div>
                     </div>
 
-                    <label class="switch" style="position: relative; display: inline-block; width: 48px; height: 26px;">
+                    <label class="switch">
                         <input type="checkbox" name="customer_notifications_enabled" value="1" {{ ($settings['customer_notifications_enabled'] ?? true) ? 'checked' : '' }} id="customerNotifyToggle" onchange="toggleContainer('customerContainer', this.checked)">
-                        <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
+                        <span class="slider round"></span>
                     </label>
                 </div>
 
@@ -122,8 +122,8 @@
                             <label style="display: flex; align-items: flex-start; gap: 0.75rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.85rem; cursor: pointer; transition: border-color 0.2s;">
                                 <input type="checkbox" name="customer_events[]" value="{{ $eventKey }}" {{ $isChecked ? 'checked' : '' }} style="margin-top: 0.25rem; accent-color: var(--primary);">
                                 <div style="min-width: 0;">
-                                    <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">{{ $meta['name'] }}</div>
-                                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem;">{{ $meta['desc'] }}</div>
+                                    <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">{{ __($meta['name']) }}</div>
+                                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem;">{{ __($meta['desc']) }}</div>
                                 </div>
                             </label>
                         @endforeach
@@ -138,9 +138,9 @@
                                     {{ __('Automatic Customer Arrival Reminders') }}
                                 </span>
                             </div>
-                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                            <label class="switch">
                                 <input type="checkbox" name="customer_reminder_enabled" value="1" {{ ($settings['customer_reminder_enabled'] ?? true) ? 'checked' : '' }}>
-                                <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
+                                <span class="slider round"></span>
                             </label>
                         </div>
 
@@ -183,9 +183,9 @@
                         </div>
                     </div>
 
-                    <label class="switch" style="position: relative; display: inline-block; width: 48px; height: 26px;">
+                    <label class="switch">
                         <input type="checkbox" name="restaurant_notifications_enabled" value="1" {{ ($settings['restaurant_notifications_enabled'] ?? true) ? 'checked' : '' }} id="restaurantNotifyToggle" onchange="toggleContainer('restaurantContainer', this.checked)">
-                        <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
+                        <span class="slider round"></span>
                     </label>
                 </div>
 
@@ -214,8 +214,8 @@
                             <label style="display: flex; align-items: flex-start; gap: 0.75rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.85rem; cursor: pointer; transition: border-color 0.2s;">
                                 <input type="checkbox" name="restaurant_events[]" value="{{ $eventKey }}" {{ $isChecked ? 'checked' : '' }} style="margin-top: 0.25rem; accent-color: var(--primary);">
                                 <div style="min-width: 0;">
-                                    <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">{{ $meta['name'] }}</div>
-                                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem;">{{ $meta['desc'] }}</div>
+                                    <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">{{ __($meta['name']) }}</div>
+                                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem;">{{ __($meta['desc']) }}</div>
                                 </div>
                             </label>
                         @endforeach
@@ -230,9 +230,9 @@
                                     {{ __('Staff Shift Arrival Reminders') }}
                                 </span>
                             </div>
-                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                            <label class="switch">
                                 <input type="checkbox" name="restaurant_reminder_enabled" value="1" {{ ($settings['restaurant_reminder_enabled'] ?? true) ? 'checked' : '' }}>
-                                <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
+                                <span class="slider round"></span>
                             </label>
                         </div>
 
