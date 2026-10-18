@@ -1664,6 +1664,11 @@ class Vendor extends Model
         }
     }
 
+    public function canUseFeature(string $feature): bool
+    {
+        return $this->hasFeature($feature);
+    }
+
     /**
      * Custom domains associated with this vendor.
      */
