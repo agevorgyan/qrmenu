@@ -132,7 +132,7 @@
                 </div>
 
                 <!-- Fees Breakdown (Service Fee or Delivery Fee) -->
-                <template x-if="getActiveOrderServiceFee() > 0 || getActiveOrderDeliveryFee() > 0 || activeOrder?.type === 'delivery'">
+                <template x-if="getActiveOrderServiceFee() > 0 || getActiveOrderDeliveryFee() > 0 || (activeOrder?.type || activeOrder?.order_type) === 'delivery'">
                     <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-color); font-size: 0.85rem;">
                         <div style="display: flex; justify-content: space-between; align-items: center; color: var(--text-muted);">
                             <span>{{ __('menu.subtotal') }}</span>
@@ -147,7 +147,7 @@
                                 <span style="font-family: 'Outfit'; font-weight: 700; color: #10b981;" x-text="'+' + Number(getActiveOrderServiceFee()).toLocaleString() + ' ' + (activeOrder?.currency || '{{ $vendor->currency }}')"></span>
                             </div>
                         </template>
-                        <template x-if="activeOrder?.type === 'delivery' || getActiveOrderDeliveryFee() > 0">
+                        <template x-if="(activeOrder?.type || activeOrder?.order_type) === 'delivery' || getActiveOrderDeliveryFee() > 0">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <span style="color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
                                     <i class="fa-solid fa-motorcycle" style="color: #3b82f6; font-size: 0.8rem;"></i>

@@ -202,6 +202,8 @@ class OrderTrackerTest extends TestCase
                 'success',
                 'order_number',
                 'order_id',
+                'type',
+                'table_number',
                 'status',
                 'status_label',
                 'subtotal',

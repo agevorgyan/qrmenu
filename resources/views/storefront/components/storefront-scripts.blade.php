@@ -125,7 +125,7 @@
 </script>
 
 <!-- External Cached Storefront Engine -->
-<script src="{{ asset('js/storefront.js') }}"></script>
+<script src="{{ asset('js/storefront.js') }}?v={{ file_exists(public_path('js/storefront.js')) ? filemtime(public_path('js/storefront.js')) : time() }}"></script>
 
 <!-- Automated test compatibility signatures & Directives -->
 <script>

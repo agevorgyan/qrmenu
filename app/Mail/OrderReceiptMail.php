@@ -40,7 +40,7 @@ class OrderReceiptMail extends Mailable implements ShouldQueue
             : ($this->order->type === 'delivery' ? __('Delivery', [], $targetLocale) : __('Takeaway', [], $targetLocale));
 
         $subject = null;
-        if (app()->bound(EmailTemplateService::class)) {
+        try {
             $tpl = app(EmailTemplateService::class)->render('order_receipt', [
                 'customer_name' => $this->order->customer_name ?? __('Customer', [], $targetLocale),
                 'vendor_name' => $this->order->vendor?->name ?? 'QRMenu',
@@ -54,6 +54,8 @@ class OrderReceiptMail extends Mailable implements ShouldQueue
             if (! empty($tpl['subject'])) {
                 $subject = $tpl['subject'];
             }
+        } catch (\Throwable $e) {
+            // Fall back to default
         }
 
         if (empty($subject)) {

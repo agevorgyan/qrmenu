@@ -895,6 +895,8 @@
                                 id: data.order_id || this.activeOrder.id,
                                 tracking_token: data.tracking_token || this.activeOrder.tracking_token,
                                 order_number: data.order_number,
+                                type: data.type || this.activeOrder.type || this.orderType,
+                                order_type: data.type || this.activeOrder.order_type || this.orderType,
                                 status: data.status || this.activeOrder.status,
                                 status_label: data.status_label || this.activeOrder.status_label,
                                 subtotal: data.subtotal !== undefined ? Number(data.subtotal) : this.activeOrder.subtotal,
@@ -918,7 +920,8 @@
                                 service_fee: Number(data.service_fee ?? (this.calculatedServiceFee || 0)),
                                 delivery_fee: Number(data.delivery_fee ?? (this.calculatedDeliveryFee || 0)),
                                 total_amount: data.total_amount,
-                                order_type: this.orderType,
+                                type: data.type || this.orderType,
+                                order_type: data.type || this.orderType,
                                 delivery_address: this.orderType === 'delivery' ? this.deliveryAddress : null,
                                 table_number: this.orderType === 'delivery' ? (translations.delivery || 'Առաքում') : (this.orderType === 'takeaway' ? (translations.takeaway || 'Առհանում') : (this.tableNumber || 'Սեղան')),
                                 currency: this.currency,
@@ -1174,7 +1177,8 @@
                 if (this.activeOrder.service_fee !== undefined && Number(this.activeOrder.service_fee) > 0) {
                     return Number(this.activeOrder.service_fee);
                 }
-                if (this.activeOrder.type !== 'delivery' && this.activeOrder.items && this.activeOrder.total_amount) {
+                const orderType = this.activeOrder.type || this.activeOrder.order_type;
+                if (orderType !== 'delivery' && this.activeOrder.items && this.activeOrder.total_amount) {
                     const itemsSum = this.activeOrder.items.reduce((sum, item) => sum + Number(item.subtotal || (item.price * item.quantity)), 0);
                     if (Number(this.activeOrder.total_amount) > itemsSum) {
                         return Number(this.activeOrder.total_amount) - itemsSum;
@@ -1185,13 +1189,19 @@
 
             getActiveOrderDeliveryFee() {
                 if (!this.activeOrder) return 0;
-                if (this.activeOrder.delivery_fee !== undefined) {
+                if (this.activeOrder.delivery_fee !== undefined && Number(this.activeOrder.delivery_fee) > 0) {
                     return Number(this.activeOrder.delivery_fee);
                 }
-                if (this.activeOrder.type === 'delivery' && this.activeOrder.items && this.activeOrder.total_amount) {
-                    const itemsSum = this.activeOrder.items.reduce((sum, item) => sum + Number(item.subtotal || (item.price * item.quantity)), 0);
-                    if (Number(this.activeOrder.total_amount) > itemsSum) {
-                        return Number(this.activeOrder.total_amount) - itemsSum;
+                const orderType = this.activeOrder.type || this.activeOrder.order_type;
+                if (orderType === 'delivery') {
+                    if (this.activeOrder.delivery_fee !== undefined) {
+                        return Number(this.activeOrder.delivery_fee);
+                    }
+                    if (this.activeOrder.items && this.activeOrder.total_amount) {
+                        const itemsSum = this.activeOrder.items.reduce((sum, item) => sum + Number(item.subtotal || (item.price * item.quantity)), 0);
+                        if (Number(this.activeOrder.total_amount) > itemsSum) {
+                            return Number(this.activeOrder.total_amount) - itemsSum;
+                        }
                     }
                 }
                 return 0;
@@ -1219,8 +1229,9 @@
                     this.saveActiveOrderToStorage();
                 }
 
+                const timeoutMs = 60 * 1000;
                 const elapsed = Date.now() - completedAt;
-                const remaining = (10 * 60 * 1000) - elapsed;
+                const remaining = timeoutMs - elapsed;
 
                 if (remaining <= 0) {
                     this.activeOrder = null;

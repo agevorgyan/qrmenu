@@ -39,6 +39,23 @@
         $totalLabel = 'Total Amount';
         $viewOnlineBtn = 'View Digital Receipt';
         $thanksLabel = 'Thank you for your visit!';
+    } elseif ($targetLocale === 'ru') {
+        $orderTypeLabel = match ($order->type) {
+            'dine_in' => 'В зале (Dine-in)' . ($order->table_number ? ' • Стол #' . $order->table_number : ''),
+            'takeaway' => 'На вынос (Takeaway)',
+            'delivery' => 'Доставка (Delivery)',
+            default => strtoupper($order->type),
+        };
+        $statusLabel = ($order->payment_status === 'paid') ? 'Оплачено' : 'Не оплачено';
+        $titleLabel = 'Чек заказа';
+        $itemsHeader = 'Заказанные блюда';
+        $subtotalLabel = 'Подытог';
+        $serviceLabel = 'Сервисный сбор';
+        $deliveryLabel = 'Доставка';
+        $discountLabel = 'Скидка';
+        $totalLabel = 'Итого';
+        $viewOnlineBtn = 'Посмотреть электронный чек';
+        $thanksLabel = 'Спасибо за ваш визит!';
     } else {
         $orderTypeLabel = match ($order->type) {
             'dine_in' => 'Սրահում (Dine-in)' . ($order->table_number ? ' • Սեղան #' . $order->table_number : ''),

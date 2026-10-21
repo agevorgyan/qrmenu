@@ -143,7 +143,7 @@ class LocalizedEmailTest extends TestCase
         // Armenian
         $mailHy = new OrderReceiptMail($order, 'hy');
         $this->assertStringContainsString('հաջողությամբ ընդունվել է', $mailHy->envelope()->subject);
-        $this->assertStringContainsString('Պատվերն ընդունված է', $mailHy->render());
+        $this->assertStringContainsString('Պատվերի կտրոն', $mailHy->render());
 
         // English
         $mailEn = new OrderReceiptMail($order, 'en');
