@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Services\Security\SsrfProtectionService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -846,6 +847,8 @@ class MenuExtractorService
             throw new \InvalidArgumentException('Անվավեր URL հասցե: Խնդրում ենք տրամադրել լիարժեք հասցե (օր. https://example.com/menu)');
         }
 
+        app(SsrfProtectionService::class)->assertSafeUrl($url, 'Menu extraction URL');
+
         $visited = [];
         $toVisit = [$url];
         $allCategories = [];
@@ -863,6 +866,8 @@ class MenuExtractorService
             $visited[$currentUrl] = true;
 
             try {
+                app(SsrfProtectionService::class)->assertSafeUrl($currentUrl, 'Crawl URL');
+
                 $response = Http::timeout(15)
                     ->withHeaders([
                         'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',

@@ -30,7 +30,7 @@ class StripeGateway implements PaymentGatewayInterface
     {
         $vendor = $attempt->vendor;
         $settings = $vendor->getPaymentSettings()['gateways']['stripe'] ?? [];
-        $secretKey = $settings['secret_key'] ?? config('services.stripe.secret');
+        $secretKey = ! empty($settings['secret_key']) ? $settings['secret_key'] : config('services.stripe.secret');
 
         // Build checkout redirect URL or fallback to internal checkout URL
         $returnUrl = route('client.payment.callback', [
@@ -125,7 +125,7 @@ class StripeGateway implements PaymentGatewayInterface
 
         $vendor = $attempt->vendor;
         $settings = $vendor->getPaymentSettings()['gateways']['stripe'] ?? [];
-        $secretKey = $settings['secret_key'] ?? config('services.stripe.secret');
+        $secretKey = ! empty($settings['secret_key']) ? $settings['secret_key'] : config('services.stripe.secret');
 
         if (empty($secretKey)) {
             return PaymentVerificationResult::pending(

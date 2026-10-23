@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Vendor;
+use App\Services\Security\SsrfProtectionService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -537,6 +538,10 @@ class AiGatewayService
 
     private function callOpenAiCompatibleText(string $provider, string $apiKey, string $model, string $prompt, ?string $baseUrl, int $timeout): string
     {
+        if (! empty($baseUrl)) {
+            app(SsrfProtectionService::class)->assertSafeUrl($baseUrl, 'Custom AI Base URL');
+        }
+
         $defaultUrl = self::PROVIDERS[$provider]['default_base_url'] ?? 'https://api.openai.com/v1';
         $url = rtrim($baseUrl ?: $defaultUrl, '/').'/chat/completions';
 

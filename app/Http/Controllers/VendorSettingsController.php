@@ -11,6 +11,7 @@ use App\Models\Vendor;
 use App\Services\AiGatewayService;
 use App\Services\CredentialService;
 use App\Services\CustomDomainService;
+use App\Services\Security\SsrfProtectionService;
 use App\Services\SecurityAuditService;
 use App\Services\TelegramNotificationService;
 use App\Services\TenantCache;
@@ -651,6 +652,13 @@ class VendorSettingsController extends Controller
             'ai_base_url' => 'nullable|string|max:500',
         ]);
 
+        if (! empty($validated['ai_base_url'])) {
+            $ssrf = app(SsrfProtectionService::class);
+            if (! $ssrf->isSafeUrl($validated['ai_base_url'])) {
+                return back()->withErrors(['ai_base_url' => __('Prohibited or unsafe AI base URL destination (SSRF protection).')])->withInput();
+            }
+        }
+
         $aiModel = $validated['ai_model'] ?? null;
         if ($aiModel === 'custom' || empty($aiModel)) {
             $aiModel = ! empty($validated['custom_model']) ? trim((string) $validated['custom_model']) : ($aiModel ?: null);
@@ -752,6 +760,16 @@ class VendorSettingsController extends Controller
         }
 
         $baseUrl = $request->input('ai_base_url') ?: ($vendor->ai_settings['base_url'] ?? null);
+
+        if (! empty($baseUrl)) {
+            $ssrf = app(SsrfProtectionService::class);
+            if (! $ssrf->isSafeUrl($baseUrl)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'SSRF Security Error: Prohibited or unsafe AI base URL destination.',
+                ], 422);
+            }
+        }
 
         $result = $gateway->testConnection(
             provider: $provider,
