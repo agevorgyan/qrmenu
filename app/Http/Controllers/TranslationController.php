@@ -25,6 +25,8 @@ class TranslationController extends Controller
 
     public function index(Request $request): View
     {
+        $this->authorize('viewAny', ContentTranslation::class);
+
         $user = Auth::user();
         $vendor = $user->vendor;
         abort_unless($vendor, 404, 'Vendor not found.');
@@ -112,8 +114,7 @@ class TranslationController extends Controller
 
     public function edit(ContentTranslation $translation): View
     {
-        $user = Auth::user();
-        abort_unless((int) $user->vendor_id === (int) $translation->vendor_id, 403, 'Unauthorized.');
+        $this->authorize('view', $translation);
 
         $translation->load(['translatable', 'reviewer', 'histories.creator']);
 
@@ -122,10 +123,17 @@ class TranslationController extends Controller
 
     public function handleAction(Request $request, ContentTranslation $translation): RedirectResponse
     {
-        $user = Auth::user();
-        abort_unless((int) $user->vendor_id === (int) $translation->vendor_id, 403, 'Unauthorized.');
-
         $action = $request->input('action');
+
+        if ($action === 'publish') {
+            $this->authorize('publish', $translation);
+        } elseif ($action === 'approve') {
+            $this->authorize('approve', $translation);
+        } else {
+            $this->authorize('update', $translation);
+        }
+
+        $user = Auth::user();
 
         try {
             switch ($action) {
@@ -196,8 +204,9 @@ class TranslationController extends Controller
 
     public function restore(Request $request, ContentTranslation $translation, int $historyId): RedirectResponse
     {
+        $this->authorize('update', $translation);
+
         $user = Auth::user();
-        abort_unless((int) $user->vendor_id === (int) $translation->vendor_id, 403, 'Unauthorized.');
 
         try {
             $this->translationService->restoreVersion($translation, $historyId, $user);
@@ -211,6 +220,8 @@ class TranslationController extends Controller
 
     public function batchAiTranslate(Request $request): RedirectResponse
     {
+        $this->authorize('create', ContentTranslation::class);
+
         $user = Auth::user();
         $vendor = $user->vendor;
         abort_unless($vendor, 404, 'Vendor not found.');
@@ -301,6 +312,8 @@ class TranslationController extends Controller
     public function glossaryIndex(Request $request): View
     {
         $user = Auth::user();
+        abort_unless($user->can('translations.view'), 403, 'Unauthorized access.');
+
         $vendor = $user->vendor;
         abort_unless($vendor, 404, 'Vendor not found.');
 
@@ -314,6 +327,8 @@ class TranslationController extends Controller
     public function glossaryStore(Request $request): RedirectResponse
     {
         $user = Auth::user();
+        abort_unless($user->can('translations.manage'), 403, 'Unauthorized access.');
+
         $vendor = $user->vendor;
         abort_unless($vendor, 404, 'Vendor not found.');
 
@@ -342,6 +357,7 @@ class TranslationController extends Controller
     {
         $user = Auth::user();
         abort_unless((int) $user->vendor_id === (int) $glossary->vendor_id, 403, 'Unauthorized.');
+        abort_unless($user->can('translations.manage'), 403, 'Unauthorized access.');
 
         $glossary->delete();
 

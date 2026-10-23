@@ -260,7 +260,7 @@ self.addEventListener('fetch', event => {
 
     public function submitOrder(SubmitOrderRequest $request, string $vendor_slug, CreateOrderAction $createOrderAction, PaymentGatewayService $paymentService)
     {
-        $vendor = Vendor::where('slug', $vendor_slug)->firstOrFail();
+        $vendor = Vendor::where('slug', $vendor_slug)->where('is_active', true)->firstOrFail();
 
         if (! $vendor->hasFeature('orders')) {
             return response()->json([

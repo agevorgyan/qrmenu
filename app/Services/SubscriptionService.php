@@ -482,7 +482,10 @@ class SubscriptionService
         $vendor->subscription_expires_at = $subscription->current_period_end;
         $vendor->grace_ends_at = $subscription->grace_ends_at;
         $vendor->cancelled_at = $subscription->cancelled_at;
-        if ($vendor->is_active || $vendor->email_verified_at !== null) {
+        $isEmailVerified = $vendor->email_verified_at !== null
+            || $vendor->users()->whereNotNull('email_verified_at')->exists();
+
+        if ($vendor->is_active || $isEmailVerified) {
             $vendor->is_active = $subscription->allowsAccess();
         }
 

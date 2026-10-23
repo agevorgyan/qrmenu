@@ -222,6 +222,8 @@ class AdminTableController extends Controller
      */
     public function syncFloorPlan(): RedirectResponse
     {
+        $this->authorize('create', RestaurantTable::class);
+
         $vendor = Auth::user()->vendor;
         $this->availabilityService->ensureTablesExistForVendor($vendor);
 
