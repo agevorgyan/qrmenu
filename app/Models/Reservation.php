@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToVendor;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -45,7 +46,7 @@ use Illuminate\Support\Str;
  */
 class Reservation extends Model
 {
-    use HasFactory, SoftDeletes;
+    use BelongsToVendor, HasFactory, SoftDeletes;
 
     protected $table = 'reservations';
 
@@ -136,11 +137,6 @@ class Reservation extends Model
                 $reservation->resetFutureReminders();
             }
         });
-    }
-
-    public function vendor(): BelongsTo
-    {
-        return $this->belongsTo(Vendor::class, 'vendor_id');
     }
 
     public function location(): BelongsTo

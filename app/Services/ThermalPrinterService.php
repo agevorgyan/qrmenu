@@ -539,6 +539,15 @@ class ThermalPrinterService
 
         $port = ($port > 0) ? $port : 9100;
 
+        if (! $this->isSafePrinterAddress($ip, $port)) {
+            Log::warning("Blocked unsafe printer connection attempt to {$ip}:{$port}");
+
+            return [
+                'success' => false,
+                'message' => 'Անվտանգության նկատառումներով նշված IP հասցեն կամ դարպասը (port) արգելափակված է։',
+            ];
+        }
+
         // Open socket connection with 3.5s timeout
         $socket = @fsockopen($ip, $port, $errno, $errstr, 3.5);
         if (! $socket) {
@@ -648,6 +657,66 @@ class ThermalPrinterService
         $rightSpaces = $spaceCount - $leftSpaces;
 
         return $name.str_repeat(' ', $leftSpaces).$qty.str_repeat(' ', $rightSpaces).$price;
+    }
+
+    /**
+     * Validate printer IP and port to prevent SSRF against loopback, metadata, and sensitive services.
+     */
+    public function isSafePrinterAddress(string $ip, int $port): bool
+    {
+        $ip = trim($ip);
+
+        // Disallow hostname strings to prevent DNS rebinding SSRF; enforce strict IP format
+        if (! filter_var($ip, FILTER_VALIDATE_IP)) {
+            return false;
+        }
+
+        // Block IPv4 loopback (127.0.0.0/8) & IPv6 loopback (::1)
+        if ($ip === '127.0.0.1' || $ip === '::1' || str_starts_with($ip, '127.')) {
+            return false;
+        }
+
+        // Block unspecified addresses
+        if ($ip === '0.0.0.0' || $ip === '::') {
+            return false;
+        }
+
+        // Block link-local addresses & cloud metadata service (169.254.0.0/16, fe80::)
+        if (str_starts_with($ip, '169.254.') || str_starts_with(strtolower($ip), 'fe80:')) {
+            return false;
+        }
+
+        // Block broadcast / reserved ranges
+        if (! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_RES_RANGE)) {
+            return false;
+        }
+
+        // Validate port range
+        if ($port < 1 || $port > 65535) {
+            return false;
+        }
+
+        // Block sensitive application and infrastructure service ports
+        $blockedPorts = [
+            21,    // FTP
+            22,    // SSH
+            23,    // Telnet
+            25,    // SMTP
+            80,    // HTTP
+            443,   // HTTPS
+            11211, // Memcached
+            3306,  // MySQL
+            5432,  // PostgreSQL
+            6379,  // Redis
+            27017, // MongoDB
+            8080,  // Alternate HTTP
+        ];
+
+        if (in_array($port, $blockedPorts, true)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

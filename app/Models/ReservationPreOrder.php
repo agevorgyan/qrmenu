@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToVendor;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,7 +29,7 @@ use Illuminate\Support\Str;
  */
 class ReservationPreOrder extends Model
 {
-    use HasFactory;
+    use BelongsToVendor, HasFactory;
 
     protected $table = 'reservation_pre_orders';
 
@@ -81,11 +82,6 @@ class ReservationPreOrder extends Model
     public function reservation(): BelongsTo
     {
         return $this->belongsTo(Reservation::class, 'reservation_id');
-    }
-
-    public function vendor(): BelongsTo
-    {
-        return $this->belongsTo(Vendor::class, 'vendor_id');
     }
 
     /**

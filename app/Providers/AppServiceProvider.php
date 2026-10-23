@@ -16,6 +16,9 @@ use App\Models\Location;
 use App\Models\LocationProductOverride;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Reservation;
+use App\Models\ReservationPreOrder;
+use App\Models\RestaurantTable;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Models\VendorStorageFile;
@@ -28,6 +31,9 @@ use App\Policies\LocationPolicy;
 use App\Policies\LocationProductOverridePolicy;
 use App\Policies\OrderPolicy;
 use App\Policies\ProductPolicy;
+use App\Policies\ReservationPolicy;
+use App\Policies\ReservationPreOrderPolicy;
+use App\Policies\RestaurantTablePolicy;
 use App\Policies\UserPolicy;
 use App\Policies\VendorPolicy;
 use App\Policies\VendorStorageFilePolicy;
@@ -126,6 +132,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(VendorStorageFile::class, VendorStorageFilePolicy::class);
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(ContentTranslation::class, ContentTranslationPolicy::class);
+        Gate::policy(Reservation::class, ReservationPolicy::class);
+        Gate::policy(RestaurantTable::class, RestaurantTablePolicy::class);
+        Gate::policy(ReservationPreOrder::class, ReservationPreOrderPolicy::class);
 
         // Register Gates for all granular permissions
         foreach (Permission::all() as $permission) {
