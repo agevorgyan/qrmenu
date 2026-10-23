@@ -243,8 +243,19 @@ class CustomerController extends Controller
                 'Notes',
             ]);
 
+            $sanitize = static function (mixed $value): mixed {
+                if (! is_string($value) || $value === '') {
+                    return $value;
+                }
+                if (in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+                    return "'".$value;
+                }
+
+                return $value;
+            };
+
             foreach ($customers as $c) {
-                fputcsv($file, [
+                $row = [
                     $c->id,
                     $c->location?->name ?? 'All Branches',
                     $c->name ?? 'Guest',
@@ -258,7 +269,9 @@ class CustomerController extends Controller
                     $c->last_order_at ? $c->last_order_at->format('Y-m-d H:i') : '-',
                     $c->created_at->format('Y-m-d H:i'),
                     $c->notes ?? '',
-                ]);
+                ];
+
+                fputcsv($file, array_map($sanitize, $row));
             }
 
             fclose($file);

@@ -30,6 +30,8 @@ class AdminReservationController extends Controller
         $user = Auth::user();
         $vendor = $user->vendor;
 
+        $this->authorize('viewAny', Reservation::class);
+
         // Admin interface strictly uses the restaurant administration language
         $adminLocale = session('admin_locale') ?: ($vendor->admin_locale ?: 'hy');
         app()->setLocale($adminLocale);
@@ -179,6 +181,8 @@ class AdminReservationController extends Controller
      */
     public function show(Reservation $reservation): JsonResponse
     {
+        $this->authorize('view', $reservation);
+
         $vendor = Auth::user()->vendor;
         if ((int) $reservation->vendor_id !== (int) $vendor->id) {
             abort(403, 'Unauthorized cross-vendor reservation access.');
@@ -225,6 +229,8 @@ class AdminReservationController extends Controller
      */
     public function updateStatus(Request $request, Reservation $reservation): JsonResponse|RedirectResponse
     {
+        $this->authorize('update', $reservation);
+
         $vendor = Auth::user()->vendor;
         if ((int) $reservation->vendor_id !== (int) $vendor->id) {
             abort(403, 'Unauthorized cross-vendor reservation access.');
@@ -304,6 +310,7 @@ class AdminReservationController extends Controller
     public function settingsIndex(): View
     {
         $vendor = Auth::user()->vendor;
+        $this->authorize('manageSettings', $vendor);
         $adminLocale = session('admin_locale') ?: ($vendor->admin_locale ?: 'hy');
         app()->setLocale($adminLocale);
 
@@ -330,6 +337,7 @@ class AdminReservationController extends Controller
     public function updateSettings(Request $request): RedirectResponse
     {
         $vendor = Auth::user()->vendor;
+        $this->authorize('manageSettings', $vendor);
 
         $validated = $request->validate([
             'mode' => ['nullable', 'string', 'in:disabled,reservation_only,reservation_and_preorder'],
