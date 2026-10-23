@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
   tests:
     name: Code Quality & Automated Tests
@@ -73,4 +76,5 @@ jobs:
       - name: Install NPM Dependencies & Build Assets
         run: |
           npm ci
+          npm audit --audit-level=high
           npm run build
