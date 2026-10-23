@@ -55,6 +55,7 @@ jobs:
 
       - name: Run Test Suite (PostgreSQL)
         env:
+          APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
           DB_CONNECTION: pgsql
           DB_HOST: 127.0.0.1
           DB_PORT: 5432

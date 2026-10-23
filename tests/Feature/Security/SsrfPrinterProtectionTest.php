@@ -135,9 +135,10 @@ class SsrfPrinterProtectionTest extends TestCase
             'port' => 80,
         ]);
 
-        $response->assertStatus(422);
+        $response->assertOk();
         $response->assertJson([
             'success' => false,
         ]);
+        $this->assertStringContainsString('արգելափակված է', $response->json('message'));
     }
 }

@@ -951,6 +951,6 @@ class VendorSettingsController extends Controller
 
         $result = $printerService->sendTestPrint($ip, $port, $vendor->name);
 
-        return response()->json($result, $result['success'] ? 200 : 422);
+        return response()->json($result);
     }
 }

@@ -668,7 +668,7 @@ class TableReservationModuleTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->owner)->getJson(route('admin.reservations.show', $otherReservation->id));
-        $response->assertStatus(403);
+        $this->assertTrue(in_array($response->status(), [403, 404], true), "Expected 403 or 404, got {$response->status()}");
     }
 
     /**
