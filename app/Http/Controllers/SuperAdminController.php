@@ -14,6 +14,7 @@ use App\Models\SubscriptionPlan;
 use App\Models\SystemSetting;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Services\QrCodeService;
 use App\Services\Security\ImageProcessor;
 use App\Services\SecurityAuditService;
 use App\Services\SubscriptionService;
@@ -316,7 +317,7 @@ class SuperAdminController extends Controller
 
         $setupSecret = $user->two_factor_secret ?: TwoFactorAuthService::generateSecretKey();
         $otpAuthUri = TwoFactorAuthService::getOtpAuthUri($user, $setupSecret);
-        $qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='.urlencode($otpAuthUri);
+        $qrCodeUrl = app(QrCodeService::class)->generateDataUri($otpAuthUri, 200);
 
         return view('superadmin.settings.index', compact('settings', 'user', 'setupSecret', 'otpAuthUri', 'qrCodeUrl'));
     }

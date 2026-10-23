@@ -29,7 +29,7 @@ class StorefrontReservationController extends Controller
      */
     public function showReservationForm(Request $request, string $vendor_slug, ?string $location_slug = null): View
     {
-        $vendor = Vendor::where('slug', $vendor_slug)->with('locations')->firstOrFail();
+        $vendor = Vendor::where('slug', $vendor_slug)->where('is_active', true)->with('locations')->firstOrFail();
 
         if (! $vendor->isReservationFeatureEnabled()) {
             abort(404, __('Table reservations are not available for this restaurant.'));
@@ -81,7 +81,7 @@ class StorefrontReservationController extends Controller
      */
     public function getAvailability(Request $request, string $vendor_slug): JsonResponse
     {
-        $vendor = Vendor::where('slug', $vendor_slug)->with('locations')->firstOrFail();
+        $vendor = Vendor::where('slug', $vendor_slug)->where('is_active', true)->with('locations')->firstOrFail();
 
         if (! $vendor->isReservationFeatureEnabled()) {
             return response()->json([
@@ -123,7 +123,7 @@ class StorefrontReservationController extends Controller
      */
     public function submitReservation(Request $request, string $vendor_slug): JsonResponse
     {
-        $vendor = Vendor::where('slug', $vendor_slug)->with('locations')->firstOrFail();
+        $vendor = Vendor::where('slug', $vendor_slug)->where('is_active', true)->with('locations')->firstOrFail();
 
         if (! $vendor->isReservationFeatureEnabled()) {
             throw ValidationException::withMessages([
@@ -274,7 +274,7 @@ class StorefrontReservationController extends Controller
      */
     public function showReservationDetails(Request $request, string $vendor_slug, string $reference): View
     {
-        $vendor = Vendor::where('slug', $vendor_slug)->firstOrFail();
+        $vendor = Vendor::where('slug', $vendor_slug)->where('is_active', true)->firstOrFail();
 
         $reservation = Reservation::withoutGlobalScopes()
             ->where('vendor_id', $vendor->id)
@@ -302,7 +302,7 @@ class StorefrontReservationController extends Controller
      */
     public function cancelReservation(Request $request, string $vendor_slug, string $reference): JsonResponse
     {
-        $vendor = Vendor::where('slug', $vendor_slug)->firstOrFail();
+        $vendor = Vendor::where('slug', $vendor_slug)->where('is_active', true)->firstOrFail();
 
         $reservation = Reservation::withoutGlobalScopes()
             ->where('vendor_id', $vendor->id)

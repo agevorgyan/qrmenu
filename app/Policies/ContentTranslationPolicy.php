@@ -19,62 +19,41 @@ class ContentTranslationPolicy
 
     public function viewAny(User $user): bool
     {
-        return ! empty($user->vendor_id) && (
-            $user->hasPermission(Permission::TRANSLATIONS_VIEW)
-            || $user->hasPermission(Permission::MENU_VIEW)
-        );
+        return ! empty($user->vendor_id) && $user->hasPermission(Permission::TRANSLATIONS_VIEW);
     }
 
     public function view(User $user, ContentTranslation $translation): bool
     {
         return (int) $user->vendor_id === (int) $translation->vendor_id
-            && (
-                $user->hasPermission(Permission::TRANSLATIONS_VIEW)
-                || $user->hasPermission(Permission::MENU_VIEW)
-            );
+            && $user->hasPermission(Permission::TRANSLATIONS_VIEW);
     }
 
     public function create(User $user): bool
     {
-        return ! empty($user->vendor_id) && (
-            $user->hasPermission(Permission::TRANSLATIONS_MANAGE)
-            || $user->hasPermission(Permission::MENU_UPDATE)
-        );
+        return ! empty($user->vendor_id) && $user->hasPermission(Permission::TRANSLATIONS_MANAGE);
     }
 
     public function update(User $user, ContentTranslation $translation): bool
     {
         return (int) $user->vendor_id === (int) $translation->vendor_id
-            && (
-                $user->hasPermission(Permission::TRANSLATIONS_MANAGE)
-                || $user->hasPermission(Permission::MENU_UPDATE)
-            );
+            && $user->hasPermission(Permission::TRANSLATIONS_MANAGE);
     }
 
     public function approve(User $user, ContentTranslation $translation): bool
     {
         return (int) $user->vendor_id === (int) $translation->vendor_id
-            && (
-                $user->hasPermission(Permission::TRANSLATIONS_MANAGE)
-                || $user->hasPermission(Permission::MENU_UPDATE)
-            );
+            && $user->hasPermission(Permission::TRANSLATIONS_MANAGE);
     }
 
     public function publish(User $user, ContentTranslation $translation): bool
     {
         return (int) $user->vendor_id === (int) $translation->vendor_id
-            && (
-                $user->hasPermission(Permission::TRANSLATIONS_PUBLISH)
-                || $user->hasPermission(Permission::MENU_UPDATE)
-            );
+            && $user->hasPermission(Permission::TRANSLATIONS_PUBLISH);
     }
 
     public function delete(User $user, ContentTranslation $translation): bool
     {
         return (int) $user->vendor_id === (int) $translation->vendor_id
-            && (
-                $user->hasPermission(Permission::TRANSLATIONS_MANAGE)
-                || $user->hasPermission(Permission::MENU_DELETE)
-            );
+            && $user->hasPermission(Permission::TRANSLATIONS_MANAGE);
     }
 }

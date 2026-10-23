@@ -1563,6 +1563,10 @@ class Vendor extends Model
      */
     public function allowsAccess(): bool
     {
+        if (! $this->is_active) {
+            return false;
+        }
+
         if ($this->subscription) {
             return $this->subscription->allowsAccess();
         }

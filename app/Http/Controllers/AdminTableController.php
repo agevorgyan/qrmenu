@@ -25,6 +25,7 @@ class AdminTableController extends Controller
     public function index(Request $request): View
     {
         $vendor = Auth::user()->vendor;
+        $this->authorize('viewAny', RestaurantTable::class);
         $adminLocale = session('admin_locale') ?: ($vendor->admin_locale ?: 'hy');
         app()->setLocale($adminLocale);
 
@@ -70,6 +71,8 @@ class AdminTableController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $this->authorize('create', RestaurantTable::class);
+
         $vendor = Auth::user()->vendor;
 
         $validated = $request->validate([
@@ -88,7 +91,7 @@ class AdminTableController extends Controller
             'min_capacity' => 'required|integer|min:1|max:50',
             'section' => 'nullable|string|max:100',
             'is_active' => 'nullable|boolean',
-            'location_id' => 'nullable|integer',
+            'location_id' => ['nullable', 'integer', Rule::exists('locations', 'id')->where('vendor_id', $vendor->id)],
         ]);
 
         if ($validated['min_capacity'] > $validated['capacity']) {
@@ -116,6 +119,8 @@ class AdminTableController extends Controller
      */
     public function update(Request $request, RestaurantTable $table): RedirectResponse
     {
+        $this->authorize('update', $table);
+
         $vendor = Auth::user()->vendor;
         if ((int) $table->vendor_id !== (int) $vendor->id) {
             abort(403, 'Unauthorized cross-vendor table modification.');
@@ -138,7 +143,7 @@ class AdminTableController extends Controller
             'min_capacity' => 'required|integer|min:1|max:50',
             'section' => 'nullable|string|max:100',
             'is_active' => 'nullable|boolean',
-            'location_id' => 'nullable|integer',
+            'location_id' => ['nullable', 'integer', Rule::exists('locations', 'id')->where('vendor_id', $vendor->id)],
         ]);
 
         if ($validated['min_capacity'] > $validated['capacity']) {
@@ -165,6 +170,8 @@ class AdminTableController extends Controller
      */
     public function toggleActive(RestaurantTable $table): JsonResponse|RedirectResponse
     {
+        $this->authorize('update', $table);
+
         $vendor = Auth::user()->vendor;
         if ((int) $table->vendor_id !== (int) $vendor->id) {
             abort(403, 'Unauthorized table access.');
@@ -189,6 +196,8 @@ class AdminTableController extends Controller
      */
     public function destroy(RestaurantTable $table): RedirectResponse
     {
+        $this->authorize('delete', $table);
+
         $vendor = Auth::user()->vendor;
         if ((int) $table->vendor_id !== (int) $vendor->id) {
             abort(403, 'Unauthorized table deletion.');
@@ -213,6 +222,8 @@ class AdminTableController extends Controller
      */
     public function syncFloorPlan(): RedirectResponse
     {
+        $this->authorize('create', RestaurantTable::class);
+
         $vendor = Auth::user()->vendor;
         $this->availabilityService->ensureTablesExistForVendor($vendor);
 

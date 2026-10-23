@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SecurityAuditLog;
+use App\Services\QrCodeService;
 use App\Services\SecurityAuditService;
 use App\Services\TwoFactorAuthService;
 use Illuminate\Http\JsonResponse;
@@ -24,7 +25,7 @@ class ProfileSecurityController extends Controller
 
         $setupSecret = $user->two_factor_secret ?: TwoFactorAuthService::generateSecretKey();
         $otpAuthUri = TwoFactorAuthService::getOtpAuthUri($user, $setupSecret);
-        $qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='.urlencode($otpAuthUri);
+        $qrCodeUrl = app(QrCodeService::class)->generateDataUri($otpAuthUri, 200);
 
         return view('admin.profile', compact('user', 'vendor', 'setupSecret', 'otpAuthUri', 'qrCodeUrl'));
     }
@@ -65,7 +66,7 @@ class ProfileSecurityController extends Controller
         return response()->json([
             'secret' => $secret,
             'otpauth_uri' => $otpAuthUri,
-            'qr_code_url' => 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='.urlencode($otpAuthUri),
+            'qr_code_url' => app(QrCodeService::class)->generateDataUri($otpAuthUri, 200),
         ]);
     }
 
