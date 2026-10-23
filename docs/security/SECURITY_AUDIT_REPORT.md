@@ -248,6 +248,6 @@ Command: `php artisan test --compact tests/Feature/Security`
 
 ## 7. Remaining Operational Recommendations
 
-1. **Production Environment Cookie Flag**: Ensure deployment configurations define `SESSION_SECURE_COOKIE=true` in `.env.production`.
+1. **Production Environment Cookie Flag**: **Verified and Configured**. `SESSION_SECURE_COOKIE=true` is enforced in `.env.production` (and documented in `.env.example`), ensuring session cookies are restricted to HTTPS.
 2. **`order_items` Vendor Column Addition**: Staged zero-downtime migration recommended for large-scale deployments to add `vendor_id` to `order_items` with dual composite foreign keys referencing `orders(id, vendor_id)` and `products(id, vendor_id)`.
 3. **Commit SHA Pinning for Actions**: Pin GitHub Actions (`actions/checkout@v4`, `actions/cache@v4`) by full commit hash in CI workflows for supply-chain defense.
