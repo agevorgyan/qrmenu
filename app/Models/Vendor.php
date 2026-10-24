@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
 
@@ -1026,6 +1027,108 @@ class Vendor extends Model
     public function featuredProduct()
     {
         return $this->belongsTo(Product::class, 'featured_product_id');
+    }
+
+    public function dailyOffers(): HasMany
+    {
+        return $this->hasMany(DailyOffer::class)->orderBy('sort_order', 'asc');
+    }
+
+    public function dailyOfferProducts(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'daily_offers')
+            ->withPivot(['id', 'sort_order', 'badge', 'subtitle', 'discount_price', 'is_active'])
+            ->withTimestamps()
+            ->orderByPivot('sort_order', 'asc');
+    }
+
+    /**
+     * Resolve active daily offers for customer storefront.
+     * Returns a collection of items (with product, badge, subtitle, discount_price).
+     */
+    public function getActiveDailyOffers(?Location $location = null): Collection
+    {
+        if (! (bool) $this->featured_dish_enabled) {
+            return collect();
+        }
+
+        $offers = $this->dailyOffers()
+            ->where('is_active', true)
+            ->with([
+                'product' => function ($query) {
+                    $query->with(['variations', 'allergens', 'overrides', 'category']);
+                },
+            ])
+            ->get();
+
+        $activeItems = collect();
+
+        foreach ($offers as $offer) {
+            $product = $offer->product;
+            if (! $product || ! $product->is_available || $product->trashed()) {
+                continue;
+            }
+
+            if ($location && ! $product->isAvailableAtLocation($location->id)) {
+                continue;
+            }
+
+            $effectivePrice = $offer->discount_price !== null && (float) $offer->discount_price > 0
+                ? (float) $offer->discount_price
+                : (float) $product->getEffectivePrice($location?->id);
+
+            $regularPrice = (float) $product->getRegularPrice($location?->id);
+            $hasDiscount = ($offer->discount_price !== null && (float) $offer->discount_price > 0 && (float) $offer->discount_price < $regularPrice)
+                || $product->isDiscountActive();
+
+            $discountPercentage = null;
+            if ($hasDiscount && $regularPrice > 0 && $regularPrice > $effectivePrice) {
+                $discountPercentage = (int) round((($regularPrice - $effectivePrice) / $regularPrice) * 100);
+            }
+
+            $activeItems->push((object) [
+                'id' => $offer->id,
+                'offer_id' => $offer->id,
+                'product_id' => $product->id,
+                'product' => $product,
+                'sort_order' => $offer->sort_order,
+                'badge' => $offer->badge ?: $this->featured_dish_badge ?: '⭐ ՕՐՎԱ ԱՌԱՋԱՐԿ',
+                'subtitle' => $offer->subtitle ?: $this->featured_dish_subtitle ?: $product->description ?: 'Շեֆ խոհարարի հատուկ ընտրանի',
+                'effective_price' => $effectivePrice,
+                'regular_price' => $regularPrice,
+                'is_discount_active' => $hasDiscount,
+                'discount_percentage' => $discountPercentage,
+                'discount_price' => $offer->discount_price,
+            ]);
+        }
+
+        // Backward compatibility fallback: if no offers exist in daily_offers table, check featured_product_id
+        if ($activeItems->isEmpty() && $this->featured_product_id) {
+            $product = Product::where('vendor_id', $this->id)
+                ->where('id', $this->featured_product_id)
+                ->where('is_available', true)
+                ->with(['variations', 'allergens', 'overrides', 'category'])
+                ->first();
+
+            if ($product && (! $location || $product->isAvailableAtLocation($location->id))) {
+                $activeItems->push((object) [
+                    'id' => 0,
+                    'offer_id' => null,
+                    'product_id' => $product->id,
+                    'product' => $product,
+                    'sort_order' => 0,
+                    'badge' => $this->featured_dish_badge ?: '⭐ ՕՐՎԱ ԱՌԱՋԱՐԿ',
+                    'subtitle' => $this->featured_dish_subtitle ?: $product->description ?: 'Շեֆ խոհարարի հատուկ ընտրանի',
+                    'effective_price' => (float) $product->getEffectivePrice($location?->id),
+                    'regular_price' => (float) $product->getRegularPrice($location?->id),
+                    'is_discount_active' => $product->isDiscountActive(),
+                    'discount_percentage' => $product->getDiscountPercentage(),
+                    'discount_price' => null,
+                ]);
+            }
+        }
+
+        return $activeItems;
     }
 
     public function menuTemplate()

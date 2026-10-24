@@ -173,34 +173,16 @@ class ClientStorefrontController extends Controller
             }
         }
 
-        // Featured Dish / Dish of the Day
-        $featuredDish = null;
-        if ($vendor->featured_dish_enabled && $vendor->featured_product_id) {
-            foreach ($categories as $cat) {
-                if ($cat->relationLoaded('products')) {
-                    $found = $cat->products->firstWhere('id', (int) $vendor->featured_product_id);
-                    if ($found) {
-                        $found->setRelation('category', $cat);
-                        $featuredDish = $found;
-                        break;
-                    }
-                }
-            }
-
-            if (! $featuredDish) {
-                $featuredDish = Product::where('vendor_id', $vendor->id)
-                    ->where('id', $vendor->featured_product_id)
-                    ->where('is_available', true)
-                    ->with(['variations', 'allergens', 'overrides', 'category'])
-                    ->first();
-            }
-        }
+        // Featured Dishes / Daily Offers Carousel
+        $dailyOffers = $vendor->getActiveDailyOffers($location);
+        $featuredDish = $dailyOffers->first()?->product ?? null;
 
         return view("storefront.themes.{$themeSlug}", compact(
             'vendor',
             'location',
             'categories',
             'featuredDish',
+            'dailyOffers',
             'lang',
             'table',
             'channel'

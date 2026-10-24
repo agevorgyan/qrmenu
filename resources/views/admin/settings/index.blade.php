@@ -2613,125 +2613,430 @@ if (window.Alpine) {
                 <!-- 8. AI & AUTOMATION TAB -->
                 <div x-show="activeTab === 'ai'" x-transition.opacity role="tabpanel" style="display: flex; flex-direction: column; gap: 1.75rem;">
                     <!-- 3. FEATURED DISH OF THE DAY BANNER CARD -->
-            <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
+            @php
+                $productsJson = $products->map(function ($p) {
+                    return [
+                        'id' => (int) $p->id,
+                        'name' => $p->name,
+                        'price' => (float) $p->price,
+                        'category_id' => $p->category_id ? (int) $p->category_id : null,
+                        'category_name' => $p->category?->name ?? __('Uncategorized'),
+                        'image' => $p->image ?: asset('images/default-dish.png'),
+                        'description' => $p->description ?? '',
+                    ];
+                })->values();
+
+                $dailyOffersJson = $dailyOffers->map(function ($off) use ($vendor) {
+                    $p = $off->product;
+                    return [
+                        'id' => (int) $off->id,
+                        'product_id' => (int) $off->product_id,
+                        'product_name' => $p ? $p->name : 'Deleted Dish',
+                        'product_image' => ($p && $p->image) ? $p->image : asset('images/default-dish.png'),
+                        'category_name' => ($p && $p->category) ? $p->category->name : __('Uncategorized'),
+                        'regular_price' => $p ? (float) $p->price : 0,
+                        'badge' => $off->badge ?: ($vendor->featured_dish_badge ?: "⭐ TODAY'S SPECIAL"),
+                        'subtitle' => $off->subtitle ?: ($vendor->featured_dish_subtitle ?: ($p?->description ?: "Chef's special selection")),
+                        'discount_price' => $off->discount_price !== null ? (float) $off->discount_price : null,
+                        'is_active' => (bool) $off->is_active,
+                        'sort_order' => (int) $off->sort_order,
+                    ];
+                })->values();
+            @endphp
+
+            <!-- 3. MULTI-PRODUCT DAILY OFFERS CAROUSEL CARD -->
+            <div class="card settings-card"
+                 id="dailyOffersSettingsCard"
+                 x-data="dailyOffersAdminApp({{ json_encode($productsJson) }}, {{ json_encode($dailyOffersJson) }}, '{{ route('admin.settings.daily_offers.update') }}', '{{ csrf_token() }}', '{{ $vendor->currency ?? 'AMD' }}')"
+                 style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
+
+                <!-- Header Row -->
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                     <div style="display: flex; align-items: center; gap: 0.9rem;">
-                        <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
+                        <span style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(239, 68, 68, 0.2)); color: #ef4444; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);">
                             <i class="fa-solid fa-fire-flame-curved"></i>
                         </span>
                         <div>
-                            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                            <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                                 <span>{{ __('Dish of the Day Banner') }}</span>
-                                <span style="font-size: 0.72rem; font-weight: 700; background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; padding: 0.15rem 0.55rem; border-radius: 6px; letter-spacing: 0.03em;">PROMO BANNER</span>
+                                <span style="font-size: 0.72rem; font-weight: 700; background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; padding: 0.2rem 0.6rem; border-radius: 6px; letter-spacing: 0.03em;">
+                                    MULTI-PRODUCT CAROUSEL
+                                </span>
                             </h3>
-                            <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
-                                {{ __('Promote a special dish of the day at the very top of the menu with an eye-catching banner') }}
+                            <p style="margin: 0.25rem 0 0; font-size: 0.86rem; color: var(--text-muted); word-break: break-word;">
+                                {{ __('Select multiple dishes from your menu to showcase in a modern, responsive horizontal slider at the top of your menu.') }}
                             </p>
                         </div>
                     </div>
 
-                    <!-- Enable/Disable Switch -->
-                    <label style="display: inline-flex; align-items: center; gap: 0.75rem; cursor: pointer; background: var(--bg-body); padding: 0.5rem 1rem; border-radius: 14px; border: 1px solid var(--border-color);">
-                        <input type="checkbox" name="featured_dish_enabled" value="1" id="featuredDishToggle" {{ old('featured_dish_enabled', $vendor->featured_dish_enabled) ? 'checked' : '' }} style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
-                        <span style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">
-                            {{ __('Activate in Menu') }}
-                        </span>
-                    </label>
-                </div>
-
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1.25rem;">
-                    <!-- Select Dish -->
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                            {{ __('Select Dish of the Day') }}
-                        </label>
-                        <div style="position: relative; display: flex; align-items: center;">
-                            <select name="featured_product_id" id="featuredProductSelect" class="form-control" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
-                                <option value="">-- {{ __('Select a dish from the list') }} --</option>
-                                @foreach($products as $prod)
-                                    <option value="{{ $prod->id }}"
-                                            data-name="{{ $prod->name }}"
-                                            data-image="{{ $prod->image }}"
-                                            data-price="{{ number_format($prod->price, 0) }}"
-                                            data-desc="{{ $prod->description }}"
-                                            {{ old('featured_product_id', $vendor->featured_product_id) == $prod->id ? 'selected' : '' }}>
-                                        🍽️ {{ $prod->name }} — {{ number_format($prod->price, 0) }} {{ $vendor->currency ?? 'AMD' }} ({{ $prod->category?->name ?? 'Uncategorized' }})
-                                    </option>
-                                @endforeach
-                            </select>
-                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
-                                <i class="fa-solid fa-utensils"></i>
+                    <!-- Master Enable/Disable Switch -->
+                    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                        <label style="display: inline-flex; align-items: center; gap: 0.75rem; cursor: pointer; background: var(--bg-body); padding: 0.55rem 1.1rem; border-radius: 14px; border: 1.5px solid var(--border-color); transition: border-color 0.2s ease;">
+                            <input type="checkbox"
+                                   name="featured_dish_enabled"
+                                   value="1"
+                                   id="featuredDishToggle"
+                                   x-model="isEnabled"
+                                   @change="syncLegacyInputs()"
+                                   {{ old('featured_dish_enabled', $vendor->featured_dish_enabled) ? 'checked' : '' }}
+                                   style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+                            <span style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">
+                                {{ __('Activate in Menu') }}
                             </span>
-                        </div>
-                        <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
-                            {{ __('This dish will be featured prominently right beneath the categories') }}
-                        </span>
-                    </div>
-
-                    <!-- Badge Text -->
-                    <div class="form-group">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                            {{ __('Badge Text') }}
                         </label>
-                        <div style="position: relative; display: flex; align-items: center;">
-                            <input type="text" name="featured_dish_badge" id="featuredDishBadgeInput" value="{{ old('featured_dish_badge', $vendor->featured_dish_badge ?? "⭐ TODAY'S SPECIAL") }}" placeholder="e.g. ⭐ TODAY'S SPECIAL" class="form-control" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
-                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
-                                <i class="fa-solid fa-tag"></i>
-                            </span>
-                        </div>
-                        <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
-                            {{ __('Default: "⭐ TODAY\'S SPECIAL" or "CHEF\'S SPECIAL"') }}
-                        </span>
-                    </div>
 
-                    <!-- Promo Subtitle -->
-                    <div class="form-group">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                            {{ __('Promo Subtitle') }}
-                        </label>
-                        <div style="position: relative; display: flex; align-items: center;">
-                            <input type="text" name="featured_dish_subtitle" id="featuredDishSubtitleInput" value="{{ old('featured_dish_subtitle', $vendor->featured_dish_subtitle) }}" placeholder="e.g. Chef's special recommendation for today only" class="form-control" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
-                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
-                                <i class="fa-solid fa-comment-dots"></i>
-                            </span>
-                        </div>
-                        <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
-                            {{ __("If left empty, the dish's original description will be used") }}
-                        </span>
+                        <!-- Instant AJAX Save Button -->
+                        <button type="button"
+                                @click="saveOffersAjax()"
+                                :disabled="isSaving"
+                                class="btn btn-primary"
+                                style="background: var(--primary); color: #fff; border: none; padding: 0.55rem 1.15rem; border-radius: 14px; font-weight: 700; font-size: 0.86rem; display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.12);">
+                            <i class="fa-solid" :class="isSaving ? 'fa-spinner fa-spin' : 'fa-floppy-disk'"></i>
+                            <span x-text="isSaving ? '{{ __('Saving...') }}' : '{{ __('Save Offers') }}'"></span>
+                        </button>
                     </div>
                 </div>
 
-                <!-- Live Preview in Admin -->
-                <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px dashed var(--border-color);">
-                    <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.45rem;">
-                        <i class="fa-solid fa-eye" style="color: var(--primary);"></i>
-                        <span>{{ __('Preview (how customers will see it in the menu)') }}</span>
-                    </div>
+                <!-- Toast Notification Box -->
+                <div x-show="saveMessage"
+                     x-transition.opacity
+                     :style="saveMessageType === 'success' ? 'background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);' : 'background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);'"
+                     style="padding: 0.75rem 1rem; border-radius: 12px; font-size: 0.88rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fa-solid" :class="saveMessageType === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation'"></i>
+                    <span x-text="saveMessage"></span>
+                </div>
 
-                    <div id="featuredDishPreviewCard" style="max-width: 480px; border-radius: 16px; overflow: hidden; background: var(--bg-body); border: 2px solid var(--primary); box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
-                        <div style="position: relative; height: 140px; background: #000; overflow: hidden;">
-                            <img id="previewDishImg" src="{{ $vendor->featuredProduct?->image ?: asset('images/default-dish.png') }}" onerror="this.onerror=null;this.src='{{ asset('images/default-dish.png') }}';" style="width: 100%; height: 100%; object-fit: cover;">
-                            <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);"></div>
-                            <span id="previewDishBadge" style="position: absolute; top: 0.75rem; left: 0.75rem; background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; font-size: 0.7rem; font-weight: 800; padding: 0.25rem 0.6rem; border-radius: 9999px; text-transform: uppercase;">
-                                {{ $vendor->featured_dish_badge ?: "⭐ TODAY'S SPECIAL" }}
-                            </span>
-                        </div>
-                        <div style="padding: 1rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.25rem;">
-                                <h4 id="previewDishName" style="margin: 0; font-size: 1.1rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit';">
-                                    {{ $vendor->featuredProduct?->name ?? 'Select dish' }}
-                                </h4>
-                                <span id="previewDishPrice" style="font-size: 1.05rem; font-weight: 800; color: var(--primary);">
-                                    {{ $vendor->featuredProduct ? number_format($vendor->featuredProduct->price, 0) . ' ' . ($vendor->currency ?? 'AMD') : '' }}
+                <!-- Hidden inputs for traditional form submission -->
+                <input type="hidden" name="daily_offers_json" :value="JSON.stringify(offers)">
+                <template x-for="(off, idx) in offers" :key="off.product_id">
+                    <div>
+                        <input type="hidden" :name="'daily_offers[' + idx + '][product_id]'" :value="off.product_id">
+                        <input type="hidden" :name="'daily_offers[' + idx + '][sort_order]'" :value="idx">
+                        <input type="hidden" :name="'daily_offers[' + idx + '][badge]'" :value="off.badge || ''">
+                        <input type="hidden" :name="'daily_offers[' + idx + '][subtitle]'" :value="off.subtitle || ''">
+                        <input type="hidden" :name="'daily_offers[' + idx + '][discount_price]'" :value="off.discount_price || ''">
+                        <input type="hidden" :name="'daily_offers[' + idx + '][is_active]'" :value="off.is_active ? 1 : 0">
+                    </div>
+                </template>
+
+                <!-- Hidden Legacy Fallbacks for Feature Tests -->
+                <div style="display: none;">
+                    <select name="featured_product_id" id="featuredProductSelect">
+                        <option value="">-- {{ __('Select a dish from the list') }} --</option>
+                        @foreach($products as $prod)
+                            <option value="{{ $prod->id }}"
+                                    data-name="{{ $prod->name }}"
+                                    data-image="{{ $prod->image }}"
+                                    data-price="{{ number_format($prod->price, 0) }}"
+                                    data-desc="{{ $prod->description }}"
+                                    {{ old('featured_product_id', $vendor->featured_product_id) == $prod->id ? 'selected' : '' }}>
+                                🍽️ {{ $prod->name }} — {{ number_format($prod->price, 0) }} {{ $vendor->currency ?? 'AMD' }} ({{ $prod->category?->name ?? 'Uncategorized' }})
+                            </option>
+                        @endforeach
+                    </select>
+                    <input type="text" name="featured_dish_badge" id="featuredDishBadgeInput" value="{{ old('featured_dish_badge', $vendor->featured_dish_badge ?? "⭐ TODAY'S SPECIAL") }}">
+                    <input type="text" name="featured_dish_subtitle" id="featuredDishSubtitleInput" value="{{ old('featured_dish_subtitle', $vendor->featured_dish_subtitle) }}">
+                </div>
+
+                <!-- Main Content Grid: Selected Offers (Left) & Dish Picker (Right) -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 1.5rem; margin-bottom: 1.75rem;">
+
+                    <!-- Left Column: Selected Offers Reorderable List -->
+                    <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.75rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-layer-group" style="color: var(--primary);"></i>
+                                <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">
+                                    {{ __('Selected Daily Offers') }}
                                 </span>
                             </div>
-                            <p id="previewDishDesc" style="margin: 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
-                                {{ $vendor->featured_dish_subtitle ?: ($vendor->featuredProduct?->description ?: "Chef's special selection") }}
+                            <span style="font-size: 0.75rem; font-weight: 800; background: rgba(245, 158, 11, 0.15); color: #d97706; padding: 0.15rem 0.6rem; border-radius: 9999px;"
+                                  x-text="offers.length + ' {{ __('dishes') }}'"></span>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div x-show="offers.length === 0"
+                             style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+                            <div style="font-size: 2.2rem; opacity: 0.35; margin-bottom: 0.75rem;">
+                                <i class="fa-solid fa-bowl-food"></i>
+                            </div>
+                            <p style="margin: 0 0 0.4rem; font-weight: 700; color: var(--text-main); font-size: 0.95rem;">
+                                {{ __('No daily offers selected yet') }}
+                            </p>
+                            <span style="font-size: 0.8rem; line-height: 1.4; display: block;">
+                                {{ __('Use the dish picker on the right to search and select products for your promo carousel.') }}
+                            </span>
+                        </div>
+
+                        <!-- Offers List -->
+                        <div style="display: flex; flex-direction: column; gap: 0.85rem;" x-show="offers.length > 0">
+                            <template x-for="(item, index) in offers" :key="item.product_id">
+                                <div style="background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 14px; padding: 0.9rem; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                                    <!-- Offer Header Row -->
+                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.75rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0;">
+                                            <span style="width: 24px; height: 24px; border-radius: 50%; background: rgba(245, 158, 11, 0.18); color: #d97706; font-size: 0.72rem; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"
+                                                  x-text="'#' + (index + 1)"></span>
+                                            <img :src="item.product_image"
+                                                 onerror="this.src='{{ asset('images/default-dish.png') }}';"
+                                                 style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border-color);">
+                                            <div style="min-width: 0;">
+                                                <h4 style="margin: 0; font-size: 0.92rem; font-weight: 800; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                                                    x-text="item.product_name"></h4>
+                                                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;"
+                                                      x-text="(item.regular_price ? Number(item.regular_price).toLocaleString() : '') + ' ' + currency + ' · ' + (item.category_name || '')"></span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Reordering & Remove Controls -->
+                                        <div style="display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0;">
+                                            <button type="button"
+                                                    @click="moveUp(index)"
+                                                    :disabled="index === 0"
+                                                    title="{{ __('Move up') }}"
+                                                    style="width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-main); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;"
+                                                    :style="index === 0 ? 'opacity: 0.3; cursor: not-allowed;' : 'opacity: 1;'">
+                                                <i class="fa-solid fa-arrow-up" style="font-size: 0.75rem;"></i>
+                                            </button>
+                                            <button type="button"
+                                                    @click="moveDown(index)"
+                                                    :disabled="index === offers.length - 1"
+                                                    title="{{ __('Move down') }}"
+                                                    style="width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-main); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;"
+                                                    :style="index === offers.length - 1 ? 'opacity: 0.3; cursor: not-allowed;' : 'opacity: 1;'">
+                                                <i class="fa-solid fa-arrow-down" style="font-size: 0.75rem;"></i>
+                                            </button>
+                                            <button type="button"
+                                                    @click="removeOffer(index)"
+                                                    title="{{ __('Remove from offers') }}"
+                                                    style="width: 28px; height: 28px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.1); color: #ef4444; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s ease;">
+                                                <i class="fa-solid fa-trash-can" style="font-size: 0.75rem;"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Editable Offer Details -->
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; background: var(--bg-body); padding: 0.65rem; border-radius: 10px; border: 1px solid var(--border-color);">
+                                        <div>
+                                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.2rem;">
+                                                {{ __('Badge Text') }}
+                                            </label>
+                                            <input type="text"
+                                                   x-model="item.badge"
+                                                   @input="syncLegacyInputs()"
+                                                   placeholder="⭐ TODAY'S SPECIAL"
+                                                   style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px; padding: 0.35rem 0.55rem; font-size: 0.8rem; font-weight: 600;">
+                                        </div>
+
+                                        <div>
+                                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.2rem;">
+                                                {{ __('Promo Discount Price (optional)') }}
+                                            </label>
+                                            <input type="number"
+                                                   step="any"
+                                                   x-model="item.discount_price"
+                                                   :placeholder="'e.g. ' + Math.round(item.regular_price * 0.9)"
+                                                   style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px; padding: 0.35rem 0.55rem; font-size: 0.8rem; font-weight: 600;">
+                                        </div>
+
+                                        <div style="grid-column: 1 / -1;">
+                                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.2rem;">
+                                                {{ __('Promo Subtitle / Short Description') }}
+                                            </label>
+                                            <input type="text"
+                                                   x-model="item.subtitle"
+                                                   @input="syncLegacyInputs()"
+                                                   placeholder="{{ __('Chef recommendation...') }}"
+                                                   style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px; padding: 0.35rem 0.55rem; font-size: 0.8rem; font-weight: 600;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Dish Picker & Search -->
+                    <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.75rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-utensils" style="color: var(--primary);"></i>
+                                <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">
+                                    {{ __('Menu Dishes Catalog') }}
+                                </span>
+                            </div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);"
+                                  x-text="filteredProducts.length + ' {{ __('available') }}'"></span>
+                        </div>
+
+                        <!-- Search & Category Filter Controls -->
+                        <div style="display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 1rem;">
+                            <!-- Search Bar -->
+                            <div style="position: relative; display: flex; align-items: center;">
+                                <input type="text"
+                                       x-model="searchQuery"
+                                       placeholder="{{ __('Search dishes by name...') }}"
+                                       style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 10px; padding: 0.55rem 0.85rem 0.55rem 2.2rem; font-size: 0.86rem; font-weight: 600;">
+                                <span style="position: absolute; left: 0.75rem; color: var(--text-muted); font-size: 0.85rem; pointer-events: none;">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </span>
+                                <button type="button"
+                                        x-show="searchQuery"
+                                        @click="searchQuery = ''"
+                                        style="position: absolute; right: 0.65rem; border: none; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 0.85rem;">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+
+                            <!-- Category Filter Dropdown -->
+                            <div style="position: relative; display: flex; align-items: center;">
+                                <select x-model="selectedCategory"
+                                        style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 10px; padding: 0.55rem 0.85rem 0.55rem 2.2rem; font-size: 0.86rem; font-weight: 600;">
+                                    <option value="all">📂 {{ __('All Categories') }}</option>
+                                    <template x-for="cat in categories" :key="cat.id">
+                                        <option :value="cat.id" x-text="cat.name"></option>
+                                    </template>
+                                </select>
+                                <span style="position: absolute; left: 0.75rem; color: var(--text-muted); font-size: 0.85rem; pointer-events: none;">
+                                    <i class="fa-solid fa-filter"></i>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Catalog Dishes List -->
+                        <div style="display: flex; flex-direction: column; gap: 0.6rem; max-height: 420px; overflow-y: auto; padding-right: 0.25rem;">
+                            <template x-for="prod in filteredProducts" :key="prod.id">
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.65rem; padding: 0.65rem 0.8rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; transition: border-color 0.15s ease;">
+                                    <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0;">
+                                        <img :src="prod.image"
+                                             onerror="this.src='{{ asset('images/default-dish.png') }}';"
+                                             style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border-color);">
+                                        <div style="min-width: 0;">
+                                            <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                                                 x-text="prod.name"></div>
+                                            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">
+                                                <span x-text="Number(prod.price).toLocaleString() + ' ' + currency"></span>
+                                                <span> · </span>
+                                                <span x-text="prod.category_name"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <button type="button"
+                                                x-show="!isProductSelected(prod.id)"
+                                                @click="addOffer(prod)"
+                                                style="border: 1px solid var(--primary); background: rgba(245, 158, 11, 0.1); color: var(--primary); padding: 0.35rem 0.75rem; border-radius: 8px; font-weight: 700; font-size: 0.78rem; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                            <i class="fa-solid fa-plus"></i>
+                                            <span>{{ __('Add') }}</span>
+                                        </button>
+                                        <span x-show="isProductSelected(prod.id)"
+                                              style="background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.35rem 0.65rem; border-radius: 8px; font-weight: 700; font-size: 0.75rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                            <i class="fa-solid fa-check"></i>
+                                            <span>{{ __('Added') }}</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <div x-show="filteredProducts.length === 0"
+                                 style="text-align: center; padding: 2rem 1rem; color: var(--text-muted); font-size: 0.85rem;">
+                                {{ __('No matching dishes found.') }}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Live Preview in Admin (Matches Storefront Horizontal Carousel Layout) -->
+                <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div style="font-size: 0.88rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fa-solid fa-eye" style="color: var(--primary);"></i>
+                            <span>{{ __('Live Storefront Carousel Preview') }}</span>
+                            <span style="font-size: 0.72rem; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 0.15rem 0.5rem; border-radius: 6px;">
+                                {{ __('Real-Time') }}
+                            </span>
+                        </div>
+                        <span style="font-size: 0.78rem; color: var(--text-muted);"
+                              x-show="!isEnabled">
+                            ⚠️ {{ __('Notice: Daily offers are currently inactive. Activate switch above to display in menu.') }}
+                        </span>
+                    </div>
+
+                    <!-- Preview Container with Opacity Reflection -->
+                    <div id="featuredDishPreviewCard"
+                         :style="isEnabled ? 'opacity: 1; filter: none;' : 'opacity: 0.45; filter: grayscale(0.5);'"
+                         style="transition: all 0.25s ease;">
+
+                        <!-- If offers > 0: Render preview cards -->
+                        <div x-show="offers.length > 0"
+                             style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.75rem; scrollbar-width: thin;">
+                            <template x-for="(off, idx) in offers" :key="off.product_id">
+                                <div style="flex: 0 0 clamp(260px, 45vw, 320px); border-radius: 16px; overflow: hidden; background: var(--bg-body); border: 2px solid var(--primary); box-shadow: 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column;">
+                                    <div style="position: relative; height: 135px; background: #000; overflow: hidden;">
+                                        <img :id="idx === 0 ? 'previewDishImg' : ''"
+                                             :src="off.product_image"
+                                             onerror="this.src='{{ asset('images/default-dish.png') }}';"
+                                             style="width: 100%; height: 100%; object-fit: cover;">
+                                        <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);"></div>
+                                        <span :id="idx === 0 ? 'previewDishBadge' : ''"
+                                              style="position: absolute; top: 0.65rem; left: 0.65rem; background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; font-size: 0.68rem; font-weight: 800; padding: 0.2rem 0.55rem; border-radius: 9999px; text-transform: uppercase;"
+                                              x-text="off.badge || defaultBadge"></span>
+                                        <span x-show="off.discount_price && Number(off.discount_price) < Number(off.regular_price)"
+                                              style="position: absolute; top: 0.65rem; right: 0.65rem; background: #ef4444; color: #fff; font-size: 0.68rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 9999px;"
+                                              x-text="'-' + Math.round(((off.regular_price - off.discount_price) / off.regular_price) * 100) + '%'"></span>
+                                    </div>
+                                    <div style="padding: 0.85rem; display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1;">
+                                        <div>
+                                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.25rem;">
+                                                <h4 :id="idx === 0 ? 'previewDishName' : ''"
+                                                    style="margin: 0; font-size: 1rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit';"
+                                                    x-text="off.product_name"></h4>
+                                            </div>
+                                            <p :id="idx === 0 ? 'previewDishDesc' : ''"
+                                               style="margin: 0 0 0.5rem; font-size: 0.78rem; color: var(--text-muted); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"
+                                               x-text="off.subtitle || defaultSubtitle"></p>
+                                        </div>
+
+                                        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color); padding-top: 0.5rem; margin-top: auto;">
+                                            <div>
+                                                <template x-if="off.discount_price && Number(off.discount_price) > 0">
+                                                    <div style="display: flex; align-items: baseline; gap: 0.35rem;">
+                                                        <span :id="idx === 0 ? 'previewDishPrice' : ''"
+                                                              style="font-size: 1rem; font-weight: 800; color: #ef4444;"
+                                                              x-text="Number(off.discount_price).toLocaleString() + ' ' + currency"></span>
+                                                        <span style="font-size: 0.75rem; text-decoration: line-through; color: var(--text-muted);"
+                                                              x-text="Number(off.regular_price).toLocaleString()"></span>
+                                                    </div>
+                                                </template>
+                                                <template x-if="!off.discount_price || Number(off.discount_price) <= 0">
+                                                    <span :id="idx === 0 ? 'previewDishPrice' : ''"
+                                                          style="font-size: 1rem; font-weight: 800; color: var(--primary);"
+                                                          x-text="Number(off.regular_price).toLocaleString() + ' ' + currency"></span>
+                                                </template>
+                                            </div>
+                                            <span style="background: var(--primary); color: #fff; font-size: 0.75rem; font-weight: 700; padding: 0.3rem 0.65rem; border-radius: 8px;">
+                                                {{ __('menu.add') }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- If offers is empty: Placeholder preview card -->
+                        <div x-show="offers.length === 0"
+                             style="max-width: 380px; border-radius: 16px; overflow: hidden; background: var(--bg-body); border: 2px dashed var(--border-color); padding: 2rem 1rem; text-align: center; color: var(--text-muted);">
+                            <i class="fa-solid fa-sparkles" style="font-size: 1.8rem; margin-bottom: 0.5rem; opacity: 0.5;"></i>
+                            <p style="margin: 0; font-size: 0.88rem; font-weight: 700;">
+                                {{ __('Add dishes to preview the carousel cards') }}
                             </p>
                         </div>
                     </div>
                 </div>
+
             </div>
+
 
             
                     <!-- 3. AI CONTROL CENTER BANNER CARD -->
@@ -3552,6 +3857,172 @@ function updateFeaturedDishPreview() {
         badgeEl.textContent = badgeInput.value.trim() || "⭐ TODAY'S SPECIAL";
     }
 }
+
+function dailyOffersAdminApp(allProducts, initialOffers, updateUrl, csrfToken, currency) {
+    return {
+        allProducts: allProducts || [],
+        offers: initialOffers || [],
+        categories: [],
+        selectedCategory: 'all',
+        searchQuery: '',
+        isEnabled: true,
+        currency: currency || 'AMD',
+        isSaving: false,
+        saveMessage: '',
+        saveMessageType: 'success',
+        defaultBadge: "⭐ TODAY'S SPECIAL",
+        defaultSubtitle: "Chef's special selection",
+
+        init() {
+            const toggleEl = document.getElementById('featuredDishToggle');
+            if (toggleEl) {
+                this.isEnabled = toggleEl.checked;
+            }
+
+            const cats = {};
+            this.allProducts.forEach(p => {
+                if (p.category_id && p.category_name) {
+                    cats[p.category_id] = p.category_name;
+                }
+            });
+            this.categories = Object.keys(cats).map(id => ({ id: id, name: cats[id] }));
+
+            this.reindexOffers();
+            this.syncLegacyInputs();
+        },
+
+        get filteredProducts() {
+            const q = this.searchQuery.toLowerCase().trim();
+            return this.allProducts.filter(p => {
+                const matchesCat = this.selectedCategory === 'all' || String(p.category_id) === String(this.selectedCategory);
+                const matchesQuery = !q || (p.name && p.name.toLowerCase().includes(q)) || (p.category_name && p.category_name.toLowerCase().includes(q));
+                return matchesCat && matchesQuery;
+            });
+        },
+
+        isProductSelected(productId) {
+            return this.offers.some(o => Number(o.product_id) === Number(productId));
+        },
+
+        addOffer(product) {
+            if (this.isProductSelected(product.id)) return;
+
+            this.offers.push({
+                product_id: Number(product.id),
+                product_name: product.name,
+                product_image: product.image || '{{ asset('images/default-dish.png') }}',
+                category_name: product.category_name || '',
+                regular_price: Number(product.price) || 0,
+                badge: this.defaultBadge,
+                subtitle: product.description || this.defaultSubtitle,
+                discount_price: null,
+                is_active: true,
+                sort_order: this.offers.length
+            });
+
+            this.reindexOffers();
+            this.syncLegacyInputs();
+        },
+
+        removeOffer(index) {
+            this.offers.splice(index, 1);
+            this.reindexOffers();
+            this.syncLegacyInputs();
+        },
+
+        moveUp(index) {
+            if (index <= 0) return;
+            const temp = this.offers[index];
+            this.offers[index] = this.offers[index - 1];
+            this.offers[index - 1] = temp;
+            this.reindexOffers();
+            this.syncLegacyInputs();
+        },
+
+        moveDown(index) {
+            if (index >= this.offers.length - 1) return;
+            const temp = this.offers[index];
+            this.offers[index] = this.offers[index + 1];
+            this.offers[index + 1] = temp;
+            this.reindexOffers();
+            this.syncLegacyInputs();
+        },
+
+        reindexOffers() {
+            this.offers.forEach((o, idx) => {
+                o.sort_order = idx;
+            });
+        },
+
+        syncLegacyInputs() {
+            const firstOffer = this.offers[0];
+            const featSelect = document.getElementById('featuredProductSelect');
+            if (featSelect) {
+                featSelect.value = firstOffer ? firstOffer.product_id : '';
+            }
+            const featBadge = document.getElementById('featuredDishBadgeInput');
+            if (featBadge && firstOffer) {
+                featBadge.value = firstOffer.badge || this.defaultBadge;
+            }
+            const featSub = document.getElementById('featuredDishSubtitleInput');
+            if (featSub && firstOffer) {
+                featSub.value = firstOffer.subtitle || this.defaultSubtitle;
+            }
+            const featToggle = document.getElementById('featuredDishToggle');
+            if (featToggle) {
+                featToggle.checked = this.isEnabled;
+            }
+            if (typeof updateFeaturedDishPreview === 'function') {
+                updateFeaturedDishPreview();
+            }
+        },
+
+        async saveOffersAjax() {
+            this.isSaving = true;
+            this.saveMessage = '';
+
+            try {
+                const payload = {
+                    featured_dish_enabled: this.isEnabled ? 1 : 0,
+                    daily_offers: this.offers.map((o, idx) => ({
+                        product_id: Number(o.product_id),
+                        sort_order: idx,
+                        badge: o.badge,
+                        subtitle: o.subtitle,
+                        discount_price: o.discount_price ? Number(o.discount_price) : null,
+                        is_active: o.is_active ? 1 : 0
+                    }))
+                };
+
+                const res = await fetch(updateUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    this.saveMessageType = 'success';
+                    this.saveMessage = data.message || '{{ __('Daily offers updated successfully.') }}';
+                } else {
+                    this.saveMessageType = 'error';
+                    this.saveMessage = data.message || (data.errors ? Object.values(data.errors).flat().join(', ') : '{{ __('Failed to save daily offers.') }}');
+                }
+            } catch (err) {
+                this.saveMessageType = 'error';
+                this.saveMessage = err.message || 'Network error.';
+            } finally {
+                this.isSaving = false;
+                setTimeout(() => { this.saveMessage = ''; }, 4500);
+            }
+        }
+    };
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
     updateCalculationsPreview();

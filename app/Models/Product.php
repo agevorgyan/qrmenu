@@ -211,6 +211,11 @@ class Product extends Model
         return $this->hasMany(LocationProductOverride::class);
     }
 
+    public function dailyOffers()
+    {
+        return $this->hasMany(DailyOffer::class);
+    }
+
     public function getTranslatedName(?string $lang = null): string
     {
         $lang = $lang ?: app()->getLocale();

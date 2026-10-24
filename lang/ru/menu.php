@@ -214,4 +214,12 @@ return [
     'payment_success' => '🎉 Оплата успешно завершена!',
     'attention_item_unavailable' => 'Внимание: :items недоступно для выбранного способа заказа',
     'out_of_stock' => 'Блюдо временно закончилось в этом филиале',
+    'daily_offers_title' => 'Предложения дня',
+    'daily_offer_single_title' => 'Предложение дня',
+    'offers_count' => ':count предл.',
+    'special_badge_default' => '⭐ БЛЮДО ДНЯ',
+    'chef_selection_default' => 'Специальный выбор шеф-повара',
+    'view_offer' => 'Посмотреть',
+    'prev_offer' => 'Предыдущее предложение',
+    'next_offer' => 'Следующее предложение',
 ];

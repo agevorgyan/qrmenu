@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AiWaiterSession;
 use App\Models\Category;
 use App\Models\CustomDomain;
+use App\Models\DailyOffer;
 use App\Models\Location;
 use App\Models\Product;
 use App\Models\Vendor;
@@ -35,13 +36,37 @@ class VendorSettingsController extends Controller
     {
         $vendor = Auth::user()->vendor;
         $this->authorize('viewSettings', $vendor);
-        $vendor->load('featuredProduct');
+        $vendor->load(['featuredProduct', 'dailyOffers.product.category']);
 
         $products = $vendor->products()
             ->with(['category'])
             ->orderBy('category_id')
             ->orderBy('name')
             ->get();
+
+        $categories = $vendor->categories()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        // If legacy featured_product_id is set but dailyOffers is empty, populate initial offer
+        if ($vendor->featured_product_id && $vendor->dailyOffers->isEmpty()) {
+            $legacyProduct = $products->firstWhere('id', (int) $vendor->featured_product_id);
+            if ($legacyProduct) {
+                $createdOffer = $vendor->dailyOffers()->create([
+                    'vendor_id' => $vendor->id,
+                    'product_id' => $legacyProduct->id,
+                    'sort_order' => 0,
+                    'badge' => $vendor->featured_dish_badge,
+                    'subtitle' => $vendor->featured_dish_subtitle,
+                    'is_active' => true,
+                ]);
+                $createdOffer->setRelation('product', $legacyProduct);
+                $vendor->dailyOffers->push($createdOffer);
+            }
+        }
+
+        $dailyOffers = $vendor->dailyOffers;
 
         $locationId = $request->get('location_id', session('active_location_id', $vendor->locations->first()?->id));
         $location = ($locationId ? $vendor->locations->firstWhere('id', (int) $locationId) : null) ?? $vendor->locations->first();
@@ -103,6 +128,8 @@ class VendorSettingsController extends Controller
             'vendor',
             'location',
             'products',
+            'categories',
+            'dailyOffers',
             'popularTimezones',
             'groupedTimezones',
             'currencies',
@@ -120,7 +147,12 @@ class VendorSettingsController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $vendor = Auth::user()->vendor;
-        $this->authorize('manageSettings', $vendor);
+        if ($request->filled('daily_offers_json')) {
+            $decoded = json_decode($request->input('daily_offers_json'), true);
+            if (is_array($decoded)) {
+                $request->merge(['daily_offers' => $decoded]);
+            }
+        }
 
         $validated = $request->validate([
             // Regional & Localization Settings
@@ -173,11 +205,18 @@ class VendorSettingsController extends Controller
             'takeaway_enabled' => 'nullable|boolean',
             'takeaway_min_amount' => 'nullable|numeric|min:0',
 
-            // Featured Dish / Dish of the Day
+            // Featured Dish / Daily Offers Carousel
             'featured_dish_enabled' => 'nullable|boolean',
             'featured_product_id' => ['nullable', 'integer', Rule::exists('products', 'id')->where('vendor_id', $vendor->id)],
             'featured_dish_badge' => 'nullable|string|max:100',
             'featured_dish_subtitle' => 'nullable|string|max:255',
+            'daily_offers' => 'nullable|array',
+            'daily_offers.*.product_id' => 'required|integer',
+            'daily_offers.*.sort_order' => 'nullable|integer|min:0',
+            'daily_offers.*.badge' => 'nullable|string|max:100',
+            'daily_offers.*.subtitle' => 'nullable|string|max:255',
+            'daily_offers.*.discount_price' => 'nullable|numeric|min:0',
+            'daily_offers.*.is_active' => 'nullable|boolean',
 
             // AI Waiter Advisor
             'ai_waiter_enabled' => 'nullable|boolean',
@@ -300,12 +339,79 @@ class VendorSettingsController extends Controller
             $vendorUpdate['ai_waiter_welcome_text'] = $validated['ai_waiter_welcome_text'];
         }
 
-        // Ensure selected featured product belongs to this vendor
-        if (! empty($validated['featured_product_id'])) {
+        // Multi-tenant isolation verification on daily_offers
+        if ($request->has('daily_offers')) {
+            $rawOffers = $request->input('daily_offers', []);
+            if (! empty($rawOffers)) {
+                $productIds = collect($rawOffers)->pluck('product_id')->filter()->all();
+
+                if (count($productIds) !== count(array_unique($productIds))) {
+                    throw ValidationException::withMessages([
+                        'daily_offers' => __('Duplicate products are not allowed in daily offers.'),
+                    ]);
+                }
+
+                $validProductIds = $vendor->products()->whereIn('id', $productIds)->pluck('id')->all();
+                if (count($validProductIds) !== count($productIds)) {
+                    throw ValidationException::withMessages([
+                        'daily_offers' => __('One or more selected products are invalid or do not belong to your restaurant.'),
+                    ]);
+                }
+            }
+        }
+
+        // Multi-product daily offers sync
+        if ($request->has('daily_offers')) {
+            $offersData = $request->input('daily_offers', []);
+            $keptOfferIds = [];
+
+            foreach ($offersData as $index => $item) {
+                $productId = (int) $item['product_id'];
+                $offer = DailyOffer::withoutGlobalScopes()->updateOrCreate(
+                    [
+                        'vendor_id' => $vendor->id,
+                        'product_id' => $productId,
+                    ],
+                    [
+                        'sort_order' => isset($item['sort_order']) ? (int) $item['sort_order'] : $index,
+                        'badge' => ! empty($item['badge']) ? trim($item['badge']) : null,
+                        'subtitle' => ! empty($item['subtitle']) ? trim($item['subtitle']) : null,
+                        'discount_price' => isset($item['discount_price']) && is_numeric($item['discount_price']) && (float) $item['discount_price'] > 0 ? (float) $item['discount_price'] : null,
+                        'is_active' => isset($item['is_active']) ? (bool) $item['is_active'] : true,
+                    ]
+                );
+                $keptOfferIds[] = $offer->id;
+            }
+
+            $vendor->dailyOffers()->whereNotIn('id', $keptOfferIds)->delete();
+
+            if (! empty($offersData)) {
+                $vendorUpdate['featured_product_id'] = (int) $offersData[0]['product_id'];
+            } else {
+                $vendorUpdate['featured_product_id'] = null;
+            }
+        } elseif (! empty($validated['featured_product_id'])) {
             $productExists = $vendor->products()->where('id', $validated['featured_product_id'])->exists();
-            $vendorUpdate['featured_product_id'] = $productExists ? $validated['featured_product_id'] : null;
-        } else {
+            if ($productExists) {
+                $vendorUpdate['featured_product_id'] = $validated['featured_product_id'];
+                $vendor->dailyOffers()->updateOrCreate(
+                    [
+                        'vendor_id' => $vendor->id,
+                        'product_id' => $validated['featured_product_id'],
+                    ],
+                    [
+                        'sort_order' => 0,
+                        'badge' => $validated['featured_dish_badge'] ?? null,
+                        'subtitle' => $validated['featured_dish_subtitle'] ?? null,
+                        'is_active' => true,
+                    ]
+                );
+            } else {
+                $vendorUpdate['featured_product_id'] = null;
+            }
+        } elseif ($request->exists('featured_product_id') && empty($validated['featured_product_id'])) {
             $vendorUpdate['featured_product_id'] = null;
+            $vendor->dailyOffers()->delete();
         }
 
         if (! empty($validated['name'])) {
@@ -1088,6 +1194,98 @@ class VendorSettingsController extends Controller
             'provider' => 'ExchangeRate-API',
             'updated_at' => now()->format('Y-m-d H:i:s'),
             'label' => "1 {$target} = ".number_format($rate, 2)." {$primary}",
+        ]);
+    }
+
+    /**
+     * Dedicated API endpoint for saving / reordering daily offers.
+     */
+    public function updateDailyOffers(Request $request): JsonResponse
+    {
+        $vendor = Auth::user()->vendor;
+        $this->authorize('manageSettings', $vendor);
+
+        if ($request->filled('daily_offers_json')) {
+            $decoded = json_decode($request->input('daily_offers_json'), true);
+            if (is_array($decoded)) {
+                $request->merge(['daily_offers' => $decoded]);
+            }
+        }
+
+        $validated = $request->validate([
+            'featured_dish_enabled' => 'nullable|boolean',
+            'daily_offers' => 'nullable|array',
+            'daily_offers.*.product_id' => 'required|integer',
+            'daily_offers.*.sort_order' => 'nullable|integer|min:0',
+            'daily_offers.*.badge' => 'nullable|string|max:100',
+            'daily_offers.*.subtitle' => 'nullable|string|max:255',
+            'daily_offers.*.discount_price' => 'nullable|numeric|min:0',
+            'daily_offers.*.is_active' => 'nullable|boolean',
+        ]);
+
+        $rawOffers = $request->input('daily_offers', []);
+        if (! empty($rawOffers)) {
+            $productIds = collect($rawOffers)->pluck('product_id')->filter()->all();
+
+            if (count($productIds) !== count(array_unique($productIds))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('Duplicate products are not allowed in daily offers.'),
+                    'errors' => ['daily_offers' => [__('Duplicate products are not allowed in daily offers.')]],
+                ], 422);
+            }
+
+            $validProductIds = $vendor->products()->whereIn('id', $productIds)->pluck('id')->all();
+            if (count($validProductIds) !== count($productIds)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('One or more selected products are invalid or do not belong to your restaurant.'),
+                    'errors' => ['daily_offers' => [__('One or more selected products are invalid or do not belong to your restaurant.')]],
+                ], 422);
+            }
+        }
+
+        DB::transaction(function () use ($vendor, $request, $rawOffers) {
+            if ($request->has('featured_dish_enabled')) {
+                $vendor->featured_dish_enabled = $request->boolean('featured_dish_enabled');
+            }
+
+            $keptOfferIds = [];
+            foreach ($rawOffers as $index => $item) {
+                $offer = DailyOffer::withoutGlobalScopes()->updateOrCreate(
+                    [
+                        'vendor_id' => $vendor->id,
+                        'product_id' => (int) $item['product_id'],
+                    ],
+                    [
+                        'sort_order' => isset($item['sort_order']) ? (int) $item['sort_order'] : $index,
+                        'badge' => ! empty($item['badge']) ? trim($item['badge']) : null,
+                        'subtitle' => ! empty($item['subtitle']) ? trim($item['subtitle']) : null,
+                        'discount_price' => isset($item['discount_price']) && is_numeric($item['discount_price']) && (float) $item['discount_price'] > 0 ? (float) $item['discount_price'] : null,
+                        'is_active' => isset($item['is_active']) ? (bool) $item['is_active'] : true,
+                    ]
+                );
+                $keptOfferIds[] = $offer->id;
+            }
+
+            $vendor->dailyOffers()->whereNotIn('id', $keptOfferIds)->delete();
+
+            if (! empty($rawOffers)) {
+                $vendor->featured_product_id = (int) $rawOffers[0]['product_id'];
+            } else {
+                $vendor->featured_product_id = null;
+            }
+
+            $vendor->save();
+        });
+
+        $offers = $vendor->dailyOffers()->with('product.category')->orderBy('sort_order')->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Daily offers updated successfully.'),
+            'offers' => $offers,
+            'featured_dish_enabled' => (bool) $vendor->featured_dish_enabled,
         ]);
     }
 }
