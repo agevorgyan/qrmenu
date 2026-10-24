@@ -160,4 +160,17 @@ class IdramGateway implements PaymentGatewayInterface
     {
         return false;
     }
+
+    /**
+     * Authoritatively query Idram transaction status during reconciliation.
+     * Idram uses server-to-server push confirmation; return pending if not yet pushed.
+     */
+    public function queryTransactionStatus(PaymentAttempt $attempt): PaymentVerificationResult
+    {
+        return PaymentVerificationResult::pending(
+            merchantReference: $attempt->merchant_reference,
+            providerTransactionId: $attempt->provider_transaction_id,
+            rawPayload: ['note' => 'Idram relies on server-to-server webhook confirmation']
+        );
+    }
 }

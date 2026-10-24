@@ -39,7 +39,22 @@
         const translations = bootConfig.translations || {};
         const catalogProducts = bootConfig.catalogProducts || [];
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const isPreOrderUrl = urlParams.get('mode') === 'preorder' || urlParams.get('preorder') === '1';
+        let isPreOrderStorage = false;
+        try {
+            isPreOrderStorage = localStorage.getItem('active_preorder_mode_' + (vendor.slug || '')) === 'true';
+        } catch(e) {}
+        const isPreOrderMode = isPreOrderUrl || isPreOrderStorage;
+        if (isPreOrderUrl) {
+            try {
+                localStorage.setItem('active_preorder_mode_' + (vendor.slug || ''), 'true');
+            } catch(e) {}
+        }
+
         return {
+            isPreOrderMode: isPreOrderMode,
+            preOrderSummaryText: '',
             catalogProducts: catalogProducts,
             activeCat: customConfig.activeCat || bootConfig.activeCat || 'cat-1',
             search: '',
@@ -185,7 +200,11 @@
                 this.initAiWaiterWelcome();
 
                 // Initial order type prompt for direct visitors (no table QR)
-                if (!this.isTableFixed) {
+                if (this.isPreOrderMode) {
+                    this.showOrderTypeModal = false;
+                    this.orderType = 'dine_in';
+                    this.initPreOrderState();
+                } else if (!this.isTableFixed) {
                     if (this.deliveryEnabled && this.takeawayEnabled) {
                         let sessionChosen = null;
                         try {
@@ -206,7 +225,7 @@
 
                 const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams.get('payment_success') === '1') {
-                    this.triggerToast('🎉 Վճարումը հաջողությամբ կատարվել է:', 'success', 'fa-solid fa-circle-check');
+                    this.triggerToast(translations.payment_success || '🎉 Վճարումը հաջողությամբ կատարվել է:', 'success', 'fa-solid fa-circle-check');
                 }
                 this.$nextTick(() => {
                     this.initScrollSpy();
@@ -219,7 +238,7 @@
                     if (this.closingNotice.closing_soon && !this.closingNotice.is_closed) {
                         setTimeout(() => {
                             if (!this.dismissedWarningBanner) {
-                                this.triggerToast(this.closingNotice.message || 'Ուշադրություն: Խոհանոցը շուտով փակվում է:', 'info', 'fa-solid fa-clock');
+                                this.triggerToast(this.closingNotice.notice_title || this.closingNotice.message || translations.closing_soon_notice_title || 'Ուշադրություն: Խոհանոցը շուտով փակվում է:', 'info', 'fa-solid fa-clock');
                             }
                         }, 1200);
                     }
@@ -272,7 +291,8 @@
                 });
                 if (unavailable.length > 0) {
                     const names = unavailable.map(i => '«' + i.name + '»').join(', ');
-                    this.triggerToast('Ուշադրություն. ' + names + ' հասանելի չէ ընտրված պատվերի եղանակի համար', 'remove', 'fa-solid fa-triangle-exclamation');
+                    const tpl = translations.attention_item_unavailable || 'Ուշադրություն. :items հասանելի չէ ընտրված պատվերի եղանակի համար';
+                    this.triggerToast(tpl.replace(':items', names), 'remove', 'fa-solid fa-triangle-exclamation');
                 } else {
                     const label = type === 'delivery' 
                         ? (translations.switched_to_delivery || 'Ընտրվել է՝ Առաքում') 
@@ -738,15 +758,23 @@
                 } else {
                     this.selectDish(rec);
                 }
-                this.triggerToast('✨ ' + rec.name + ' ավելացվեց զամբյուղում', 'success', 'fa-solid fa-cart-plus');
+                const addedMsg = (translations.item_added_to_cart_toast || '✨ :name ավելացվեց զամբյուղում').replace(':name', rec.name);
+                this.triggerToast(addedMsg, 'success', 'fa-solid fa-cart-plus');
             },
 
             async submitOrder(channel) {
                 if (this.cart.length === 0) return;
 
                 if (!this.isCurrentChannelOpen) {
-                    const channelName = this.orderType === 'delivery' ? 'Առաքման ծառայությունը' : (this.orderType === 'takeaway' ? 'Տանելու պատվերների ծառայությունը' : 'Խոհանոցը');
-                    this.triggerToast(channelName + ' այս պահին փակ է: Պատվերներ չեն ընդունվում:', 'remove', 'fa-solid fa-clock');
+                    if (this.currentSchedule && this.currentSchedule.notice_message) {
+                        this.triggerToast(this.currentSchedule.notice_message, 'remove', 'fa-solid fa-clock');
+                    } else {
+                        const channelName = this.orderType === 'delivery' 
+                            ? (translations.delivery_service || 'Առաքման ծառայությունը') 
+                            : (this.orderType === 'takeaway' ? (translations.takeaway_service || 'Տանելու պատվերների ծառայությունը') : (translations.kitchen_service || 'Խոհանոցը'));
+                        const closedMsg = (translations.orders_closed_toast || ':channel այս պահին փակ է: Պատվերներ չեն ընդունվում:').replace(':channel', channelName);
+                        this.triggerToast(closedMsg, 'remove', 'fa-solid fa-clock');
+                    }
                     return;
                 }
 
@@ -825,15 +853,15 @@
                 // Strict Channel Restrictions Validation
                 for (const item of this.cart) {
                     if (this.orderType === 'dine_in' && item.available_for_dine_in === false) {
-                        this.triggerToast(`«${item.name}» հասանելի չէ սրահում պատվիրելու համար`, 'remove', 'fa-solid fa-ban');
+                        this.triggerToast(`«${item.name}» - ` + (translations.item_unavailable_for_channel || 'Հասանելի չէ սրահում պատվիրելու համար'), 'remove', 'fa-solid fa-ban');
                         return;
                     }
                     if (this.orderType === 'takeaway' && item.available_for_takeaway === false) {
-                        this.triggerToast(`«${item.name}» հասանելի չէ տանելու պատվերի համար`, 'remove', 'fa-solid fa-ban');
+                        this.triggerToast(`«${item.name}» - ` + (translations.item_unavailable_for_channel || 'Հասանելի չէ տանելու պատվերի համար'), 'remove', 'fa-solid fa-ban');
                         return;
                     }
                     if (this.orderType === 'delivery' && item.available_for_delivery === false) {
-                        this.triggerToast(`«${item.name}» հասանելի չէ առաքման համար`, 'remove', 'fa-solid fa-ban');
+                        this.triggerToast(`«${item.name}» - ` + (translations.item_unavailable_for_channel || 'Հասանելի չէ առաքման համար'), 'remove', 'fa-solid fa-ban');
                         return;
                     }
                 }
@@ -956,7 +984,7 @@
                     }
                 } catch (e) {
                     console.error('Order submit error:', e);
-                    this.triggerToast('Ցանցային սխալ', 'remove', 'fa-solid fa-triangle-exclamation');
+                    this.triggerToast(translations.network_error || 'Ցանցային սխալ', 'remove', 'fa-solid fa-triangle-exclamation');
                 }
             },
 
@@ -1040,6 +1068,104 @@
                     const key = 'storefront_cart_' + (this.vendorSlug || 'default');
                     localStorage.removeItem(key);
                 } catch(e) {}
+            },
+
+            initPreOrderState() {
+                try {
+                    const draftStr = localStorage.getItem('reservation_draft_' + this.vendorSlug);
+                    if (draftStr) {
+                        const draft = JSON.parse(draftStr);
+                        const parts = [];
+                        if (draft.selectedDate) parts.push(draft.selectedDate);
+                        if (draft.selectedTime) parts.push(draft.selectedTime);
+                        if (draft.guestCount) {
+                            const guestsLabel = translations.guests || 'անձ';
+                            parts.push(draft.guestCount + ' ' + guestsLabel);
+                        }
+                        if (parts.length > 0) {
+                            this.preOrderSummaryText = parts.join(' • ');
+                        }
+                    }
+
+                    // If cart is currently empty, check if preorder_items exists and restore into cart
+                    if ((!this.cart || this.cart.length === 0)) {
+                        const savedPreorder = localStorage.getItem('preorder_items_' + this.vendorSlug);
+                        if (savedPreorder) {
+                            const items = JSON.parse(savedPreorder);
+                            if (Array.isArray(items) && items.length > 0) {
+                                this.cart = items.map(i => ({
+                                    id: Number(i.product_id || i.id),
+                                    product_id: Number(i.product_id || i.id),
+                                    name: i.name,
+                                    price: Number(i.unit_price || i.price || 0),
+                                    variation_name: i.variation_name || null,
+                                    variation_id: i.variation_id ? Number(i.variation_id) : null,
+                                    qty: Number(i.quantity || i.qty || 1),
+                                    notes: i.notes || null,
+                                    available_for_dine_in: true,
+                                    available_for_takeaway: true,
+                                    available_for_delivery: true,
+                                    is_time_available: true
+                                }));
+                            }
+                        }
+                    }
+                } catch(e) {
+                    console.debug('Failed to init pre-order state:', e);
+                }
+            },
+
+            confirmPreOrderAndReturn() {
+                try {
+                    const preorderItems = (this.cart || []).map(item => ({
+                        product_id: Number(item.product_id || item.id),
+                        name: item.name,
+                        variation_name: item.variation_name || null,
+                        variation_id: item.variation_id ? Number(item.variation_id) : null,
+                        unit_price: Number(item.price || 0),
+                        quantity: Number(item.qty || 1),
+                        notes: item.notes || null
+                    }));
+                    localStorage.setItem('preorder_items_' + this.vendorSlug, JSON.stringify(preorderItems));
+                    localStorage.removeItem('active_preorder_mode_' + this.vendorSlug);
+                    const reserveUrl = routes.reserve || ('/m/' + this.vendorSlug + '/reserve');
+                    window.location.href = reserveUrl;
+                } catch(e) {
+                    console.error('Failed to confirm preorder:', e);
+                }
+            },
+
+            returnToReservation() {
+                this.confirmPreOrderAndReturn();
+            },
+
+            startReservationWithCart() {
+                try {
+                    const preorderItems = (this.cart || []).map(item => ({
+                        product_id: Number(item.product_id || item.id),
+                        name: item.name,
+                        variation_name: item.variation_name || null,
+                        variation_id: item.variation_id ? Number(item.variation_id) : null,
+                        unit_price: Number(item.price || 0),
+                        quantity: Number(item.qty || 1),
+                        notes: item.notes || null
+                    }));
+                    localStorage.setItem('preorder_items_' + this.vendorSlug, JSON.stringify(preorderItems));
+                    localStorage.removeItem('active_preorder_mode_' + this.vendorSlug);
+                    const reserveUrl = routes.reserve || ('/m/' + this.vendorSlug + '/reserve');
+                    window.location.href = reserveUrl;
+                } catch(e) {
+                    console.error('Failed to start reservation with cart:', e);
+                }
+            },
+
+            goToReservationPage() {
+                if (this.cart && this.cart.length > 0) {
+                    this.startReservationWithCart();
+                } else {
+                    const reserveUrl = routes.reserve || ('/m/' + this.vendorSlug + '/reserve');
+                    window.location.href = reserveUrl;
+                }
             },
 
             restoreCartFromStorage() {
@@ -1368,12 +1494,12 @@
                 try {
                     localStorage.removeItem('active_order_' + this.vendorSlug);
                 } catch(e) {}
-                this.triggerToast('Պատվերի հետևումն ավարտված է', 'info', 'fa-solid fa-circle-check');
+                this.triggerToast(translations.order_tracking_finished || 'Պատվերի հետևումն ավարտված է', 'info', 'fa-solid fa-circle-check');
             },
 
             openWaiterModal(type = 'call_waiter') {
                 if (!this.isTableFixed) {
-                    this.triggerToast('Մատուցողի կանչը հասանելի է միայն սեղանի QR կոդը սկանավորելուց հետո', 'remove', 'fa-solid fa-qrcode');
+                    this.triggerToast(translations.call_waiter_table_required || 'Մատուցողի կանչը հասանելի է միայն սեղանի QR կոդը սկանավորելուց հետո', 'remove', 'fa-solid fa-qrcode');
                     return;
                 }
                 this.serviceType = type;
@@ -1385,7 +1511,7 @@
 
             async submitServiceCall() {
                 if (!this.isTableFixed || !this.serviceTable || this.serviceTable.toString().trim() === '') {
-                    this.triggerToast('Մատուցողի կանչը հասանելի է միայն սեղանի QR կոդը սկանավորելուց հետո', 'remove', 'fa-solid fa-qrcode');
+                    this.triggerToast(translations.call_waiter_table_required || 'Մատուցողի կանչը հասանելի է միայն սեղանի QR կոդը սկանավորելուց հետո', 'remove', 'fa-solid fa-qrcode');
                     return;
                 }
 
@@ -1418,11 +1544,11 @@
                         const icon = this.serviceType === 'call_waiter' ? 'fa-solid fa-bell' : (this.serviceType === 'bill_cash' ? 'fa-solid fa-money-bill-wave' : 'fa-solid fa-credit-card');
                         this.triggerToast(data.message, 'success', icon);
                     } else {
-                        this.triggerToast(data.message || 'Սխալ՝ կրկին փորձեք', 'remove', 'fa-solid fa-triangle-exclamation');
+                        this.triggerToast(data.message || translations.error_try_again || 'Սխալ՝ կրկին փորձեք', 'remove', 'fa-solid fa-triangle-exclamation');
                     }
                 } catch (e) {
                     console.error('Service call error:', e);
-                    this.triggerToast('Կապի խնդիր, խնդրում ենք կրկին փորձել', 'remove', 'fa-solid fa-triangle-exclamation');
+                    this.triggerToast(translations.connection_error_retry || 'Կապի խնդիր, խնդրում ենք կրկին փորձել', 'remove', 'fa-solid fa-triangle-exclamation');
                 } finally {
                     this.isCallingService = false;
                 }

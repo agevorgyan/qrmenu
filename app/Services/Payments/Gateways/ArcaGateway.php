@@ -266,4 +266,75 @@ class ArcaGateway implements PaymentGatewayInterface
     {
         return true;
     }
+
+    /**
+     * Authoritatively query ArCa API for current order status during reconciliation.
+     */
+    public function queryTransactionStatus(PaymentAttempt $attempt): PaymentVerificationResult
+    {
+        $vendor = $attempt->vendor;
+        $settings = $vendor?->getPaymentSettings()['gateways']['arca'] ?? [];
+        $userName = $settings['username'] ?? $settings['merchant_id'] ?? null;
+        $password = $settings['password'] ?? $settings['secret_key'] ?? null;
+        $orderId = $attempt->provider_transaction_id;
+
+        if (empty($userName) || empty($password) || empty($orderId)) {
+            return PaymentVerificationResult::pending(
+                merchantReference: $attempt->merchant_reference,
+                providerTransactionId: $orderId,
+                rawPayload: ['note' => 'ArCa credentials or provider transaction ID missing']
+            );
+        }
+
+        try {
+            $apiBase = $settings['api_url'] ?? 'https://arca.ca/payment/rest';
+            $response = Http::timeout(5)->asForm()->post("{$apiBase}/getOrderStatus.do", [
+                'userName' => $userName,
+                'password' => $password,
+                'orderId' => $orderId,
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $remoteStatus = (int) ($data['OrderStatus'] ?? $data['orderStatus'] ?? -1);
+
+                if ($remoteStatus === 2) {
+                    $amount = isset($data['Amount']) ? ((float) $data['Amount']) / 100 : (float) $attempt->amount;
+
+                    return PaymentVerificationResult::paid(
+                        providerTransactionId: (string) $orderId,
+                        amount: $amount,
+                        currency: 'AMD',
+                        merchantReference: $attempt->merchant_reference,
+                        rawPayload: $data,
+                        signatureValid: true
+                    );
+                }
+
+                if (in_array($remoteStatus, [3, 6], true)) {
+                    return PaymentVerificationResult::failed(
+                        errorMessage: "ArCa transaction reported status {$remoteStatus}",
+                        merchantReference: $attempt->merchant_reference,
+                        providerTransactionId: $orderId,
+                        rawPayload: $data,
+                        signatureValid: true
+                    );
+                }
+            }
+
+            return PaymentVerificationResult::pending(
+                merchantReference: $attempt->merchant_reference,
+                providerTransactionId: $orderId,
+                rawPayload: $response->json() ?? []
+            );
+        } catch (\Throwable $e) {
+            Log::warning("ArCa queryTransactionStatus exception for {$attempt->merchant_reference}: {$e->getMessage()}");
+
+            return PaymentVerificationResult::pending(
+                merchantReference: $attempt->merchant_reference,
+                providerTransactionId: $orderId,
+                rawPayload: ['error' => $e->getMessage()]
+            );
+        }
+    }
 }

@@ -40,15 +40,18 @@ use App\Policies\VendorStorageFilePolicy;
 use App\Policies\WaiterCallPolicy;
 use App\Security\Permission;
 use App\Services\EmailRoutingService;
+use App\Services\EntitlementService;
 use App\Services\Localization\Contracts\TranslationProviderInterface;
 use App\Services\Localization\Providers\AiGatewayTranslationProvider;
 use App\Services\Localization\TranslationService;
 use App\Services\Localization\TranslationValidator;
+use App\Services\QuotaService;
 use App\Services\TenantContext;
 use Illuminate\Queue\Events\JobExceptionOccurred;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Queue;
@@ -142,5 +145,14 @@ class AppServiceProvider extends ServiceProvider
                 return $user->hasPermission($permission);
             });
         }
+
+        // Subscription feature and quota Blade directives
+        Blade::if('feature', function (string $featureKey, ?Vendor $vendor = null): bool {
+            return app(EntitlementService::class)->can($vendor, $featureKey);
+        });
+
+        Blade::if('quota', function (string $quotaKey, int $quantity = 1, ?Vendor $vendor = null): bool {
+            return app(QuotaService::class)->can($vendor, $quotaKey, $quantity);
+        });
     }
 }

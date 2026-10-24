@@ -294,6 +294,12 @@ class TelegramNotificationTest extends TestCase
                 'vendor_id' => $vendor->id,
                 'name' => 'Telegram Test Owner',
                 'email' => 'telegram-test-owner@example.test',
+        $vendor = Vendor::whereHas('users', fn ($q) => $q->where('role', 'vendor_owner'))->first() ?? Vendor::first();
+        $user = User::where('vendor_id', $vendor->id)->where('role', 'vendor_owner')->first()
+            ?? User::create([
+                'vendor_id' => $vendor->id,
+                'name' => 'Owner',
+                'email' => 'owner-tg-test@test.com',
                 'password' => bcrypt('password'),
                 'role' => 'vendor_owner',
             ]);

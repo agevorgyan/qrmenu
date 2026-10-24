@@ -178,27 +178,43 @@ class StripeGateway implements PaymentGatewayInterface
         $stripeSignature = $headers['stripe-signature'][0] ?? $headers['stripe-signature'] ?? null;
         $webhookSecret = config('services.stripe.webhook_secret') ?? env('STRIPE_WEBHOOK_SECRET');
 
-        // If webhook secret configured, verify HMAC signature
-        if ($webhookSecret && $stripeSignature) {
+        // If webhook secret configured, strictly verify HMAC signature
+        if ($webhookSecret) {
+            if (! $stripeSignature) {
+                return PaymentVerificationResult::failed('Missing Stripe webhook signature');
+            }
+
             $parsedSig = $this->parseStripeSignature((string) $stripeSignature);
             if (! $parsedSig['timestamp'] || empty($parsedSig['signatures'])) {
                 return PaymentVerificationResult::failed('Invalid Stripe signature format');
             }
 
-            // Check timestamp tolerance (5 minutes)
+            // Check timestamp tolerance (5 minutes replay protection)
             if (abs(time() - (int) $parsedSig['timestamp']) > 300) {
                 return PaymentVerificationResult::failed('Stripe webhook signature expired');
             }
 
-            $rawBody = json_encode($payload);
-            $signedPayload = "{$parsedSig['timestamp']}.{$rawBody}";
-            $expectedSignature = hash_hmac('sha256', $signedPayload, $webhookSecret);
+            $rawBodyCandidates = [];
+            if (! empty($headers['x-raw-body'])) {
+                $rawBodyCandidates[] = is_array($headers['x-raw-body']) ? $headers['x-raw-body'][0] : $headers['x-raw-body'];
+            }
+            if (! empty($payload['_raw_body'])) {
+                $rawBodyCandidates[] = $payload['_raw_body'];
+            }
+            $cleanPayload = $payload;
+            unset($cleanPayload['_raw_body']);
+            $rawBodyCandidates[] = json_encode($cleanPayload, JSON_UNESCAPED_SLASHES);
+            $rawBodyCandidates[] = json_encode($cleanPayload);
 
             $matched = false;
-            foreach ($parsedSig['signatures'] as $sig) {
-                if (hash_equals($expectedSignature, $sig)) {
-                    $matched = true;
-                    break;
+            foreach ($rawBodyCandidates as $rawCandidate) {
+                $signedPayload = "{$parsedSig['timestamp']}.{$rawCandidate}";
+                $expectedSignature = hash_hmac('sha256', $signedPayload, $webhookSecret);
+                foreach ($parsedSig['signatures'] as $sig) {
+                    if (hash_equals($expectedSignature, $sig)) {
+                        $matched = true;
+                        break 2;
+                    }
                 }
             }
 
@@ -211,12 +227,16 @@ class StripeGateway implements PaymentGatewayInterface
         $dataObject = $payload['data']['object'] ?? [];
         $merchantReference = $dataObject['client_reference_id']
             ?? $dataObject['metadata']['merchant_reference']
+            ?? $dataObject['subscription_details']['metadata']['merchant_reference']
+            ?? $dataObject['lines']['data'][0]['metadata']['merchant_reference']
             ?? null;
 
-        if ($eventType === 'checkout.session.completed' || $eventType === 'payment_intent.succeeded') {
+        if ($eventType === 'checkout.session.completed' || $eventType === 'payment_intent.succeeded' || $eventType === 'invoice.payment_succeeded') {
             $amount = isset($dataObject['amount_total'])
                 ? $dataObject['amount_total'] / 100
-                : (isset($dataObject['amount_received']) ? $dataObject['amount_received'] / 100 : 0);
+                : (isset($dataObject['amount_received'])
+                    ? $dataObject['amount_received'] / 100
+                    : (isset($dataObject['amount_paid']) ? $dataObject['amount_paid'] / 100 : 0));
 
             $currency = strtoupper($dataObject['currency'] ?? 'AMD');
             $providerTxId = $dataObject['payment_intent'] ?? $dataObject['id'] ?? null;
@@ -235,7 +255,7 @@ class StripeGateway implements PaymentGatewayInterface
             );
         }
 
-        if ($eventType === 'payment_intent.payment_failed') {
+        if ($eventType === 'payment_intent.payment_failed' || $eventType === 'invoice.payment_failed') {
             return PaymentVerificationResult::failed(
                 errorMessage: $dataObject['last_payment_error']['message'] ?? 'Payment failed',
                 merchantReference: $merchantReference,
@@ -244,8 +264,8 @@ class StripeGateway implements PaymentGatewayInterface
             );
         }
 
-        if ($eventType === 'charge.refunded') {
-            $amount = ($dataObject['amount_refunded'] ?? 0) / 100;
+        if ($eventType === 'charge.refunded' || $eventType === 'customer.subscription.deleted') {
+            $amount = ($dataObject['amount_refunded'] ?? $dataObject['amount_total'] ?? 0) / 100;
             $currency = strtoupper($dataObject['currency'] ?? 'AMD');
             $providerTxId = $dataObject['payment_intent'] ?? $dataObject['id'] ?? null;
 
@@ -264,6 +284,124 @@ class StripeGateway implements PaymentGatewayInterface
             rawPayload: $payload,
             signatureValid: true
         );
+    }
+
+    /**
+     * Authoritatively query Stripe API for current transaction status during reconciliation.
+     */
+    public function queryTransactionStatus(PaymentAttempt $attempt): PaymentVerificationResult
+    {
+        $vendor = $attempt->vendor;
+        $settings = $vendor?->getPaymentSettings()['gateways']['stripe'] ?? [];
+        $secretKey = ! empty($settings['secret_key']) ? $settings['secret_key'] : config('services.stripe.secret');
+
+        if (empty($secretKey)) {
+            return PaymentVerificationResult::pending(
+                merchantReference: $attempt->merchant_reference,
+                providerTransactionId: $attempt->provider_transaction_id,
+                rawPayload: ['note' => 'Stripe secret key not configured']
+            );
+        }
+
+        $txId = $attempt->provider_transaction_id;
+        if (empty($txId)) {
+            return PaymentVerificationResult::pending(
+                merchantReference: $attempt->merchant_reference,
+                rawPayload: ['note' => 'No provider transaction ID on attempt']
+            );
+        }
+
+        try {
+            $endpoint = str_starts_with($txId, 'cs_')
+                ? "https://api.stripe.com/v1/checkout/sessions/{$txId}"
+                : "https://api.stripe.com/v1/payment_intents/{$txId}";
+
+            $response = Http::withToken($secretKey)->timeout(5)->get($endpoint);
+            if (! $response->successful()) {
+                return PaymentVerificationResult::pending(
+                    merchantReference: $attempt->merchant_reference,
+                    providerTransactionId: $txId,
+                    rawPayload: $response->json() ?? []
+                );
+            }
+
+            $data = $response->json();
+
+            // Checkout session check
+            if (str_starts_with($txId, 'cs_')) {
+                $paymentStatus = $data['payment_status'] ?? '';
+                if ($paymentStatus === 'paid') {
+                    $amount = ($data['amount_total'] ?? 0) / 100;
+                    $currency = strtoupper($data['currency'] ?? 'AMD');
+                    $resolvedTxId = $data['payment_intent'] ?? $data['id'];
+
+                    return PaymentVerificationResult::paid(
+                        providerTransactionId: (string) $resolvedTxId,
+                        amount: (float) $amount,
+                        currency: $currency,
+                        merchantReference: $attempt->merchant_reference,
+                        rawPayload: $data,
+                        signatureValid: true
+                    );
+                }
+
+                if (($data['status'] ?? '') === 'expired') {
+                    return PaymentVerificationResult::failed(
+                        errorMessage: 'Stripe checkout session expired',
+                        merchantReference: $attempt->merchant_reference,
+                        providerTransactionId: $txId,
+                        rawPayload: $data,
+                        signatureValid: true
+                    );
+                }
+
+                return PaymentVerificationResult::pending(
+                    merchantReference: $attempt->merchant_reference,
+                    providerTransactionId: $txId,
+                    rawPayload: $data
+                );
+            }
+
+            // Payment intent check
+            $intentStatus = $data['status'] ?? '';
+            if ($intentStatus === 'succeeded') {
+                $amount = ($data['amount_received'] ?? $data['amount'] ?? 0) / 100;
+                $currency = strtoupper($data['currency'] ?? 'AMD');
+
+                return PaymentVerificationResult::paid(
+                    providerTransactionId: (string) $data['id'],
+                    amount: (float) $amount,
+                    currency: $currency,
+                    merchantReference: $attempt->merchant_reference,
+                    rawPayload: $data,
+                    signatureValid: true
+                );
+            }
+
+            if ($intentStatus === 'canceled') {
+                return PaymentVerificationResult::failed(
+                    errorMessage: 'Stripe payment intent was canceled',
+                    merchantReference: $attempt->merchant_reference,
+                    providerTransactionId: $txId,
+                    rawPayload: $data,
+                    signatureValid: true
+                );
+            }
+
+            return PaymentVerificationResult::pending(
+                merchantReference: $attempt->merchant_reference,
+                providerTransactionId: $txId,
+                rawPayload: $data
+            );
+        } catch (\Throwable $e) {
+            Log::warning("Stripe queryTransactionStatus exception for {$attempt->merchant_reference}: {$e->getMessage()}");
+
+            return PaymentVerificationResult::pending(
+                merchantReference: $attempt->merchant_reference,
+                providerTransactionId: $txId,
+                rawPayload: ['error' => $e->getMessage()]
+            );
+        }
     }
 
     /**

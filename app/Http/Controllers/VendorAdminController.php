@@ -6,9 +6,15 @@ use App\Http\Requests\RenewSubscriptionRequest;
 use App\Models\AnalyticsLog;
 use App\Models\Location;
 use App\Models\Order;
+use App\Models\SubscriptionPayment;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
+use App\Security\FeatureCatalog;
+use App\Security\QuotaCatalog;
+use App\Services\EntitlementService;
 use App\Services\PaymentGatewayService;
+use App\Services\QuotaService;
+use App\Services\SubscriptionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -103,17 +109,23 @@ class VendorAdminController extends Controller
             'minimum_order_amount' => 'nullable|numeric|min:0',
         ]);
 
-        Location::create([
-            'vendor_id' => $vendor->id,
-            'name' => $validated['name'],
-            'slug' => Str::slug($validated['name']),
-            'address' => $validated['address'] ?? null,
-            'phone' => $validated['phone'] ?? null,
-            'whatsapp_number' => $validated['whatsapp_number'] ?? null,
-            'table_count' => $validated['table_count'],
-            'minimum_order_amount' => $validated['minimum_order_amount'] ?? 0,
-            'is_active' => true,
-        ]);
+        app(QuotaService::class)->executeWithResourceQuota(
+            $vendor,
+            QuotaCatalog::KEY_BRANCHES_COUNT,
+            function ($lockedVendor) use ($validated) {
+                Location::create([
+                    'vendor_id' => $lockedVendor->id,
+                    'name' => $validated['name'],
+                    'slug' => Str::slug($validated['name']),
+                    'address' => $validated['address'] ?? null,
+                    'phone' => $validated['phone'] ?? null,
+                    'whatsapp_number' => $validated['whatsapp_number'] ?? null,
+                    'table_count' => $validated['table_count'],
+                    'minimum_order_amount' => $validated['minimum_order_amount'] ?? 0,
+                    'is_active' => true,
+                ]);
+            }
+        );
 
         return back()->with('success', __('New Location added successfully!'));
     }
@@ -150,28 +162,67 @@ class VendorAdminController extends Controller
             }
         }
 
-        User::create([
-            'vendor_id' => $vendor->id,
-            'location_id' => $validated['location_id'] ?? null,
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role' => $validated['role'],
-        ]);
+        app(QuotaService::class)->executeWithResourceQuota(
+            $vendor,
+            QuotaCatalog::KEY_TEAM_MEMBERS_COUNT,
+            function ($lockedVendor) use ($validated) {
+                User::create([
+                    'vendor_id' => $lockedVendor->id,
+                    'location_id' => $validated['location_id'] ?? null,
+                    'name' => $validated['name'],
+                    'email' => $validated['email'],
+                    'password' => Hash::make($validated['password']),
+                    'role' => $validated['role'],
+                ]);
+            }
+        );
 
         return back()->with('success', __('Team member invited successfully!'));
     }
 
-    public function subscriptionIndex()
-    {
+    public function subscriptionIndex(
+        SubscriptionService $subscriptionService,
+        EntitlementService $entitlementService,
+        QuotaService $quotaService
+    ) {
         $this->authorize('billing.view');
 
         $vendor = Auth::user()->vendor;
-
         $vendor->load('plan', 'payments');
-        $allPlans = SubscriptionPlan::where('is_active', true)->orderBy('sort_order', 'asc')->get();
+        $vendor->unsetRelation('subscription');
 
-        return view('admin.subscription.index', compact('vendor', 'allPlans'));
+        $subscription = $subscriptionService->getOrCreateForVendor($vendor);
+        $allPlans = SubscriptionPlan::where('is_active', true)->with('activePrices')->orderBy('sort_order', 'asc')->get();
+
+        $entitledFeatures = $entitlementService->getEntitledFeatures($vendor);
+        $allFeatures = FeatureCatalog::all();
+
+        $keyQuotas = [
+            QuotaCatalog::KEY_PRODUCTS_COUNT,
+            QuotaCatalog::KEY_CATEGORIES_COUNT,
+            QuotaCatalog::KEY_BRANCHES_COUNT,
+            QuotaCatalog::KEY_TEAM_MEMBERS_COUNT,
+            QuotaCatalog::KEY_ORDERS_PERIOD,
+            QuotaCatalog::KEY_RESERVATIONS_PERIOD,
+            QuotaCatalog::KEY_AI_REQUESTS_PERIOD,
+        ];
+
+        $quotas = [];
+        foreach ($keyQuotas as $qk) {
+            $quotas[$qk] = $quotaService->getQuotaStatus($vendor, $qk);
+        }
+
+        $payments = $vendor->payments()->latest()->paginate(15);
+
+        return view('admin.subscription.index', compact(
+            'vendor',
+            'subscription',
+            'allPlans',
+            'entitledFeatures',
+            'allFeatures',
+            'quotas',
+            'payments'
+        ));
     }
 
     /**
@@ -224,5 +275,78 @@ class VendorAdminController extends Controller
                 'invoice' => $payment->invoice_number,
             ])
         );
+    }
+
+    /**
+     * Cancel vendor subscription (at period end or immediately if requested).
+     */
+    public function cancelSubscription(Request $request, SubscriptionService $subscriptionService)
+    {
+        $vendor = Auth::user()->vendor;
+        $this->authorize('manageBilling', $vendor);
+        $vendor->unsetRelation('subscription');
+
+        $subscription = $subscriptionService->getOrCreateForVendor($vendor);
+        $immediately = $request->boolean('immediately', false);
+        $reason = $request->input('reason', 'Cancelled by tenant administrator');
+
+        $subscriptionService->cancel($subscription, immediately: $immediately, reason: $reason, actor: Auth::user());
+
+        $message = $immediately
+            ? __('Subscription has been cancelled immediately.')
+            : __('Subscription will cancel at the end of the current billing period.');
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * Resume auto-renewal on a subscription scheduled to cancel at period end.
+     */
+    public function resumeSubscription(SubscriptionService $subscriptionService)
+    {
+        $vendor = Auth::user()->vendor;
+        $this->authorize('manageBilling', $vendor);
+        $vendor->unsetRelation('subscription');
+
+        $subscription = $subscriptionService->getOrCreateForVendor($vendor);
+        $subscriptionService->resume($subscription, actor: Auth::user());
+
+        return back()->with('success', __('Subscription auto-renewal has been resumed.'));
+    }
+
+    /**
+     * View or print specific invoice transaction.
+     */
+    public function showInvoice($invoice)
+    {
+        $this->authorize('billing.view');
+
+        $invoiceModel = $invoice instanceof SubscriptionPayment
+            ? $invoice
+            : SubscriptionPayment::withoutGlobalScopes()->findOrFail($invoice);
+
+        $vendor = Auth::user()->vendor;
+        if ((int) $invoiceModel->vendor_id !== (int) $vendor->id) {
+            abort(403, 'Unauthorized invoice access.');
+        }
+
+        $invoiceModel->load('plan', 'latestPaymentAttempt');
+
+        if (request()->wantsJson()) {
+            return response()->json([
+                'invoice_number' => $invoiceModel->invoice_number,
+                'amount' => $invoiceModel->amount,
+                'currency' => $invoiceModel->currency,
+                'status' => $invoiceModel->status,
+                'period_start' => $invoiceModel->period_start?->toDateString(),
+                'period_end' => $invoiceModel->period_end?->toDateString(),
+                'payment_method' => $invoiceModel->payment_method,
+                'plan_name' => $invoiceModel->plan?->name,
+                'notes' => $invoiceModel->notes,
+                'created_at' => $invoiceModel->created_at?->toIso8601String(),
+            ]);
+        }
+
+        return view('admin.subscription.invoice', ['invoice' => $invoiceModel, 'vendor' => $vendor]);
     }
 }

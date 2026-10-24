@@ -4,6 +4,15 @@
 
 @section('content')
 <div style="max-width: 960px; margin: 0 auto; width: 100%; box-sizing: border-box; padding-bottom: 3rem;">
+    <!-- Breadcrumb -->
+    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem; flex-wrap: wrap;">
+        <a href="{{ route('admin.dashboard') }}" style="color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 0.35rem;"><i class="fa-solid fa-gauge-high"></i> {{ __('Dashboard') }}</a>
+        <i class="fa-solid fa-chevron-right" style="font-size: 0.65rem; opacity: 0.6;"></i>
+        <a href="{{ route('admin.settings.index', ['tab' => 'reservations']) }}" style="color: var(--text-muted); text-decoration: none;">{{ __('Settings') }}</a>
+        <i class="fa-solid fa-chevron-right" style="font-size: 0.65rem; opacity: 0.6;"></i>
+        <span style="color: var(--primary); font-weight: 700;">{{ __('Reservations & Booking Rules') }}</span>
+    </div>
+
     <!-- Header -->
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.75rem;">
         <div>
@@ -19,6 +28,9 @@
         </div>
 
         <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+            <a href="{{ route('admin.settings.index', ['tab' => 'reservations']) }}" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i> {{ __('Back to Settings') }}
+            </a>
             <a href="{{ route('admin.reservations.index') }}" class="btn btn-secondary">
                 <i class="fa-solid fa-calendar-check" style="color: #ec4899;"></i> {{ __('Table Reservations') }}
             </a>

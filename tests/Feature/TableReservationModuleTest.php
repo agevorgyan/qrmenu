@@ -752,4 +752,35 @@ class TableReservationModuleTest extends TestCase
         $this->assertEquals('mandatory', $updated['pre_orders_mode']);
         $this->assertEquals('Strict cancellation policy applies.', $updated['cancellation_policy']);
     }
+
+    /**
+     * 23. Reservation page guides customer to use the main menu for pre-orders rather than a separate menu.
+     */
+    public function test_reservation_page_prompts_customer_to_browse_main_menu_for_preorder(): void
+    {
+        $response = $this->get(route('client.reserve', ['vendor_slug' => $this->vendor->slug]));
+
+        $response->assertStatus(200);
+        // Ensure new CTA button to use the main menu is present
+        $response->assertSee('browse-menu-action-btn');
+        $response->assertSee('goToMainMenuForPreOrder');
+        // Ensure old separate menu toggle is NOT present
+        $response->assertDontSee('preorder-toggle');
+    }
+
+    /**
+     * 24. Main menu renders preorder top banner and cart actions when in preorder mode.
+     */
+    public function test_main_menu_renders_preorder_banner_and_return_actions(): void
+    {
+        $response = $this->get(route('client.menu', [
+            'vendor_slug' => $this->vendor->slug,
+            'mode' => 'preorder',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('storefront-preorder-top-banner');
+        $response->assertSee('returnToReservation');
+        $response->assertSee('confirmPreOrderAndReturn');
+    }
 }

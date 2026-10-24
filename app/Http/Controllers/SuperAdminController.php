@@ -9,12 +9,21 @@ use App\Models\Location;
 use App\Models\MenuTemplate;
 use App\Models\Order;
 use App\Models\SecurityAuditLog;
+use App\Models\Subscription;
+use App\Models\SubscriptionLifecycleEvent;
 use App\Models\SubscriptionPayment;
 use App\Models\SubscriptionPlan;
+use App\Models\SubscriptionPlanPrice;
 use App\Models\SystemSetting;
+use App\Models\TenantFeatureOverride;
+use App\Models\TenantQuotaOverride;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Security\FeatureCatalog;
+use App\Security\QuotaCatalog;
+use App\Services\EntitlementService;
 use App\Services\QrCodeService;
+use App\Services\QuotaService;
 use App\Services\Security\ImageProcessor;
 use App\Services\SecurityAuditService;
 use App\Services\SubscriptionService;
@@ -142,9 +151,11 @@ class SuperAdminController extends Controller
     // Plan Management
     public function plansIndex()
     {
-        $plans = SubscriptionPlan::withCount('vendors')->orderBy('sort_order', 'asc')->get();
+        $plans = SubscriptionPlan::withCount('vendors')->with('activePrices')->orderBy('sort_order', 'asc')->get();
+        $availableFeatures = FeatureCatalog::all();
+        $availableQuotas = QuotaCatalog::all();
 
-        return view('superadmin.plans.index', compact('plans'));
+        return view('superadmin.plans.index', compact('plans', 'availableFeatures', 'availableQuotas'));
     }
 
     public function storePlan(Request $request)
@@ -152,29 +163,87 @@ class SuperAdminController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
+            'currency' => 'nullable|string|size:3',
             'billing_interval' => 'required|string|in:monthly,yearly,custom',
             'duration_days' => 'required|integer|min:1',
             'trial_days' => 'required|integer|min:0',
             'description' => 'nullable|string',
             'features' => 'nullable|string',
+            'feature_codes' => 'nullable|array',
+            'feature_codes.*' => 'string|max:100',
+            'quota_limits' => 'nullable|array',
+            'yearly_price' => 'nullable|numeric|min:0',
         ]);
 
         $featuresArray = array_values(array_filter(array_map('trim', explode("\n", $validated['features'] ?? ''))));
+        $currency = strtoupper($validated['currency'] ?? 'AMD');
 
-        SubscriptionPlan::create([
+        // Normalize feature codes against catalog
+        $validFeatures = FeatureCatalog::all();
+        $featureCodes = array_values(array_intersect($validated['feature_codes'] ?? [], $validFeatures));
+
+        // Normalize quota limits against catalog
+        $quotaLimits = [];
+        if (! empty($validated['quota_limits']) && is_array($validated['quota_limits'])) {
+            foreach ($validated['quota_limits'] as $k => $val) {
+                if (QuotaCatalog::isValid($k) && is_numeric($val)) {
+                    $quotaLimits[QuotaCatalog::normalize($k)] = (int) $val;
+                }
+            }
+        }
+
+        $plan = SubscriptionPlan::create([
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
             'price' => $validated['price'],
-            'currency' => 'AMD',
+            'currency' => $currency,
             'billing_interval' => $validated['billing_interval'],
             'duration_days' => $validated['duration_days'],
             'trial_days' => $validated['trial_days'],
             'description' => $validated['description'] ?? null,
             'features' => $featuresArray,
+            'feature_codes' => $featureCodes,
+            'quota_limits' => $quotaLimits,
             'is_custom' => $validated['price'] == 0 || $validated['billing_interval'] === 'custom',
             'is_active' => true,
             'sort_order' => (SubscriptionPlan::max('sort_order') ?? 0) + 1,
         ]);
+
+        // Create default monthly price tier
+        SubscriptionPlanPrice::create([
+            'subscription_plan_id' => $plan->id,
+            'billing_interval' => 'monthly',
+            'currency' => $currency,
+            'price' => $validated['price'],
+            'is_active' => true,
+            'description' => 'Monthly billing interval',
+        ]);
+
+        // Optional yearly price tier
+        if (isset($validated['yearly_price']) && is_numeric($validated['yearly_price'])) {
+            SubscriptionPlanPrice::create([
+                'subscription_plan_id' => $plan->id,
+                'billing_interval' => 'yearly',
+                'currency' => $currency,
+                'price' => (float) $validated['yearly_price'],
+                'is_active' => true,
+                'description' => 'Yearly billing interval',
+            ]);
+        }
+
+        app(SecurityAuditService::class)->record(
+            event: SecurityAuditLog::EVENT_SUBSCRIPTION_CHANGED,
+            action: "Created subscription plan [{$plan->name}] (Slug: {$plan->slug}).",
+            actor: Auth::user(),
+            targetType: SubscriptionPlan::class,
+            targetId: $plan->id,
+            metadata: [
+                'price' => $plan->price,
+                'currency' => $currency,
+                'feature_codes' => $featureCodes,
+                'quota_limits' => $quotaLimits,
+            ]
+        );
 
         return back()->with('success', __('Բաժանորդագրության փաթեթը հաջողությամբ ստեղծվեց։'));
     }
@@ -184,26 +253,76 @@ class SuperAdminController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
+            'currency' => 'nullable|string|size:3',
             'billing_interval' => 'required|string|in:monthly,yearly,custom',
             'duration_days' => 'required|integer|min:1',
             'trial_days' => 'required|integer|min:0',
             'description' => 'nullable|string',
             'features' => 'nullable|string',
+            'feature_codes' => 'nullable|array',
+            'feature_codes.*' => 'string|max:100',
+            'quota_limits' => 'nullable|array',
+            'yearly_price' => 'nullable|numeric|min:0',
         ]);
 
         $featuresArray = array_values(array_filter(array_map('trim', explode("\n", $validated['features'] ?? ''))));
+        $currency = strtoupper($validated['currency'] ?? $plan->currency ?? 'AMD');
+
+        // Normalize feature codes against catalog
+        $validFeatures = FeatureCatalog::all();
+        $featureCodes = array_values(array_intersect($validated['feature_codes'] ?? [], $validFeatures));
+
+        // Normalize quota limits against catalog
+        $quotaLimits = [];
+        if (! empty($validated['quota_limits']) && is_array($validated['quota_limits'])) {
+            foreach ($validated['quota_limits'] as $k => $val) {
+                if (QuotaCatalog::isValid($k) && is_numeric($val)) {
+                    $quotaLimits[QuotaCatalog::normalize($k)] = (int) $val;
+                }
+            }
+        }
 
         $plan->update([
             'name' => $validated['name'],
             'price' => $validated['price'],
+            'currency' => $currency,
             'billing_interval' => $validated['billing_interval'],
             'duration_days' => $validated['duration_days'],
             'trial_days' => $validated['trial_days'],
             'description' => $validated['description'] ?? null,
             'features' => $featuresArray,
+            'feature_codes' => $featureCodes,
+            'quota_limits' => $quotaLimits,
             'is_custom' => $validated['price'] == 0 || $validated['billing_interval'] === 'custom',
             'is_active' => $request->has('is_active'),
         ]);
+
+        // Sync monthly price tier
+        SubscriptionPlanPrice::updateOrCreate(
+            ['subscription_plan_id' => $plan->id, 'billing_interval' => 'monthly', 'currency' => $currency],
+            ['price' => $validated['price'], 'is_active' => true]
+        );
+
+        // Sync yearly price tier if specified
+        if (isset($validated['yearly_price']) && is_numeric($validated['yearly_price'])) {
+            SubscriptionPlanPrice::updateOrCreate(
+                ['subscription_plan_id' => $plan->id, 'billing_interval' => 'yearly', 'currency' => $currency],
+                ['price' => (float) $validated['yearly_price'], 'is_active' => true]
+            );
+        }
+
+        app(SecurityAuditService::class)->record(
+            event: SecurityAuditLog::EVENT_SUBSCRIPTION_CHANGED,
+            action: "Updated subscription plan [{$plan->name}] (Slug: {$plan->slug}).",
+            actor: Auth::user(),
+            targetType: SubscriptionPlan::class,
+            targetId: $plan->id,
+            metadata: [
+                'price' => $plan->price,
+                'feature_codes' => $featureCodes,
+                'quota_limits' => $quotaLimits,
+            ]
+        );
 
         return back()->with('success', __('Բաժանորդագրության փաթեթը թարմացվեց։'));
     }
@@ -212,26 +331,98 @@ class SuperAdminController extends Controller
     {
         $plan->update(['is_active' => ! $plan->is_active]);
 
+        app(SecurityAuditService::class)->record(
+            event: SecurityAuditLog::EVENT_SUBSCRIPTION_CHANGED,
+            action: "Toggled subscription plan [{$plan->name}] to ".($plan->is_active ? 'active' : 'disabled').'.',
+            actor: Auth::user(),
+            targetType: SubscriptionPlan::class,
+            targetId: $plan->id
+        );
+
         return back()->with('success', __('Փաթեթի կարգավիճակը թարմացվեց։'));
     }
 
     public function destroyPlan(SubscriptionPlan $plan)
     {
-        if ($plan->vendors()->count() > 0) {
+        if ($plan->vendors()->count() > 0 || $plan->subscriptions()->count() > 0) {
             return back()->with('error', __('Հնարավոր չէ ջնջել փաթեթը, քանի որ այն կցված է գործընկերների։'));
         }
+
+        app(SecurityAuditService::class)->record(
+            event: SecurityAuditLog::EVENT_SUBSCRIPTION_CHANGED,
+            action: "Deleted subscription plan [{$plan->name}] (ID: {$plan->id}).",
+            actor: Auth::user(),
+            targetType: SubscriptionPlan::class,
+            targetId: $plan->id
+        );
+
+        $plan->prices()->delete();
         $plan->delete();
 
         return back()->with('success', __('Փաթեթը հաջողությամբ ջնջվեց։'));
     }
 
-    // Vendor Subscriptions & Payment Logs
-    public function subscriptionsIndex()
+    // Vendor Subscriptions & Subscriber Management
+    public function subscriptionsIndex(Request $request)
     {
-        $vendors = Vendor::with('plan', 'payments')->latest()->get();
-        $plans = SubscriptionPlan::where('is_active', true)->orderBy('sort_order', 'asc')->get();
+        $query = Vendor::withoutGlobalScopes()->with(['plan', 'subscription.plan', 'payments' => fn ($q) => $q->latest()->limit(5)]);
 
-        return view('superadmin.subscriptions.index', compact('vendors', 'plans'));
+        // Search filter (name, email, phone, slug)
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'ilike', "%{$search}%")
+                    ->orWhere('email', 'ilike', "%{$search}%")
+                    ->orWhere('slug', 'ilike', "%{$search}%")
+                    ->orWhere('phone', 'ilike', "%{$search}%");
+            });
+        }
+
+        // Status filter
+        if ($status = $request->input('status')) {
+            if ($status === 'active') {
+                $query->whereHas('subscription', fn ($q) => $q->where('status', 'active'));
+            } elseif ($status === 'trialing') {
+                $query->whereHas('subscription', fn ($q) => $q->where('status', 'trialing'));
+            } elseif ($status === 'expired') {
+                $query->whereHas('subscription', fn ($q) => $q->where('status', 'expired'));
+            } elseif ($status === 'suspended') {
+                $query->whereHas('subscription', fn ($q) => $q->where('status', 'suspended'));
+            } elseif ($status === 'past_due') {
+                $query->whereHas('subscription', fn ($q) => $q->whereIn('status', ['past_due', 'grace', 'grace_period']));
+            } elseif ($status === 'cancelled') {
+                $query->whereHas('subscription', fn ($q) => $q->whereIn('status', ['cancelled', 'cancel_at_period_end']));
+            }
+        }
+
+        // Plan filter
+        if ($planId = $request->input('plan_id')) {
+            $query->where(function ($q) use ($planId) {
+                $q->where('subscription_plan_id', $planId)
+                    ->orWhereHas('subscription', fn ($sq) => $sq->where('subscription_plan_id', $planId));
+            });
+        }
+
+        // Failed payment filter
+        if ($request->boolean('failed_only')) {
+            $query->whereHas('payments', fn ($q) => $q->where('status', 'failed'));
+        }
+
+        $vendors = $query->latest('id')->paginate(15)->withQueryString();
+
+        $plans = SubscriptionPlan::orderBy('sort_order', 'asc')->get();
+        $availableFeatures = FeatureCatalog::all();
+        $availableQuotas = QuotaCatalog::all();
+
+        // Calculate KPI stats
+        $stats = [
+            'total' => Vendor::withoutGlobalScopes()->count(),
+            'active' => Subscription::withoutTenantQuery()->where('status', SubscriptionStatus::Active)->count(),
+            'trialing' => Subscription::withoutTenantQuery()->where('status', SubscriptionStatus::Trialing)->count(),
+            'expired_suspended' => Subscription::withoutTenantQuery()->whereIn('status', [SubscriptionStatus::Expired, SubscriptionStatus::Suspended])->count(),
+            'failed_payments' => SubscriptionPayment::withoutGlobalScopes()->where('status', 'failed')->count(),
+        ];
+
+        return view('superadmin.subscriptions.index', compact('vendors', 'plans', 'availableFeatures', 'availableQuotas', 'stats'));
     }
 
     public function updateVendorSubscription(Request $request, Vendor $vendor)
@@ -250,6 +441,8 @@ class SuperAdminController extends Controller
         $subscriptionService = app(SubscriptionService::class);
         $subscription = $vendor->subscription ?? $subscriptionService->getOrCreateForVendor($vendor);
 
+        $oldStatus = $subscription->status->value;
+
         $subscription->update([
             'subscription_plan_id' => $plan->id,
             'status' => $status,
@@ -264,7 +457,172 @@ class SuperAdminController extends Controller
             $vendor->saveQuietly();
         }
 
+        app(SecurityAuditService::class)->logSubscriptionChange(
+            vendor: $vendor,
+            oldStatus: $oldStatus,
+            newStatus: $status->value,
+            planSlug: $plan->slug,
+            actor: Auth::user()
+        );
+
         return back()->with('success', __(':name-ի բաժանորդագրությունը թարմացվեց։', ['name' => $vendor->name]));
+    }
+
+    /**
+     * Administratively suspend vendor subscription (mandatory reason required).
+     */
+    public function suspendVendorSubscription(Request $request, Vendor $vendor)
+    {
+        $validated = $request->validate([
+            'reason' => 'required|string|min:5|max:1000',
+        ]);
+
+        $subscriptionService = app(SubscriptionService::class);
+        $subscription = $vendor->subscription ?? $subscriptionService->getOrCreateForVendor($vendor);
+
+        $subscriptionService->suspend($subscription, reason: $validated['reason'], actor: Auth::user());
+
+        app(SecurityAuditService::class)->logVendorSuspension($vendor, reason: $validated['reason'], actor: Auth::user());
+
+        return back()->with('success', __(':name-ի բաժանորդագրությունը կասեցվեց։', ['name' => $vendor->name]));
+    }
+
+    /**
+     * Administratively restore vendor subscription (mandatory reason required).
+     */
+    public function restoreVendorSubscription(Request $request, Vendor $vendor)
+    {
+        $validated = $request->validate([
+            'reason' => 'required|string|min:5|max:1000',
+        ]);
+
+        $subscriptionService = app(SubscriptionService::class);
+        $subscription = $vendor->subscription ?? $subscriptionService->getOrCreateForVendor($vendor);
+
+        $subscriptionService->restore($subscription, reason: $validated['reason'], actor: Auth::user());
+
+        app(SecurityAuditService::class)->logSubscriptionChange(
+            vendor: $vendor,
+            oldStatus: 'suspended',
+            newStatus: 'active',
+            planSlug: $subscription->plan?->slug,
+            actor: Auth::user()
+        );
+
+        return back()->with('success', __(':name-ի բաժանորդագրությունը հաջողությամբ վերականգնվեց։', ['name' => $vendor->name]));
+    }
+
+    /**
+     * View subscription lifecycle events history for a vendor.
+     */
+    public function vendorLifecycleHistory(Vendor $vendor)
+    {
+        $subscription = $vendor->subscription ?? app(SubscriptionService::class)->getOrCreateForVendor($vendor);
+        $events = SubscriptionLifecycleEvent::withoutGlobalScopes()
+            ->where('vendor_id', $vendor->id)
+            ->latest('created_at')
+            ->paginate(20);
+
+        if (request()->wantsJson()) {
+            return response()->json($events);
+        }
+
+        return view('superadmin.subscriptions.lifecycle', compact('vendor', 'subscription', 'events'));
+    }
+
+    /**
+     * View real-time quota usage and active overrides for a vendor.
+     */
+    public function vendorUsageReporting(Vendor $vendor, QuotaService $quotaService)
+    {
+        $subscription = $vendor->subscription ?? app(SubscriptionService::class)->getOrCreateForVendor($vendor);
+        $allQuotas = QuotaCatalog::all();
+
+        $quotaStatuses = [];
+        foreach ($allQuotas as $key) {
+            $quotaStatuses[$key] = $quotaService->getQuotaStatus($vendor, $key);
+        }
+
+        $activeQuotaOverrides = TenantQuotaOverride::withoutGlobalScopes()
+            ->where('vendor_id', $vendor->id)
+            ->active()
+            ->get();
+
+        $activeFeatureOverrides = TenantFeatureOverride::withoutGlobalScopes()
+            ->where('vendor_id', $vendor->id)
+            ->active()
+            ->get();
+
+        if (request()->wantsJson()) {
+            return response()->json([
+                'vendor' => $vendor->only('id', 'name', 'slug'),
+                'quotas' => collect($quotaStatuses)->map(fn ($q) => $q->toArray()),
+                'quota_overrides' => $activeQuotaOverrides,
+                'feature_overrides' => $activeFeatureOverrides,
+            ]);
+        }
+
+        return view('superadmin.subscriptions.usage', compact('vendor', 'subscription', 'quotaStatuses', 'activeQuotaOverrides', 'activeFeatureOverrides'));
+    }
+
+    /**
+     * Global Payment & Invoice History with failed payment review.
+     */
+    public function allPaymentsIndex(Request $request)
+    {
+        $query = SubscriptionPayment::withoutGlobalScopes()->with(['vendor:id,name,slug,email', 'plan:id,name,slug']);
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('invoice_number', 'ilike', "%{$search}%")
+                    ->orWhereHas('vendor', fn ($vq) => $vq->where('name', 'ilike', "%{$search}%")->orWhere('email', 'ilike', "%{$search}%"));
+            });
+        }
+
+        $payments = $query->latest('id')->paginate(25)->withQueryString();
+
+        $stats = [
+            'total_payments' => SubscriptionPayment::withoutGlobalScopes()->count(),
+            'completed' => SubscriptionPayment::withoutGlobalScopes()->whereIn('status', ['paid', 'completed'])->count(),
+            'failed' => SubscriptionPayment::withoutGlobalScopes()->where('status', 'failed')->count(),
+            'pending' => SubscriptionPayment::withoutGlobalScopes()->where('status', 'pending')->count(),
+        ];
+
+        return view('superadmin.subscriptions.payments', compact('payments', 'stats'));
+    }
+
+    /**
+     * Subscription and Security Administrative Audit Logs.
+     */
+    public function subscriptionAuditLogs(Request $request)
+    {
+        $query = SecurityAuditLog::withoutGlobalScopes()
+            ->whereIn('event', [
+                SecurityAuditLog::EVENT_SUBSCRIPTION_CHANGED,
+                SecurityAuditLog::EVENT_VENDOR_SUSPENDED,
+                SecurityAuditLog::EVENT_PAYMENT_STATUS_CHANGED,
+                SecurityAuditLog::EVENT_SECURITY_CONFIG_CHANGED,
+            ])
+            ->with(['vendor:id,name,slug', 'user:id,name,email']);
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('action', 'ilike', "%{$search}%")
+                    ->orWhereHas('vendor', fn ($vq) => $vq->where('name', 'ilike', "%{$search}%"));
+            });
+        }
+
+        $logs = $query->latest('created_at')->paginate(25)->withQueryString();
+
+        if ($request->wantsJson()) {
+            return response()->json($logs);
+        }
+
+        return view('superadmin.subscriptions.audit_logs', compact('logs'));
     }
 
     public function storeVendorPayment(Request $request, Vendor $vendor)
@@ -307,7 +665,132 @@ class SuperAdminController extends Controller
             $subscriptionService->handlePaymentFailure($subscription, $subPayment);
         }
 
+        app(SecurityAuditService::class)->logPaymentStatusChange(
+            orderOrPaymentId: $subPayment->id,
+            oldStatus: 'new',
+            newStatus: $paymentStatus,
+            vendor: $vendor,
+            metadata: ['amount' => $validated['amount'], 'method' => $validated['payment_method']]
+        );
+
         return back()->with('success', __('Վճարման գրանցումը հաջողությամբ պահպանվեց։'));
+    }
+
+    public function storeFeatureOverride(Request $request, Vendor $vendor)
+    {
+        $validated = $request->validate([
+            'feature_key' => 'required|string|max:100',
+            'is_enabled' => 'required|boolean',
+            'reason' => 'required|string|min:3|max:1000',
+            'scope' => 'nullable|string|max:50',
+            'expires_at' => 'nullable|date|after:now',
+        ]);
+
+        $entitlementService = app(EntitlementService::class);
+        $entitlementService->setOverride(
+            vendor: $vendor,
+            featureKey: $validated['feature_key'],
+            enabled: (bool) $validated['is_enabled'],
+            reason: $validated['reason'],
+            scope: $validated['scope'] ?? 'global',
+            expiresAt: ! empty($validated['expires_at']) ? Carbon::parse($validated['expires_at']) : null,
+            actor: Auth::user()
+        );
+
+        app(SecurityAuditService::class)->record(
+            event: SecurityAuditLog::EVENT_SECURITY_CONFIG_CHANGED,
+            action: "Set feature override [{$validated['feature_key']}] to ".($validated['is_enabled'] ? 'enabled' : 'disabled')." for vendor [{$vendor->name}]. Reason: {$validated['reason']}",
+            vendor: $vendor,
+            actor: Auth::user(),
+            targetType: Vendor::class,
+            targetId: $vendor->id,
+            metadata: $validated
+        );
+
+        return back()->with('success', __('Հատուկ ֆունկցիոնալության փոփոխությունը պահպանվեց։'));
+    }
+
+    public function destroyFeatureOverride(Vendor $vendor, string $featureKey)
+    {
+        $entitlementService = app(EntitlementService::class);
+        $entitlementService->revokeOverride($vendor, $featureKey, Auth::user());
+
+        app(SecurityAuditService::class)->record(
+            event: SecurityAuditLog::EVENT_SECURITY_CONFIG_CHANGED,
+            action: "Revoked feature override [{$featureKey}] for vendor [{$vendor->name}].",
+            vendor: $vendor,
+            actor: Auth::user(),
+            targetType: Vendor::class,
+            targetId: $vendor->id
+        );
+
+        return back()->with('success', __('Հատուկ ֆունկցիոնալության կարգավորումը հեռացվեց։'));
+    }
+
+    public function storeQuotaOverride(Request $request, Vendor $vendor)
+    {
+        $validated = $request->validate([
+            'quota_key' => 'required|string|max:64',
+            'quota_limit' => 'required|integer|min:-1',
+            'reason' => 'required|string|min:3|max:1000',
+            'expires_at' => 'nullable|date|after:now',
+        ]);
+
+        $quotaService = app(QuotaService::class);
+        $quotaService->setOverride(
+            vendor: $vendor,
+            quotaKey: $validated['quota_key'],
+            limit: (int) $validated['quota_limit'],
+            reason: $validated['reason'],
+            expiresAt: ! empty($validated['expires_at']) ? Carbon::parse($validated['expires_at']) : null,
+            actor: Auth::user()
+        );
+
+        app(SecurityAuditService::class)->record(
+            event: SecurityAuditLog::EVENT_SECURITY_CONFIG_CHANGED,
+            action: "Set quota override [{$validated['quota_key']}] to [{$validated['quota_limit']}] for vendor [{$vendor->name}]. Reason: {$validated['reason']}",
+            vendor: $vendor,
+            actor: Auth::user(),
+            targetType: Vendor::class,
+            targetId: $vendor->id,
+            metadata: $validated
+        );
+
+        return back()->with('success', __('Քվոտայի սահմանաչափը հաջողությամբ փոփոխվեց։'));
+    }
+
+    public function destroyQuotaOverride(Vendor $vendor, string $quotaKey)
+    {
+        $quotaService = app(QuotaService::class);
+        $quotaService->removeOverride($vendor, $quotaKey);
+
+        app(SecurityAuditService::class)->record(
+            event: SecurityAuditLog::EVENT_SECURITY_CONFIG_CHANGED,
+            action: "Removed quota override [{$quotaKey}] for vendor [{$vendor->name}].",
+            vendor: $vendor,
+            actor: Auth::user(),
+            targetType: Vendor::class,
+            targetId: $vendor->id
+        );
+
+        return back()->with('success', __('Քվոտայի հատուկ սահմանաչափը հեռացվեց։'));
+    }
+
+    public function resetUsageMeter(Vendor $vendor, string $quotaKey)
+    {
+        $quotaService = app(QuotaService::class);
+        $quotaService->resetMeter($vendor, $quotaKey, actor: Auth::user());
+
+        app(SecurityAuditService::class)->record(
+            event: SecurityAuditLog::EVENT_SUBSCRIPTION_CHANGED,
+            action: "Reset usage meter [{$quotaKey}] for vendor [{$vendor->name}].",
+            vendor: $vendor,
+            actor: Auth::user(),
+            targetType: Vendor::class,
+            targetId: $vendor->id
+        );
+
+        return back()->with('success', __('Օգտագործման հաշվիչը զրոյացվեց։'));
     }
 
     public function settingsIndex()
@@ -479,6 +962,11 @@ class SuperAdminController extends Controller
             $plan = SubscriptionPlan::find($validated['subscription_plan_id']);
             if ($plan) {
                 $validated['subscription_plan'] = $plan->slug;
+                $subscriptionService = app(SubscriptionService::class);
+                $subscription = $vendor->subscription ?? $subscriptionService->getOrCreateForVendor($vendor);
+                if ((int) $subscription->subscription_plan_id !== (int) $plan->id) {
+                    $subscriptionService->changePlan($subscription, $plan, reason: 'SuperAdmin updated vendor profile', actor: Auth::user());
+                }
             }
         }
 

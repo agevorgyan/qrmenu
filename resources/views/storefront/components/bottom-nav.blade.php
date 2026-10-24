@@ -1,3 +1,34 @@
+<!-- Pre-Order Floating Top Banner (Shown when customer is choosing dishes from main menu for table reservation) -->
+<div class="storefront-preorder-top-banner" 
+     x-show="isPreOrderMode" 
+     x-cloak
+     x-transition:enter="transition ease-out duration-300"
+     x-transition:enter-start="opacity-0 -translate-y-full"
+     x-transition:enter-end="opacity-100 translate-y-0"
+     x-transition:leave="transition ease-in duration-200"
+     x-transition:leave-start="opacity-100 translate-y-0"
+     x-transition:leave-end="opacity-0 -translate-y-full">
+    <div class="preorder-top-banner-inner">
+        <div class="preorder-top-banner-left">
+            <span class="preorder-live-dot"></span>
+            <div class="preorder-top-banner-texts">
+                <div class="preorder-top-banner-title">
+                    <i class="fa-solid fa-calendar-check" style="color: var(--primary);"></i>
+                    <span>{{ __('menu.preorder_for_reservation') }}</span>
+                </div>
+                <div class="preorder-top-banner-desc" x-text="preOrderSummaryText || '{{ __('menu.select_dishes_for_arrival') }}'"></div>
+            </div>
+        </div>
+        <div class="preorder-top-banner-right">
+            <button type="button" @click="returnToReservation()" class="preorder-return-btn">
+                <span>{{ __('menu.return_to_reservation') }}</span>
+                <span class="preorder-cart-badge" x-show="cartTotalCount > 0" x-text="cartTotalCount"></span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Mobile Bottom Navigation Bar & Persistent Trackers -->
 <div class="storefront-bottom-nav-container">
     <!-- Active Order Tracker Floating Pill (Shown when customer has an active order) -->
@@ -141,10 +172,13 @@
         <!-- 5. Table Reservation -->
         <a href="{{ route('client.reserve', ['vendor_slug' => $vendor->slug, 'location_slug' => $location?->slug, 'lang' => app()->getLocale()]) }}" 
            class="bottom-nav-item bottom-nav-reserve" 
+           :class="{ 'active': isPreOrderMode }"
+           @click.prevent="goToReservationPage()"
            title="{{ __('Reserve a Table') }}"
            style="text-decoration: none; color: inherit;">
             <div class="nav-icon-wrapper">
                 <i class="fa-solid fa-calendar-check"></i>
+                <span class="nav-badge" x-show="isPreOrderMode && cartTotalCount > 0" x-text="cartTotalCount" x-transition.scale></span>
             </div>
             <span class="nav-label">{{ __('Reserve') }}</span>
         </a>
@@ -604,5 +638,98 @@
     @keyframes aiBubbleFloat {
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-4px); }
+    }
+
+    /* Pre-Order Mode Floating Top Banner Styling */
+    .storefront-preorder-top-banner {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 999;
+        background: var(--bg-card, #ffffff);
+        border-bottom: 2px solid var(--primary, #3b82f6);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.14);
+        padding: 0.65rem 1rem;
+        pointer-events: auto;
+    }
+    .preorder-top-banner-inner {
+        max-width: 900px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+    .preorder-top-banner-left {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        min-width: 0;
+    }
+    .preorder-live-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+        flex-shrink: 0;
+        animation: preorderPulse 2s infinite;
+    }
+    @keyframes preorderPulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+        70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .preorder-top-banner-texts {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+    .preorder-top-banner-title {
+        font-size: 0.88rem;
+        font-weight: 800;
+        color: var(--text-main, #0f172a);
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .preorder-top-banner-desc {
+        font-size: 0.75rem;
+        color: var(--text-muted, #64748b);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .preorder-return-btn {
+        background: var(--primary, #3b82f6);
+        color: #ffffff;
+        border: none;
+        border-radius: 10px;
+        padding: 0.45rem 0.85rem;
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+        box-shadow: 0 2px 10px rgba(59, 130, 246, 0.35);
+        transition: transform 0.15s, opacity 0.15s;
+    }
+    .preorder-return-btn:active {
+        transform: scale(0.97);
+    }
+    .preorder-cart-badge {
+        background: #ffffff;
+        color: var(--primary, #3b82f6);
+        font-size: 0.72rem;
+        font-weight: 800;
+        padding: 0.1rem 0.4rem;
+        border-radius: 9999px;
     }
 </style>

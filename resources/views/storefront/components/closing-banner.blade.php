@@ -8,11 +8,11 @@
                     <i class="fa-solid fa-hourglass-half fa-spin" style="--fa-animation-duration: 3s;"></i>
                 </span>
                 <div style="min-width: 0;">
-                    <div style="font-weight: 800; font-size: 0.85rem; color: #d97706; display: flex; align-items: center; gap: 0.35rem;" x-text="currentSchedule.notice_title || 'Ուշադրություն. Շուտով փակվում ենք'"></div>
+                    <div style="font-weight: 800; font-size: 0.85rem; color: #d97706; display: flex; align-items: center; gap: 0.35rem;" x-text="currentSchedule.notice_title || '{{ __('menu.closing_soon_notice_title') }}'"></div>
                     <div style="font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" x-text="currentSchedule.notice_message"></div>
                 </div>
             </div>
-            <button type="button" @click="dismissedWarningBanner = true" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 0.3rem 0.45rem; font-size: 0.85rem; border-radius: 6px;" title="{{ __('Փակել') }}">
+            <button type="button" @click="dismissedWarningBanner = true" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 0.3rem 0.45rem; font-size: 0.85rem; border-radius: 6px;" title="{{ __('menu.close') }}">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -25,7 +25,7 @@
                 <i class="fa-solid fa-door-closed"></i>
             </span>
             <div style="min-width: 0; flex: 1;">
-                <div style="font-weight: 800; font-size: 0.85rem; color: #ef4444;" x-text="currentSchedule.notice_title || 'Ծառայությունն այս պահին փակ է'"></div>
+                <div style="font-weight: 800; font-size: 0.85rem; color: #ef4444;" x-text="currentSchedule.notice_title || '{{ __('menu.service_closed_notice_title') }}'"></div>
                 <div style="font-size: 0.75rem; color: var(--text-muted);" x-text="currentSchedule.notice_message"></div>
             </div>
         </div>

@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Enums\SubscriptionStatus;
+use App\Exceptions\InvalidSubscriptionTransitionException;
 use App\Models\Traits\BelongsToVendor;
+use App\Services\EntitlementService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,14 +18,20 @@ class Subscription extends Model
     protected $fillable = [
         'vendor_id',
         'subscription_plan_id',
+        'subscription_plan_price_id',
+        'price',
+        'currency',
         'status',
         'billing_interval',
         'trial_starts_at',
         'trial_ends_at',
+        'trial_duration_days',
         'current_period_start',
         'current_period_end',
         'grace_ends_at',
         'cancelled_at',
+        'cancel_at_period_end',
+        'cancellation_reason',
         'renewal_state',
         'auto_renew',
         'last_payment_reference',
@@ -31,13 +39,16 @@ class Subscription extends Model
     ];
 
     protected $casts = [
+        'price' => 'decimal:2',
         'status' => SubscriptionStatus::class,
         'trial_starts_at' => 'datetime',
         'trial_ends_at' => 'datetime',
+        'trial_duration_days' => 'integer',
         'current_period_start' => 'datetime',
         'current_period_end' => 'datetime',
         'grace_ends_at' => 'datetime',
         'cancelled_at' => 'datetime',
+        'cancel_at_period_end' => 'boolean',
         'auto_renew' => 'boolean',
         'metadata' => 'array',
     ];
@@ -59,11 +70,124 @@ class Subscription extends Model
     }
 
     /**
+     * Specific plan pricing tier / interval snapshot.
+     */
+    public function planPrice(): BelongsTo
+    {
+        return $this->belongsTo(SubscriptionPlanPrice::class, 'subscription_plan_price_id');
+    }
+
+    /**
      * Associated billing and invoice payments.
      */
     public function payments(): HasMany
     {
         return $this->hasMany(SubscriptionPayment::class, 'subscription_id');
+    }
+
+    /**
+     * Historical audit trail of all subscription lifecycle events.
+     */
+    public function lifecycleEvents(): HasMany
+    {
+        return $this->hasMany(SubscriptionLifecycleEvent::class, 'subscription_id')->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Transition subscription to a new state governed by the formal state machine.
+     * Throws InvalidSubscriptionTransitionException on forbidden state changes.
+     */
+    public function transitionTo(
+        SubscriptionStatus $target,
+        ?string $reason = null,
+        ?User $actor = null,
+        string $actorType = 'system',
+        array $metadata = []
+    ): void {
+        if ($this->status === $target) {
+            return;
+        }
+
+        if (! $this->status->canTransitionTo($target)) {
+            throw new InvalidSubscriptionTransitionException($this->status, $target);
+        }
+
+        $oldStatus = $this->status;
+
+        // Apply state-specific side effects
+        if ($target === SubscriptionStatus::CancelAtPeriodEnd) {
+            $this->cancel_at_period_end = true;
+            $this->cancelled_at = now();
+            $this->auto_renew = false;
+            $this->renewal_state = 'cancelled';
+            if ($reason) {
+                $this->cancellation_reason = $reason;
+            }
+        } elseif ($target === SubscriptionStatus::Cancelled) {
+            $this->auto_renew = false;
+            $this->renewal_state = 'cancelled';
+            $this->cancelled_at = now();
+            if ($reason) {
+                $this->cancellation_reason = $reason;
+            }
+        } elseif ($target === SubscriptionStatus::Active) {
+            $this->auto_renew = true;
+            $this->cancel_at_period_end = false;
+            $this->cancelled_at = null;
+            $this->cancellation_reason = null;
+            $this->grace_ends_at = null;
+            $this->renewal_state = 'active';
+        } elseif ($target === SubscriptionStatus::Grace || $target === SubscriptionStatus::GracePeriod) {
+            if (! $this->grace_ends_at || $this->grace_ends_at->isPast()) {
+                $this->grace_ends_at = now()->addDays(3);
+            }
+        } elseif ($target === SubscriptionStatus::Expired || $target === SubscriptionStatus::Suspended) {
+            $this->grace_ends_at = null;
+            $this->renewal_state = 'none';
+        }
+
+        $this->status = $target;
+        $this->save();
+
+        $this->recordLifecycleEvent(
+            event: 'state_transition',
+            toStatus: $target,
+            fromStatus: $oldStatus,
+            reason: $reason,
+            actor: $actor,
+            actorType: $actorType,
+            metadata: $metadata
+        );
+    }
+
+    /**
+     * Record an immutable lifecycle event for this subscription.
+     */
+    public function recordLifecycleEvent(
+        string $event,
+        ?SubscriptionStatus $toStatus = null,
+        ?SubscriptionStatus $fromStatus = null,
+        ?string $reason = null,
+        ?User $actor = null,
+        string $actorType = 'system',
+        array $metadata = [],
+        ?int $fromPlanId = null,
+        ?int $toPlanId = null
+    ): SubscriptionLifecycleEvent {
+        return SubscriptionLifecycleEvent::create([
+            'vendor_id' => $this->vendor_id,
+            'subscription_id' => $this->id,
+            'actor_id' => $actor?->id,
+            'actor_type' => $actorType,
+            'event' => $event,
+            'from_status' => $fromStatus?->value ?? ($this->getOriginal('status') instanceof SubscriptionStatus ? $this->getOriginal('status')->value : (string) $this->getOriginal('status')),
+            'to_status' => $toStatus?->value ?? $this->status->value,
+            'from_plan_id' => $fromPlanId ?? $this->getOriginal('subscription_plan_id'),
+            'to_plan_id' => $toPlanId ?? $this->subscription_plan_id,
+            'reason' => $reason,
+            'metadata' => $metadata,
+            'created_at' => now(),
+        ]);
     }
 
     /**
@@ -95,9 +219,21 @@ class Subscription extends Model
      */
     public function isInGracePeriod(): bool
     {
-        return in_array($this->status, [SubscriptionStatus::Grace, SubscriptionStatus::PastDue], true)
+        return in_array($this->status, [SubscriptionStatus::Grace, SubscriptionStatus::GracePeriod, SubscriptionStatus::PastDue], true)
             && $this->grace_ends_at !== null
             && $this->grace_ends_at->isFuture();
+    }
+
+    /**
+     * Check if subscription has a pending cancellation scheduled at period end.
+     */
+    public function isCancellationRequested(): bool
+    {
+        if ($this->cancel_at_period_end || $this->status === SubscriptionStatus::CancelAtPeriodEnd) {
+            return true;
+        }
+
+        return $this->cancelled_at !== null && $this->current_period_end && $this->current_period_end->isFuture();
     }
 
     /**
@@ -105,7 +241,8 @@ class Subscription extends Model
      */
     public function isCancelled(): bool
     {
-        return $this->status === SubscriptionStatus::Cancelled || $this->cancelled_at !== null;
+        return in_array($this->status, [SubscriptionStatus::Cancelled, SubscriptionStatus::CancelAtPeriodEnd], true)
+            || $this->cancelled_at !== null;
     }
 
     /**
@@ -121,7 +258,11 @@ class Subscription extends Model
      */
     public function isExpired(): bool
     {
-        if (in_array($this->status, [SubscriptionStatus::Expired, SubscriptionStatus::Suspended, SubscriptionStatus::PastDue], true)) {
+        if (in_array($this->status, [SubscriptionStatus::Expired, SubscriptionStatus::Suspended, SubscriptionStatus::PastDue, SubscriptionStatus::Pending, SubscriptionStatus::Incomplete], true)) {
+            if ($this->isInGracePeriod()) {
+                return false;
+            }
+
             return true;
         }
 
@@ -129,7 +270,7 @@ class Subscription extends Model
             return false;
         }
 
-        if ($this->status === SubscriptionStatus::Grace) {
+        if (in_array($this->status, [SubscriptionStatus::Grace, SubscriptionStatus::GracePeriod], true)) {
             return true;
         }
 
@@ -153,7 +294,13 @@ class Subscription extends Model
      */
     public function allowsAccess(): bool
     {
-        if (in_array($this->status, [SubscriptionStatus::Suspended, SubscriptionStatus::Expired, SubscriptionStatus::PastDue], true)) {
+        if (in_array($this->status, [
+            SubscriptionStatus::Suspended,
+            SubscriptionStatus::Expired,
+            SubscriptionStatus::PastDue,
+            SubscriptionStatus::Pending,
+            SubscriptionStatus::Incomplete,
+        ], true)) {
             return false;
         }
 
@@ -161,16 +308,20 @@ class Subscription extends Model
             return true;
         }
 
-        if ($this->status === SubscriptionStatus::Grace) {
+        if (in_array($this->status, [SubscriptionStatus::Grace, SubscriptionStatus::GracePeriod], true)) {
             return false;
         }
 
         if ($this->isTrialing()) {
-            return true;
+            return $this->trial_ends_at ? $this->trial_ends_at->isFuture() : true;
         }
 
         if ($this->status === SubscriptionStatus::Active) {
             return $this->current_period_end ? $this->current_period_end->isFuture() : true;
+        }
+
+        if ($this->status === SubscriptionStatus::CancelAtPeriodEnd) {
+            return $this->current_period_end ? $this->current_period_end->isFuture() : false;
         }
 
         if ($this->status === SubscriptionStatus::Cancelled) {
@@ -207,16 +358,22 @@ class Subscription extends Model
      */
     public function hasFeature(string $feature): bool
     {
-        $planSlug = strtolower($this->plan?->slug ?? 'pro');
+        return app(EntitlementService::class)->can($this->vendor_id, $feature);
+    }
 
-        if ($planSlug === 'custom' || $planSlug === 'business') {
-            return true;
+    /**
+     * Resolve the effective historical locked price for this subscription.
+     */
+    public function getEffectivePriceAttribute(): float
+    {
+        if ($this->price !== null) {
+            return (float) $this->price;
         }
 
-        return match ($feature) {
-            'orders', 'online_orders', 'customers' => in_array($planSlug, ['pro', 'business', 'custom'], true),
-            'locations', 'multi_location', 'team', 'staff_roles', 'advanced_analytics' => in_array($planSlug, ['business', 'custom'], true),
-            default => true,
-        };
+        if ($this->planPrice) {
+            return (float) $this->planPrice->price;
+        }
+
+        return (float) ($this->plan?->price ?? 0);
     }
 }
