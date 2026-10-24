@@ -260,10 +260,10 @@
                                 <i class="fa-solid fa-clock" style="font-size: 1.25rem; flex-shrink: 0;"></i>
                                 <div style="flex: 1;">
                                     <div style="font-weight: 800; font-size: 0.88rem;">
-                                        <span x-text="orderType === 'delivery' ? '{{ __('menu.delivery_closed') ?? 'Առաքման ծառայությունը փակ է' }}' : (orderType === 'takeaway' ? '{{ __('menu.takeaway_closed') ?? 'Տանելու պատվերները փակ են' }}' : '{{ __('menu.kitchen_closed') ?? 'Խոհանոցը փակ է' }}')"></span>
+                                        <span x-text="currentSchedule.notice_title || (orderType === 'delivery' ? '{{ __('menu.delivery_closed') }}' : (orderType === 'takeaway' ? '{{ __('menu.takeaway_closed') }}' : '{{ __('menu.kitchen_closed') }}'))"></span>
                                     </div>
                                     <div style="font-size: 0.78rem; opacity: 0.9; margin-top: 0.2rem;">
-                                        {{ __('menu.operating_hours') ?? 'Աշխատանքային ժամեր' }}: <strong x-text="currentSchedule.start_time + ' - ' + currentSchedule.end_time"></strong>
+                                        {{ __('menu.operating_hours') }}: <strong x-text="currentSchedule.start_time + ' - ' + currentSchedule.end_time"></strong>
                                     </div>
                                 </div>
                             </div>
@@ -274,9 +274,9 @@
                             <div style="background: rgba(245, 158, 11, 0.12); border: 1.5px solid rgba(245, 158, 11, 0.35); border-radius: 14px; padding: 0.85rem 1rem; display: flex; align-items: center; gap: 0.75rem; color: #d97706; font-size: 0.85rem;">
                                 <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.25rem; flex-shrink: 0; color: #f59e0b;"></i>
                                 <div style="flex: 1;">
-                                    <div style="font-weight: 800; font-size: 0.88rem; color: #b45309;" x-text="closingNotice.message || 'Ուշադրություն: Խոհանոցը շուտով փակվում է:'"></div>
+                                    <div style="font-weight: 800; font-size: 0.88rem; color: #b45309;" x-text="closingNotice.notice_title || closingNotice.message || '{{ __('menu.closing_soon_notice_title') }}'"></div>
                                     <div style="font-size: 0.78rem; opacity: 0.9; margin-top: 0.2rem; color: #b45309;">
-                                        {{ __('menu.closing_time') ?? 'Փակման ժամ' }}: <strong x-text="currentSchedule.end_time"></strong> (<span x-text="closingNotice.minutes_left + ' {{ __('menu.minutes_left') ?? 'րոպեից' }}'"></span>)
+                                        {{ __('menu.closing_time') }}: <strong x-text="currentSchedule.end_time"></strong> (<span x-text="closingNotice.minutes_left + ' {{ __('menu.minutes_left') }}'"></span>)
                                     </div>
                                 </div>
                             </div>
@@ -306,7 +306,7 @@
                         <div style="background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 14px; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.65rem; font-size: 0.82rem; color: var(--text-main);">
                             <i class="fa-solid fa-store" style="color: #8b5cf6; font-size: 1rem; flex-shrink: 0;"></i>
                             <div>
-                                <span style="font-weight: 700;">{{ $location->name ?? 'Մասնաճյուղ' }}</span> — {{ __('menu.takeaway_ready_notice') }}
+                                <span style="font-weight: 700;">{{ $location->name ?? __('menu.branch') }}</span> — {{ __('menu.takeaway_ready_notice') }}
                             </div>
                         </div>
                     </div>
@@ -819,7 +819,7 @@
                                     </span>
                                 </template>
                                 <span x-text="!isCurrentChannelOpen
-                                    ? (orderType === 'delivery' ? '{{ __('menu.delivery_closed') ?? 'Առաքումը փակ է' }}' : (orderType === 'takeaway' ? '{{ __('menu.takeaway_closed') ?? 'Տանելու պատվերները փակ են' }}' : '{{ __('menu.kitchen_closed') ?? 'Խոհանոցը փակ է' }}'))
+                                    ? (orderType === 'delivery' ? '{{ __('menu.delivery_closed') }}' : (orderType === 'takeaway' ? '{{ __('menu.takeaway_closed') }}' : '{{ __('menu.kitchen_closed') }}'))
                                     : ((activeOrder && !['completed', 'cancelled'].includes(activeOrder.status))
                                         ? ('{{ __('menu.append_to_active_order') }} (' + activeOrder.order_number + ')')
                                         : (orderType === 'delivery' ? '{{ __('menu.order_delivery') }}' : (orderType === 'takeaway' ? '{{ __('menu.order_takeaway') }}' : '{{ __('menu.checkout') }}')))"></span>
@@ -839,7 +839,7 @@
                                 class="cart-whatsapp-btn cart-whatsapp-order-btn">
                             <i class="fa-brands fa-whatsapp cart-wa-icon"></i>
                             <span x-text="!isCurrentChannelOpen
-                                ? '{{ __('menu.orders_closed') ?? 'Պատվերներ չեն ընդունվում' }}'
+                                ? '{{ __('menu.orders_closed') }}'
                                 : ((activeOrder && !['completed', 'cancelled'].includes(activeOrder.status))
                                     ? '{{ __('menu.append_to_active_order_wa') }}'
                                     : (orderType === 'delivery' ? '{{ __('menu.order_delivery_via_whatsapp') }}' : (orderType === 'takeaway' ? '{{ __('menu.order_takeaway_via_whatsapp') }}' : '{{ __('menu.order_via_whatsapp') }}')))"></span>

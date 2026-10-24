@@ -406,9 +406,14 @@ class Vendor extends Model
      *     notice_message: ?string
      * }
      */
-    public function resolveOperatingSchedule(string $channel, ?Location $location = null, ?Carbon $now = null): array
+    public function resolveOperatingSchedule(string $channel, ?Location $location = null, ?Carbon $now = null, ?string $lang = null): array
     {
         $channel = in_array($channel, ['dine_in', 'delivery', 'takeaway']) ? $channel : 'dine_in';
+        $lang = $lang ?: app()->getLocale() ?: 'hy';
+        $lang = strtolower($lang);
+        if (! in_array($lang, ['hy', 'en', 'ru', 'fr', 'de', 'es', 'it', 'ge', 'ar'])) {
+            $lang = 'hy';
+        }
 
         // Extract settings with location override support
         $scheduleEnabled = match ($channel) {
@@ -450,12 +455,12 @@ class Vendor extends Model
         $tz = ! empty($this->timezone) ? $this->timezone : 'Asia/Yerevan';
         $now = $now ? $now->copy()->setTimezone($tz) : Carbon::now($tz);
 
-        $channelNames = [
-            'dine_in' => 'Ռեստորանի խոհանոցը',
-            'delivery' => 'Առաքման ծառայությունը',
-            'takeaway' => 'Տանելու (Takeaway) ծառայությունը',
-        ];
-        $channelName = $channelNames[$channel] ?? 'Ծառայությունը';
+        $channelName = match ($channel) {
+            'dine_in' => __('menu.kitchen_service', [], $lang),
+            'delivery' => __('menu.delivery_service', [], $lang),
+            'takeaway' => __('menu.takeaway_service', [], $lang),
+            default => __('menu.default_service', [], $lang),
+        };
 
         // If schedule not enabled or no hours defined, it is open 24/7
         if (! $scheduleEnabled || (empty($startTime) && empty($endTime) && empty($days))) {
@@ -474,7 +479,7 @@ class Vendor extends Model
                 'is_warning_active' => false,
                 'warning_minutes' => $warningMinutes,
                 'status' => 'open',
-                'badge_text' => 'Բաց է',
+                'badge_text' => __('menu.channel_open_24_7_badge', [], $lang),
                 'title' => null,
                 'notice_title' => null,
                 'message' => null,
@@ -490,6 +495,10 @@ class Vendor extends Model
             $currentDay = strtolower($now->format('D'));
             $allowedDays = array_map(fn ($d) => substr(strtolower($d), 0, 3), $days);
             if (! in_array($currentDay, $allowedDays)) {
+                $badgeText = __('menu.channel_day_off_badge', [], $lang);
+                $noticeTitle = __('menu.channel_day_off_title', ['channel' => $channelName], $lang);
+                $noticeMessage = __('menu.channel_day_off_message', ['channel' => $channelName], $lang);
+
                 return [
                     'channel' => $channel,
                     'enabled' => true,
@@ -505,11 +514,11 @@ class Vendor extends Model
                     'is_warning_active' => false,
                     'warning_minutes' => $warningMinutes,
                     'status' => 'closed',
-                    'badge_text' => 'Փակ է (ոչ աշխատանքային օր)',
-                    'title' => "{$channelName} այսօր չի աշխատում",
-                    'notice_title' => "{$channelName} այսօր չի աշխատում",
-                    'message' => "Այսօր {$channelName} հանգստյան օր է: Պատվերներ չեն ընդունվում:",
-                    'notice_message' => "Այսօր {$channelName} հանգստյան օր է: Պատվերներ չեն ընդունվում:",
+                    'badge_text' => $badgeText,
+                    'title' => $noticeTitle,
+                    'notice_title' => $noticeTitle,
+                    'message' => $noticeMessage,
+                    'notice_message' => $noticeMessage,
                 ];
             }
         }
@@ -546,17 +555,24 @@ class Vendor extends Model
 
         if (! $isOpen) {
             $status = 'closed';
-            $badgeText = "Փակ է (բացվում է {$cleanStart}-ին)";
-            $noticeTitle = "{$channelName} այս պահին փակ է";
-            $noticeMessage = "{$channelName} այս պահին փակ է (աշխատանքային ժամեր՝ {$cleanStart} - {$cleanEnd}): Պատվերներ չեն ընդունվում:";
+            $badgeText = __('menu.channel_closed_badge', ['time' => $cleanStart], $lang);
+            $noticeTitle = __('menu.channel_closed_title', ['channel' => $channelName], $lang);
+            $noticeMessage = __('menu.channel_closed_message', [
+                'channel' => $channelName,
+                'start' => $cleanStart,
+                'end' => $cleanEnd,
+            ], $lang);
         } elseif ($isWarningActive) {
             $status = 'closing_soon';
-            $badgeText = "Փակվում է {$minutesUntilClose} րոպեից";
-            $noticeTitle = "Ուշադրություն. {$channelName} փակվում է {$minutesUntilClose} րոպեից";
-            $noticeMessage = $customMessage ?: "Խնդրում ենք ձևակերպել Ձեր պատվերը մինչև {$cleanEnd}:";
+            $badgeText = __('menu.channel_closing_soon_badge', ['minutes' => $minutesUntilClose], $lang);
+            $noticeTitle = __('menu.channel_closing_soon_title', [
+                'channel' => $channelName,
+                'minutes' => $minutesUntilClose,
+            ], $lang);
+            $noticeMessage = $customMessage ?: __('menu.channel_closing_soon_message', ['time' => $cleanEnd], $lang);
         } else {
             $status = 'open';
-            $badgeText = "Բաց է մինչև {$cleanEnd}";
+            $badgeText = __('menu.channel_open_badge', ['time' => $cleanEnd], $lang);
             $noticeTitle = null;
             $noticeMessage = null;
         }
@@ -591,9 +607,9 @@ class Vendor extends Model
         return (bool) $res['is_open'];
     }
 
-    public function getClosingNotice(string $channel, ?Location $location = null, ?Carbon $now = null, ?string $lang = 'en'): ?array
+    public function getClosingNotice(string $channel, ?Location $location = null, ?Carbon $now = null, ?string $lang = null): ?array
     {
-        $res = $this->resolveOperatingSchedule($channel, $location, $now);
+        $res = $this->resolveOperatingSchedule($channel, $location, $now, $lang);
         if (! $res['is_open'] || $res['is_warning_active']) {
             return $res;
         }

@@ -61,9 +61,9 @@ class Location extends Model
         'closing_warning_minutes' => 'integer',
     ];
 
-    public function resolveOperatingSchedule(string $channel, ?Carbon $now = null): array
+    public function resolveOperatingSchedule(string $channel, ?Carbon $now = null, ?string $lang = null): array
     {
-        return $this->vendor->resolveOperatingSchedule($channel, $this, $now);
+        return $this->vendor->resolveOperatingSchedule($channel, $this, $now, $lang);
     }
 
     public function isChannelOpen(string $channel, ?Carbon $now = null): bool
@@ -71,7 +71,7 @@ class Location extends Model
         return $this->vendor->isChannelOpen($channel, $this, $now);
     }
 
-    public function getClosingNotice(string $channel, ?Carbon $now = null, ?string $lang = 'en'): ?array
+    public function getClosingNotice(string $channel, ?Carbon $now = null, ?string $lang = null): ?array
     {
         return $this->vendor->getClosingNotice($channel, $this, $now, $lang);
     }

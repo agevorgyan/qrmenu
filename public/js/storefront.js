@@ -225,7 +225,7 @@
 
                 const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams.get('payment_success') === '1') {
-                    this.triggerToast('🎉 Վճարումը հաջողությամբ կատարվել է:', 'success', 'fa-solid fa-circle-check');
+                    this.triggerToast(translations.payment_success || '🎉 Վճարումը հաջողությամբ կատարվել է:', 'success', 'fa-solid fa-circle-check');
                 }
                 this.$nextTick(() => {
                     this.initScrollSpy();
@@ -238,7 +238,7 @@
                     if (this.closingNotice.closing_soon && !this.closingNotice.is_closed) {
                         setTimeout(() => {
                             if (!this.dismissedWarningBanner) {
-                                this.triggerToast(this.closingNotice.message || 'Ուշադրություն: Խոհանոցը շուտով փակվում է:', 'info', 'fa-solid fa-clock');
+                                this.triggerToast(this.closingNotice.notice_title || this.closingNotice.message || translations.closing_soon_notice_title || 'Ուշադրություն: Խոհանոցը շուտով փակվում է:', 'info', 'fa-solid fa-clock');
                             }
                         }, 1200);
                     }
@@ -291,7 +291,8 @@
                 });
                 if (unavailable.length > 0) {
                     const names = unavailable.map(i => '«' + i.name + '»').join(', ');
-                    this.triggerToast('Ուշադրություն. ' + names + ' հասանելի չէ ընտրված պատվերի եղանակի համար', 'remove', 'fa-solid fa-triangle-exclamation');
+                    const tpl = translations.attention_item_unavailable || 'Ուշադրություն. :items հասանելի չէ ընտրված պատվերի եղանակի համար';
+                    this.triggerToast(tpl.replace(':items', names), 'remove', 'fa-solid fa-triangle-exclamation');
                 } else {
                     const label = type === 'delivery' 
                         ? (translations.switched_to_delivery || 'Ընտրվել է՝ Առաքում') 
@@ -757,15 +758,23 @@
                 } else {
                     this.selectDish(rec);
                 }
-                this.triggerToast('✨ ' + rec.name + ' ավելացվեց զամբյուղում', 'success', 'fa-solid fa-cart-plus');
+                const addedMsg = (translations.item_added_to_cart_toast || '✨ :name ավելացվեց զամբյուղում').replace(':name', rec.name);
+                this.triggerToast(addedMsg, 'success', 'fa-solid fa-cart-plus');
             },
 
             async submitOrder(channel) {
                 if (this.cart.length === 0) return;
 
                 if (!this.isCurrentChannelOpen) {
-                    const channelName = this.orderType === 'delivery' ? 'Առաքման ծառայությունը' : (this.orderType === 'takeaway' ? 'Տանելու պատվերների ծառայությունը' : 'Խոհանոցը');
-                    this.triggerToast(channelName + ' այս պահին փակ է: Պատվերներ չեն ընդունվում:', 'remove', 'fa-solid fa-clock');
+                    if (this.currentSchedule && this.currentSchedule.notice_message) {
+                        this.triggerToast(this.currentSchedule.notice_message, 'remove', 'fa-solid fa-clock');
+                    } else {
+                        const channelName = this.orderType === 'delivery' 
+                            ? (translations.delivery_service || 'Առաքման ծառայությունը') 
+                            : (this.orderType === 'takeaway' ? (translations.takeaway_service || 'Տանելու պատվերների ծառայությունը') : (translations.kitchen_service || 'Խոհանոցը'));
+                        const closedMsg = (translations.orders_closed_toast || ':channel այս պահին փակ է: Պատվերներ չեն ընդունվում:').replace(':channel', channelName);
+                        this.triggerToast(closedMsg, 'remove', 'fa-solid fa-clock');
+                    }
                     return;
                 }
 
@@ -844,15 +853,15 @@
                 // Strict Channel Restrictions Validation
                 for (const item of this.cart) {
                     if (this.orderType === 'dine_in' && item.available_for_dine_in === false) {
-                        this.triggerToast(`«${item.name}» հասանելի չէ սրահում պատվիրելու համար`, 'remove', 'fa-solid fa-ban');
+                        this.triggerToast(`«${item.name}» - ` + (translations.item_unavailable_for_channel || 'Հասանելի չէ սրահում պատվիրելու համար'), 'remove', 'fa-solid fa-ban');
                         return;
                     }
                     if (this.orderType === 'takeaway' && item.available_for_takeaway === false) {
-                        this.triggerToast(`«${item.name}» հասանելի չէ տանելու պատվերի համար`, 'remove', 'fa-solid fa-ban');
+                        this.triggerToast(`«${item.name}» - ` + (translations.item_unavailable_for_channel || 'Հասանելի չէ տանելու պատվերի համար'), 'remove', 'fa-solid fa-ban');
                         return;
                     }
                     if (this.orderType === 'delivery' && item.available_for_delivery === false) {
-                        this.triggerToast(`«${item.name}» հասանելի չէ առաքման համար`, 'remove', 'fa-solid fa-ban');
+                        this.triggerToast(`«${item.name}» - ` + (translations.item_unavailable_for_channel || 'Հասանելի չէ առաքման համար'), 'remove', 'fa-solid fa-ban');
                         return;
                     }
                 }
@@ -975,7 +984,7 @@
                     }
                 } catch (e) {
                     console.error('Order submit error:', e);
-                    this.triggerToast('Ցանցային սխալ', 'remove', 'fa-solid fa-triangle-exclamation');
+                    this.triggerToast(translations.network_error || 'Ցանցային սխալ', 'remove', 'fa-solid fa-triangle-exclamation');
                 }
             },
 
@@ -1485,12 +1494,12 @@
                 try {
                     localStorage.removeItem('active_order_' + this.vendorSlug);
                 } catch(e) {}
-                this.triggerToast('Պատվերի հետևումն ավարտված է', 'info', 'fa-solid fa-circle-check');
+                this.triggerToast(translations.order_tracking_finished || 'Պատվերի հետևումն ավարտված է', 'info', 'fa-solid fa-circle-check');
             },
 
             openWaiterModal(type = 'call_waiter') {
                 if (!this.isTableFixed) {
-                    this.triggerToast('Մատուցողի կանչը հասանելի է միայն սեղանի QR կոդը սկանավորելուց հետո', 'remove', 'fa-solid fa-qrcode');
+                    this.triggerToast(translations.call_waiter_table_required || 'Մատուցողի կանչը հասանելի է միայն սեղանի QR կոդը սկանավորելուց հետո', 'remove', 'fa-solid fa-qrcode');
                     return;
                 }
                 this.serviceType = type;
@@ -1502,7 +1511,7 @@
 
             async submitServiceCall() {
                 if (!this.isTableFixed || !this.serviceTable || this.serviceTable.toString().trim() === '') {
-                    this.triggerToast('Մատուցողի կանչը հասանելի է միայն սեղանի QR կոդը սկանավորելուց հետո', 'remove', 'fa-solid fa-qrcode');
+                    this.triggerToast(translations.call_waiter_table_required || 'Մատուցողի կանչը հասանելի է միայն սեղանի QR կոդը սկանավորելուց հետո', 'remove', 'fa-solid fa-qrcode');
                     return;
                 }
 
@@ -1535,11 +1544,11 @@
                         const icon = this.serviceType === 'call_waiter' ? 'fa-solid fa-bell' : (this.serviceType === 'bill_cash' ? 'fa-solid fa-money-bill-wave' : 'fa-solid fa-credit-card');
                         this.triggerToast(data.message, 'success', icon);
                     } else {
-                        this.triggerToast(data.message || 'Սխալ՝ կրկին փորձեք', 'remove', 'fa-solid fa-triangle-exclamation');
+                        this.triggerToast(data.message || translations.error_try_again || 'Սխալ՝ կրկին փորձեք', 'remove', 'fa-solid fa-triangle-exclamation');
                     }
                 } catch (e) {
                     console.error('Service call error:', e);
-                    this.triggerToast('Կապի խնդիր, խնդրում ենք կրկին փորձել', 'remove', 'fa-solid fa-triangle-exclamation');
+                    this.triggerToast(translations.connection_error_retry || 'Կապի խնդիր, խնդրում ենք կրկին փորձել', 'remove', 'fa-solid fa-triangle-exclamation');
                 } finally {
                     this.isCallingService = false;
                 }

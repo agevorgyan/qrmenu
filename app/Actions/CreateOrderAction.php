@@ -437,10 +437,10 @@ class CreateOrderAction
         $loc = $location instanceof Location
             ? $location
             : (($vendor->relationLoaded('locations') ? $vendor->locations->firstWhere('id', (int) $location) : null) ?? $vendor->locations()->find($location));
-        $schedule = $vendor->resolveOperatingSchedule($orderType, $loc);
+        $schedule = $vendor->resolveOperatingSchedule($orderType, $loc, null, app()->getLocale());
 
         if ($schedule['schedule_enabled'] && ! $schedule['is_open']) {
-            $msg = $schedule['notice_message'] ?? 'Տվյալ ծառայությունն այս պահին փակ է և պատվերներ չի ընդունում:';
+            $msg = $schedule['notice_message'] ?? __('menu.service_closed_notice_title');
             throw ValidationException::withMessages([
                 'type' => $msg,
             ]);
