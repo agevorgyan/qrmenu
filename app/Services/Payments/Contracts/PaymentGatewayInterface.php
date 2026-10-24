@@ -37,4 +37,9 @@ interface PaymentGatewayInterface
     public function supportsWebhooks(): bool;
 
     public function supportsRefunds(): bool;
+
+    /**
+     * Authoritatively query the gateway provider for current transaction status during reconciliation.
+     */
+    public function queryTransactionStatus(PaymentAttempt $attempt): PaymentVerificationResult;
 }

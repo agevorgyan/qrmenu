@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Security\Permission;
+use App\Services\EntitlementService;
 use App\Services\SecurityAuditService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -185,6 +186,14 @@ class User extends Authenticatable implements MustVerifyEmail
         }
 
         return false;
+    }
+
+    /**
+     * Check if user's tenant is entitled to a feature, and optionally whether user has the required permission.
+     */
+    public function canAccessFeature(string $feature, ?string $requiredUserPermission = null): bool
+    {
+        return app(EntitlementService::class)->canUserAccessFeature($this, $feature, $requiredUserPermission);
     }
 
     /**

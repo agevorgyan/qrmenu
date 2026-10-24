@@ -19,6 +19,8 @@ class SubscriptionPlan extends Model
         'duration_days',
         'trial_days',
         'features',
+        'feature_codes',
+        'quota_limits',
         'description',
         'is_active',
         'is_custom',
@@ -28,6 +30,8 @@ class SubscriptionPlan extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'features' => 'array',
+        'feature_codes' => 'array',
+        'quota_limits' => 'array',
         'is_active' => 'boolean',
         'is_custom' => 'boolean',
         'duration_days' => 'integer',

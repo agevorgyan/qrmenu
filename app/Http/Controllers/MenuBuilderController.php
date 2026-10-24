@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\QuotaExceededException;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateCategoryRequest;
@@ -83,7 +84,7 @@ class MenuBuilderController extends Controller
 
         try {
             $this->menuService->createProduct(Auth::user()->vendor, $validated, $request->file('image_file'));
-        } catch (ValidationException $e) {
+        } catch (ValidationException|QuotaExceededException $e) {
             throw $e;
         } catch (\Throwable $e) {
             Log::error('Failed to create product dish: '.$e->getMessage(), ['exception' => $e]);

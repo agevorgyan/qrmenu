@@ -2,8 +2,12 @@
 
 namespace App\Models;
 
+use App\DTOs\QuotaStatus;
 use App\Services\CredentialService;
+use App\Services\Currency\CurrencyExchangeService;
+use App\Services\EntitlementService;
 use App\Services\Localization\LocaleManager;
+use App\Services\QuotaService;
 use App\Services\Security\CssSanitizer;
 use App\Services\TenantCache;
 use Carbon\Carbon;
@@ -34,6 +38,10 @@ class Vendor extends Model
         'currency' => 'AMD',
         'weight_unit' => 'g',
         'volume_unit' => 'ml',
+        'secondary_currency_enabled' => false,
+        'secondary_currency_rate_mode' => 'manual',
+        'secondary_currency_decimal_places' => 2,
+        'secondary_currency_prefix' => '≈',
     ];
 
     protected $fillable = [
@@ -58,6 +66,14 @@ class Vendor extends Model
         'email',
         'timezone',
         'currency',
+        'secondary_currency_enabled',
+        'secondary_currency',
+        'secondary_currency_rate_mode',
+        'secondary_currency_exchange_rate',
+        'secondary_currency_rate_provider',
+        'secondary_currency_rate_updated_at',
+        'secondary_currency_decimal_places',
+        'secondary_currency_prefix',
         'weight_unit',
         'volume_unit',
         'custom_domain',
@@ -185,7 +201,191 @@ class Vendor extends Model
         'takeaway_days' => 'array',
         'closing_warning_enabled' => 'boolean',
         'closing_warning_minutes' => 'integer',
+        'secondary_currency_enabled' => 'boolean',
+        'secondary_currency_exchange_rate' => 'decimal:6',
+        'secondary_currency_rate_updated_at' => 'datetime',
+        'secondary_currency_decimal_places' => 'integer',
     ];
+
+    /**
+     * Determine if secondary currency display is enabled and actively valid.
+     */
+    public function isSecondaryCurrencyActive(): bool
+    {
+        if (! (bool) $this->secondary_currency_enabled) {
+            return false;
+        }
+
+        // In full automatic mode by language, it is always active when enabled
+        if ($this->secondary_currency_rate_mode === 'auto_by_language') {
+            return true;
+        }
+
+        if (empty($this->secondary_currency)) {
+            return false;
+        }
+
+        $primary = strtoupper(trim((string) ($this->currency ?: 'AMD')));
+        $secondary = strtoupper(trim((string) $this->secondary_currency));
+
+        if ($primary === $secondary) {
+            return false;
+        }
+
+        $rate = (float) $this->secondary_currency_exchange_rate;
+
+        return $rate > 0 && is_finite($rate) && ! is_nan($rate);
+    }
+
+    /**
+     * Resolve target secondary currency code, dynamically adapting to active language if configured.
+     */
+    public function resolveSecondaryCurrency(?string $lang = null): ?string
+    {
+        $primary = strtoupper(trim((string) ($this->currency ?: 'AMD')));
+
+        if ($this->secondary_currency_rate_mode === 'auto_by_language') {
+            $effectiveLang = strtolower(trim((string) ($lang ?: app()->getLocale() ?: 'en')));
+            $mapped = app(CurrencyExchangeService::class)->getCurrencyForLanguage($effectiveLang, $this->secondary_currency ?: 'USD');
+
+            if ($mapped === $primary) {
+                // If native language is Armenian and primary is AMD, display the vendor's fallback secondary currency (e.g. USD)
+                if ($effectiveLang === 'hy') {
+                    $fallback = strtoupper(trim((string) ($this->secondary_currency ?: 'USD')));
+
+                    return $fallback !== $primary ? $fallback : null;
+                }
+
+                return null;
+            }
+
+            return $mapped;
+        }
+
+        $secondary = strtoupper(trim((string) $this->secondary_currency));
+
+        return ($secondary !== '' && $secondary !== $primary) ? $secondary : null;
+    }
+
+    /**
+     * Get applicable exchange rate for a given target currency.
+     */
+    public function getSecondaryExchangeRate(?string $targetCurrency = null): ?float
+    {
+        $primary = strtoupper(trim((string) ($this->currency ?: 'AMD')));
+        $target = strtoupper(trim((string) ($targetCurrency ?: $this->resolveSecondaryCurrency() ?: $this->secondary_currency ?: 'USD')));
+
+        if ($primary === $target) {
+            return 1.0;
+        }
+
+        // If manual mode and requesting the configured secondary currency
+        if ($this->secondary_currency_rate_mode === 'manual' && $target === strtoupper(trim((string) $this->secondary_currency))) {
+            $rate = (float) $this->secondary_currency_exchange_rate;
+
+            return ($rate > 0 && is_finite($rate)) ? $rate : null;
+        }
+
+        // If standard automatic mode with existing valid stored rate for configured currency
+        if ($this->secondary_currency_rate_mode === 'automatic'
+            && $target === strtoupper(trim((string) $this->secondary_currency))
+            && (float) $this->secondary_currency_exchange_rate > 0) {
+            return (float) $this->secondary_currency_exchange_rate;
+        }
+
+        // Otherwise (or in auto_by_language mode), fetch live/cached rate from provider
+        return app(CurrencyExchangeService::class)->getLiveRate($primary, $target, $this->secondary_currency_rate_provider);
+    }
+
+    /**
+     * Convert a primary currency price to secondary currency.
+     */
+    public function convertPriceToSecondary(mixed $primaryPrice, ?string $lang = null): ?float
+    {
+        if (! $this->isSecondaryCurrencyActive()) {
+            return null;
+        }
+
+        $targetCurrency = $this->resolveSecondaryCurrency($lang);
+        if (! $targetCurrency) {
+            return null;
+        }
+
+        $rate = $this->getSecondaryExchangeRate($targetCurrency);
+        if (! $rate) {
+            return null;
+        }
+
+        return app(CurrencyExchangeService::class)->convert(
+            $primaryPrice,
+            $rate,
+            (int) ($this->secondary_currency_decimal_places ?? 2)
+        );
+    }
+
+    /**
+     * Format a primary price converted to secondary currency display string.
+     */
+    public function formatSecondaryPrice(mixed $primaryPrice, ?string $lang = null): ?string
+    {
+        if (! $this->isSecondaryCurrencyActive()) {
+            return null;
+        }
+
+        $targetCurrency = $this->resolveSecondaryCurrency($lang);
+        if (! $targetCurrency) {
+            return null;
+        }
+
+        $rate = $this->getSecondaryExchangeRate($targetCurrency);
+        if (! $rate) {
+            return null;
+        }
+
+        return app(CurrencyExchangeService::class)->formatSecondaryPrice(
+            $primaryPrice,
+            $targetCurrency,
+            $rate,
+            (int) ($this->secondary_currency_decimal_places ?? 2),
+            (string) ($this->secondary_currency_prefix ?? '≈')
+        );
+    }
+
+    /**
+     * Get secondary currency symbol or fallback code.
+     */
+    public function getSecondaryCurrencySymbol(?string $currencyCode = null): string
+    {
+        $code = strtoupper(trim((string) ($currencyCode ?: $this->resolveSecondaryCurrency() ?: $this->secondary_currency)));
+        $supported = CurrencyExchangeService::SUPPORTED_CURRENCIES;
+
+        return $supported[$code]['symbol'] ?? $code;
+    }
+
+    /**
+     * Get public secondary currency display configuration.
+     * Only returns data when feature is enabled and active. Never exposes internal credentials.
+     *
+     * @return array{currency: string, symbol: string, prefix: string, decimal_places: int}|null
+     */
+    public function getPublicSecondaryCurrencyData(?string $lang = null): ?array
+    {
+        if (! $this->isSecondaryCurrencyActive()) {
+            return null;
+        }
+
+        $targetCurrency = $this->resolveSecondaryCurrency($lang);
+        if (! $targetCurrency) {
+            return null;
+        }
+
+        return [
+            'currency' => $targetCurrency,
+            'symbol' => $this->getSecondaryCurrencySymbol($targetCurrency),
+            'prefix' => (string) ($this->secondary_currency_prefix ?? '≈'),
+            'decimal_places' => (int) ($this->secondary_currency_decimal_places ?? 2),
+        ];
+    }
 
     /**
      * Resolve operating schedule, open/closed status, and closing warning for a given channel (dine_in, delivery, takeaway).
@@ -206,9 +406,14 @@ class Vendor extends Model
      *     notice_message: ?string
      * }
      */
-    public function resolveOperatingSchedule(string $channel, ?Location $location = null, ?Carbon $now = null): array
+    public function resolveOperatingSchedule(string $channel, ?Location $location = null, ?Carbon $now = null, ?string $lang = null): array
     {
         $channel = in_array($channel, ['dine_in', 'delivery', 'takeaway']) ? $channel : 'dine_in';
+        $lang = $lang ?: app()->getLocale() ?: 'hy';
+        $lang = strtolower($lang);
+        if (! in_array($lang, ['hy', 'en', 'ru', 'fr', 'de', 'es', 'it', 'ge', 'ar'])) {
+            $lang = 'hy';
+        }
 
         // Extract settings with location override support
         $scheduleEnabled = match ($channel) {
@@ -250,12 +455,12 @@ class Vendor extends Model
         $tz = ! empty($this->timezone) ? $this->timezone : 'Asia/Yerevan';
         $now = $now ? $now->copy()->setTimezone($tz) : Carbon::now($tz);
 
-        $channelNames = [
-            'dine_in' => 'Ռեստորանի խոհանոցը',
-            'delivery' => 'Առաքման ծառայությունը',
-            'takeaway' => 'Տանելու (Takeaway) ծառայությունը',
-        ];
-        $channelName = $channelNames[$channel] ?? 'Ծառայությունը';
+        $channelName = match ($channel) {
+            'dine_in' => __('menu.kitchen_service', [], $lang),
+            'delivery' => __('menu.delivery_service', [], $lang),
+            'takeaway' => __('menu.takeaway_service', [], $lang),
+            default => __('menu.default_service', [], $lang),
+        };
 
         // If schedule not enabled or no hours defined, it is open 24/7
         if (! $scheduleEnabled || (empty($startTime) && empty($endTime) && empty($days))) {
@@ -274,7 +479,7 @@ class Vendor extends Model
                 'is_warning_active' => false,
                 'warning_minutes' => $warningMinutes,
                 'status' => 'open',
-                'badge_text' => 'Բաց է',
+                'badge_text' => __('menu.channel_open_24_7_badge', [], $lang),
                 'title' => null,
                 'notice_title' => null,
                 'message' => null,
@@ -290,6 +495,10 @@ class Vendor extends Model
             $currentDay = strtolower($now->format('D'));
             $allowedDays = array_map(fn ($d) => substr(strtolower($d), 0, 3), $days);
             if (! in_array($currentDay, $allowedDays)) {
+                $badgeText = __('menu.channel_day_off_badge', [], $lang);
+                $noticeTitle = __('menu.channel_day_off_title', ['channel' => $channelName], $lang);
+                $noticeMessage = __('menu.channel_day_off_message', ['channel' => $channelName], $lang);
+
                 return [
                     'channel' => $channel,
                     'enabled' => true,
@@ -305,11 +514,11 @@ class Vendor extends Model
                     'is_warning_active' => false,
                     'warning_minutes' => $warningMinutes,
                     'status' => 'closed',
-                    'badge_text' => 'Փակ է (ոչ աշխատանքային օր)',
-                    'title' => "{$channelName} այսօր չի աշխատում",
-                    'notice_title' => "{$channelName} այսօր չի աշխատում",
-                    'message' => "Այսօր {$channelName} հանգստյան օր է: Պատվերներ չեն ընդունվում:",
-                    'notice_message' => "Այսօր {$channelName} հանգստյան օր է: Պատվերներ չեն ընդունվում:",
+                    'badge_text' => $badgeText,
+                    'title' => $noticeTitle,
+                    'notice_title' => $noticeTitle,
+                    'message' => $noticeMessage,
+                    'notice_message' => $noticeMessage,
                 ];
             }
         }
@@ -346,17 +555,24 @@ class Vendor extends Model
 
         if (! $isOpen) {
             $status = 'closed';
-            $badgeText = "Փակ է (բացվում է {$cleanStart}-ին)";
-            $noticeTitle = "{$channelName} այս պահին փակ է";
-            $noticeMessage = "{$channelName} այս պահին փակ է (աշխատանքային ժամեր՝ {$cleanStart} - {$cleanEnd}): Պատվերներ չեն ընդունվում:";
+            $badgeText = __('menu.channel_closed_badge', ['time' => $cleanStart], $lang);
+            $noticeTitle = __('menu.channel_closed_title', ['channel' => $channelName], $lang);
+            $noticeMessage = __('menu.channel_closed_message', [
+                'channel' => $channelName,
+                'start' => $cleanStart,
+                'end' => $cleanEnd,
+            ], $lang);
         } elseif ($isWarningActive) {
             $status = 'closing_soon';
-            $badgeText = "Փակվում է {$minutesUntilClose} րոպեից";
-            $noticeTitle = "Ուշադրություն. {$channelName} փակվում է {$minutesUntilClose} րոպեից";
-            $noticeMessage = $customMessage ?: "Խնդրում ենք ձևակերպել Ձեր պատվերը մինչև {$cleanEnd}:";
+            $badgeText = __('menu.channel_closing_soon_badge', ['minutes' => $minutesUntilClose], $lang);
+            $noticeTitle = __('menu.channel_closing_soon_title', [
+                'channel' => $channelName,
+                'minutes' => $minutesUntilClose,
+            ], $lang);
+            $noticeMessage = $customMessage ?: __('menu.channel_closing_soon_message', ['time' => $cleanEnd], $lang);
         } else {
             $status = 'open';
-            $badgeText = "Բաց է մինչև {$cleanEnd}";
+            $badgeText = __('menu.channel_open_badge', ['time' => $cleanEnd], $lang);
             $noticeTitle = null;
             $noticeMessage = null;
         }
@@ -391,9 +607,9 @@ class Vendor extends Model
         return (bool) $res['is_open'];
     }
 
-    public function getClosingNotice(string $channel, ?Location $location = null, ?Carbon $now = null, ?string $lang = 'en'): ?array
+    public function getClosingNotice(string $channel, ?Location $location = null, ?Carbon $now = null, ?string $lang = null): ?array
     {
-        $res = $this->resolveOperatingSchedule($channel, $location, $now);
+        $res = $this->resolveOperatingSchedule($channel, $location, $now, $lang);
         if (! $res['is_open'] || $res['is_warning_active']) {
             return $res;
         }
@@ -1638,39 +1854,60 @@ class Vendor extends Model
 
     public function hasFeature(string $feature): bool
     {
-        $planSlug = strtolower($this->plan?->slug ?? $this->subscription_plan ?? 'pro');
-
-        if ($planSlug === 'custom' || $planSlug === 'business') {
-            return true;
-        }
-
-        switch ($feature) {
-            case 'orders':
-            case 'online_orders':
-            case 'customers':
-            case 'reservations':
-            case 'preorders':
-                return in_array($planSlug, ['pro', 'business', 'custom']);
-
-            case 'locations':
-            case 'multi_location':
-            case 'team':
-            case 'staff_roles':
-            case 'advanced_analytics':
-                return in_array($planSlug, ['business', 'custom']);
-
-            case 'menu':
-            case 'qr':
-            case 'branding':
-            case 'analytics':
-            default:
-                return true;
-        }
+        return app(EntitlementService::class)->can($this, $feature);
     }
 
     public function canUseFeature(string $feature): bool
     {
         return $this->hasFeature($feature);
+    }
+
+    /**
+     * Administrative feature overrides for this vendor.
+     */
+    public function featureOverrides(): HasMany
+    {
+        return $this->hasMany(TenantFeatureOverride::class);
+    }
+
+    /**
+     * Administrative quota overrides for this vendor.
+     */
+    public function quotaOverrides(): HasMany
+    {
+        return $this->hasMany(TenantQuotaOverride::class);
+    }
+
+    /**
+     * Usage meters for this vendor.
+     */
+    public function usageMeters(): HasMany
+    {
+        return $this->hasMany(TenantUsageMeter::class);
+    }
+
+    /**
+     * Usage audit events for this vendor.
+     */
+    public function usageEvents(): HasMany
+    {
+        return $this->hasMany(TenantUsageEvent::class);
+    }
+
+    /**
+     * Check if vendor can consume quota.
+     */
+    public function hasQuota(string $quotaKey, int $quantity = 1): bool
+    {
+        return app(QuotaService::class)->can($this, $quotaKey, $quantity);
+    }
+
+    /**
+     * Get complete quota status.
+     */
+    public function getQuotaStatus(string $quotaKey): QuotaStatus
+    {
+        return app(QuotaService::class)->getQuotaStatus($this, $quotaKey);
     }
 
     /**

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\AiUsageLog;
 use App\Models\AiWaiterSession;
 use App\Models\Vendor;
+use App\Security\QuotaCatalog;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 
@@ -186,6 +187,16 @@ class AiQuotaService
                     'reason' => 'Monthly request quota exceeded for this vendor.',
                 ];
             }
+        } else {
+            // Subscription plan period check
+            $periodStatus = app(QuotaService::class)->getQuotaStatus($vendor, QuotaCatalog::KEY_AI_REQUESTS_PERIOD);
+            if ($periodStatus->limit > 0 && $periodStatus->isExceeded) {
+                return [
+                    'allowed' => false,
+                    'tier' => 'monthly_requests',
+                    'reason' => 'Monthly AI request quota exceeded for this vendor.',
+                ];
+            }
         }
 
         // 5. Token limits (daily or monthly)
@@ -323,6 +334,18 @@ class AiQuotaService
         $monthCostKey = TenantCache::key($vendor, 'ai_q_cost_month:'.$now->format('Ym'));
         $currentCost = (float) Cache::get($monthCostKey, 0);
         Cache::put($monthCostKey, $currentCost + $cost, 86400 * 35);
+
+        try {
+            app(QuotaService::class)->recordUsage(
+                vendor: $vendor,
+                quotaKey: QuotaCatalog::KEY_AI_REQUESTS_PERIOD,
+                quantity: 1,
+                idempotencyKey: 'ai_log_'.$log->id,
+                metadata: ['model' => $model, 'tokens' => $totalTokens]
+            );
+        } catch (\Throwable $e) {
+            // Non-blocking for log completion
+        }
 
         return $log;
     }

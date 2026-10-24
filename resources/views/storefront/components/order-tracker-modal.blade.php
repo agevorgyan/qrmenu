@@ -187,7 +187,7 @@
             <button type="button" 
                     @click="closeOrderTracker(false)" 
                     style="width: 100%; padding: 0.85rem; background: var(--primary); color: #ffffff; border: none; border-radius: 14px; font-weight: 800; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 15px rgba(var(--primary-rgb, 225, 29, 72), 0.35);">
-                {{ __('menu.close') }} (Շարունակել դիտել մենյուն)
+                {{ __('menu.close') }} ({{ __('menu.continue_browsing_menu') }})
             </button>
 
             <!-- Dismiss / Clear tracking (Shown only when order completed or cancelled) -->
@@ -196,7 +196,7 @@
                         @click="clearActiveOrder()" 
                         style="width: 100%; padding: 0.7rem; background: transparent; color: var(--text-muted); border: 1px dashed var(--border-color); border-radius: 14px; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.45rem; transition: all 0.2s;">
                     <i class="fa-solid fa-xmark" style="font-size: 0.85rem;"></i>
-                    <span>Փակել ծանուցումը / Ավարտել հետևումը</span>
+                    <span>{{ __('menu.dismiss_tracker_notice') }}</span>
                 </button>
             </template>
         </div>

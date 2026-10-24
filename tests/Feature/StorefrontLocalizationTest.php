@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\ProductVariation;
 use App\Models\SubscriptionPlan;
 use App\Models\Vendor;
+use Carbon\Carbon;
 use Database\Seeders\SubscriptionPlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -191,5 +192,47 @@ class StorefrontLocalizationTest extends TestCase
         $responseEn->assertStatus(200);
         $responseEn->assertSee('Single Serving');
         $responseEn->assertSee('Double Serving');
+    }
+
+    public function test_storefront_operating_schedule_notices_change_language_properly(): void
+    {
+        // Configure delivery schedule 11:00 to 22:30, takeaway 10:00 to 23:00
+        $this->vendor->update([
+            'delivery_enabled' => true,
+            'delivery_schedule_enabled' => true,
+            'delivery_start_time' => '11:00',
+            'delivery_end_time' => '22:30',
+            'delivery_days' => ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+            'takeaway_enabled' => true,
+            'takeaway_schedule_enabled' => true,
+            'takeaway_start_time' => '10:00',
+            'takeaway_end_time' => '23:00',
+            'takeaway_days' => ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+        ]);
+
+        // Fix time outside operating hours (03:00 AM)
+        Carbon::setTestNow(Carbon::parse('2026-10-25 03:00:00', 'Asia/Yerevan'));
+
+        // 1. English Storefront (luxury-dark theme as in user screenshot)
+        $this->vendor->update(['theme' => 'luxury-dark']);
+        $resEn = $this->get(route('client.menu', ['vendor_slug' => $this->vendor->slug, 'lang' => 'en']));
+        $resEn->assertStatus(200);
+        $resEn->assertSee('Delivery service is currently closed');
+        $resEn->assertSee('Takeaway service is currently closed');
+        $resEn->assertDontSee('Առաքման ծառայությունը այս պահին փակ է');
+
+        // 2. Armenian Storefront
+        $resHy = $this->get(route('client.menu', ['vendor_slug' => $this->vendor->slug, 'lang' => 'hy']));
+        $resHy->assertStatus(200);
+        $resHy->assertSee('Առաքման ծառայությունը այս պահին փակ է');
+        $resHy->assertSee('Տանելու (Takeaway) ծառայությունը այս պահին փակ է');
+
+        // 3. Russian Storefront
+        $resRu = $this->get(route('client.menu', ['vendor_slug' => $this->vendor->slug, 'lang' => 'ru']));
+        $resRu->assertStatus(200);
+        $resRu->assertSee('Служба доставки сейчас закрыта');
+        $resRu->assertSee('Служба навынос сейчас закрыта');
+
+        Carbon::setTestNow();
     }
 }

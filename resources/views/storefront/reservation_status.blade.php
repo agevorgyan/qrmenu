@@ -11,16 +11,43 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+Armenian:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
+    @php
+        $primaryHex = ltrim($vendor->primary_color ?: '#3b82f6', '#');
+        if (strlen($primaryHex) === 3) {
+            $primaryHex = $primaryHex[0].$primaryHex[0].$primaryHex[1].$primaryHex[1].$primaryHex[2].$primaryHex[2];
+        }
+        $r = hexdec(substr($primaryHex, 0, 2) ?: '3b');
+        $g = hexdec(substr($primaryHex, 2, 2) ?: '82');
+        $b = hexdec(substr($primaryHex, 4, 2) ?: 'f6');
+        $luminance = (0.299 * $r + 0.587 * $g + 0.114 * $b) / 255;
+        $primaryTextColor = $luminance > 0.62 ? '#0f172a' : '#ffffff';
+        $isDark = ($vendor->theme_mode === 'dark');
+    @endphp
+
     <style>
         :root {
             --primary: {{ $vendor->primary_color ?: '#3b82f6' }};
+            --primary-contrast: {{ $primaryTextColor }};
             --accent: {{ $vendor->accent_color ?: '#10b981' }};
-            --bg-color: {{ $vendor->theme_mode === 'dark' ? '#0f172a' : '#f8fafc' }};
-            --card-bg: {{ $vendor->theme_mode === 'dark' ? '#1e293b' : '#ffffff' }};
-            --card-border: {{ $vendor->theme_mode === 'dark' ? '#334155' : '#e2e8f0' }};
-            --text-main: {{ $vendor->theme_mode === 'dark' ? '#f8fafc' : '#0f172a' }};
-            --text-muted: {{ $vendor->theme_mode === 'dark' ? '#94a3b8' : '#64748b' }};
-            --input-bg: {{ $vendor->theme_mode === 'dark' ? '#0f172a' : '#f1f5f9' }};
+            @if($isDark)
+            --bg-color: #0b1120;
+            --card-bg: #141d2e;
+            --card-border: #233149;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-subtle: #cbd5e1;
+            --input-bg: #0d1525;
+            --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.45);
+            @else
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --card-border: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --text-subtle: #475569;
+            --input-bg: #ffffff;
+            --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+            @endif
             --radius-lg: 16px;
             --radius-md: 12px;
         }
@@ -44,56 +71,69 @@
         .nav-back {
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            color: var(--text-muted);
+            gap: 0.55rem;
+            color: var(--text-main);
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-md);
+            padding: 0.6rem 1rem;
             text-decoration: none;
-            font-weight: 600;
+            font-weight: 700;
             font-size: 0.9rem;
             margin-bottom: 1.25rem;
+            box-shadow: var(--shadow-card);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .nav-back:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateX(-2px);
         }
 
         .hero-card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             border-radius: var(--radius-lg);
-            padding: 1.75rem 1.25rem;
+            padding: 2rem 1.25rem;
             text-align: center;
             margin-bottom: 1.25rem;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+            box-shadow: var(--shadow-card);
         }
 
         .status-badge {
             display: inline-flex;
             align-items: center;
-            gap: 0.4rem;
+            gap: 0.45rem;
             padding: 0.45rem 1rem;
             border-radius: 999px;
             font-size: 0.85rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.03em;
+            margin-bottom: 0.85rem;
         }
 
-        .status-confirmed { background: #dcfce7; color: #166534; }
-        .status-pending { background: #fef3c7; color: #92400e; }
-        .status-seated { background: #dbeafe; color: #1e40af; }
-        .status-completed { background: #f3f4f6; color: #4b5563; }
-        .status-cancelled, .status-rejected { background: #fee2e2; color: #991b1b; }
+        .status-confirmed { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.35); }
+        .status-pending { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.35); }
+        .status-seated { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.35); }
+        .status-completed { background: rgba(100, 116, 139, 0.15); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.35); }
+        .status-cancelled, .status-rejected { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35); }
 
         .ref-number {
-            font-size: 1.8rem;
+            font-size: 2rem;
             font-weight: 800;
             letter-spacing: -0.02em;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.35rem;
+            color: var(--text-main);
         }
 
         .detail-card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             border-radius: var(--radius-lg);
-            padding: 1.25rem;
+            padding: 1.35rem;
             margin-bottom: 1.25rem;
+            box-shadow: var(--shadow-card);
         }
 
         .detail-row {
@@ -107,15 +147,15 @@
 
         .detail-row:last-child { border-bottom: none; }
         .detail-label { color: var(--text-muted); font-weight: 500; }
-        .detail-value { font-weight: 700; }
+        .detail-value { font-weight: 700; color: var(--text-main); }
 
         .cancel-btn {
             width: 100%;
             padding: 0.85rem;
             border-radius: var(--radius-md);
-            background: transparent;
+            background: rgba(239, 68, 68, 0.08);
             color: #ef4444;
-            border: 1px solid #fca5a5;
+            border: 1.5px solid rgba(239, 68, 68, 0.3);
             font-size: 0.95rem;
             font-weight: 700;
             cursor: pointer;
@@ -124,13 +164,15 @@
         }
 
         .cancel-btn:hover {
-            background: #fef2f2;
+            background: rgba(239, 68, 68, 0.16);
+            border-color: #ef4444;
         }
 
         .modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -145,6 +187,7 @@
             max-width: 440px;
             width: 100%;
             padding: 1.5rem;
+            box-shadow: var(--shadow-card);
         }
     </style>
 </head>
@@ -160,7 +203,7 @@
     <div class="hero-card">
         <span class="status-badge status-{{ $reservation->status }}">
             <i class="fa-solid {{ $reservation->status === 'confirmed' ? 'fa-circle-check' : ($reservation->status === 'pending' ? 'fa-clock' : 'fa-info-circle') }}"></i>
-            {{ ucfirst($reservation->status) }}
+            {{ __(ucfirst($reservation->status)) }}
         </span>
         <div class="ref-number">{{ $reservation->reference }}</div>
         <p style="color: var(--text-muted); font-size: 0.9rem;">{{ __('Please present this reference upon arrival at the host stand.') }}</p>
@@ -210,7 +253,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
             <h3 style="font-size: 1.05rem; font-weight: 700;">{{ __('Attached Pre-Order') }}</h3>
             <span class="status-badge status-{{ $reservation->preOrder->status }}" style="font-size: 0.75rem; padding: 0.2rem 0.6rem; margin-bottom: 0;">
-                {{ ucfirst($reservation->preOrder->status) }}
+                {{ __(ucfirst($reservation->preOrder->status)) }}
             </span>
         </div>
 

@@ -289,11 +289,28 @@ class SubscriptionService
             $planId = $payment->subscription_plan_id ?? $lockedSub->subscription_plan_id;
             $oldStatus = $lockedSub->status;
 
+            $interval = 'monthly';
+            if ($payment->period_start && $payment->period_end) {
+                $days = Carbon::parse($payment->period_start)->diffInDays(Carbon::parse($payment->period_end));
+                if ($days >= 300) {
+                    $interval = 'yearly';
+                }
+            } elseif (! empty($attempt->request_payload['billing_interval'])) {
+                $interval = $attempt->request_payload['billing_interval'];
+            }
+
+            $plan = SubscriptionPlan::find($planId);
+            $planPrice = $plan?->priceFor($interval, $payment->currency ?: ($lockedSub->currency ?? 'AMD'));
+            $priceId = $attempt->request_payload['subscription_plan_price_id'] ?? $planPrice?->id ?? $lockedSub->subscription_plan_price_id;
+
             $lockedSub->update([
                 'subscription_plan_id' => $planId,
+                'subscription_plan_price_id' => $priceId,
+                'billing_interval' => $interval,
                 'price' => $payment->amount,
                 'currency' => $payment->currency ?: $lockedSub->currency,
                 'status' => SubscriptionStatus::Active,
+                'current_period_start' => $lockedSub->current_period_start ?? ($payment->period_start ? Carbon::parse($payment->period_start) : now()),
                 'current_period_end' => $newExpiry,
                 'grace_ends_at' => null,
                 'cancelled_at' => null,
@@ -590,6 +607,47 @@ class SubscriptionService
             $this->syncVendor($lockedSub);
 
             Log::warning("Subscription {$lockedSub->id} suspended. Reason: {$reason}");
+        });
+    }
+
+    /**
+     * Restore an administratively suspended subscription back to active state.
+     */
+    public function restore(Subscription $subscription, string $reason = '', ?User $actor = null): void
+    {
+        DB::transaction(function () use ($subscription, $reason, $actor) {
+            $lockedSub = Subscription::withoutTenantQuery()->where('id', $subscription->id)->lockForUpdate()->first();
+            if (! $lockedSub) {
+                return;
+            }
+
+            if (! $lockedSub->status->canTransitionTo(SubscriptionStatus::Active)) {
+                throw new InvalidSubscriptionTransitionException($lockedSub->status, SubscriptionStatus::Active);
+            }
+
+            $oldStatus = $lockedSub->status;
+            $metadata = $lockedSub->metadata ?? [];
+            $metadata['restored_reason'] = $reason;
+            $metadata['restored_at'] = now()->toIso8601String();
+
+            $lockedSub->update([
+                'status' => SubscriptionStatus::Active,
+                'renewal_state' => 'active',
+                'metadata' => $metadata,
+            ]);
+
+            $lockedSub->recordLifecycleEvent(
+                event: 'restored',
+                toStatus: SubscriptionStatus::Active,
+                fromStatus: $oldStatus,
+                reason: $reason ?: 'Administrative restoration applied',
+                actor: $actor,
+                metadata: ['reason' => $reason]
+            );
+
+            $this->syncVendor($lockedSub);
+
+            Log::info("Subscription {$lockedSub->id} restored. Reason: {$reason}");
         });
     }
 
@@ -982,5 +1040,7 @@ class SubscriptionService
                 actor: auth()->user()
             );
         }
+
+        app(EntitlementService::class)->clearCache($vendor);
     }
 }

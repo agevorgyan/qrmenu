@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\SubscriptionStatus;
 use App\Exceptions\InvalidSubscriptionTransitionException;
 use App\Models\Traits\BelongsToVendor;
+use App\Services\EntitlementService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -357,17 +358,7 @@ class Subscription extends Model
      */
     public function hasFeature(string $feature): bool
     {
-        $planSlug = strtolower($this->plan?->slug ?? 'pro');
-
-        if ($planSlug === 'custom' || $planSlug === 'business') {
-            return true;
-        }
-
-        return match ($feature) {
-            'orders', 'online_orders', 'customers', 'reservations', 'preorders' => in_array($planSlug, ['pro', 'business', 'custom'], true),
-            'locations', 'multi_location', 'team', 'staff_roles', 'advanced_analytics' => in_array($planSlug, ['business', 'custom'], true),
-            default => true,
-        };
+        return app(EntitlementService::class)->can($this->vendor_id, $feature);
     }
 
     /**

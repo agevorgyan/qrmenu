@@ -90,6 +90,7 @@ class AdminTableController extends Controller
             'capacity' => 'required|integer|min:1|max:50',
             'min_capacity' => 'required|integer|min:1|max:50',
             'section' => 'nullable|string|max:100',
+            'shape' => ['nullable', Rule::in(['square', 'round', 'rectangle'])],
             'is_active' => 'nullable|boolean',
             'location_id' => ['nullable', 'integer', Rule::exists('locations', 'id')->where('vendor_id', $vendor->id)],
         ]);
@@ -108,6 +109,7 @@ class AdminTableController extends Controller
             'capacity' => (int) $validated['capacity'],
             'min_capacity' => (int) $validated['min_capacity'],
             'section' => ! empty($validated['section']) ? trim($validated['section']) : 'Main Hall',
+            'shape' => $validated['shape'] ?? 'square',
             'is_active' => $request->boolean('is_active', true),
         ]);
 
@@ -142,6 +144,7 @@ class AdminTableController extends Controller
             'capacity' => 'required|integer|min:1|max:50',
             'min_capacity' => 'required|integer|min:1|max:50',
             'section' => 'nullable|string|max:100',
+            'shape' => ['nullable', Rule::in(['square', 'round', 'rectangle'])],
             'is_active' => 'nullable|boolean',
             'location_id' => ['nullable', 'integer', Rule::exists('locations', 'id')->where('vendor_id', $vendor->id)],
         ]);
@@ -158,6 +161,7 @@ class AdminTableController extends Controller
             'capacity' => (int) $validated['capacity'],
             'min_capacity' => (int) $validated['min_capacity'],
             'section' => ! empty($validated['section']) ? trim($validated['section']) : $table->section,
+            'shape' => $validated['shape'] ?? $table->shape,
             'is_active' => $request->boolean('is_active'),
             'location_id' => ! empty($validated['location_id']) ? (int) $validated['location_id'] : null,
         ]);

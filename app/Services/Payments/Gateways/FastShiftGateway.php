@@ -142,4 +142,16 @@ class FastShiftGateway implements PaymentGatewayInterface
     {
         return false;
     }
+
+    /**
+     * Authoritatively query FastShift transaction status during reconciliation.
+     */
+    public function queryTransactionStatus(PaymentAttempt $attempt): PaymentVerificationResult
+    {
+        return PaymentVerificationResult::pending(
+            merchantReference: $attempt->merchant_reference,
+            providerTransactionId: $attempt->provider_transaction_id,
+            rawPayload: ['note' => 'FastShift relies on server-to-server webhook confirmation']
+        );
+    }
 }
