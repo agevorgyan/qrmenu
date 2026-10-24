@@ -445,6 +445,7 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cas
     Route::post('/settings', [VendorSettingsController::class, 'update'])->name('settings.update');
     Route::post('/settings/telegram/test', [VendorSettingsController::class, 'testTelegramConnection'])->name('settings.telegram.test');
     Route::post('/settings/printer/test', [VendorSettingsController::class, 'testPrinterConnection'])->name('settings.printer.test');
+    Route::get('/settings/currency/live-rate', [VendorSettingsController::class, 'getLiveRate'])->name('settings.currency.live_rate');
 
     Route::middleware([EnsurePlanHasFeature::class.':branding.custom_domain'])->group(function () {
         Route::post('/settings/domain/check', [VendorSettingsController::class, 'checkDomainDns'])->name('settings.domain.check');

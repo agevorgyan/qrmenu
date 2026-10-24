@@ -216,6 +216,11 @@ class Vendor extends Model
             return false;
         }
 
+        // In full automatic mode by language, it is always active when enabled
+        if ($this->secondary_currency_rate_mode === 'auto_by_language') {
+            return true;
+        }
+
         if (empty($this->secondary_currency)) {
             return false;
         }
@@ -233,17 +238,87 @@ class Vendor extends Model
     }
 
     /**
+     * Resolve target secondary currency code, dynamically adapting to active language if configured.
+     */
+    public function resolveSecondaryCurrency(?string $lang = null): ?string
+    {
+        $primary = strtoupper(trim((string) ($this->currency ?: 'AMD')));
+
+        if ($this->secondary_currency_rate_mode === 'auto_by_language') {
+            $effectiveLang = strtolower(trim((string) ($lang ?: app()->getLocale() ?: 'en')));
+            $mapped = app(CurrencyExchangeService::class)->getCurrencyForLanguage($effectiveLang, $this->secondary_currency ?: 'USD');
+
+            if ($mapped === $primary) {
+                // If native language is Armenian and primary is AMD, display the vendor's fallback secondary currency (e.g. USD)
+                if ($effectiveLang === 'hy') {
+                    $fallback = strtoupper(trim((string) ($this->secondary_currency ?: 'USD')));
+
+                    return $fallback !== $primary ? $fallback : null;
+                }
+
+                return null;
+            }
+
+            return $mapped;
+        }
+
+        $secondary = strtoupper(trim((string) $this->secondary_currency));
+
+        return ($secondary !== '' && $secondary !== $primary) ? $secondary : null;
+    }
+
+    /**
+     * Get applicable exchange rate for a given target currency.
+     */
+    public function getSecondaryExchangeRate(?string $targetCurrency = null): ?float
+    {
+        $primary = strtoupper(trim((string) ($this->currency ?: 'AMD')));
+        $target = strtoupper(trim((string) ($targetCurrency ?: $this->resolveSecondaryCurrency() ?: $this->secondary_currency ?: 'USD')));
+
+        if ($primary === $target) {
+            return 1.0;
+        }
+
+        // If manual mode and requesting the configured secondary currency
+        if ($this->secondary_currency_rate_mode === 'manual' && $target === strtoupper(trim((string) $this->secondary_currency))) {
+            $rate = (float) $this->secondary_currency_exchange_rate;
+
+            return ($rate > 0 && is_finite($rate)) ? $rate : null;
+        }
+
+        // If standard automatic mode with existing valid stored rate for configured currency
+        if ($this->secondary_currency_rate_mode === 'automatic'
+            && $target === strtoupper(trim((string) $this->secondary_currency))
+            && (float) $this->secondary_currency_exchange_rate > 0) {
+            return (float) $this->secondary_currency_exchange_rate;
+        }
+
+        // Otherwise (or in auto_by_language mode), fetch live/cached rate from provider
+        return app(CurrencyExchangeService::class)->getLiveRate($primary, $target, $this->secondary_currency_rate_provider);
+    }
+
+    /**
      * Convert a primary currency price to secondary currency.
      */
-    public function convertPriceToSecondary(mixed $primaryPrice): ?float
+    public function convertPriceToSecondary(mixed $primaryPrice, ?string $lang = null): ?float
     {
         if (! $this->isSecondaryCurrencyActive()) {
             return null;
         }
 
+        $targetCurrency = $this->resolveSecondaryCurrency($lang);
+        if (! $targetCurrency) {
+            return null;
+        }
+
+        $rate = $this->getSecondaryExchangeRate($targetCurrency);
+        if (! $rate) {
+            return null;
+        }
+
         return app(CurrencyExchangeService::class)->convert(
             $primaryPrice,
-            $this->secondary_currency_exchange_rate,
+            $rate,
             (int) ($this->secondary_currency_decimal_places ?? 2)
         );
     }
@@ -251,16 +326,26 @@ class Vendor extends Model
     /**
      * Format a primary price converted to secondary currency display string.
      */
-    public function formatSecondaryPrice(mixed $primaryPrice): ?string
+    public function formatSecondaryPrice(mixed $primaryPrice, ?string $lang = null): ?string
     {
         if (! $this->isSecondaryCurrencyActive()) {
             return null;
         }
 
+        $targetCurrency = $this->resolveSecondaryCurrency($lang);
+        if (! $targetCurrency) {
+            return null;
+        }
+
+        $rate = $this->getSecondaryExchangeRate($targetCurrency);
+        if (! $rate) {
+            return null;
+        }
+
         return app(CurrencyExchangeService::class)->formatSecondaryPrice(
             $primaryPrice,
-            (string) $this->secondary_currency,
-            $this->secondary_currency_exchange_rate,
+            $targetCurrency,
+            $rate,
             (int) ($this->secondary_currency_decimal_places ?? 2),
             (string) ($this->secondary_currency_prefix ?? '≈')
         );
@@ -269,9 +354,9 @@ class Vendor extends Model
     /**
      * Get secondary currency symbol or fallback code.
      */
-    public function getSecondaryCurrencySymbol(): string
+    public function getSecondaryCurrencySymbol(?string $currencyCode = null): string
     {
-        $code = strtoupper(trim((string) $this->secondary_currency));
+        $code = strtoupper(trim((string) ($currencyCode ?: $this->resolveSecondaryCurrency() ?: $this->secondary_currency)));
         $supported = CurrencyExchangeService::SUPPORTED_CURRENCIES;
 
         return $supported[$code]['symbol'] ?? $code;
@@ -283,15 +368,20 @@ class Vendor extends Model
      *
      * @return array{currency: string, symbol: string, prefix: string, decimal_places: int}|null
      */
-    public function getPublicSecondaryCurrencyData(): ?array
+    public function getPublicSecondaryCurrencyData(?string $lang = null): ?array
     {
         if (! $this->isSecondaryCurrencyActive()) {
             return null;
         }
 
+        $targetCurrency = $this->resolveSecondaryCurrency($lang);
+        if (! $targetCurrency) {
+            return null;
+        }
+
         return [
-            'currency' => strtoupper(trim((string) $this->secondary_currency)),
-            'symbol' => $this->getSecondaryCurrencySymbol(),
+            'currency' => $targetCurrency,
+            'symbol' => $this->getSecondaryCurrencySymbol($targetCurrency),
             'prefix' => (string) ($this->secondary_currency_prefix ?? '≈'),
             'decimal_places' => (int) ($this->secondary_currency_decimal_places ?? 2),
         ];

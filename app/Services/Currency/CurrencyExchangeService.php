@@ -19,6 +19,27 @@ class CurrencyExchangeService
     ];
 
     /**
+     * Storefront language code to currency code mapping for full automatic mode.
+     */
+    public const LANGUAGE_TO_CURRENCY_MAP = [
+        'ru' => 'RUB', // Russian -> Ruble
+        'en' => 'USD', // English -> US Dollar
+        'de' => 'EUR', // German -> Euro
+        'fr' => 'EUR', // French -> Euro
+        'es' => 'EUR', // Spanish -> Euro
+        'it' => 'EUR', // Italian -> Euro
+        'ge' => 'GEL', // Georgian -> Lari
+        'ka' => 'GEL', // Georgian (ISO) -> Lari
+        'ar' => 'AED', // Arabic -> Dirham
+        'zh' => 'CNY', // Chinese -> Yuan
+        'tr' => 'TRY', // Turkish -> Lira
+        'kk' => 'KZT', // Kazakh -> Tenge
+        'kz' => 'KZT', // Kazakh -> Tenge
+        'fa' => 'IRR', // Persian -> Rial
+        'hy' => 'AMD', // Armenian -> Dram
+    ];
+
+    /**
      * Minimum and maximum safe rate bounds.
      */
     public const MIN_EXCHANGE_RATE = 0.000001;
@@ -33,6 +54,7 @@ class CurrencyExchangeService
     public function __construct()
     {
         $this->registerProvider(new ManualExchangeRateProvider);
+        $this->registerProvider(new ExchangeRateApiProvider);
     }
 
     /**
@@ -59,6 +81,83 @@ class CurrencyExchangeService
     public function getProviders(): array
     {
         return $this->providers;
+    }
+
+    /**
+     * Retrieve live rate between base and target currency from registered providers.
+     */
+    public function getLiveRate(string $baseCurrency, string $targetCurrency, ?string $providerId = null): ?float
+    {
+        $base = strtoupper(trim($baseCurrency));
+        $target = strtoupper(trim($targetCurrency));
+
+        if ($base === '' || $target === '') {
+            return null;
+        }
+
+        if ($base === $target) {
+            return 1.0;
+        }
+
+        if ($providerId && isset($this->providers[$providerId]) && $this->providers[$providerId]->isAvailable()) {
+            $rate = $this->providers[$providerId]->getRate($base, $target);
+            if ($this->isValidRate($rate)) {
+                return $rate;
+            }
+        }
+
+        // Try ExchangeRateApiProvider first
+        if (isset($this->providers['exchangerate_api']) && $this->providers['exchangerate_api']->isAvailable()) {
+            $rate = $this->providers['exchangerate_api']->getRate($base, $target);
+            if ($this->isValidRate($rate)) {
+                return $rate;
+            }
+        }
+
+        // Iterate through any other registered providers
+        foreach ($this->providers as $pId => $provider) {
+            if ($pId === 'manual' || $pId === 'exchangerate_api') {
+                continue;
+            }
+            if ($provider->isAvailable()) {
+                $rate = $provider->getRate($base, $target);
+                if ($this->isValidRate($rate)) {
+                    return $rate;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve default secondary currency for a given storefront language code.
+     */
+    public function getCurrencyForLanguage(string $lang, ?string $fallback = 'USD'): string
+    {
+        $code = strtolower(trim($lang));
+
+        return self::LANGUAGE_TO_CURRENCY_MAP[$code] ?? strtoupper(trim($fallback ?: 'USD'));
+    }
+
+    /**
+     * Get list of auto-mapped languages for UI display.
+     *
+     * @return array<int, array{code: string, name: string, flag: string, currency: string, symbol: string}>
+     */
+    public function getAutoMappedLanguages(): array
+    {
+        return [
+            ['code' => 'ru', 'name' => 'Русский (Russian)', 'flag' => '🇷🇺', 'currency' => 'RUB', 'symbol' => '₽'],
+            ['code' => 'en', 'name' => 'English (US/UK)', 'flag' => '🇺🇸', 'currency' => 'USD', 'symbol' => '$'],
+            ['code' => 'de', 'name' => 'Deutsch (German)', 'flag' => '🇩🇪', 'currency' => 'EUR', 'symbol' => '€'],
+            ['code' => 'fr', 'name' => 'Français (French)', 'flag' => '🇫🇷', 'currency' => 'EUR', 'symbol' => '€'],
+            ['code' => 'es', 'name' => 'Español (Spanish)', 'flag' => '🇪🇸', 'currency' => 'EUR', 'symbol' => '€'],
+            ['code' => 'it', 'name' => 'Italiano (Italian)', 'flag' => '🇮🇹', 'currency' => 'EUR', 'symbol' => '€'],
+            ['code' => 'ge', 'name' => 'ქართული (Georgian)', 'flag' => '🇬🇪', 'currency' => 'GEL', 'symbol' => '₾'],
+            ['code' => 'ar', 'name' => 'العربية (Arabic)', 'flag' => '🇦🇪', 'currency' => 'AED', 'symbol' => 'د.إ'],
+            ['code' => 'zh', 'name' => '中文 (Chinese)', 'flag' => '🇨🇳', 'currency' => 'CNY', 'symbol' => '¥'],
+        ];
     }
 
     /**

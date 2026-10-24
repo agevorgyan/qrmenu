@@ -1,6 +1,6 @@
 @php
-    $allCatalogProducts = ($categories ?? collect())->flatMap(function($cat) use ($lang, $location) {
-        return $cat->products->map(function($prod) use ($cat, $lang, $location) {
+    $allCatalogProducts = ($categories ?? collect())->flatMap(function($cat) use ($vendor, $lang, $location) {
+        return $cat->products->map(function($prod) use ($vendor, $cat, $lang, $location) {
             return [
                 'id' => $prod->id,
                 'product_id' => $prod->id,
@@ -20,7 +20,8 @@
                 'variations' => $prod->variations->map(fn($v) => [
                     'id' => $v->id,
                     'name' => $v->getTranslatedName($lang),
-                    'price' => (float)$v->price
+                    'price' => (float)$v->price,
+                    'secondary_price' => $vendor?->formatSecondaryPrice($v->getEffectivePrice(), $lang),
                 ])->toArray(),
             ];
         });

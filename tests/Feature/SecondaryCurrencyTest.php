@@ -440,4 +440,147 @@ class SecondaryCurrencyTest extends TestCase
         $this->assertEquals('≈ $12.86', $this->vendor->formatSecondaryPrice($variation->getEffectivePrice()));
         $this->assertEquals(4500.00, (float) $variation->getEffectivePrice());
     }
+
+    public function test_admin_settings_live_exchange_rate_endpoint_returns_json_rate(): void
+    {
+        $response = $this->actingAs($this->owner)->getJson(route('admin.settings.currency.live_rate', [
+            'currency' => 'AMD',
+            'secondary_currency' => 'USD',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'success',
+            'primary',
+            'target',
+            'rate',
+            'rate_full',
+            'provider',
+            'updated_at',
+            'label',
+        ]);
+        $this->assertTrue($response->json('success'));
+        $this->assertEquals('AMD', $response->json('primary'));
+        $this->assertEquals('USD', $response->json('target'));
+        $this->assertGreaterThan(0, (float) $response->json('rate'));
+    }
+
+    public function test_vendor_can_save_settings_with_automatic_rate_mode(): void
+    {
+        $response = $this->actingAs($this->owner)->post(route('admin.settings.update'), [
+            'currency' => 'AMD',
+            'timezone' => 'Asia/Yerevan',
+            'secondary_currency_enabled' => '1',
+            'secondary_currency' => 'EUR',
+            'secondary_currency_rate_mode' => 'automatic',
+            'secondary_currency_decimal_places' => '2',
+            'secondary_currency_prefix' => '≈',
+            'service_fee_type' => 'percent',
+            'service_fee_value' => '0',
+            'delivery_fee' => '0',
+            'delivery_min_amount' => '0',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        $this->vendor->refresh();
+        $this->assertTrue($this->vendor->secondary_currency_enabled);
+        $this->assertEquals('EUR', $this->vendor->secondary_currency);
+        $this->assertEquals('automatic', $this->vendor->secondary_currency_rate_mode);
+        $this->assertGreaterThan(0, (float) $this->vendor->secondary_currency_exchange_rate);
+        $this->assertEquals('exchangerate_api', $this->vendor->secondary_currency_rate_provider);
+        $this->assertNotNull($this->vendor->secondary_currency_rate_updated_at);
+    }
+
+    public function test_vendor_can_save_settings_with_auto_by_language_mode(): void
+    {
+        $response = $this->actingAs($this->owner)->post(route('admin.settings.update'), [
+            'currency' => 'AMD',
+            'timezone' => 'Asia/Yerevan',
+            'secondary_currency_enabled' => '1',
+            'secondary_currency' => 'USD',
+            'secondary_currency_rate_mode' => 'auto_by_language',
+            'secondary_currency_decimal_places' => '2',
+            'secondary_currency_prefix' => '≈',
+            'service_fee_type' => 'percent',
+            'service_fee_value' => '0',
+            'delivery_fee' => '0',
+            'delivery_min_amount' => '0',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        $this->vendor->refresh();
+        $this->assertTrue($this->vendor->secondary_currency_enabled);
+        $this->assertEquals('auto_by_language', $this->vendor->secondary_currency_rate_mode);
+        $this->assertTrue($this->vendor->isSecondaryCurrencyActive());
+        $this->assertGreaterThan(0, (float) $this->vendor->secondary_currency_exchange_rate);
+    }
+
+    public function test_auto_by_language_mode_switches_secondary_currency_dynamically_per_storefront_language(): void
+    {
+        $this->vendor->update([
+            'secondary_currency_enabled' => true,
+            'secondary_currency' => 'USD',
+            'secondary_currency_rate_mode' => 'auto_by_language',
+            'secondary_currency_decimal_places' => 2,
+            'secondary_currency_prefix' => '≈',
+        ]);
+        TenantCache::increment($this->vendor, 'menu_version');
+
+        auth()->logout();
+        app(TenantContext::class)->clear();
+
+        // Russian -> RUB (₽)
+        $ruRes = $this->get(route('client.menu', ['vendor_slug' => $this->vendor->slug, 'lang' => 'ru']));
+        $ruRes->assertStatus(200);
+        $ruRes->assertSee('₽');
+
+        // German -> EUR (€)
+        $deRes = $this->get(route('client.menu', ['vendor_slug' => $this->vendor->slug, 'lang' => 'de']));
+        $deRes->assertStatus(200);
+        $deRes->assertSee('€');
+
+        // English -> USD ($)
+        $enRes = $this->get(route('client.menu', ['vendor_slug' => $this->vendor->slug, 'lang' => 'en']));
+        $enRes->assertStatus(200);
+        $enRes->assertSee('$');
+
+        // Georgian -> GEL (₾)
+        $geRes = $this->get(route('client.menu', ['vendor_slug' => $this->vendor->slug, 'lang' => 'ge']));
+        $geRes->assertStatus(200);
+        $geRes->assertSee('₾');
+
+        // Armenian -> fallback USD ($)
+        $hyRes = $this->get(route('client.menu', ['vendor_slug' => $this->vendor->slug, 'lang' => 'hy']));
+        $hyRes->assertStatus(200);
+        $hyRes->assertSee('$');
+    }
+
+    public function test_all_four_storefront_themes_support_language_aware_secondary_currency(): void
+    {
+        $this->vendor->update([
+            'secondary_currency_enabled' => true,
+            'secondary_currency' => 'USD',
+            'secondary_currency_rate_mode' => 'auto_by_language',
+            'secondary_currency_decimal_places' => 2,
+            'secondary_currency_prefix' => '≈',
+        ]);
+
+        auth()->logout();
+        app(TenantContext::class)->clear();
+
+        $themes = ['modern-bistro', 'minimalist-light', 'vibrant-glass', 'luxury-dark'];
+
+        foreach ($themes as $theme) {
+            $this->vendor->update(['theme' => $theme]);
+            TenantCache::increment($this->vendor, 'menu_version');
+
+            $res = $this->get(route('client.menu', ['vendor_slug' => $this->vendor->slug, 'lang' => 'ru']));
+            $res->assertStatus(200);
+            $res->assertSee('₽', false);
+        }
+    }
 }

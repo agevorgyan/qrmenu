@@ -97,6 +97,7 @@ class VendorSettingsController extends Controller
         $exchangeService = app(CurrencyExchangeService::class);
         $secondaryCurrencies = $exchangeService->getSupportedCurrencyOptions();
         $exchangeRateProviders = $exchangeService->getProviders();
+        $autoMappedLanguages = $exchangeService->getAutoMappedLanguages();
 
         return view('admin.settings.index', compact(
             'vendor',
@@ -107,6 +108,7 @@ class VendorSettingsController extends Controller
             'currencies',
             'secondaryCurrencies',
             'exchangeRateProviders',
+            'autoMappedLanguages',
             'weightUnits',
             'volumeUnits'
         ));
@@ -126,7 +128,7 @@ class VendorSettingsController extends Controller
             'currency' => ['nullable', 'string', 'max:10', Rule::in(['AMD', 'USD', 'EUR', 'RUB', 'GEL', 'GBP', 'AED', 'CNY', 'KZT', 'TRY', 'IRR'])],
             'secondary_currency_enabled' => ['nullable', 'boolean'],
             'secondary_currency' => ['nullable', 'string', 'max:10', Rule::in(['AMD', 'USD', 'EUR', 'RUB', 'GEL', 'GBP', 'AED', 'CNY', 'KZT', 'TRY', 'IRR'])],
-            'secondary_currency_rate_mode' => ['nullable', 'string', Rule::in(['manual', 'automatic'])],
+            'secondary_currency_rate_mode' => ['nullable', 'string', Rule::in(['manual', 'automatic', 'auto_by_language'])],
             'secondary_currency_exchange_rate' => ['nullable', 'numeric', 'gt:0', 'lte:100000000'],
             'secondary_currency_rate_provider' => ['nullable', 'string', 'max:50'],
             'secondary_currency_decimal_places' => ['nullable', 'integer', 'min:0', 'max:4'],
@@ -211,6 +213,7 @@ class VendorSettingsController extends Controller
         if ($secondaryEnabled) {
             $effectivePrimary = strtoupper(trim((string) ($request->input('currency') ?: $vendor->currency ?: 'AMD')));
             $effectiveSecondary = strtoupper(trim((string) ($request->input('secondary_currency') ?: $vendor->secondary_currency)));
+            $rateMode = $request->input('secondary_currency_rate_mode', $vendor->secondary_currency_rate_mode ?? 'manual');
 
             if (empty($effectiveSecondary)) {
                 throw ValidationException::withMessages([
@@ -218,21 +221,23 @@ class VendorSettingsController extends Controller
                 ]);
             }
 
-            if ($effectiveSecondary === $effectivePrimary) {
+            if ($rateMode !== 'auto_by_language' && $effectiveSecondary === $effectivePrimary) {
                 throw ValidationException::withMessages([
                     'secondary_currency' => __('The secondary currency must be different from the primary currency.'),
                 ]);
             }
 
-            $rateInput = $request->filled('secondary_currency_exchange_rate')
-                ? $request->input('secondary_currency_exchange_rate')
-                : $vendor->secondary_currency_exchange_rate;
+            if ($rateMode === 'manual') {
+                $rateInput = $request->filled('secondary_currency_exchange_rate')
+                    ? $request->input('secondary_currency_exchange_rate')
+                    : $vendor->secondary_currency_exchange_rate;
 
-            $exchangeService = app(CurrencyExchangeService::class);
-            if (! $exchangeService->isValidRate($rateInput)) {
-                throw ValidationException::withMessages([
-                    'secondary_currency_exchange_rate' => __('A valid, positive exchange rate is required when secondary currency is enabled.'),
-                ]);
+                $exchangeService = app(CurrencyExchangeService::class);
+                if (! $exchangeService->isValidRate($rateInput)) {
+                    throw ValidationException::withMessages([
+                        'secondary_currency_exchange_rate' => __('A valid, positive exchange rate is required when secondary currency is enabled in manual mode.'),
+                    ]);
+                }
             }
         }
 
@@ -365,9 +370,21 @@ class VendorSettingsController extends Controller
             $vendorUpdate['secondary_currency'] = strtoupper(trim((string) $request->input('secondary_currency')));
         }
         if ($request->has('secondary_currency_rate_mode') && $request->filled('secondary_currency_rate_mode')) {
-            $vendorUpdate['secondary_currency_rate_mode'] = $request->input('secondary_currency_rate_mode');
+            $rateMode = $request->input('secondary_currency_rate_mode');
+            $vendorUpdate['secondary_currency_rate_mode'] = $rateMode;
+
+            if ($rateMode === 'automatic' || $rateMode === 'auto_by_language') {
+                $targetCurr = $vendorUpdate['secondary_currency'] ?? $vendor->secondary_currency ?? 'USD';
+                $primaryCurr = $vendorUpdate['currency'] ?? $vendor->currency ?? 'AMD';
+                $liveRate = app(CurrencyExchangeService::class)->getLiveRate($primaryCurr, $targetCurr);
+                if ($liveRate) {
+                    $vendorUpdate['secondary_currency_exchange_rate'] = $liveRate;
+                    $vendorUpdate['secondary_currency_rate_provider'] = 'exchangerate_api';
+                    $vendorUpdate['secondary_currency_rate_updated_at'] = now();
+                }
+            }
         }
-        if ($request->has('secondary_currency_exchange_rate') && $request->filled('secondary_currency_exchange_rate')) {
+        if ($request->has('secondary_currency_exchange_rate') && $request->filled('secondary_currency_exchange_rate') && ($vendorUpdate['secondary_currency_rate_mode'] ?? $vendor->secondary_currency_rate_mode) === 'manual') {
             $vendorUpdate['secondary_currency_exchange_rate'] = (float) $request->input('secondary_currency_exchange_rate');
             $vendorUpdate['secondary_currency_rate_updated_at'] = now();
         }
@@ -1039,5 +1056,38 @@ class VendorSettingsController extends Controller
         $result = $printerService->sendTestPrint($ip, $port, $vendor->name);
 
         return response()->json($result);
+    }
+
+    /**
+     * Get live exchange rate for AJAX preview in Admin Settings.
+     */
+    public function getLiveRate(Request $request): JsonResponse
+    {
+        $vendor = Auth::user()->vendor;
+        $this->authorize('viewSettings', $vendor);
+
+        $primary = strtoupper(trim((string) ($request->input('currency') ?: $vendor->currency ?: 'AMD')));
+        $target = strtoupper(trim((string) ($request->input('secondary_currency') ?: $vendor->secondary_currency ?: 'USD')));
+
+        $service = app(CurrencyExchangeService::class);
+        $rate = $service->getLiveRate($primary, $target);
+
+        if (! $rate) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Unable to fetch live exchange rate. Please try again or enter manually.'),
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'primary' => $primary,
+            'target' => $target,
+            'rate' => round($rate, 4),
+            'rate_full' => $rate,
+            'provider' => 'ExchangeRate-API',
+            'updated_at' => now()->format('Y-m-d H:i:s'),
+            'label' => "1 {$target} = ".number_format($rate, 2)." {$primary}",
+        ]);
     }
 }

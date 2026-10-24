@@ -2165,6 +2165,8 @@ if (window.Alpine) {
                      exchangeRate: '{{ $secRate }}',
                      decimalPlaces: {{ (int) $secDecimals }},
                      prefix: '{{ addslashes($secPrefix) }}',
+                     isLoadingRate: false,
+                     rateFetchStatus: '',
                      symbols: {
                          'USD': '$',
                          'EUR': '€',
@@ -2199,6 +2201,40 @@ if (window.Alpine) {
                          const isBefore = beforeSymbols.includes(sym);
                          const priceStr = isBefore ? (sym + formatted) : (formatted + ' ' + sym);
                          return (pfx ? pfx + ' ' : '') + priceStr;
+                     },
+                     fetchLiveRate() {
+                         if (this.isSameAsPrimary) return;
+                         this.isLoadingRate = true;
+                         this.rateFetchStatus = '';
+                         const url = `{{ route('admin.settings.currency.live_rate') }}?currency=${encodeURIComponent(this.primaryCurrency)}&secondary_currency=${encodeURIComponent(this.secondaryCurrency)}`;
+                         fetch(url)
+                             .then(res => res.json())
+                             .then(data => {
+                                 this.isLoadingRate = false;
+                                 if (data && data.success && data.rate) {
+                                     this.exchangeRate = data.rate;
+                                     this.rateFetchStatus = 'success';
+                                     setTimeout(() => { this.rateFetchStatus = ''; }, 3500);
+                                 } else {
+                                     this.rateFetchStatus = 'error';
+                                 }
+                             })
+                             .catch(() => {
+                                 this.isLoadingRate = false;
+                                 this.rateFetchStatus = 'error';
+                             });
+                     },
+                     init() {
+                         this.$watch('secondaryCurrency', (val) => {
+                             if (this.rateMode === 'automatic') {
+                                 this.fetchLiveRate();
+                             }
+                         });
+                         this.$watch('rateMode', (val) => {
+                             if (val === 'automatic' && (!this.exchangeRate || parseFloat(this.exchangeRate) <= 0 || this.exchangeRate === '350')) {
+                                 this.fetchLiveRate();
+                             }
+                         });
                      }
                  }"
                  @primary-currency-changed.window="primaryCurrency = $event.detail">
@@ -2215,7 +2251,7 @@ if (window.Alpine) {
                                 </span>
                             </h3>
                             <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
-                                {{ __('Ցուցադրել մոտավոր գները երկրորդ արժույթով (օր.՝ USD, EUR) հանրային ճաշացանկում՝ հիմնական գնի տակ') }}
+                                {{ __('Ցուցադրել մոտավոր գները երկրորդ արժույթով (օր.՝ USD, EUR, RUB) հանրային ճաշացանկում՝ հիմնական գնի տակ') }}
                             </p>
                         </div>
                     </div>
@@ -2255,11 +2291,12 @@ if (window.Alpine) {
                      style="display: flex; flex-direction: column; gap: 1.5rem; border-top: 1px dashed var(--border-color); padding-top: 1.5rem;">
                     
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 1.25rem;">
-                        <!-- 1. Secondary Currency -->
+                        <!-- 1. Secondary Currency / Fallback -->
                         <div class="form-group">
                             <label for="secondary_currency" class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem;">
                                 <i class="fa-solid fa-globe" style="color: #0284c7;"></i>
-                                <span>{{ __('Երկրորդային արժույթ (Secondary Currency)') }}</span>
+                                <span x-show="rateMode !== 'auto_by_language'">{{ __('Երկրորդային արժույթ (Secondary Currency)') }}</span>
+                                <span x-show="rateMode === 'auto_by_language'" x-cloak>{{ __('Պահուստային արժույթ (Fallback Currency)') }}</span>
                                 <span style="color: #ef4444;">*</span>
                             </label>
                             <select name="secondary_currency" 
@@ -2287,10 +2324,13 @@ if (window.Alpine) {
                                     </option>
                                 @endforeach
                             </select>
-                            <div x-show="isSameAsPrimary" x-cloak style="color: #ef4444; font-size: 0.78rem; font-weight: 700; margin-top: 0.35rem; display: flex; align-items: center; gap: 0.35rem;">
+                            <div x-show="isSameAsPrimary && rateMode !== 'auto_by_language'" x-cloak style="color: #ef4444; font-size: 0.78rem; font-weight: 700; margin-top: 0.35rem; display: flex; align-items: center; gap: 0.35rem;">
                                 <i class="fa-solid fa-triangle-exclamation"></i>
                                 <span>{{ __('Երկրորդային արժույթը պետք է տարբերվի հիմնական արժույթից') }} (<span x-text="primaryCurrency"></span>)</span>
                             </div>
+                            <span x-show="rateMode === 'auto_by_language'" x-cloak style="font-size: 0.75rem; color: #0284c7; margin-top: 0.35rem; display: block; font-weight: 600;">
+                                {{ __('Ծառայում է որպես լռելյայն պահուստային արժույթ այն լեզուների համար, որոնք առանձին քարտեզագրված չեն:') }}
+                            </span>
                             @error('secondary_currency')
                                 <span style="color: #ef4444; font-size: 0.78rem; font-weight: 700; margin-top: 0.35rem; display: block;">{{ $message }}</span>
                             @enderror
@@ -2308,10 +2348,13 @@ if (window.Alpine) {
                                     x-model="rateMode"
                                     style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); cursor: pointer;">
                                 <option value="manual">✍️ {{ __('Ձեռքով մուտքագրում (Manual Entry)') }}</option>
-                                <option value="automatic" disabled title="{{ __('Extensible Provider API Interface') }}">🤖 {{ __('Ավտոմատ մատակարար (Auto Provider - Available via Extensible API)') }}</option>
+                                <option value="automatic">🤖 {{ __('Ավտոմատ փոխարժեք (Live Auto Rate)') }}</option>
+                                <option value="auto_by_language">🌐 {{ __('Ամբողջական ավտոմատ՝ ըստ լեզվի (Full Auto: Dynamic by Menu Language)') }}</option>
                             </select>
                             <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
-                                {{ __('Մուտքագրեք ընթացիկ փոխարժեքը ձեռքով կամ միացրեք համակարգային ինտեգրումը:') }}
+                                <span x-show="rateMode === 'manual'">{{ __('Մուտքագրեք ընթացիկ փոխարժեքը ձեռքով:') }}</span>
+                                <span x-show="rateMode === 'automatic'" x-cloak>{{ __('Փոխարժեքը ստացվում է ուղիղ եթերում API-ից (ExchangeRate-API, 6ժ քեշավորմամբ):') }}</span>
+                                <span x-show="rateMode === 'auto_by_language'" x-cloak>{{ __('Արժույթը և փոխարժեքը փոխվում են ավտոմատ՝ ըստ հաճախորդի ընտրած լեզվի:') }}</span>
                             </span>
                         </div>
 
@@ -2357,20 +2400,123 @@ if (window.Alpine) {
                         </div>
                     </div>
 
+                    <!-- 🌐 Dynamic Language-to-Currency Map Banner (Visible when rateMode === 'auto_by_language') -->
+                    <div x-show="rateMode === 'auto_by_language'" 
+                         x-cloak
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 transform -translate-y-1"
+                         x-transition:enter-end="opacity-100 transform translate-y-0"
+                         style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(99, 102, 241, 0.08) 100%); border: 1.5px solid rgba(14, 165, 233, 0.3); border-radius: 16px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                <span style="font-size: 1.35rem;">🌐</span>
+                                <div>
+                                    <h4 style="margin: 0; font-size: 0.96rem; font-weight: 800; color: var(--text-main);">
+                                        {{ __('Ամբողջական ավտոմատ ճաշացանկ՝ ըստ ընտրված լեզվի') }}
+                                    </h4>
+                                    <p style="margin: 0.15rem 0 0; font-size: 0.8rem; color: var(--text-muted);">
+                                        {{ __('Հյուրի կողմից լեզուն փոխելիս երկրորդային արժույթը և փոխարժեքը դինամիկ կերպով կհամապատասխանեցվեն:') }}
+                                    </p>
+                                </div>
+                            </div>
+                            <span style="font-size: 0.72rem; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; padding: 0.2rem 0.6rem;">
+                                LIVE MULTI-CURRENCY
+                            </span>
+                        </div>
+
+                        <!-- Language Badges Grid -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 0.65rem;">
+                            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.6rem 0.85rem; display: flex; align-items: center; gap: 0.6rem;">
+                                <span style="font-size: 1.2rem;">🇷🇺</span>
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">{{ __('Ռուսերեն (ru)') }}</div>
+                                    <div style="font-size: 0.74rem; font-weight: 800; color: #0284c7;">RUB (₽ - Ռուբլի)</div>
+                                </div>
+                            </div>
+
+                            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.6rem 0.85rem; display: flex; align-items: center; gap: 0.6rem;">
+                                <span style="font-size: 1.2rem;">🇺🇸</span>
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">{{ __('Անգլերեն (en)') }}</div>
+                                    <div style="font-size: 0.74rem; font-weight: 800; color: #0284c7;">USD ($ - Դոլար)</div>
+                                </div>
+                            </div>
+
+                            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.6rem 0.85rem; display: flex; align-items: center; gap: 0.6rem;">
+                                <span style="font-size: 1.2rem;">🇩🇪 🇫🇷 🇪🇸 🇮🇹</span>
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">{{ __('de / fr / es / it') }}</div>
+                                    <div style="font-size: 0.74rem; font-weight: 800; color: #0284c7;">EUR (€ - Եվրո)</div>
+                                </div>
+                            </div>
+
+                            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.6rem 0.85rem; display: flex; align-items: center; gap: 0.6rem;">
+                                <span style="font-size: 1.2rem;">🇬🇪</span>
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">{{ __('Վրացերեն (ge / ka)') }}</div>
+                                    <div style="font-size: 0.74rem; font-weight: 800; color: #0284c7;">GEL (₾ - Լարի)</div>
+                                </div>
+                            </div>
+
+                            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.6rem 0.85rem; display: flex; align-items: center; gap: 0.6rem;">
+                                <span style="font-size: 1.2rem;">🇦🇪</span>
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">{{ __('Արաբերեն (ar)') }}</div>
+                                    <div style="font-size: 0.74rem; font-weight: 800; color: #0284c7;">AED (د.إ - Դիրհամ)</div>
+                                </div>
+                            </div>
+
+                            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.6rem 0.85rem; display: flex; align-items: center; gap: 0.6rem;">
+                                <span style="font-size: 1.2rem;">🇨🇳</span>
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">{{ __('Չինարեն (zh)') }}</div>
+                                    <div style="font-size: 0.74rem; font-weight: 800; color: #0284c7;">CNY (¥ - Յուան)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.45;">
+                            💡 <strong>{{ __('Նշում:') }}</strong> {{ __('Հայերենի (hy) կամ չքարտեզագրված լեզուների համար կօգտագործվի նշված պահուստային արժույթը') }} (<strong style="color: var(--text-main);" x-text="secondaryCurrency">USD</strong>)։ {{ __('Բոլոր փոխարժեքները թարմացվում են ինքնաշխատորեն ExchangeRate-API միջոցով (6 ժամ քեշավորմամբ):') }}
+                        </div>
+                    </div>
+
                     <!-- Exchange Rate Direction & Value Input Box -->
                     <div style="background: var(--bg-body); border: 1.5px solid var(--border-color); border-radius: 16px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem;">
                         <label for="secondary_currency_exchange_rate" style="font-weight: 700; font-size: 0.9rem; color: var(--text-main); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
                             <span style="display: flex; align-items: center; gap: 0.5rem;">
                                 <i class="fa-solid fa-arrow-right-arrow-left" style="color: var(--primary);"></i>
-                                <span>{{ __('Փոխարժեք և ուղղություն (Exchange Rate)') }}</span>
-                                <span style="color: #ef4444;">*</span>
+                                <span x-show="rateMode === 'manual'">{{ __('Փոխարժեք և ուղղություն (Manual Exchange Rate)') }}</span>
+                                <span x-show="rateMode === 'automatic'" x-cloak>{{ __('Ընթացիկ ավտոմատ փոխարժեք (Live Auto Rate)') }}</span>
+                                <span x-show="rateMode === 'auto_by_language'" x-cloak>{{ __('Պահուստային արժույթի փոխարժեք (Fallback Exchange Rate)') }}</span>
+                                <span style="color: #ef4444;" x-show="rateMode === 'manual'">*</span>
                             </span>
-                            @if(!empty($vendor->secondary_currency_rate_updated_at))
-                                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">
-                                    <i class="fa-regular fa-clock"></i> {{ __('Վերջին թարմացում:') }} {{ $vendor->secondary_currency_rate_updated_at->format('d.m.Y H:i') }}
-                                </span>
-                            @endif
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <!-- Live Rate Fetch Button -->
+                                <button type="button" 
+                                        @click="fetchLiveRate()" 
+                                        :disabled="isLoadingRate || isSameAsPrimary"
+                                        style="font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.75rem; border-radius: 8px; border: 1px solid rgba(14, 165, 233, 0.4); background: rgba(14, 165, 233, 0.1); color: #0284c7; cursor: pointer; transition: all 0.2s ease;">
+                                    <i class="fa-solid fa-arrows-rotate" :class="{ 'fa-spin': isLoadingRate }"></i>
+                                    <span x-text="isLoadingRate ? '{{ __('Ստացվում է...') }}' : '{{ __('Թարմացնել API-ից') }}'"></span>
+                                </button>
+
+                                @if(!empty($vendor->secondary_currency_rate_updated_at))
+                                    <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">
+                                        <i class="fa-regular fa-clock"></i> {{ __('Վերջին թարմացում:') }} {{ $vendor->secondary_currency_rate_updated_at->format('d.m.Y H:i') }}
+                                    </span>
+                                @endif
+                            </div>
                         </label>
+
+                        <!-- Feedback banner for AJAX live fetch -->
+                        <div x-show="rateFetchStatus === 'success'" x-cloak style="font-size: 0.8rem; font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 0.4rem 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>{{ __('Փոխարժեքը հաջողությամբ թարմացվեց ExchangeRate-API մատակարարից:') }}</span>
+                        </div>
+                        <div x-show="rateFetchStatus === 'error'" x-cloak style="font-size: 0.8rem; font-weight: 700; color: #ef4444; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 0.4rem 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <span>{{ __('Չհաջողվեց կապ հաստատել API-ի հետ։ Ստուգեք կապը կամ մուտքագրեք փոխարժեքը ձեռքով:') }}</span>
+                        </div>
 
                         <!-- Direction Formula Box -->
                         <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.85rem 1.25rem;">
@@ -2390,12 +2536,21 @@ if (window.Alpine) {
                                        class="form-input" 
                                        x-model="exchangeRate"
                                        placeholder="350"
+                                       :readonly="rateMode === 'auto_by_language'"
+                                       :style="rateMode === 'auto_by_language' ? 'opacity: 0.85; background: var(--bg-body); cursor: not-allowed;' : ''"
                                        style="width: 150px; font-size: 1.15rem; font-weight: 800; padding: 0.55rem 0.85rem; border-radius: 10px; background: var(--bg-body); border: 2px solid var(--primary); color: var(--text-main); text-align: center;">
                             </div>
 
                             <div style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 0.35rem;">
                                 <span style="color: #10b981;" x-text="primaryCurrency">AMD</span>
                             </div>
+
+                            <span x-show="rateMode === 'automatic'" x-cloak style="font-size: 0.75rem; font-weight: 700; background: rgba(14, 165, 233, 0.15); color: #0284c7; border: 1px solid rgba(14, 165, 233, 0.3); padding: 0.2rem 0.5rem; border-radius: 6px;">
+                                LIVE RATE
+                            </span>
+                            <span x-show="rateMode === 'auto_by_language'" x-cloak style="font-size: 0.75rem; font-weight: 700; background: rgba(99, 102, 241, 0.15); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.3); padding: 0.2rem 0.5rem; border-radius: 6px;">
+                                DYNAMIC PER LANGUAGE
+                            </span>
                         </div>
 
                         <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.45;">

@@ -348,7 +348,7 @@
                                     'price' => (float)$v->getEffectivePrice(),
                                     'regular_price' => (float)$v->price,
                                     'is_default' => (bool)$v->is_default,
-                                    'secondary_price' => $vendor->formatSecondaryPrice($v->getEffectivePrice()),
+                                    'secondary_price' => $vendor->formatSecondaryPrice($v->getEffectivePrice(), $lang),
                                 ])->values(),
                             ];
                         @endphp
@@ -443,7 +443,7 @@
                                                 $secPriceVal = $prod->variations->count() > 1 
                                                     ? $prod->variations->min('price') 
                                                     : $prod->getEffectivePrice($location?->id);
-                                                $secFormatted = $vendor->formatSecondaryPrice($secPriceVal);
+                                                $secFormatted = $vendor->formatSecondaryPrice($secPriceVal, $lang);
                                             @endphp
                                             @if($secFormatted)
                                                 <div class="secondary-price" style="font-size: 0.76rem; font-weight: 600; color: var(--text-muted); opacity: 0.85; margin-top: 0.15rem; line-height: 1.1;">
