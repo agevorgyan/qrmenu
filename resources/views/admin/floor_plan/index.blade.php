@@ -1333,7 +1333,7 @@ function openEditTableModal(tableId) {
     document.getElementById('editTableName').value = table.name || '';
     document.getElementById('editTableCapacity').value = table.capacity;
     document.getElementById('editTableMinCapacity').value = table.min_capacity || 1;
-    document.getElementById('editTableHall').value = table.section || (floorHalls[0]?.name ?? 'Գլխավոր Սրահ');
+    document.getElementById('editTableHall').value = table.section || (floorHalls[0]?.name ?? '{{ __('Main Hall') }}');
     document.getElementById('editTableShape').value = table.shape || 'square';
     document.getElementById('editTableIsActive').checked = Boolean(table.is_active);
 

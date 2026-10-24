@@ -339,4 +339,23 @@ class InteractiveFloorPlanAndTableCombinationTest extends TestCase
         $this->assertEquals('Outdoor Patio', $floorPlan['halls'][0]['name']);
         $this->assertEquals('#10b981', $floorPlan['halls'][0]['color']);
     }
+
+    public function test_floor_plan_translations_render_correctly(): void
+    {
+        // 1. Armenian locale
+        session(['admin_locale' => 'hy']);
+        $responseHy = $this->actingAs($this->user)->get(route('admin.floor_plan.index'));
+        $responseHy->assertStatus(200);
+        $responseHy->assertSee('Սեղանների Ինտերակտիվ Քարտեզ');
+        $responseHy->assertSee('Միացնել սեղաններ');
+        $responseHy->assertSee('Սրահներ');
+
+        // 2. Russian locale
+        session(['admin_locale' => 'ru']);
+        $responseRu = $this->actingAs($this->user)->get(route('admin.floor_plan.index'));
+        $responseRu->assertStatus(200);
+        $responseRu->assertSee('Интерактивная Карта Зала');
+        $responseRu->assertSee('Объединить столы');
+        $responseRu->assertSee('Залы');
+    }
 }

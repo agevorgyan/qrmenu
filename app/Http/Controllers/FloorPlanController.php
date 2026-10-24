@@ -110,7 +110,7 @@ class FloorPlanController extends Controller
                 $shape = in_array($t['shape'] ?? '', ['round', 'rectangle', 'square']) ? $t['shape'] : 'square';
                 $x = (int) round(floatval($t['x'] ?? 50));
                 $y = (int) round(floatval($t['y'] ?? 50));
-                $section = (string) ($t['section'] ?? $t['hall'] ?? ($dbTable?->section ?: 'Գլխավոր Սրահ'));
+                $section = (string) ($t['section'] ?? $t['hall'] ?? ($dbTable?->section ?: __('Main Hall')));
 
                 if ($dbTable) {
                     $dbTable->update([
@@ -526,9 +526,9 @@ class FloorPlanController extends Controller
         }
 
         return [
-            ['id' => 'main', 'name' => 'Գլխավոր Սրահ', 'color' => '#3b82f6'],
-            ['id' => 'terrace', 'name' => 'Տեռաս / Պատշգամբ', 'color' => '#10b981'],
-            ['id' => 'vip', 'name' => 'VIP Սրահ', 'color' => '#f59e0b'],
+            ['id' => 'main', 'name' => __('Main Hall'), 'color' => '#3b82f6'],
+            ['id' => 'terrace', 'name' => __('Terrace / Balcony'), 'color' => '#10b981'],
+            ['id' => 'vip', 'name' => __('VIP Room'), 'color' => '#f59e0b'],
         ];
     }
 
@@ -726,7 +726,7 @@ class FloorPlanController extends Controller
             }
 
             // Hall mapping
-            $section = $table->section ?: ($halls[0]['name'] ?? 'Գլխավոր Սրահ');
+            $section = $table->section ?: ($halls[0]['name'] ?? __('Main Hall'));
             $hallSlug = Str::slug($section);
             $matchedHall = $hallsMap->get($hallSlug) ?? ($halls[0] ?? ['id' => 'main', 'name' => $section, 'color' => '#3b82f6']);
 
@@ -791,7 +791,7 @@ class FloorPlanController extends Controller
             'combined_capacity' => $table->combined_capacity,
             'effective_capacity' => $table->effective_capacity,
             'shape' => in_array($table->shape, ['round', 'rectangle', 'square']) ? $table->shape : 'square',
-            'section' => (string) ($table->section ?: 'Գլխավոր Սրահ'),
+            'section' => (string) ($table->section ?: __('Main Hall')),
             'hall_id' => Str::slug($table->section ?: 'main'),
             'x' => (int) ($table->x ?? 50),
             'y' => (int) ($table->y ?? 50),
