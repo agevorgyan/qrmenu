@@ -3,6 +3,78 @@
 @section('title', __('Settings') . ' - ' . $vendor->name)
 
 @section('content')
+<script>
+window.settingsModule = function() {
+    return {
+        activeTab: 'profile',
+        isDirty: false,
+        init() {
+            // Check query param first, then hash
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+            const hash = window.location.hash.replace('#', '');
+            const validTabs = ['profile', 'orders', 'reservations', 'payments', 'delivery', 'notifications', 'regional', 'ai', 'integrations', 'security'];
+
+            if (tabParam && validTabs.includes(tabParam)) {
+                this.activeTab = tabParam;
+            } else if (hash && validTabs.includes(hash)) {
+                this.activeTab = hash;
+            }
+
+            // Detect errors and navigate to erroneous tab automatically
+            @if(isset($errors) && $errors->any())
+                @if($errors->has('name') || $errors->has('address') || $errors->has('phone') || $errors->has('whatsapp_number') || $errors->has('wifi_ssid') || $errors->has('wifi_password') || $errors->has('working_hours') || $errors->has('legal_name') || $errors->has('tax_id') || $errors->has('operating_address') || $errors->has('director_name') || $errors->has('director_phone') || $errors->has('contact_person_name') || $errors->has('contact_person_phone'))
+                    this.activeTab = 'profile';
+                @elseif($errors->has('service_fee_type') || $errors->has('service_fee_value') || $errors->has('service_fee_min_order') || $errors->has('dine_in_start_time') || $errors->has('dine_in_end_time'))
+                    this.activeTab = 'orders';
+                @elseif($errors->has('delivery_fee') || $errors->has('delivery_min_amount') || $errors->has('delivery_free_from') || $errors->has('takeaway_min_amount') || $errors->has('delivery_start_time') || $errors->has('delivery_end_time'))
+                    this.activeTab = 'delivery';
+                @elseif($errors->has('timezone') || $errors->has('currency') || $errors->has('weight_unit') || $errors->has('volume_unit'))
+                    this.activeTab = 'regional';
+                @elseif($errors->has('custom_domain'))
+                    this.activeTab = 'integrations';
+                @endif
+            @endif
+
+            // Track form dirty status
+            this.$nextTick(() => {
+                const form = document.getElementById('vendorSettingsForm');
+                if (form) {
+                    form.addEventListener('input', () => { this.isDirty = true; });
+                    form.addEventListener('change', () => { this.isDirty = true; });
+                    form.addEventListener('submit', () => { this.isDirty = false; });
+                }
+            });
+
+            window.addEventListener('beforeunload', (e) => {
+                if (this.isDirty) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+        },
+        setTab(tab) {
+            this.activeTab = tab;
+            if (window.history && window.history.replaceState) {
+                const url = new URL(window.location);
+                url.searchParams.set('tab', tab);
+                window.history.replaceState(null, '', url.pathname + url.search + '#' + tab);
+            } else {
+                window.location.hash = tab;
+            }
+        }
+    };
+};
+
+if (window.Alpine) {
+    Alpine.data('settingsModule', window.settingsModule);
+} else {
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('settingsModule', window.settingsModule);
+    });
+}
+</script>
+
 <div style="max-width: 1250px; margin: 0 auto; width: 100%; box-sizing: border-box;" x-data="settingsModule()">
     <!-- Breadcrumb & Header -->
     <div style="margin-bottom: 1.75rem;">
@@ -2805,68 +2877,6 @@
 </style>
 
 <script>
-function settingsModule() {
-    return {
-        activeTab: 'profile',
-        isDirty: false,
-        init() {
-            // Check query param first, then hash
-            const urlParams = new URLSearchParams(window.location.search);
-            const tabParam = urlParams.get('tab');
-            const hash = window.location.hash.replace('#', '');
-            const validTabs = ['profile', 'orders', 'reservations', 'payments', 'delivery', 'notifications', 'regional', 'ai', 'integrations', 'security'];
-
-            if (tabParam && validTabs.includes(tabParam)) {
-                this.activeTab = tabParam;
-            } else if (hash && validTabs.includes(hash)) {
-                this.activeTab = hash;
-            }
-
-            // Detect errors and navigate to erroneous tab automatically
-            @if($errors->any())
-                @if($errors->has('name') || $errors->has('address') || $errors->has('phone') || $errors->has('whatsapp_number') || $errors->has('wifi_ssid') || $errors->has('wifi_password') || $errors->has('working_hours') || $errors->has('legal_name') || $errors->has('tax_id') || $errors->has('operating_address') || $errors->has('director_name') || $errors->has('director_phone') || $errors->has('contact_person_name') || $errors->has('contact_person_phone'))
-                    this.activeTab = 'profile';
-                @elseif($errors->has('service_fee_type') || $errors->has('service_fee_value') || $errors->has('service_fee_min_order') || $errors->has('dine_in_start_time') || $errors->has('dine_in_end_time'))
-                    this.activeTab = 'orders';
-                @elseif($errors->has('delivery_fee') || $errors->has('delivery_min_amount') || $errors->has('delivery_free_from') || $errors->has('takeaway_min_amount') || $errors->has('delivery_start_time') || $errors->has('delivery_end_time'))
-                    this.activeTab = 'delivery';
-                @elseif($errors->has('timezone') || $errors->has('currency') || $errors->has('weight_unit') || $errors->has('volume_unit'))
-                    this.activeTab = 'regional';
-                @elseif($errors->has('custom_domain'))
-                    this.activeTab = 'integrations';
-                @endif
-            @endif
-
-            // Track form dirty status
-            this.$nextTick(() => {
-                const form = document.getElementById('vendorSettingsForm');
-                if (form) {
-                    form.addEventListener('input', () => { this.isDirty = true; });
-                    form.addEventListener('change', () => { this.isDirty = true; });
-                    form.addEventListener('submit', () => { this.isDirty = false; });
-                }
-            });
-
-            window.addEventListener('beforeunload', (e) => {
-                if (this.isDirty) {
-                    e.preventDefault();
-                    e.returnValue = '';
-                }
-            });
-        },
-        setTab(tab) {
-            this.activeTab = tab;
-            if (window.history && window.history.replaceState) {
-                const url = new URL(window.location);
-                url.searchParams.set('tab', tab);
-                window.history.replaceState(null, '', url.pathname + url.search + '#' + tab);
-            } else {
-                window.location.hash = tab;
-            }
-        }
-    };
-}
-
 let CURRENCY = "{{ $vendor->currency }}";
 
 function onCurrencyChanged(newCurrency) {
@@ -3069,7 +3079,7 @@ function updateFeaturedDishPreview() {
         if (nameEl) nameEl.textContent = opt.dataset.name || opt.text;
         if (priceEl) priceEl.textContent = (opt.dataset.price || '') + ' ' + '{{ $vendor->currency ?? "AMD" }}';
         if (imgEl && opt.dataset.image) imgEl.src = opt.dataset.image;
-        if (descEl) descEl.textContent = subtitleInput.value.trim() || opt.dataset.desc || 'Chef's special selection';
+        if (descEl) descEl.textContent = subtitleInput.value.trim() || opt.dataset.desc || "Chef's special selection";
     } else {
         if (nameEl) nameEl.textContent = 'Select dish';
         if (priceEl) priceEl.textContent = '';
@@ -3077,7 +3087,7 @@ function updateFeaturedDishPreview() {
     }
 
     if (badgeEl) {
-        badgeEl.textContent = badgeInput.value.trim() || '⭐ TODAY'S SPECIAL';
+        badgeEl.textContent = badgeInput.value.trim() || "⭐ TODAY'S SPECIAL";
     }
 }
 
