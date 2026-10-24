@@ -381,6 +381,7 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cas
     Route::post('/menu/products', [MenuBuilderController::class, 'storeProduct'])->name('menu.products.store');
     Route::post('/menu/products/{product}', [MenuBuilderController::class, 'updateProduct'])->name('menu.products.update');
     Route::post('/menu/products/{product}/toggle', [MenuBuilderController::class, 'toggleAvailability'])->name('menu.products.toggle');
+    Route::post('/menu/products/{product}/daily-offer-toggle', [MenuBuilderController::class, 'toggleDailyOffer'])->name('menu.products.daily_offer.toggle');
     Route::post('/menu/products/{product}/override', [MenuBuilderController::class, 'saveOverride'])->name('menu.products.override');
     Route::delete('/menu/products/{product}', [MenuBuilderController::class, 'destroyProduct'])->name('menu.products.destroy');
 

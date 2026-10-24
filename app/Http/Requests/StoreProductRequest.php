@@ -119,6 +119,7 @@ class StoreProductRequest extends FormRequest
             'fat_g' => 'nullable|numeric',
             'preparation_time_min' => 'nullable|integer',
             'is_featured' => 'nullable|boolean',
+            'is_daily_offer' => 'nullable|boolean',
             'ai_priority' => 'nullable|boolean',
             'ai_priority_level' => 'nullable|integer|min:0|max:100',
             'ai_group' => 'nullable|string|max:50',

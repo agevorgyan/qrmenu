@@ -421,4 +421,153 @@ class DailyOffersCarouselTest extends TestCase
             'sort_order' => 0,
         ]);
     }
+
+    public function test_vendor_can_toggle_daily_offer_from_menu(): void
+    {
+        $this->actingAs($this->user);
+
+        // Toggle on product 1
+        $response = $this->post(route('admin.menu.products.daily_offer.toggle', $this->product1->id));
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('daily_offers', [
+            'vendor_id' => $this->vendor->id,
+            'product_id' => $this->product1->id,
+            'is_active' => true,
+        ]);
+        $this->assertTrue((bool) $this->vendor->fresh()->featured_dish_enabled);
+
+        // Toggle on product 2
+        $responseJson = $this->postJson(route('admin.menu.products.daily_offer.toggle', $this->product2->id));
+        $responseJson->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'is_daily_offer' => true,
+                'total_offers' => 2,
+            ]);
+
+        $this->assertEquals(2, $this->vendor->dailyOffers()->count());
+
+        // Toggle off product 1
+        $responseJson2 = $this->postJson(route('admin.menu.products.daily_offer.toggle', $this->product1->id));
+        $responseJson2->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'is_daily_offer' => false,
+                'total_offers' => 1,
+            ]);
+
+        $this->assertEquals(1, $this->vendor->dailyOffers()->count());
+        $this->assertDatabaseMissing('daily_offers', [
+            'vendor_id' => $this->vendor->id,
+            'product_id' => $this->product1->id,
+        ]);
+    }
+
+    public function test_creating_and_updating_product_with_is_daily_offer(): void
+    {
+        $this->actingAs($this->user);
+
+        // Create new dish with is_daily_offer = 1
+        $res = $this->post(route('admin.menu.products.store'), [
+            'category_id' => $this->category->id,
+            'name' => 'Sous Vide Salmon',
+            'price' => 6500,
+            'is_daily_offer' => 1,
+        ]);
+        $res->assertSessionHas('success');
+
+        $created = Product::where('name', 'Sous Vide Salmon')->first();
+        $this->assertNotNull($created);
+        $this->assertDatabaseHas('daily_offers', [
+            'vendor_id' => $this->vendor->id,
+            'product_id' => $created->id,
+            'is_active' => true,
+        ]);
+
+        // Update product to remove daily offer
+        $resUpdate = $this->post(route('admin.menu.products.update', $created->id), [
+            'category_id' => $this->category->id,
+            'name' => 'Sous Vide Salmon Updated',
+            'price' => 6500,
+            'is_daily_offer' => 0,
+        ]);
+        $resUpdate->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('daily_offers', [
+            'vendor_id' => $this->vendor->id,
+            'product_id' => $created->id,
+        ]);
+    }
+
+    public function test_menu_index_view_renders_badges_for_all_daily_offers(): void
+    {
+        $this->actingAs($this->user);
+
+        // Put 2 dishes in daily offers
+        DailyOffer::create([
+            'vendor_id' => $this->vendor->id,
+            'product_id' => $this->product1->id,
+            'sort_order' => 0,
+            'badge' => 'SPECIAL OFFER 1',
+            'is_active' => true,
+        ]);
+
+        DailyOffer::create([
+            'vendor_id' => $this->vendor->id,
+            'product_id' => $this->product2->id,
+            'sort_order' => 1,
+            'badge' => 'SPECIAL OFFER 2',
+            'is_active' => true,
+        ]);
+
+        $this->vendor->update(['featured_dish_enabled' => true]);
+
+        $response = $this->get(route('admin.menu.index'));
+        $response->assertStatus(200);
+
+        // Both badges should be present in the HTML!
+        $response->assertSee('SPECIAL OFFER 1');
+        $response->assertSee('SPECIAL OFFER 2');
+    }
+
+    public function test_settings_general_update_does_not_wipe_multiple_daily_offers(): void
+    {
+        $this->actingAs($this->user);
+
+        // Setup 3 daily offers
+        DailyOffer::create([
+            'vendor_id' => $this->vendor->id,
+            'product_id' => $this->product1->id,
+            'sort_order' => 0,
+            'is_active' => true,
+        ]);
+        DailyOffer::create([
+            'vendor_id' => $this->vendor->id,
+            'product_id' => $this->product2->id,
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+        DailyOffer::create([
+            'vendor_id' => $this->vendor->id,
+            'product_id' => $this->product3->id,
+            'sort_order' => 2,
+            'is_active' => true,
+        ]);
+
+        $this->assertEquals(3, $this->vendor->dailyOffers()->count());
+
+        // Now save a profile setting without changing daily offers
+        $res = $this->post(route('admin.settings.update'), [
+            'name' => 'Updated Carousel Bistro Name',
+            'phone' => '+37499112233',
+            'service_fee_type' => 'percent',
+            'service_fee_value' => 0,
+            'delivery_fee' => 0,
+            'delivery_min_amount' => 0,
+            'featured_dish_enabled' => true,
+        ]);
+
+        $res->assertSessionHas('success');
+        $this->assertEquals(3, $this->vendor->fresh()->dailyOffers()->count());
+    }
 }

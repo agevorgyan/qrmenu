@@ -2350,5 +2350,19 @@
     "Reservation Notification Rules": "Уведомления о бронированиях",
     "Regional & Measurement Units": "Региональные настройки и единицы",
     "Hardware & Network Integrations": "Оборудование и интеграции",
-    "Account & Team Security": "Безопасность аккаунта и команды"
+    "Account & Team Security": "Безопасность аккаунта и команды",
+    "Daily Offers & Carousel": "Блюда дня (Карусель)",
+    "Daily Offers": "Блюда дня",
+    "Daily Offer / Special of the Day": "Блюдо дня / Спецпредложение",
+    "Daily Offer": "Блюдо дня",
+    "+ Daily Offer": "+ Блюдо дня",
+    "Remove from Daily Offers": "Удалить из блюд дня",
+    "Add to Daily Offers": "Добавить в блюда дня",
+    "Added to Daily Offers!": "Добавлено в блюда дня!",
+    "Removed from Daily Offers!": "Удалено из блюд дня!",
+    "Daily Offers Carousel": "Карусель блюд дня",
+    "Manage multiple dishes of the day in their dedicated tab.": "Управляйте несколькими блюдами дня в специальной вкладке.",
+    "Open Daily Offers Tab": "Открыть вкладку Блюда дня",
+    "Daily Offers & Dish of the Day Carousel": "Карусель блюд дня",
+    "Manage daily offers carousel and special dish settings": "Настройка карусели блюд дня и спецпредложений"
 }

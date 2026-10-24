@@ -122,6 +122,16 @@
         </p>
     </div>
     <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
+        <a href="{{ route('admin.settings.index', ['tab' => 'daily_offers']) }}"
+           class="btn btn-secondary"
+           style="display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.86rem; border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.08); color: #ef4444; text-decoration: none;"
+           title="{{ __('Manage daily offers carousel and special dish settings') }}">
+            <i class="fa-solid fa-fire-flame-curved"></i>
+            <span>{{ __('Daily Offers & Carousel') }}</span>
+            <span class="badge" style="background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 999px;">
+                {{ $vendor->dailyOffers ? $vendor->dailyOffers->where('is_active', true)->count() : 0 }}
+            </span>
+        </a>
         <button class="btn btn-secondary" onclick="document.getElementById('newCategoryModal').style.display='flex'">
             <i class="fa-solid fa-folder-plus" style="color: var(--primary);"></i> {{ __('New Category') }}
         </button>
@@ -235,9 +245,13 @@
                                 <div style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
                                     <strong style="font-size: 1.05rem; color: var(--text-main); font-family: 'Outfit'; word-break: break-word;">{{ $product->name }}</strong>
                                     
-                                    @if($vendor->featured_dish_enabled && $vendor->featured_product_id == $product->id)
-                                        <span class="badge" style="background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; font-size: 0.7rem; font-weight: 800;">
-                                            <i class="fa-solid fa-fire-flame-curved"></i> {{ $vendor->featured_dish_badge ?: __('SPECIAL OF THE DAY') }}
+                                    @php
+                                        $prodDailyOffer = $product->dailyOffers ? $product->dailyOffers->where('is_active', true)->first() : null;
+                                        $isProductDailyOffer = (bool) $prodDailyOffer || ($vendor->featured_dish_enabled && $vendor->featured_product_id == $product->id);
+                                    @endphp
+                                    @if($vendor->featured_dish_enabled && $isProductDailyOffer)
+                                        <span class="badge" style="background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; font-size: 0.7rem; font-weight: 800; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                            <i class="fa-solid fa-fire-flame-curved"></i> {{ ($prodDailyOffer?->badge) ?: ($vendor->featured_dish_badge ?: __('SPECIAL OF THE DAY')) }}
                                         </span>
                                     @endif
                                     
@@ -377,7 +391,18 @@
                             </div>
 
                             <div class="dish-actions-mobile">
-                                <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.7rem; font-size: 0.78rem;" onclick="editProduct({{ json_encode($product->load(['allergens', 'variations', 'overrides'])) }})">
+                                <form action="{{ route('admin.menu.products.daily_offer.toggle', $product->id) }}" method="POST" style="margin: 0;">
+                                    @csrf
+                                    <button type="submit"
+                                            class="btn btn-secondary"
+                                            style="padding: 0.35rem 0.65rem; font-size: 0.78rem; {{ $isProductDailyOffer ? 'border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.08); color: #ef4444; font-weight: 700;' : 'color: var(--text-muted);' }}"
+                                            title="{{ $isProductDailyOffer ? __('Remove from Daily Offers') : __('Add to Daily Offers') }}">
+                                        <i class="fa-solid fa-fire-flame-curved" style="{{ $isProductDailyOffer ? 'color: #ef4444;' : 'opacity: 0.4;' }}"></i>
+                                        <span>{{ $isProductDailyOffer ? __('Daily Offer') : __('+ Daily Offer') }}</span>
+                                    </button>
+                                </form>
+
+                                <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.7rem; font-size: 0.78rem;" onclick="editProduct({{ json_encode($product->load(['allergens', 'variations', 'overrides', 'dailyOffers'])) }})">
                                     <i class="fa-solid fa-pen"></i> {{ __('Edit') }}
                                 </button>
 
@@ -789,9 +814,13 @@
                     <label class="form-label" style="font-size: 0.75rem;">{{ __('Prep Mins') }}</label>
                     <input type="number" name="preparation_time_min" placeholder="15" class="form-input">
                 </div>
-                <div style="display: flex; align-items: flex-end; padding-bottom: 0.35rem;">
+                <div style="display: flex; align-items: flex-end; padding-bottom: 0.35rem; gap: 1rem; flex-wrap: wrap;">
                     <label style="font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
                         <input type="checkbox" name="is_featured" value="1"> ★ {{ __('Featured Dish') }}
+                    </label>
+                    <label style="font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; gap: 0.45rem; cursor: pointer; color: var(--text-main);">
+                        <input type="checkbox" name="is_daily_offer" value="1">
+                        <span style="color: #ef4444;"><i class="fa-solid fa-fire-flame-curved"></i></span> {{ __('Daily Offer / Special of the Day') }}
                     </label>
                 </div>
             </div>
@@ -1124,9 +1153,13 @@
                     <label class="form-label" style="font-size: 0.75rem;">{{ __('Prep Mins') }}</label>
                     <input type="number" id="edit_prod_preparation_time_min" name="preparation_time_min" placeholder="15" class="form-input">
                 </div>
-                <div style="display: flex; align-items: flex-end; padding-bottom: 0.35rem;">
+                <div style="display: flex; align-items: flex-end; padding-bottom: 0.35rem; gap: 1rem; flex-wrap: wrap;">
                     <label style="font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
                         <input type="checkbox" id="edit_prod_is_featured" name="is_featured" value="1"> ★ {{ __('Featured Dish') }}
+                    </label>
+                    <label style="font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; gap: 0.45rem; cursor: pointer; color: var(--text-main);">
+                        <input type="checkbox" id="edit_prod_is_daily_offer" name="is_daily_offer" value="1">
+                        <span style="color: #ef4444;"><i class="fa-solid fa-fire-flame-curved"></i></span> {{ __('Daily Offer / Special of the Day') }}
                     </label>
                 </div>
             </div>
@@ -1267,6 +1300,11 @@
         document.getElementById('edit_prod_calories').value = prod.calories || '';
         document.getElementById('edit_prod_preparation_time_min').value = prod.preparation_time_min || '';
         document.getElementById('edit_prod_is_featured').checked = !!prod.is_featured;
+        const isDailyOfferItem = (prod.daily_offers && prod.daily_offers.some(o => o.is_active)) || ({{ $vendor->featured_product_id ?? 'null' }} == prod.id);
+        const editDailyOfferCb = document.getElementById('edit_prod_is_daily_offer');
+        if (editDailyOfferCb) {
+            editDailyOfferCb.checked = !!isDailyOfferItem;
+        }
 
         // AI Waiter metadata
         document.getElementById('edit_prod_ai_priority').checked = !!prod.ai_priority;

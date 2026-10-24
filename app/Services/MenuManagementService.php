@@ -227,6 +227,24 @@ class MenuManagementService
                     ]);
                 }
 
+                if (! empty($data['is_daily_offer'])) {
+                    $lockedVendor->dailyOffers()->firstOrCreate(
+                        ['product_id' => $product->id],
+                        [
+                            'badge' => $lockedVendor->featured_dish_badge ?: "⭐ TODAY'S SPECIAL",
+                            'subtitle' => $product->description,
+                            'is_active' => true,
+                            'sort_order' => (int) ($lockedVendor->dailyOffers()->max('sort_order') ?? 0) + 1,
+                        ]
+                    );
+                    if (! $lockedVendor->featured_dish_enabled) {
+                        $lockedVendor->update(['featured_dish_enabled' => true]);
+                    }
+                    if (! $lockedVendor->featured_product_id) {
+                        $lockedVendor->update(['featured_product_id' => $product->id]);
+                    }
+                }
+
                 TenantCache::invalidateMenu($lockedVendor);
 
                 return $product;
@@ -417,6 +435,32 @@ class MenuManagementService
                 ProductVariation::where('product_id', $product->id)
                     ->whereNotIn('id', $keptIds)
                     ->delete();
+            }
+        }
+
+        if (array_key_exists('is_daily_offer', $data)) {
+            $vendor = $product->vendor;
+            if (! empty($data['is_daily_offer'])) {
+                $vendor->dailyOffers()->firstOrCreate(
+                    ['product_id' => $product->id],
+                    [
+                        'badge' => $vendor->featured_dish_badge ?: "⭐ TODAY'S SPECIAL",
+                        'subtitle' => $product->description,
+                        'is_active' => true,
+                        'sort_order' => (int) ($vendor->dailyOffers()->max('sort_order') ?? 0) + 1,
+                    ]
+                );
+                if (! $vendor->featured_dish_enabled) {
+                    $vendor->update(['featured_dish_enabled' => true]);
+                }
+                if (! $vendor->featured_product_id) {
+                    $vendor->update(['featured_product_id' => $product->id]);
+                }
+            } else {
+                $vendor->dailyOffers()->where('product_id', $product->id)->delete();
+                if ($vendor->featured_product_id == $product->id) {
+                    $vendor->update(['featured_product_id' => $vendor->dailyOffers()->value('product_id')]);
+                }
             }
         }
 

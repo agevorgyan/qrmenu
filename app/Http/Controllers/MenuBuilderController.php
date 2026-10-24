@@ -34,8 +34,10 @@ class MenuBuilderController extends Controller
         }
         $activeLocation = $vendor->locations->firstWhere('id', (int) $activeLocationId) ?? $vendor->locations->first();
 
+        $vendor->load('dailyOffers.product');
+
         $categories = Category::where('vendor_id', $vendor->id)
-            ->with(['products.variations', 'products.allergens', 'products.overrides'])
+            ->with(['products.variations', 'products.allergens', 'products.overrides', 'products.dailyOffers'])
             ->orderBy('sort_order', 'asc')
             ->get();
 
@@ -130,6 +132,53 @@ class MenuBuilderController extends Controller
         }
 
         return back()->with('success', __("Dish ':name' stock status updated.", ['name' => $product->name]));
+    }
+
+    public function toggleDailyOffer(Request $request, Product $product)
+    {
+        $this->authorize('update', $product);
+
+        $vendor = Auth::user()->vendor;
+        if ($product->vendor_id !== $vendor->id) {
+            abort(403);
+        }
+
+        $existing = $vendor->dailyOffers()->where('product_id', $product->id)->first();
+        if ($existing) {
+            $existing->delete();
+            if ($vendor->featured_product_id == $product->id) {
+                $next = $vendor->dailyOffers()->first();
+                $vendor->update(['featured_product_id' => $next?->product_id]);
+            }
+            $isOffer = false;
+        } else {
+            $vendor->dailyOffers()->create([
+                'vendor_id' => $vendor->id,
+                'product_id' => $product->id,
+                'badge' => $vendor->featured_dish_badge ?: "⭐ TODAY'S SPECIAL",
+                'subtitle' => $product->description,
+                'is_active' => true,
+                'sort_order' => (int) ($vendor->dailyOffers()->max('sort_order') ?? 0) + 1,
+            ]);
+            if (! $vendor->featured_dish_enabled) {
+                $vendor->update(['featured_dish_enabled' => true]);
+            }
+            if (! $vendor->featured_product_id) {
+                $vendor->update(['featured_product_id' => $product->id]);
+            }
+            $isOffer = true;
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'is_daily_offer' => $isOffer,
+                'total_offers' => $vendor->dailyOffers()->count(),
+                'product_id' => $product->id,
+            ]);
+        }
+
+        return back()->with('success', $isOffer ? __('Added to Daily Offers!') : __('Removed from Daily Offers!'));
     }
 
     public function saveOverride(Request $request, Product $product)

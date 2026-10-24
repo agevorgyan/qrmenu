@@ -13,7 +13,7 @@ window.settingsModule = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const tabParam = urlParams.get('tab');
             const hash = window.location.hash.replace('#', '');
-            const validTabs = ['profile', 'orders', 'reservations', 'payments', 'delivery', 'notifications', 'regional', 'ai', 'integrations', 'security'];
+            const validTabs = ['profile', 'daily_offers', 'orders', 'reservations', 'payments', 'delivery', 'notifications', 'regional', 'ai', 'integrations', 'security'];
 
             if (tabParam && validTabs.includes(tabParam)) {
                 this.activeTab = tabParam;
@@ -31,6 +31,8 @@ window.settingsModule = function() {
                     this.activeTab = 'delivery';
                 @elseif($errors->has('timezone') || $errors->has('currency') || $errors->has('secondary_currency') || $errors->has('secondary_currency_exchange_rate') || $errors->has('secondary_currency_enabled') || $errors->has('weight_unit') || $errors->has('volume_unit'))
                     this.activeTab = 'regional';
+                @elseif($errors->has('daily_offers') || $errors->has('featured_dish_enabled') || $errors->has('featured_product_id'))
+                    this.activeTab = 'daily_offers';
                 @elseif($errors->has('custom_domain'))
                     this.activeTab = 'integrations';
                 @endif
@@ -150,6 +152,10 @@ if (window.Alpine) {
             <i class="fa-solid fa-store" style="color: #10b981;"></i>
             <span>{{ __('Restaurant Profile') }}</span>
         </button>
+        <button type="button" class="settings-mobile-tab-btn" :class="{ 'active': activeTab === 'daily_offers' }" @click="setTab('daily_offers')" role="tab" :aria-selected="activeTab === 'daily_offers'">
+            <i class="fa-solid fa-fire-flame-curved" style="color: #ef4444;"></i>
+            <span>{{ __('Daily Offers') }}</span>
+        </button>
         <button type="button" class="settings-mobile-tab-btn" :class="{ 'active': activeTab === 'orders' }" @click="setTab('orders')" role="tab" :aria-selected="activeTab === 'orders'">
             <i class="fa-solid fa-bell-concierge" style="color: #ef4444;"></i>
             <span>{{ __('Orders & Kitchen') }}</span>
@@ -201,6 +207,17 @@ if (window.Alpine) {
                         <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Restaurant Profile') }}</span>
                     </span>
                     <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
+                </button>
+                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'daily_offers' }" @click="setTab('daily_offers')" role="tab" :aria-selected="activeTab === 'daily_offers'">
+                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                        <span class="settings-nav-icon-box" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+                            <i class="fa-solid fa-fire-flame-curved"></i>
+                        </span>
+                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Daily Offers & Carousel') }}</span>
+                    </span>
+                    <span class="badge" style="background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 999px;">
+                        {{ $dailyOffers->count() }}
+                    </span>
                 </button>
                 <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'orders' }" @click="setTab('orders')" role="tab" :aria-selected="activeTab === 'orders'">
                     <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
@@ -2610,9 +2627,8 @@ if (window.Alpine) {
             
                 </div>
 
-                <!-- 8. AI & AUTOMATION TAB -->
-                <div x-show="activeTab === 'ai'" x-transition.opacity role="tabpanel" style="display: flex; flex-direction: column; gap: 1.75rem;">
-                    <!-- 3. FEATURED DISH OF THE DAY BANNER CARD -->
+                <!-- DAILY OFFERS & CAROUSEL TAB -->
+                <div x-show="activeTab === 'daily_offers'" x-transition.opacity role="tabpanel" style="display: flex; flex-direction: column; gap: 1.75rem;">
             @php
                 $productsJson = $products->map(function ($p) {
                     return [
@@ -2707,7 +2723,7 @@ if (window.Alpine) {
                 </div>
 
                 <!-- Hidden inputs for traditional form submission -->
-                <input type="hidden" name="daily_offers_json" :value="JSON.stringify(offers)">
+                <input type="hidden" name="daily_offers_json" id="dailyOffersJsonInput" value="{{ json_encode($dailyOffersJson) }}" :value="JSON.stringify(offers)">
                 <template x-for="(off, idx) in offers" :key="off.product_id">
                     <div>
                         <input type="hidden" :name="'daily_offers[' + idx + '][product_id]'" :value="off.product_id">
@@ -3036,9 +3052,28 @@ if (window.Alpine) {
                 </div>
 
             </div>
+                </div>
 
+                <!-- 8. AI & AUTOMATION TAB -->
+                <div x-show="activeTab === 'ai'" x-transition.opacity role="tabpanel" style="display: flex; flex-direction: column; gap: 1.75rem;">
+                    <!-- Shortcut to Daily Offers -->
+                    <div style="background: rgba(245, 158, 11, 0.08); border: 1px dashed rgba(245, 158, 11, 0.35); border-radius: 16px; padding: 1.1rem 1.4rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.85rem;">
+                            <span style="width: 38px; height: 38px; border-radius: 10px; background: rgba(239, 68, 68, 0.15); color: #ef4444; display: flex; align-items: center; justify-content: center; font-size: 1.15rem;">
+                                <i class="fa-solid fa-fire-flame-curved"></i>
+                            </span>
+                            <div>
+                                <strong style="font-size: 0.95rem; color: var(--text-main);">{{ __('Daily Offers & Dish of the Day Carousel') }}</strong>
+                                <p style="margin: 0.2rem 0 0; font-size: 0.82rem; color: var(--text-muted);">
+                                    {{ __('Manage multiple dishes of the day in their dedicated tab.') }}
+                                </p>
+                            </div>
+                        </div>
+                        <button type="button" @click="setTab('daily_offers')" class="btn btn-secondary" style="font-size: 0.82rem; font-weight: 700; border-color: rgba(239, 68, 68, 0.4); color: #ef4444; cursor: pointer;">
+                            <i class="fa-solid fa-arrow-right"></i> {{ __('Open Daily Offers Tab') }}
+                        </button>
+                    </div>
 
-            
                     <!-- 3. AI CONTROL CENTER BANNER CARD -->
             <div class="card settings-card" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(236, 72, 153, 0.05)); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card); position: relative; overflow: hidden;">
                 <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #8b5cf6, #ec4899, #f59e0b);"></div>
@@ -3955,6 +3990,10 @@ function dailyOffersAdminApp(allProducts, initialOffers, updateUrl, csrfToken, c
         },
 
         syncLegacyInputs() {
+            const jsonInput = document.getElementById('dailyOffersJsonInput');
+            if (jsonInput) {
+                jsonInput.value = JSON.stringify(this.offers);
+            }
             const firstOffer = this.offers[0];
             const featSelect = document.getElementById('featuredProductSelect');
             if (featSelect) {

@@ -390,7 +390,7 @@ class VendorSettingsController extends Controller
             } else {
                 $vendorUpdate['featured_product_id'] = null;
             }
-        } elseif (! empty($validated['featured_product_id'])) {
+        } elseif (! empty($validated['featured_product_id']) && ! $request->has('daily_offers_json') && ! $request->has('daily_offers')) {
             $productExists = $vendor->products()->where('id', $validated['featured_product_id'])->exists();
             if ($productExists) {
                 $vendorUpdate['featured_product_id'] = $validated['featured_product_id'];
@@ -409,7 +409,7 @@ class VendorSettingsController extends Controller
             } else {
                 $vendorUpdate['featured_product_id'] = null;
             }
-        } elseif ($request->exists('featured_product_id') && empty($validated['featured_product_id'])) {
+        } elseif ($request->exists('featured_product_id') && empty($validated['featured_product_id']) && ! $request->has('daily_offers_json') && ! $request->has('daily_offers')) {
             $vendorUpdate['featured_product_id'] = null;
             $vendor->dailyOffers()->delete();
         }
