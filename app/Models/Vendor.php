@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use App\DTOs\QuotaStatus;
 use App\Services\CredentialService;
+use App\Services\EntitlementService;
 use App\Services\Localization\LocaleManager;
+use App\Services\QuotaService;
 use App\Services\Security\CssSanitizer;
 use App\Services\TenantCache;
 use Carbon\Carbon;
@@ -1638,39 +1641,60 @@ class Vendor extends Model
 
     public function hasFeature(string $feature): bool
     {
-        $planSlug = strtolower($this->plan?->slug ?? $this->subscription_plan ?? 'pro');
-
-        if ($planSlug === 'custom' || $planSlug === 'business') {
-            return true;
-        }
-
-        switch ($feature) {
-            case 'orders':
-            case 'online_orders':
-            case 'customers':
-            case 'reservations':
-            case 'preorders':
-                return in_array($planSlug, ['pro', 'business', 'custom']);
-
-            case 'locations':
-            case 'multi_location':
-            case 'team':
-            case 'staff_roles':
-            case 'advanced_analytics':
-                return in_array($planSlug, ['business', 'custom']);
-
-            case 'menu':
-            case 'qr':
-            case 'branding':
-            case 'analytics':
-            default:
-                return true;
-        }
+        return app(EntitlementService::class)->can($this, $feature);
     }
 
     public function canUseFeature(string $feature): bool
     {
         return $this->hasFeature($feature);
+    }
+
+    /**
+     * Administrative feature overrides for this vendor.
+     */
+    public function featureOverrides(): HasMany
+    {
+        return $this->hasMany(TenantFeatureOverride::class);
+    }
+
+    /**
+     * Administrative quota overrides for this vendor.
+     */
+    public function quotaOverrides(): HasMany
+    {
+        return $this->hasMany(TenantQuotaOverride::class);
+    }
+
+    /**
+     * Usage meters for this vendor.
+     */
+    public function usageMeters(): HasMany
+    {
+        return $this->hasMany(TenantUsageMeter::class);
+    }
+
+    /**
+     * Usage audit events for this vendor.
+     */
+    public function usageEvents(): HasMany
+    {
+        return $this->hasMany(TenantUsageEvent::class);
+    }
+
+    /**
+     * Check if vendor can consume quota.
+     */
+    public function hasQuota(string $quotaKey, int $quantity = 1): bool
+    {
+        return app(QuotaService::class)->can($this, $quotaKey, $quantity);
+    }
+
+    /**
+     * Get complete quota status.
+     */
+    public function getQuotaStatus(string $quotaKey): QuotaStatus
+    {
+        return app(QuotaService::class)->getQuotaStatus($this, $quotaKey);
     }
 
     /**

@@ -323,6 +323,10 @@ class VendorSettingsController extends Controller
                 $vendorUpdate['custom_domain'] = null;
                 $vendor->customDomains()->delete();
             } else {
+                if (! $vendor->hasFeature('branding.custom_domain')) {
+                    return back()->withErrors(['custom_domain' => '🔒 Սեփական դոմենի ֆունկցիան հասանելի չէ Ձեր ընթացիկ փաթեթում (պահանջվում է Business փաթեթ)։'])->withInput();
+                }
+
                 try {
                     $domainService = app(CustomDomainService::class);
                     $customDomain = $domainService->registerDomain($vendor, $rawDomain, isPrimary: true);

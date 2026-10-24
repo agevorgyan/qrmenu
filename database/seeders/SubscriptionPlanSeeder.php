@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\SubscriptionPlan;
 use App\Models\SubscriptionPlanPrice;
+use App\Security\FeatureCatalog;
+use App\Security\QuotaCatalog;
 use Illuminate\Database\Seeder;
 
 class SubscriptionPlanSeeder extends Seeder
@@ -96,6 +98,8 @@ class SubscriptionPlanSeeder extends Seeder
         ];
 
         foreach ($plans as $p) {
+            $p['feature_codes'] = FeatureCatalog::getDefaultFeaturesForPlan($p['slug']);
+            $p['quota_limits'] = QuotaCatalog::getDefaultQuotasForPlan($p['slug']);
             $plan = SubscriptionPlan::updateOrCreate(['slug' => $p['slug']], $p);
 
             $basePrice = (float) $plan->price;

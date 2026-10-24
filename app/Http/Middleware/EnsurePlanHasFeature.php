@@ -2,33 +2,51 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Vendor;
+use App\Services\EntitlementService;
+use App\Services\TenantContext;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsurePlanHasFeature
 {
+    public function __construct(
+        protected EntitlementService $entitlementService,
+        protected TenantContext $tenantContext
+    ) {}
+
     public function handle(Request $request, Closure $next, string $feature): Response
     {
         $user = $request->user();
+        $vendor = null;
 
-        if ($user && $user->vendor) {
-            $vendor = $user->vendor;
+        // 1. If this is a storefront route with vendor_slug, route parameter is authoritative
+        $vendorSlug = $request->route('vendor_slug') ?? $request->route('vendor');
+        if ($vendorSlug) {
+            $vendor = ($vendorSlug instanceof Vendor)
+                ? $vendorSlug
+                : Vendor::where('slug', (string) $vendorSlug)->first();
 
-            if (! $vendor->hasFeature($feature)) {
-                $featureNames = [
-                    'orders' => 'Օնլայն պատվերների',
-                    'customers' => 'Հաճախորդների CRM',
-                    'locations' => 'Բազմամասնաճյուղ կառավարման',
-                    'team' => 'Աշխատակիցների դերերի',
-                ];
+            // Storefront routes for missing or inactive restaurants must 404
+            if (! $vendor || ! $vendor->is_active) {
+                abort(404, 'Restaurant not found.');
+            }
+        } else {
+            // 2. Admin panel context: resolve from authenticated user or TenantContext
+            $vendor = $user?->vendor ?? $this->tenantContext->getTenant();
+        }
 
-                $name = $featureNames[$feature] ?? 'այս';
-                $planNeeded = in_array($feature, ['orders', 'customers']) ? 'Pro' : 'Business';
-                $planName = $vendor->plan?->name ?? strtoupper($vendor->subscription_plan ?? 'BASIC');
+        if ($vendor) {
+            $result = $this->entitlementService->check($vendor, $feature, $user);
+
+            if (! $result->allowed) {
+                if ($request->expectsJson() || $request->is('api/*') || $request->is('*/feed')) {
+                    return response()->json($result->toArray(), 403);
+                }
 
                 return redirect()->route('admin.subscription')
-                    ->with('warning', "🔒 {$name} ֆունկցիան հասանելի չէ Ձեր ընթացիկ ({$planName}) փաթեթում։ Խնդրում ենք անցնել {$planNeeded} փաթեթի։");
+                    ->with('warning', $result->message);
             }
         }
 

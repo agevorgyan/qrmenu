@@ -9,10 +9,12 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Vendor;
+use App\Security\QuotaCatalog;
 use App\Services\CrmAutomationService;
 use App\Services\CustomerSyncService;
 use App\Services\OrderDispatchService;
 use App\Services\OrderPricingService;
+use App\Services\QuotaService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -24,10 +26,12 @@ class CreateOrderAction
         protected ?CrmAutomationService $crmService = null,
         protected ?OrderPricingService $pricingService = null,
         protected ?OrderDispatchService $dispatchService = null,
+        protected ?QuotaService $quotaService = null,
     ) {
         $this->crmService = $crmService ?? app(CrmAutomationService::class);
         $this->pricingService = $pricingService ?? app(OrderPricingService::class);
         $this->dispatchService = $dispatchService ?? app(OrderDispatchService::class);
+        $this->quotaService = $quotaService ?? app(QuotaService::class);
     }
 
     /**
@@ -214,13 +218,23 @@ class CreateOrderAction
 
             $paymentMethod = $dto->paymentMethod ?: 'cash';
             $paymentStatus = in_array($paymentMethod, ['cash', 'pos_terminal']) ? 'unpaid' : 'pending';
+            $orderNumber = $this->generateOrderNumber($vendor->id);
+
+            // Record orders.period usage (throws QuotaExceededException if hard limit reached)
+            $this->quotaService->recordUsage(
+                vendor: $vendor,
+                quotaKey: QuotaCatalog::KEY_ORDERS_PERIOD,
+                quantity: 1,
+                idempotencyKey: 'ord_'.$orderNumber,
+                metadata: ['type' => $dto->type, 'order_number' => $orderNumber]
+            );
 
             // Create base order record
             $order = Order::create([
                 'vendor_id' => $vendor->id,
                 'location_id' => $dto->locationId,
                 'customer_id' => $customer?->id,
-                'order_number' => $this->generateOrderNumber($vendor->id),
+                'order_number' => $orderNumber,
                 'table_number' => in_array($dto->type, ['delivery', 'takeaway']) ? null : ($dto->tableNumber ?? 'Counter'),
                 'delivery_address' => $dto->deliveryAddress,
                 'type' => $dto->type,

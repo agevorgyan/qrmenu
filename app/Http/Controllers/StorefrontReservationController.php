@@ -6,7 +6,9 @@ use App\Models\Category;
 use App\Models\Reservation;
 use App\Models\ReservationPreOrder;
 use App\Models\Vendor;
+use App\Security\QuotaCatalog;
 use App\Services\PreOrderService;
+use App\Services\QuotaService;
 use App\Services\ReservationAvailabilityService;
 use App\Services\ReservationNotificationService;
 use Carbon\Carbon;
@@ -207,6 +209,15 @@ class StorefrontReservationController extends Controller
                 location: $location,
                 durationMinutes: $durationMinutes,
                 bufferMinutes: $bufferMinutes
+            );
+
+            // Record reservations.period quota usage (fails closed if quota exceeded)
+            app(QuotaService::class)->recordUsage(
+                vendor: $vendor,
+                quotaKey: QuotaCatalog::KEY_RESERVATIONS_PERIOD,
+                quantity: 1,
+                idempotencyKey: 'res_'.$vendor->id.'_'.$validated['reservation_date'].'_'.$validated['reservation_time'].'_'.$allocatedTable->id,
+                metadata: ['date' => $validated['reservation_date'], 'time' => $validated['reservation_time']]
             );
 
             // 2. Persist reservation

@@ -51,4 +51,13 @@ class OfflineGateway implements PaymentGatewayInterface
     {
         return false;
     }
+
+    public function queryTransactionStatus(PaymentAttempt $attempt): PaymentVerificationResult
+    {
+        return PaymentVerificationResult::pending(
+            merchantReference: $attempt->merchant_reference,
+            providerTransactionId: $attempt->provider_transaction_id,
+            rawPayload: ['note' => 'Offline payments require manual administrative confirmation']
+        );
+    }
 }

@@ -26,10 +26,11 @@ class AiWaiterController extends Controller
     {
         $vendor = Vendor::where('slug', $vendor_slug)->where('is_active', true)->firstOrFail();
         $config = $vendor->getAiWaiterConfig();
+        $isEntitled = $vendor->hasFeature('ai.waiter');
 
         return response()->json([
             'success' => true,
-            'enabled' => (bool) $vendor->ai_waiter_enabled,
+            'enabled' => (bool) ($vendor->ai_waiter_enabled && $isEntitled),
             'waiter_name' => $vendor->getAiWaiterName(),
             'avatar' => $vendor->ai_waiter_avatar,
             'welcome_text' => $vendor->ai_waiter_welcome_text,

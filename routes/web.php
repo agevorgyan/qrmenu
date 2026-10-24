@@ -81,7 +81,7 @@ Route::get('/m/{vendor_slug}/{location_slug?}', [ClientStorefrontController::cla
     ->name('client.menu');
 
 // Rate-limited public order & waiter endpoints (anti-spam & DDoS protection)
-Route::middleware('throttle:15,1')->group(function () {
+Route::middleware(['throttle:15,1', EnsurePlanHasFeature::class.':orders.online'])->group(function () {
     Route::post('/api/m/{vendor_slug}/order', [ClientStorefrontController::class, 'submitOrder'])->name('client.order.submit');
     Route::post('/api/m/{vendor_slug}/call-waiter', [ClientStorefrontController::class, 'callWaiter'])->name('client.waiter.call');
 });
@@ -101,19 +101,22 @@ Route::post('/api/webhooks/payment/{gateway}', [PaymentWebhookController::class,
 // AI Waiter Advisor Endpoints
 Route::prefix('/api/m/{vendor_slug}/ai-waiter')->middleware('throttle:60,1')->group(function () {
     Route::get('/config', [AiWaiterController::class, 'config'])->name('client.ai_waiter.config');
-    Route::get('/questions', [AiWaiterController::class, 'questions'])->name('client.ai_waiter.questions');
-    Route::post('/session', [AiWaiterController::class, 'startSession'])->name('client.ai_waiter.session.start');
-    Route::post('/session/{token}/language', [AiWaiterController::class, 'setLanguage'])->name('client.ai_waiter.session.language');
-    Route::post('/session/{token}/answer', [AiWaiterController::class, 'submitAnswer'])->name('client.ai_waiter.session.answer');
-    Route::post('/session/{token}/next-question', [AiWaiterController::class, 'nextQuestion'])->name('client.ai_waiter.session.next_question');
-    Route::post('/session/{token}/recommendations', [AiWaiterController::class, 'recommendations'])->name('client.ai_waiter.session.recommendations');
-    Route::post('/session/{token}/chat', [AiWaiterController::class, 'chat'])->name('client.ai_waiter.session.chat');
-    Route::post('/session/{token}/add-to-cart', [AiWaiterController::class, 'addToCart'])->name('client.ai_waiter.session.add_to_cart');
-    Route::post('/session/{token}/complete', [AiWaiterController::class, 'complete'])->name('client.ai_waiter.session.complete');
 
-    // Legacy endpoints
-    Route::post('/recommend', [AiWaiterController::class, 'recommend'])->name('client.ai_waiter.recommend');
-    Route::get('/pairings/{product_id}', [AiWaiterController::class, 'pairings'])->name('client.ai_waiter.pairings');
+    Route::middleware([EnsurePlanHasFeature::class.':ai.waiter'])->group(function () {
+        Route::get('/questions', [AiWaiterController::class, 'questions'])->name('client.ai_waiter.questions');
+        Route::post('/session', [AiWaiterController::class, 'startSession'])->name('client.ai_waiter.session.start');
+        Route::post('/session/{token}/language', [AiWaiterController::class, 'setLanguage'])->name('client.ai_waiter.session.language');
+        Route::post('/session/{token}/answer', [AiWaiterController::class, 'submitAnswer'])->name('client.ai_waiter.session.answer');
+        Route::post('/session/{token}/next-question', [AiWaiterController::class, 'nextQuestion'])->name('client.ai_waiter.session.next_question');
+        Route::post('/session/{token}/recommendations', [AiWaiterController::class, 'recommendations'])->name('client.ai_waiter.session.recommendations');
+        Route::post('/session/{token}/chat', [AiWaiterController::class, 'chat'])->name('client.ai_waiter.session.chat');
+        Route::post('/session/{token}/add-to-cart', [AiWaiterController::class, 'addToCart'])->name('client.ai_waiter.session.add_to_cart');
+        Route::post('/session/{token}/complete', [AiWaiterController::class, 'complete'])->name('client.ai_waiter.session.complete');
+
+        // Legacy endpoints
+        Route::post('/recommend', [AiWaiterController::class, 'recommend'])->name('client.ai_waiter.recommend');
+        Route::get('/pairings/{product_id}', [AiWaiterController::class, 'pairings'])->name('client.ai_waiter.pairings');
+    });
 });
 
 // Admin / Platform Language Switcher
@@ -252,8 +255,19 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
 
     // Vendor Subscriptions & Payment Logs
     Route::get('/subscriptions', [SuperAdminController::class, 'subscriptionsIndex'])->name('subscriptions.index');
+    Route::get('/subscriptions/payments', [SuperAdminController::class, 'allPaymentsIndex'])->name('subscriptions.payments.index');
+    Route::get('/subscriptions/audit-logs', [SuperAdminController::class, 'subscriptionAuditLogs'])->name('subscriptions.audit_logs');
     Route::post('/subscriptions/{vendor}', [SuperAdminController::class, 'updateVendorSubscription'])->name('subscriptions.update');
+    Route::post('/subscriptions/{vendor}/suspend', [SuperAdminController::class, 'suspendVendorSubscription'])->name('subscriptions.suspend');
+    Route::post('/subscriptions/{vendor}/restore', [SuperAdminController::class, 'restoreVendorSubscription'])->name('subscriptions.restore');
+    Route::get('/subscriptions/{vendor}/lifecycle', [SuperAdminController::class, 'vendorLifecycleHistory'])->name('subscriptions.lifecycle');
+    Route::get('/subscriptions/{vendor}/usage', [SuperAdminController::class, 'vendorUsageReporting'])->name('subscriptions.usage');
     Route::post('/subscriptions/{vendor}/payments', [SuperAdminController::class, 'storeVendorPayment'])->name('subscriptions.payments.store');
+    Route::post('/subscriptions/{vendor}/overrides', [SuperAdminController::class, 'storeFeatureOverride'])->name('subscriptions.overrides.store');
+    Route::delete('/subscriptions/{vendor}/overrides/{featureKey}', [SuperAdminController::class, 'destroyFeatureOverride'])->name('subscriptions.overrides.destroy');
+    Route::post('/subscriptions/{vendor}/quota-overrides', [SuperAdminController::class, 'storeQuotaOverride'])->name('subscriptions.quota_overrides.store');
+    Route::delete('/subscriptions/{vendor}/quota-overrides/{quotaKey}', [SuperAdminController::class, 'destroyQuotaOverride'])->name('subscriptions.quota_overrides.destroy');
+    Route::post('/subscriptions/{vendor}/usage-meters/{quotaKey}/reset', [SuperAdminController::class, 'resetUsageMeter'])->name('subscriptions.usage_meters.reset');
 
     // Landing, System & Security Settings Management
     Route::get('/settings', [SuperAdminController::class, 'settingsIndex'])->name('settings.index');
@@ -331,7 +345,11 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cas
 
     // Vendor Subscription Status & Payment History
     Route::get('/subscription', [VendorAdminController::class, 'subscriptionIndex'])->name('subscription');
+    Route::get('/subscription/overview', [VendorAdminController::class, 'subscriptionIndex'])->name('subscription.index');
     Route::post('/subscription/renew', [VendorAdminController::class, 'renewSubscription'])->name('subscription.renew');
+    Route::post('/subscription/cancel', [VendorAdminController::class, 'cancelSubscription'])->name('subscription.cancel');
+    Route::post('/subscription/resume', [VendorAdminController::class, 'resumeSubscription'])->name('subscription.resume');
+    Route::get('/subscription/invoices/{invoice}', [VendorAdminController::class, 'showInvoice'])->name('subscription.invoices.show');
 
     // Translation Management & AI Localization Studio
     Route::get('/translations', [TranslationController::class, 'index'])->name('translations.index');
@@ -366,13 +384,15 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cas
     Route::post('/menu/products/{product}/override', [MenuBuilderController::class, 'saveOverride'])->name('menu.products.override');
     Route::delete('/menu/products/{product}', [MenuBuilderController::class, 'destroyProduct'])->name('menu.products.destroy');
 
-    // AI Tools
-    Route::get('/ai/import', [AiMenuController::class, 'showImportForm'])->name('ai.import');
-    Route::post('/ai/import/process', [AiMenuController::class, 'processImport'])->name('ai.import.process');
-    Route::post('/ai/import/confirm', [AiMenuController::class, 'confirmImport'])->name('ai.import.confirm');
-    Route::post('/ai/translate', [AiMenuController::class, 'translateMenu'])->name('ai.translate');
-    Route::post('/ai/languages', [AiMenuController::class, 'saveLanguage'])->name('ai.languages.save');
-    Route::delete('/ai/languages/{code}', [AiMenuController::class, 'deleteLanguage'])->name('ai.languages.destroy');
+    // AI Tools (Business Plan Feature)
+    Route::middleware([EnsurePlanHasFeature::class.':ai.menu_builder'])->group(function () {
+        Route::get('/ai/import', [AiMenuController::class, 'showImportForm'])->name('ai.import');
+        Route::post('/ai/import/process', [AiMenuController::class, 'processImport'])->name('ai.import.process');
+        Route::post('/ai/import/confirm', [AiMenuController::class, 'confirmImport'])->name('ai.import.confirm');
+        Route::post('/ai/translate', [AiMenuController::class, 'translateMenu'])->name('ai.translate');
+        Route::post('/ai/languages', [AiMenuController::class, 'saveLanguage'])->name('ai.languages.save');
+        Route::delete('/ai/languages/{code}', [AiMenuController::class, 'deleteLanguage'])->name('ai.languages.destroy');
+    });
 
     // Live Orders & Kitchen Panel (Pro / Business Plan Feature)
     Route::middleware([EnsurePlanHasFeature::class.':orders'])->group(function () {
@@ -418,11 +438,17 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cas
     Route::post('/settings', [VendorSettingsController::class, 'update'])->name('settings.update');
     Route::post('/settings/telegram/test', [VendorSettingsController::class, 'testTelegramConnection'])->name('settings.telegram.test');
     Route::post('/settings/printer/test', [VendorSettingsController::class, 'testPrinterConnection'])->name('settings.printer.test');
-    Route::post('/settings/domain/check', [VendorSettingsController::class, 'checkDomainDns'])->name('settings.domain.check');
-    Route::post('/settings/domain/verify', [VendorSettingsController::class, 'verifyDomainOwnership'])->name('settings.domain.verify');
-    Route::get('/settings/ai', [VendorSettingsController::class, 'aiIndex'])->name('settings.ai');
-    Route::post('/settings/ai', [VendorSettingsController::class, 'aiUpdate'])->name('settings.ai.update');
-    Route::post('/settings/ai/test', [VendorSettingsController::class, 'testAiConnection'])->name('settings.ai.test');
+
+    Route::middleware([EnsurePlanHasFeature::class.':branding.custom_domain'])->group(function () {
+        Route::post('/settings/domain/check', [VendorSettingsController::class, 'checkDomainDns'])->name('settings.domain.check');
+        Route::post('/settings/domain/verify', [VendorSettingsController::class, 'verifyDomainOwnership'])->name('settings.domain.verify');
+    });
+
+    Route::middleware([EnsurePlanHasFeature::class.':ai.waiter'])->group(function () {
+        Route::get('/settings/ai', [VendorSettingsController::class, 'aiIndex'])->name('settings.ai');
+        Route::post('/settings/ai', [VendorSettingsController::class, 'aiUpdate'])->name('settings.ai.update');
+        Route::post('/settings/ai/test', [VendorSettingsController::class, 'testAiConnection'])->name('settings.ai.test');
+    });
 
     // Settings → Reservations & Pre-Orders → Notifications
     Route::get('/settings/reservations/notifications', [ReservationNotificationController::class, 'index'])->name('settings.reservations.notifications');
