@@ -49,6 +49,14 @@ class RestaurantTable extends Model
         'capacity',
         'min_capacity',
         'section',
+        'shape',
+        'x',
+        'y',
+        'width',
+        'height',
+        'merged_with_id',
+        'merged_table_ids',
+        'combined_capacity',
         'is_active',
         'sort_order',
     ];
@@ -58,6 +66,13 @@ class RestaurantTable extends Model
         return [
             'capacity' => 'integer',
             'min_capacity' => 'integer',
+            'x' => 'integer',
+            'y' => 'integer',
+            'width' => 'integer',
+            'height' => 'integer',
+            'merged_with_id' => 'integer',
+            'merged_table_ids' => 'array',
+            'combined_capacity' => 'integer',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];
@@ -74,6 +89,15 @@ class RestaurantTable extends Model
             }
             if (empty($table->capacity)) {
                 $table->capacity = 4;
+            }
+            if (empty($table->shape)) {
+                $table->shape = 'square';
+            }
+            if (! isset($table->x)) {
+                $table->x = 50;
+            }
+            if (! isset($table->y)) {
+                $table->y = 50;
             }
         });
 
@@ -105,6 +129,64 @@ class RestaurantTable extends Model
         return $this->hasMany(Reservation::class, 'restaurant_table_id');
     }
 
+    public function mergedWith(): BelongsTo
+    {
+        return $this->belongsTo(RestaurantTable::class, 'merged_with_id');
+    }
+
+    public function mergedPartners(): HasMany
+    {
+        return $this->hasMany(RestaurantTable::class, 'merged_with_id');
+    }
+
+    public function isMerged(): bool
+    {
+        return ! empty($this->merged_with_id) || ! empty($this->combined_capacity);
+    }
+
+    public function getEffectiveCapacityAttribute(): int
+    {
+        return $this->combined_capacity ?: $this->capacity;
+    }
+
+    public function mergeWith(RestaurantTable $otherTable): void
+    {
+        $combinedCap = $this->capacity + $otherTable->capacity;
+        $tableIds = [$this->id, $otherTable->id];
+
+        $this->update([
+            'merged_with_id' => $otherTable->id,
+            'combined_capacity' => $combinedCap,
+            'merged_table_ids' => $tableIds,
+        ]);
+
+        $otherTable->update([
+            'merged_with_id' => $this->id,
+            'combined_capacity' => $combinedCap,
+            'merged_table_ids' => $tableIds,
+        ]);
+    }
+
+    public function unmerge(): void
+    {
+        $partnerId = $this->merged_with_id;
+
+        $this->update([
+            'merged_with_id' => null,
+            'combined_capacity' => null,
+            'merged_table_ids' => null,
+        ]);
+
+        if ($partnerId) {
+            $partner = static::withoutGlobalScopes()->find($partnerId);
+            $partner?->update([
+                'merged_with_id' => null,
+                'combined_capacity' => null,
+                'merged_table_ids' => null,
+            ]);
+        }
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
@@ -112,8 +194,16 @@ class RestaurantTable extends Model
 
     public function scopeForCapacity(Builder $query, int $guestCount): Builder
     {
-        return $query->where('capacity', '>=', $guestCount)
-            ->where('min_capacity', '<=', $guestCount);
+        return $query->where(function (Builder $q) use ($guestCount) {
+            $q->where(function (Builder $sub) use ($guestCount) {
+                $sub->where('capacity', '>=', $guestCount)
+                    ->where('min_capacity', '<=', $guestCount);
+            })->orWhere(function (Builder $sub) use ($guestCount) {
+                $sub->whereNotNull('combined_capacity')
+                    ->where('combined_capacity', '>=', $guestCount)
+                    ->where('min_capacity', '<=', $guestCount);
+            });
+        });
     }
 
     public function getDisplayNameAttribute(): string

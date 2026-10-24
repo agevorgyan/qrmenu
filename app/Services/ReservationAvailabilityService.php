@@ -98,8 +98,7 @@ class ReservationAvailabilityService
         $tablesQuery = RestaurantTable::withoutGlobalScopes()
             ->where('vendor_id', $vendor->id)
             ->where('is_active', true)
-            ->where('capacity', '>=', $guestCount)
-            ->where('min_capacity', '<=', $guestCount)
+            ->forCapacity($guestCount)
             ->when($location, fn ($q) => $q->where(function ($sub) use ($location) {
                 $sub->where('location_id', $location->id)
                     ->orWhereNull('location_id');
@@ -111,13 +110,17 @@ class ReservationAvailabilityService
             return [];
         }
 
-        // Fetch all active reservations for candidate tables on this date window
+        // Fetch all active reservations for candidate tables and their merged partners on this date window
+        $allRelevantTableIds = $candidateTables->pluck('id')
+            ->concat($candidateTables->pluck('merged_with_id')->filter())
+            ->unique();
+
         $dateStartUtc = $openDt->copy()->subHours(2)->utc();
         $dateEndUtc = $closeDt->copy()->addHours(3)->utc();
 
         $activeReservations = Reservation::withoutGlobalScopes()
             ->where('vendor_id', $vendor->id)
-            ->whereIn('restaurant_table_id', $candidateTables->pluck('id'))
+            ->whereIn('restaurant_table_id', $allRelevantTableIds)
             ->whereIn('status', [Reservation::STATUS_PENDING, Reservation::STATUS_CONFIRMED, Reservation::STATUS_SEATED])
             ->whereBetween('reservation_datetime', [$dateStartUtc, $dateEndUtc])
             ->get();
@@ -139,7 +142,11 @@ class ReservationAvailabilityService
             if (! $isCutoff) {
                 foreach ($candidateTables as $table) {
                     $hasOverlap = $activeReservations->contains(function (Reservation $res) use ($table, $bufferedStartUtc, $bufferedEndUtc) {
-                        if ((int) $res->restaurant_table_id !== (int) $table->id) {
+                        $resTableId = (int) $res->restaurant_table_id;
+                        $isDirect = ($resTableId === (int) $table->id);
+                        $isMerged = ($table->merged_with_id && $resTableId === (int) $table->merged_with_id);
+
+                        if (! $isDirect && ! $isMerged) {
                             return false;
                         }
 
@@ -156,13 +163,19 @@ class ReservationAvailabilityService
                     });
 
                     if (! $hasOverlap) {
+                        $effectiveCap = $table->effective_capacity;
+                        $nameDisplay = $table->display_name;
+                        if ($table->isMerged()) {
+                            $nameDisplay .= ' ('.__('Combined').')';
+                        }
                         $availableTables[] = [
                             'id' => $table->id,
                             'number' => $table->table_number,
                             'name' => $table->name,
-                            'display_name' => $table->display_name,
-                            'capacity' => $table->capacity,
+                            'display_name' => $nameDisplay,
+                            'capacity' => $effectiveCap,
                             'section' => $table->section,
+                            'is_merged' => $table->isMerged(),
                         ];
                     }
                 }
@@ -215,14 +228,13 @@ class ReservationAvailabilityService
             // 1. Query candidate tables with capacity and lock them exclusively
             $query = RestaurantTable::where('vendor_id', $vendor->id)
                 ->where('is_active', true)
-                ->where('capacity', '>=', $guestCount)
-                ->where('min_capacity', '<=', $guestCount)
+                ->forCapacity($guestCount)
                 ->when($location, fn ($q) => $q->where(function ($sub) use ($location) {
                     $sub->where('location_id', $location->id)
                         ->orWhereNull('location_id');
                 }))
                 ->orderByRaw('CASE WHEN id = ? THEN 0 ELSE 1 END', [$preferredTableId ?? 0])
-                ->orderBy('capacity', 'asc')
+                ->orderByRaw('COALESCE(combined_capacity, capacity) ASC')
                 ->orderBy('id', 'asc')
                 ->lockForUpdate();
 
@@ -236,13 +248,18 @@ class ReservationAvailabilityService
 
             // 2. Iterate through locked candidate tables to find first non-overlapping table
             foreach ($candidates as $candidate) {
-                // Check if candidate table has overlapping active reservations in PostgreSQL
-                $hasConflict = Reservation::where('restaurant_table_id', $candidate->id)
+                // Check if candidate table or its merged partner has overlapping active reservations in PostgreSQL
+                $hasConflict = Reservation::where(function ($q) use ($candidate) {
+                    $q->where('restaurant_table_id', $candidate->id);
+                    if ($candidate->merged_with_id) {
+                        $q->orWhere('restaurant_table_id', $candidate->merged_with_id);
+                    }
+                })
                     ->whereIn('status', [
-                        Reservation::STATUS_PENDING,
-                        Reservation::STATUS_CONFIRMED,
-                        Reservation::STATUS_SEATED,
-                    ])
+                    Reservation::STATUS_PENDING,
+                    Reservation::STATUS_CONFIRMED,
+                    Reservation::STATUS_SEATED,
+                ])
                     ->where(function ($q) use ($bufferedStartUtc, $bufferedEndUtc) {
                         $q->where('reservation_datetime', '<', $bufferedEndUtc)
                             ->whereRaw('(reservation_datetime + (duration_minutes || \' minutes\')::interval) > ?', [$bufferedStartUtc]);
@@ -296,6 +313,9 @@ class ReservationAvailabilityService
                     'capacity' => intval($t['capacity'] ?? 4),
                     'min_capacity' => 1,
                     'section' => $hall,
+                    'shape' => in_array($t['shape'] ?? '', ['round', 'rectangle', 'square']) ? $t['shape'] : 'square',
+                    'x' => intval($t['x'] ?? 50),
+                    'y' => intval($t['y'] ?? 50),
                     'is_active' => true,
                     'sort_order' => intval($t['id'] ?? 0),
                 ]);
@@ -303,6 +323,8 @@ class ReservationAvailabilityService
         } else {
             $tableCount = $location?->table_count ?? 12;
             for ($i = 1; $i <= $tableCount; $i++) {
+                $col = ($i - 1) % 4;
+                $row = floor(($i - 1) / 4);
                 RestaurantTable::firstOrCreate([
                     'vendor_id' => $vendor->id,
                     'location_id' => $location?->id,
@@ -311,7 +333,10 @@ class ReservationAvailabilityService
                     'name' => "Table {$i}",
                     'capacity' => ($i % 3 === 0) ? 6 : 4,
                     'min_capacity' => 1,
-                    'section' => 'Main Hall',
+                    'section' => ($i <= 6 ? 'Գլխավոր Սրահ' : ($i <= 10 ? 'Տեռաս / Պատշգամբ' : 'VIP Սրահ')),
+                    'shape' => ($i % 5 === 0) ? 'rectangle' : (($i % 3 === 0) ? 'round' : 'square'),
+                    'x' => $col * 160 + 40,
+                    'y' => $row * 150 + 40,
                     'is_active' => true,
                     'sort_order' => $i,
                 ]);

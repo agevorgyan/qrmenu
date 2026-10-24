@@ -407,6 +407,13 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cas
         // Interactive Table Floor Plan
         Route::get('/floor-plan', [FloorPlanController::class, 'index'])->name('floor_plan.index');
         Route::post('/floor-plan', [FloorPlanController::class, 'saveFloorPlan'])->name('floor_plan.save');
+        Route::get('/floor-plan/live-status', [FloorPlanController::class, 'liveStatus'])->name('floor_plan.live_status');
+        Route::post('/floor-plan/tables', [FloorPlanController::class, 'storeTable'])->name('floor_plan.tables.store');
+        Route::put('/floor-plan/tables/{table}', [FloorPlanController::class, 'updateTable'])->name('floor_plan.tables.update');
+        Route::delete('/floor-plan/tables/{table}', [FloorPlanController::class, 'destroyTable'])->name('floor_plan.tables.destroy');
+        Route::post('/floor-plan/combine', [FloorPlanController::class, 'combineTables'])->name('floor_plan.combine');
+        Route::post('/floor-plan/tables/{table}/uncombine', [FloorPlanController::class, 'uncombineTable'])->name('floor_plan.uncombine');
+        Route::post('/floor-plan/halls', [FloorPlanController::class, 'saveHalls'])->name('floor_plan.halls.save');
     });
 
     // Table Reservations & Pre-Orders (Pro / Business Plan Feature)

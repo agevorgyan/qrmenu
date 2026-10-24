@@ -22,12 +22,9 @@
             <a href="{{ route('admin.reservations.index') }}" class="btn btn-secondary">
                 <i class="fa-solid fa-calendar-check" style="color: #ec4899;"></i> {{ __('Table Reservations') }}
             </a>
-            <form method="POST" action="{{ route('admin.tables.sync_floor_plan') }}" style="display: inline;">
-                @csrf
-                <button type="submit" class="btn btn-secondary" title="{{ __('Sync from interactive floor plan layout') }}">
-                    <i class="fa-solid fa-rotate" style="color: #3b82f6;"></i> {{ __('Sync Floor Plan') }}
-                </button>
-            </form>
+            <a href="{{ route('admin.floor_plan.index') }}" class="btn btn-secondary" style="font-weight: 700; color: #3b82f6;">
+                <i class="fa-solid fa-map-location-dot"></i> {{ __('Interactive Floor Plan') }}
+            </a>
             <button type="button" class="btn btn-primary" @click="openCreateModal()">
                 <i class="fa-solid fa-plus"></i> {{ __('Add New Table') }}
             </button>
@@ -94,7 +91,14 @@
                                 <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(6, 182, 212, 0.12); color: #06b6d4; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; flex-shrink: 0;">
                                     {{ $t->table_number }}
                                 </div>
-                                <span style="font-weight: 800; font-size: 1rem; color: var(--text-main);">#{{ $t->table_number }}</span>
+                                <div>
+                                    <span style="font-weight: 800; font-size: 1rem; color: var(--text-main);">#{{ $t->table_number }}</span>
+                                    @if($t->isMerged())
+                                        <span class="badge" style="background: rgba(147, 51, 234, 0.12); color: #9333ea; font-size: 0.72rem; padding: 0.15rem 0.45rem; border-radius: 6px; font-weight: 700; margin-left: 0.35rem;">
+                                            <i class="fa-solid fa-link"></i> {{ __('Combined') }} ({{ $t->combined_capacity }} {{ __('seats') }})
+                                        </span>
+                                    @endif
+                                </div>
                             </div>
                         </td>
                         <td style="padding: 1rem 1.25rem; font-weight: 600; color: var(--text-main);">
@@ -106,7 +110,18 @@
                             </span>
                         </td>
                         <td style="padding: 1rem 1.25rem; font-weight: 700; color: var(--text-main);">
-                            <i class="fa-solid fa-chair" style="color: var(--text-muted); margin-right: 0.35rem;"></i>{{ $t->capacity }} {{ __('seats') }}
+                            <div style="display: flex; align-items: center; gap: 0.45rem;">
+                                <span>
+                                    @if($t->shape === 'round')
+                                        <i class="fa-regular fa-circle" style="color: #3b82f6;" title="{{ __('Round') }}"></i>
+                                    @elseif($t->shape === 'rectangle')
+                                        <i class="fa-solid fa-vector-square" style="color: #f59e0b;" title="{{ __('Rectangle') }}"></i>
+                                    @else
+                                        <i class="fa-regular fa-square" style="color: #10b981;" title="{{ __('Square') }}"></i>
+                                    @endif
+                                </span>
+                                <span>{{ $t->capacity }} {{ __('seats') }}</span>
+                            </div>
                         </td>
                         <td style="padding: 1rem 1.25rem;">
                             @if($t->reservations_count > 0)
@@ -209,9 +224,19 @@
                     </div>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <label class="form-label">{{ __('Section / Hall') }}</label>
-                    <input type="text" name="section" class="form-control" x-model="formData.section" placeholder="e.g. Main Hall, Terrace, VIP">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+                    <div>
+                        <label class="form-label">{{ __('Section / Hall') }}</label>
+                        <input type="text" name="section" class="form-control" x-model="formData.section" placeholder="e.g. Main Hall, Terrace, VIP">
+                    </div>
+                    <div>
+                        <label class="form-label">{{ __('Shape') }} *</label>
+                        <select name="shape" class="form-control" x-model="formData.shape">
+                            <option value="square">{{ __('Square') }}</option>
+                            <option value="round">{{ __('Round') }}</option>
+                            <option value="rectangle">{{ __('Rectangle') }}</option>
+                        </select>
+                    </div>
                 </div>
 
                 @if($locations->count() > 1)
@@ -257,6 +282,7 @@ function adminTablesApp() {
             capacity: 4,
             min_capacity: 1,
             section: 'Main Hall',
+            shape: 'square',
             location_id: '',
             is_active: true
         },
@@ -270,6 +296,7 @@ function adminTablesApp() {
                 capacity: 4,
                 min_capacity: 1,
                 section: 'Main Hall',
+                shape: 'square',
                 location_id: '{{ $locationId ?: '' }}',
                 is_active: true
             };
@@ -285,6 +312,7 @@ function adminTablesApp() {
                 capacity: table.capacity,
                 min_capacity: table.min_capacity || 1,
                 section: table.section || 'Main Hall',
+                shape: table.shape || 'square',
                 location_id: table.location_id || '',
                 is_active: Boolean(table.is_active)
             };
