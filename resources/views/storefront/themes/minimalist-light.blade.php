@@ -574,7 +574,8 @@
                                 'variations' => $prod->variations->map(fn($v) => [
                                     'id' => $v->id,
                                     'name' => $v->name,
-                                    'price' => (float)$v->price
+                                    'price' => (float)$v->price,
+                                    'secondary_price' => $vendor->formatSecondaryPrice($v->getEffectivePrice()),
                                 ])->toArray()
                             ];
                         @endphp
@@ -650,7 +651,7 @@
                                 </div>
 
                                 <div class="dish-footer">
-                                    <div class="price-text">
+                                    <div class="price-text" style="line-height: 1.2;">
                                         @if($prod->isDiscountActive())
                                             <div style="display: flex; align-items: baseline; gap: 0.35rem;">
                                                 <span style="color: #ef4444;">{{ number_format($prod->getEffectivePrice($location?->id)) }} {{ $vendor->currency }}</span>
@@ -663,6 +664,19 @@
                                             <span>{{ number_format($prod->variations->min('price')) }} {{ $vendor->currency }}</span>
                                         @else
                                             <span>{{ number_format($prod->getEffectivePrice($location?->id)) }} {{ $vendor->currency }}</span>
+                                        @endif
+                                        @if($vendor->isSecondaryCurrencyActive())
+                                            @php
+                                                $secPriceVal = $prod->variations->count() > 1 
+                                                    ? $prod->variations->min('price') 
+                                                    : $prod->getEffectivePrice($location?->id);
+                                                $secFormatted = $vendor->formatSecondaryPrice($secPriceVal);
+                                            @endphp
+                                            @if($secFormatted)
+                                                <div class="secondary-price" style="font-size: 0.76rem; font-weight: 600; color: var(--text-muted); opacity: 0.85; margin-top: 0.15rem; line-height: 1.1;">
+                                                    {{ $secFormatted }}
+                                                </div>
+                                            @endif
                                         @endif
                                     </div>
 

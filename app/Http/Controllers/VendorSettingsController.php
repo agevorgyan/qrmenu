@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\Vendor;
 use App\Services\AiGatewayService;
 use App\Services\CredentialService;
+use App\Services\Currency\CurrencyExchangeService;
 use App\Services\CustomDomainService;
 use App\Services\Security\SsrfProtectionService;
 use App\Services\SecurityAuditService;
@@ -93,6 +94,10 @@ class VendorSettingsController extends Controller
             'fl_oz' => 'Հեղուկ ունցիա (fl oz)',
         ];
 
+        $exchangeService = app(CurrencyExchangeService::class);
+        $secondaryCurrencies = $exchangeService->getSupportedCurrencyOptions();
+        $exchangeRateProviders = $exchangeService->getProviders();
+
         return view('admin.settings.index', compact(
             'vendor',
             'location',
@@ -100,6 +105,8 @@ class VendorSettingsController extends Controller
             'popularTimezones',
             'groupedTimezones',
             'currencies',
+            'secondaryCurrencies',
+            'exchangeRateProviders',
             'weightUnits',
             'volumeUnits'
         ));
@@ -117,6 +124,13 @@ class VendorSettingsController extends Controller
             // Regional & Localization Settings
             'timezone' => ['nullable', 'string', 'max:50', Rule::in(\DateTimeZone::listIdentifiers())],
             'currency' => ['nullable', 'string', 'max:10', Rule::in(['AMD', 'USD', 'EUR', 'RUB', 'GEL', 'GBP', 'AED', 'CNY', 'KZT', 'TRY', 'IRR'])],
+            'secondary_currency_enabled' => ['nullable', 'boolean'],
+            'secondary_currency' => ['nullable', 'string', 'max:10', Rule::in(['AMD', 'USD', 'EUR', 'RUB', 'GEL', 'GBP', 'AED', 'CNY', 'KZT', 'TRY', 'IRR'])],
+            'secondary_currency_rate_mode' => ['nullable', 'string', Rule::in(['manual', 'automatic'])],
+            'secondary_currency_exchange_rate' => ['nullable', 'numeric', 'gt:0', 'lte:100000000'],
+            'secondary_currency_rate_provider' => ['nullable', 'string', 'max:50'],
+            'secondary_currency_decimal_places' => ['nullable', 'integer', 'min:0', 'max:4'],
+            'secondary_currency_prefix' => ['nullable', 'string', 'max:10'],
             'weight_unit' => ['nullable', 'string', Rule::in(['g', 'kg', 'oz', 'lb'])],
             'volume_unit' => ['nullable', 'string', Rule::in(['ml', 'l', 'fl_oz', 'fl oz'])],
 
@@ -192,6 +206,35 @@ class VendorSettingsController extends Controller
             'closing_warning_minutes' => 'nullable|integer|min:1|max:240',
             'closing_warning_message' => 'nullable|string|max:500',
         ]);
+
+        $secondaryEnabled = $request->boolean('secondary_currency_enabled');
+        if ($secondaryEnabled) {
+            $effectivePrimary = strtoupper(trim((string) ($request->input('currency') ?: $vendor->currency ?: 'AMD')));
+            $effectiveSecondary = strtoupper(trim((string) ($request->input('secondary_currency') ?: $vendor->secondary_currency)));
+
+            if (empty($effectiveSecondary)) {
+                throw ValidationException::withMessages([
+                    'secondary_currency' => __('Please select a secondary currency.'),
+                ]);
+            }
+
+            if ($effectiveSecondary === $effectivePrimary) {
+                throw ValidationException::withMessages([
+                    'secondary_currency' => __('The secondary currency must be different from the primary currency.'),
+                ]);
+            }
+
+            $rateInput = $request->filled('secondary_currency_exchange_rate')
+                ? $request->input('secondary_currency_exchange_rate')
+                : $vendor->secondary_currency_exchange_rate;
+
+            $exchangeService = app(CurrencyExchangeService::class);
+            if (! $exchangeService->isValidRate($rateInput)) {
+                throw ValidationException::withMessages([
+                    'secondary_currency_exchange_rate' => __('A valid, positive exchange rate is required when secondary currency is enabled.'),
+                ]);
+            }
+        }
 
         $validated['service_fee_enabled'] = $request->boolean('service_fee_enabled');
         $validated['delivery_enabled'] = $request->boolean('delivery_enabled');
@@ -314,6 +357,28 @@ class VendorSettingsController extends Controller
         }
         if (array_key_exists('volume_unit', $validated)) {
             $vendorUpdate['volume_unit'] = ! empty($validated['volume_unit']) ? $validated['volume_unit'] : 'ml';
+        }
+
+        // Secondary Currency Settings
+        $vendorUpdate['secondary_currency_enabled'] = $secondaryEnabled;
+        if ($request->has('secondary_currency') && $request->filled('secondary_currency')) {
+            $vendorUpdate['secondary_currency'] = strtoupper(trim((string) $request->input('secondary_currency')));
+        }
+        if ($request->has('secondary_currency_rate_mode') && $request->filled('secondary_currency_rate_mode')) {
+            $vendorUpdate['secondary_currency_rate_mode'] = $request->input('secondary_currency_rate_mode');
+        }
+        if ($request->has('secondary_currency_exchange_rate') && $request->filled('secondary_currency_exchange_rate')) {
+            $vendorUpdate['secondary_currency_exchange_rate'] = (float) $request->input('secondary_currency_exchange_rate');
+            $vendorUpdate['secondary_currency_rate_updated_at'] = now();
+        }
+        if ($request->has('secondary_currency_rate_provider') && $request->filled('secondary_currency_rate_provider')) {
+            $vendorUpdate['secondary_currency_rate_provider'] = $request->input('secondary_currency_rate_provider');
+        }
+        if ($request->has('secondary_currency_decimal_places') && $request->filled('secondary_currency_decimal_places')) {
+            $vendorUpdate['secondary_currency_decimal_places'] = max(0, min(4, (int) $request->input('secondary_currency_decimal_places')));
+        }
+        if ($request->has('secondary_currency_prefix')) {
+            $vendorUpdate['secondary_currency_prefix'] = (string) $request->input('secondary_currency_prefix');
         }
 
         // Custom Domain Validation & Normalization

@@ -29,7 +29,7 @@ window.settingsModule = function() {
                     this.activeTab = 'orders';
                 @elseif($errors->has('delivery_fee') || $errors->has('delivery_min_amount') || $errors->has('delivery_free_from') || $errors->has('takeaway_min_amount') || $errors->has('delivery_start_time') || $errors->has('delivery_end_time'))
                     this.activeTab = 'delivery';
-                @elseif($errors->has('timezone') || $errors->has('currency') || $errors->has('weight_unit') || $errors->has('volume_unit'))
+                @elseif($errors->has('timezone') || $errors->has('currency') || $errors->has('secondary_currency') || $errors->has('secondary_currency_exchange_rate') || $errors->has('secondary_currency_enabled') || $errors->has('weight_unit') || $errors->has('volume_unit'))
                     this.activeTab = 'regional';
                 @elseif($errors->has('custom_domain'))
                     this.activeTab = 'integrations';
@@ -2142,6 +2142,313 @@ if (window.Alpine) {
                             {{ __('Խմիչքների, կոկտեյլների և հեղուկների չափման հիմնական միավոր:') }}
                         </span>
                     </div>
+                </div>
+            </div>
+
+            <!-- 2.1 SECONDARY CURRENCY & PRICING CARD -->
+            @php
+                $secEnabled = old('secondary_currency_enabled', $vendor->secondary_currency_enabled ?? false);
+                $secCurrency = old('secondary_currency', $vendor->secondary_currency ?? 'USD');
+                $secRateMode = old('secondary_currency_rate_mode', $vendor->secondary_currency_rate_mode ?? 'manual');
+                $secRate = old('secondary_currency_exchange_rate', $vendor->secondary_currency_exchange_rate ?? '350');
+                $secDecimals = old('secondary_currency_decimal_places', $vendor->secondary_currency_decimal_places ?? 2);
+                $secPrefix = old('secondary_currency_prefix', $vendor->secondary_currency_prefix ?? '≈');
+            @endphp
+            <div class="card settings-card" 
+                 id="secondary-currency-card"
+                 style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);"
+                 x-data="{
+                     enabled: {{ $secEnabled ? 'true' : 'false' }},
+                     primaryCurrency: '{{ strtoupper(old('currency', $vendor->currency ?? 'AMD')) }}',
+                     secondaryCurrency: '{{ strtoupper($secCurrency) }}',
+                     rateMode: '{{ $secRateMode }}',
+                     exchangeRate: '{{ $secRate }}',
+                     decimalPlaces: {{ (int) $secDecimals }},
+                     prefix: '{{ addslashes($secPrefix) }}',
+                     symbols: {
+                         'USD': '$',
+                         'EUR': '€',
+                         'RUB': '₽',
+                         'GEL': '₾',
+                         'GBP': '£',
+                         'AED': 'د.إ',
+                         'AMD': '֏',
+                         'CNY': '¥',
+                         'TRY': '₺',
+                         'KZT': '₸',
+                         'IRR': '﷼'
+                     },
+                     get isSameAsPrimary() {
+                         return this.secondaryCurrency && this.primaryCurrency && this.secondaryCurrency.toUpperCase() === this.primaryCurrency.toUpperCase();
+                     },
+                     get secondarySymbol() {
+                         return this.symbols[this.secondaryCurrency] || this.secondaryCurrency;
+                     },
+                     get primarySymbol() {
+                         return this.symbols[this.primaryCurrency] || this.primaryCurrency;
+                     },
+                     formatPreview(price) {
+                         const r = parseFloat(this.exchangeRate);
+                         if (!r || r <= 0 || isNaN(r)) return '—';
+                         const converted = price / r;
+                         const dec = Math.max(0, Math.min(4, parseInt(this.decimalPlaces) || 0));
+                         const pfx = (this.prefix || '').trim();
+                         const sym = this.secondarySymbol;
+                         const formatted = converted.toLocaleString(undefined, { minimumFractionDigits: dec, maximumFractionDigits: dec });
+                         const beforeSymbols = ['$', '€', '£', '¥', '₺'];
+                         const isBefore = beforeSymbols.includes(sym);
+                         const priceStr = isBefore ? (sym + formatted) : (formatted + ' ' + sym);
+                         return (pfx ? pfx + ' ' : '') + priceStr;
+                     }
+                 }"
+                 @primary-currency-changed.window="primaryCurrency = $event.detail">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.9rem;">
+                        <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
+                            <i class="fa-solid fa-money-bill-transfer"></i>
+                        </span>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                <span>{{ __('Երկրորդային արժույթ և փոխարժեք (Secondary Currency)') }}</span>
+                                <span style="font-size: 0.72rem; font-weight: 700; background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 6px; padding: 0.15rem 0.5rem;">
+                                    OPTIONAL DISPLAY
+                                </span>
+                            </h3>
+                            <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
+                                {{ __('Ցուցադրել մոտավոր գները երկրորդ արժույթով (օր.՝ USD, EUR) հանրային ճաշացանկում՝ հիմնական գնի տակ') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Feature Enable/Disable Switch -->
+                    <label style="display: inline-flex; align-items: center; gap: 0.75rem; cursor: pointer; background: var(--bg-body); padding: 0.5rem 1rem; border-radius: 14px; border: 1.5px solid var(--border-color); transition: all 0.2s ease;">
+                        <input type="checkbox" 
+                               name="secondary_currency_enabled" 
+                               value="1" 
+                               id="secondaryCurrencyToggle" 
+                               x-model="enabled" 
+                               style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+                        <span style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">
+                            {{ __('Show prices in a secondary currency') }}
+                        </span>
+                        <span :style="enabled ? 'background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);' : 'background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);'" 
+                              style="font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 6px;"
+                              x-text="enabled ? '{{ __('Ակտիվ (Active)') }}' : '{{ __('Անջատված է (Disabled)') }}'">
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Informational Warning Banner -->
+                <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; display: flex; align-items: flex-start; gap: 0.75rem; font-size: 0.84rem; color: var(--text-muted); line-height: 1.45;">
+                    <i class="fa-solid fa-circle-info" style="color: #3b82f6; font-size: 1.1rem; margin-top: 0.1rem; flex-shrink: 0;"></i>
+                    <div>
+                        <strong style="color: var(--text-main);">{{ __('Ցուցադրական կարգավիճակ (Display-Only):') }}</strong>
+                        {{ __('Երկրորդային արժույթը կրում է բացառապես տեղեկատվական բնույթ։ Ճաշատեսակների հիմնական գները, զամբյուղի հաշվարկը, վճարումները, հաշիվ-ապրանքագրերը և ֆինանսական հաշվետվությունները մնում են հիմնական արժույթով') }} (<strong>{{ $vendor->currency }}</strong>)։
+                    </div>
+                </div>
+
+                <!-- Conditional Configuration Fields (Visible only when toggle is enabled) -->
+                <div x-show="enabled" 
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 transform -translate-y-2"
+                     x-transition:enter-end="opacity-100 transform translate-y-0"
+                     style="display: flex; flex-direction: column; gap: 1.5rem; border-top: 1px dashed var(--border-color); padding-top: 1.5rem;">
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 1.25rem;">
+                        <!-- 1. Secondary Currency -->
+                        <div class="form-group">
+                            <label for="secondary_currency" class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem;">
+                                <i class="fa-solid fa-globe" style="color: #0284c7;"></i>
+                                <span>{{ __('Երկրորդային արժույթ (Secondary Currency)') }}</span>
+                                <span style="color: #ef4444;">*</span>
+                            </label>
+                            <select name="secondary_currency" 
+                                    id="secondary_currency" 
+                                    class="form-input" 
+                                    x-model="secondaryCurrency"
+                                    style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); cursor: pointer;">
+                                @php
+                                    $secondaryCurrenciesList = $secondaryCurrencies ?? [
+                                        'USD' => 'USD ($ - US Dollar)',
+                                        'EUR' => 'EUR (€ - Euro)',
+                                        'RUB' => 'RUB (₽ - Russian Ruble)',
+                                        'GEL' => 'GEL (₾ - Georgian Lari)',
+                                        'GBP' => 'GBP (£ - British Pound)',
+                                        'AED' => 'AED (د.إ - UAE Dirham)',
+                                        'AMD' => 'AMD (֏ - Armenian Dram)',
+                                        'CNY' => 'CNY (¥ - Chinese Yuan)',
+                                        'TRY' => 'TRY (₺ - Turkish Lira)',
+                                        'KZT' => 'KZT (₸ - Kazakhstani Tenge)',
+                                    ];
+                                @endphp
+                                @foreach($secondaryCurrenciesList as $sCode => $sLabel)
+                                    <option value="{{ $sCode }}">
+                                        {{ $sLabel }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div x-show="isSameAsPrimary" x-cloak style="color: #ef4444; font-size: 0.78rem; font-weight: 700; margin-top: 0.35rem; display: flex; align-items: center; gap: 0.35rem;">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <span>{{ __('Երկրորդային արժույթը պետք է տարբերվի հիմնական արժույթից') }} (<span x-text="primaryCurrency"></span>)</span>
+                            </div>
+                            @error('secondary_currency')
+                                <span style="color: #ef4444; font-size: 0.78rem; font-weight: 700; margin-top: 0.35rem; display: block;">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <!-- 2. Exchange Rate Mode -->
+                        <div class="form-group">
+                            <label for="secondary_currency_rate_mode" class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem;">
+                                <i class="fa-solid fa-calculator" style="color: #f59e0b;"></i>
+                                <span>{{ __('Փոխարժեքի ռեժիմ (Exchange Rate Mode)') }}</span>
+                            </label>
+                            <select name="secondary_currency_rate_mode" 
+                                    id="secondary_currency_rate_mode" 
+                                    class="form-input" 
+                                    x-model="rateMode"
+                                    style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); cursor: pointer;">
+                                <option value="manual">✍️ {{ __('Ձեռքով մուտքագրում (Manual Entry)') }}</option>
+                                <option value="automatic" disabled title="{{ __('Extensible Provider API Interface') }}">🤖 {{ __('Ավտոմատ մատակարար (Auto Provider - Available via Extensible API)') }}</option>
+                            </select>
+                            <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                                {{ __('Մուտքագրեք ընթացիկ փոխարժեքը ձեռքով կամ միացրեք համակարգային ինտեգրումը:') }}
+                            </span>
+                        </div>
+
+                        <!-- 3. Approximation Prefix -->
+                        <div class="form-group">
+                            <label for="secondary_currency_prefix" class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem;">
+                                <i class="fa-solid fa-wave-square" style="color: #8b5cf6;"></i>
+                                <span>{{ __('Մոտավորության նախածանց (Prefix)') }}</span>
+                            </label>
+                            <input type="text" 
+                                   name="secondary_currency_prefix" 
+                                   id="secondary_currency_prefix" 
+                                   class="form-input" 
+                                   x-model="prefix"
+                                   placeholder="≈"
+                                   maxlength="10"
+                                   style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main);">
+                            <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                                {{ __('Լռելյայն նախածանց (օր.՝ ≈, ~, ca.):') }}
+                            </span>
+                        </div>
+
+                        <!-- 4. Decimal Precision -->
+                        <div class="form-group">
+                            <label for="secondary_currency_decimal_places" class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem;">
+                                <i class="fa-solid fa-hashtag" style="color: #10b981;"></i>
+                                <span>{{ __('Կլորացման ճշգրտություն (Precision)') }}</span>
+                            </label>
+                            <select name="secondary_currency_decimal_places" 
+                                    id="secondary_currency_decimal_places" 
+                                    class="form-input" 
+                                    x-model="decimalPlaces"
+                                    style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); cursor: pointer;">
+                                <option value="0">0 նիշ (օր.՝ 10)</option>
+                                <option value="1">1 նիշ (օր.՝ 10.0)</option>
+                                <option value="2">2 նիշ (օր.՝ 10.00 - Ստանդարտ)</option>
+                                <option value="3">3 նիշ (օր.՝ 10.000)</option>
+                                <option value="4">4 նիշ (օր.՝ 10.0000)</option>
+                            </select>
+                            <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                                {{ __('Ստորակետից հետո թվանշանների քանակը (լռելյայն՝ 2):') }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Exchange Rate Direction & Value Input Box -->
+                    <div style="background: var(--bg-body); border: 1.5px solid var(--border-color); border-radius: 16px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <label for="secondary_currency_exchange_rate" style="font-weight: 700; font-size: 0.9rem; color: var(--text-main); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                            <span style="display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-arrow-right-arrow-left" style="color: var(--primary);"></i>
+                                <span>{{ __('Փոխարժեք և ուղղություն (Exchange Rate)') }}</span>
+                                <span style="color: #ef4444;">*</span>
+                            </span>
+                            @if(!empty($vendor->secondary_currency_rate_updated_at))
+                                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">
+                                    <i class="fa-regular fa-clock"></i> {{ __('Վերջին թարմացում:') }} {{ $vendor->secondary_currency_rate_updated_at->format('d.m.Y H:i') }}
+                                </span>
+                            @endif
+                        </label>
+
+                        <!-- Direction Formula Box -->
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.85rem 1.25rem;">
+                            <div style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <span>1</span>
+                                <span style="color: var(--primary);" x-text="secondaryCurrency">USD</span>
+                                <span>=</span>
+                            </div>
+
+                            <div style="position: relative; display: inline-flex; align-items: center;">
+                                <input type="number" 
+                                       step="any" 
+                                       min="0.000001" 
+                                       max="100000000"
+                                       name="secondary_currency_exchange_rate" 
+                                       id="secondary_currency_exchange_rate" 
+                                       class="form-input" 
+                                       x-model="exchangeRate"
+                                       placeholder="350"
+                                       style="width: 150px; font-size: 1.15rem; font-weight: 800; padding: 0.55rem 0.85rem; border-radius: 10px; background: var(--bg-body); border: 2px solid var(--primary); color: var(--text-main); text-align: center;">
+                            </div>
+
+                            <div style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <span style="color: #10b981;" x-text="primaryCurrency">AMD</span>
+                            </div>
+                        </div>
+
+                        <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.45;">
+                            {{ __('Հաշվարկման կարգ. Երկրորդային գին = Հիմնական գին / Փոխարժեք։ Օրինակ՝ եթե հիմնական գինը 3,500 AMD է և 1 USD = 350 AMD, ապա հաճախորդը կտեսնի') }}
+                            <strong style="color: var(--text-main);">≈ $10.00</strong>։
+                        </div>
+
+                        @error('secondary_currency_exchange_rate')
+                            <span style="color: #ef4444; font-size: 0.82rem; font-weight: 700; display: block;">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <!-- Live Calculation Preview on Menu Card -->
+                    <div style="background: var(--bg-body); border: 1.5px solid var(--border-color); border-radius: 16px; padding: 1.25rem;">
+                        <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-eye" style="color: #3b82f6;"></i>
+                            <span>{{ __('Հանրային ճաշացանկի նախադիտում (Live Menu Card Preview)') }}</span>
+                        </div>
+
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem 1.25rem; max-width: 380px; box-shadow: var(--shadow-card);">
+                            <div style="display: flex; gap: 0.85rem; align-items: center;">
+                                <div style="width: 54px; height: 54px; border-radius: 10px; background: rgba(245, 158, 11, 0.15); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #f59e0b; flex-shrink: 0;">
+                                    🥩
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        {{ __('Հորթի խորոված (Grilled Veal)') }}
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);">
+                                        {{ __('Մատուցվում է բանջարեղենով') }}
+                                    </div>
+                                    <div style="margin-top: 0.4rem;">
+                                        <!-- Primary Price -->
+                                        <div style="font-family: 'Outfit', sans-serif; font-size: 1.05rem; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: baseline; gap: 0.25rem;">
+                                            <span>3,500</span>
+                                            <span style="font-size: 0.85rem; color: var(--primary); font-weight: 700;" x-text="primarySymbol">֏</span>
+                                        </div>
+
+                                        <!-- Converted Secondary Price Underneath -->
+                                        <div style="font-size: 0.76rem; font-weight: 600; color: var(--text-muted); margin-top: 0.1rem; display: flex; align-items: center; gap: 0.3rem;"
+                                             x-show="enabled">
+                                            <span style="background: rgba(14, 165, 233, 0.12); color: #0284c7; padding: 0.1rem 0.4rem; border-radius: 4px; font-weight: 700;"
+                                                  x-text="formatPreview(3500)">
+                                                ≈ $10.00
+                                            </span>
+                                            <span style="font-size: 0.7rem; opacity: 0.7;">({{ __('մոտավոր') }})</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 

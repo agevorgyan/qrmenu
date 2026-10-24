@@ -155,6 +155,16 @@
                                     <span style="font-size: 0.85rem; color: var(--primary); font-weight: 700;">{{ $vendor->currency ?? 'AMD' }}</span>
                                 </div>
                             @endif
+                            @if($vendor->isSecondaryCurrencyActive())
+                                @php
+                                    $secFeaturedFormatted = $vendor->formatSecondaryPrice($featuredDish->getEffectivePrice($location?->id));
+                                @endphp
+                                @if($secFeaturedFormatted)
+                                    <div class="secondary-price" style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); opacity: 0.9; margin-top: 0.15rem; line-height: 1.1;">
+                                        {{ $secFeaturedFormatted }}
+                                    </div>
+                                @endif
+                            @endif
                         </div>
 
                         @if(!$isFeaturedTimeAvailable)

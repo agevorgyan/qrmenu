@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\DTOs\QuotaStatus;
 use App\Services\CredentialService;
+use App\Services\Currency\CurrencyExchangeService;
 use App\Services\EntitlementService;
 use App\Services\Localization\LocaleManager;
 use App\Services\QuotaService;
@@ -37,6 +38,10 @@ class Vendor extends Model
         'currency' => 'AMD',
         'weight_unit' => 'g',
         'volume_unit' => 'ml',
+        'secondary_currency_enabled' => false,
+        'secondary_currency_rate_mode' => 'manual',
+        'secondary_currency_decimal_places' => 2,
+        'secondary_currency_prefix' => '≈',
     ];
 
     protected $fillable = [
@@ -61,6 +66,14 @@ class Vendor extends Model
         'email',
         'timezone',
         'currency',
+        'secondary_currency_enabled',
+        'secondary_currency',
+        'secondary_currency_rate_mode',
+        'secondary_currency_exchange_rate',
+        'secondary_currency_rate_provider',
+        'secondary_currency_rate_updated_at',
+        'secondary_currency_decimal_places',
+        'secondary_currency_prefix',
         'weight_unit',
         'volume_unit',
         'custom_domain',
@@ -188,7 +201,101 @@ class Vendor extends Model
         'takeaway_days' => 'array',
         'closing_warning_enabled' => 'boolean',
         'closing_warning_minutes' => 'integer',
+        'secondary_currency_enabled' => 'boolean',
+        'secondary_currency_exchange_rate' => 'decimal:6',
+        'secondary_currency_rate_updated_at' => 'datetime',
+        'secondary_currency_decimal_places' => 'integer',
     ];
+
+    /**
+     * Determine if secondary currency display is enabled and actively valid.
+     */
+    public function isSecondaryCurrencyActive(): bool
+    {
+        if (! (bool) $this->secondary_currency_enabled) {
+            return false;
+        }
+
+        if (empty($this->secondary_currency)) {
+            return false;
+        }
+
+        $primary = strtoupper(trim((string) ($this->currency ?: 'AMD')));
+        $secondary = strtoupper(trim((string) $this->secondary_currency));
+
+        if ($primary === $secondary) {
+            return false;
+        }
+
+        $rate = (float) $this->secondary_currency_exchange_rate;
+
+        return $rate > 0 && is_finite($rate) && ! is_nan($rate);
+    }
+
+    /**
+     * Convert a primary currency price to secondary currency.
+     */
+    public function convertPriceToSecondary(mixed $primaryPrice): ?float
+    {
+        if (! $this->isSecondaryCurrencyActive()) {
+            return null;
+        }
+
+        return app(CurrencyExchangeService::class)->convert(
+            $primaryPrice,
+            $this->secondary_currency_exchange_rate,
+            (int) ($this->secondary_currency_decimal_places ?? 2)
+        );
+    }
+
+    /**
+     * Format a primary price converted to secondary currency display string.
+     */
+    public function formatSecondaryPrice(mixed $primaryPrice): ?string
+    {
+        if (! $this->isSecondaryCurrencyActive()) {
+            return null;
+        }
+
+        return app(CurrencyExchangeService::class)->formatSecondaryPrice(
+            $primaryPrice,
+            (string) $this->secondary_currency,
+            $this->secondary_currency_exchange_rate,
+            (int) ($this->secondary_currency_decimal_places ?? 2),
+            (string) ($this->secondary_currency_prefix ?? '≈')
+        );
+    }
+
+    /**
+     * Get secondary currency symbol or fallback code.
+     */
+    public function getSecondaryCurrencySymbol(): string
+    {
+        $code = strtoupper(trim((string) $this->secondary_currency));
+        $supported = CurrencyExchangeService::SUPPORTED_CURRENCIES;
+
+        return $supported[$code]['symbol'] ?? $code;
+    }
+
+    /**
+     * Get public secondary currency display configuration.
+     * Only returns data when feature is enabled and active. Never exposes internal credentials.
+     *
+     * @return array{currency: string, symbol: string, prefix: string, decimal_places: int}|null
+     */
+    public function getPublicSecondaryCurrencyData(): ?array
+    {
+        if (! $this->isSecondaryCurrencyActive()) {
+            return null;
+        }
+
+        return [
+            'currency' => strtoupper(trim((string) $this->secondary_currency)),
+            'symbol' => $this->getSecondaryCurrencySymbol(),
+            'prefix' => (string) ($this->secondary_currency_prefix ?? '≈'),
+            'decimal_places' => (int) ($this->secondary_currency_decimal_places ?? 2),
+        ];
+    }
 
     /**
      * Resolve operating schedule, open/closed status, and closing warning for a given channel (dine_in, delivery, takeaway).
