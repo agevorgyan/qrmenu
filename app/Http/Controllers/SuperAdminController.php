@@ -19,7 +19,6 @@ use App\Models\TenantFeatureOverride;
 use App\Models\TenantQuotaOverride;
 use App\Models\User;
 use App\Models\Vendor;
-use App\Services\QrCodeService;
 use App\Security\FeatureCatalog;
 use App\Security\QuotaCatalog;
 use App\Services\EntitlementService;
