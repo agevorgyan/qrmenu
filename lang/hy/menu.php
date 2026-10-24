@@ -153,4 +153,13 @@ return [
     'closed_hours' => 'Ժամից դուրս',
     'only_available_hours_notice' => 'Կարող եք պատվիրել միայն :time',
     'product_time_restriction_toast' => 'Տվյալ պրոդուկտը կարող եք պատվիրել միայն :time',
+
+    // Pre-Order for Reservation
+    'preorder_for_reservation' => 'Նախապատվեր ամրագրման համար',
+    'preorder_active' => 'Նախապատվեր',
+    'return_to_reservation' => 'Վերադառնալ ամրագրմանը',
+    'confirm_preorder_return' => 'Հաստատել նախապատվերը և շարունակել ամրագրումը',
+    'reserve_table_with_this_order' => 'Ամրագրել սեղան այս նախապատվերով',
+    'items_prepared_on_arrival' => 'Ուտեստները կպատրաստվեն Ձեր գալու պահին',
+    'select_dishes_for_arrival' => 'Ընտրեք Ձեր ուտեստները գլխավոր մենյուից',
 ];

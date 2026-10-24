@@ -44,6 +44,8 @@
             'ai_waiter_enabled' => (bool) $vendor->ai_waiter_enabled,
             'ai_waiter_languages' => $vendor->getAiWaiterLanguages(),
             'ai_waiter_language_details' => $vendor->getAiWaiterLanguageDetails(),
+            'reservation_enabled' => (bool) $vendor->isReservationFeatureEnabled(),
+            'preorder_enabled' => (bool) $vendor->isPreOrderFeatureEnabled(),
         ],
         'catalogProducts' => $allCatalogProducts,
         'activeCat' => 'cat-' . ($categories->first()?->id ?? 1),
@@ -61,6 +63,7 @@
             'callWaiter' => route('client.waiter.call', ['vendor_slug' => $vendor->slug]),
             'aiSessionStart' => route('client.ai_waiter.session.start', ['vendor_slug' => $vendor->slug]),
             'aiSessionBase' => url('/api/m/' . $vendor->slug . '/ai-waiter/session'),
+            'reserve' => route('client.reserve', ['vendor_slug' => $vendor->slug, 'location_slug' => $location?->slug, 'lang' => $lang ?? app()->getLocale()]),
         ],
         'settings' => [
             'paymentMethod' => !empty($vendor->getPaymentSettings()['cash_enabled']) ? 'cash' : (!empty($vendor->getPaymentSettings()['pos_terminal_enabled']) ? 'pos_terminal' : 'cash'),
@@ -115,6 +118,13 @@
             'closed_hours' => __('menu.closed_hours'),
             'only_available_hours_notice' => __('menu.only_available_hours_notice', ['time' => ':time']),
             'product_time_restriction_toast' => __('menu.product_time_restriction_toast', ['time' => ':time']),
+            'preorder_for_reservation' => __('menu.preorder_for_reservation'),
+            'preorder_active' => __('menu.preorder_active'),
+            'return_to_reservation' => __('menu.return_to_reservation'),
+            'confirm_preorder_return' => __('menu.confirm_preorder_return'),
+            'reserve_table_with_this_order' => __('menu.reserve_table_with_this_order'),
+            'items_prepared_on_arrival' => __('menu.items_prepared_on_arrival'),
+            'select_dishes_for_arrival' => __('menu.select_dishes_for_arrival'),
         ],
     ];
 @endphp

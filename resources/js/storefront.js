@@ -39,7 +39,22 @@
         const translations = bootConfig.translations || {};
         const catalogProducts = bootConfig.catalogProducts || [];
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const isPreOrderUrl = urlParams.get('mode') === 'preorder' || urlParams.get('preorder') === '1';
+        let isPreOrderStorage = false;
+        try {
+            isPreOrderStorage = localStorage.getItem('active_preorder_mode_' + (vendor.slug || '')) === 'true';
+        } catch(e) {}
+        const isPreOrderMode = isPreOrderUrl || isPreOrderStorage;
+        if (isPreOrderUrl) {
+            try {
+                localStorage.setItem('active_preorder_mode_' + (vendor.slug || ''), 'true');
+            } catch(e) {}
+        }
+
         return {
+            isPreOrderMode: isPreOrderMode,
+            preOrderSummaryText: '',
             catalogProducts: catalogProducts,
             activeCat: customConfig.activeCat || bootConfig.activeCat || 'cat-1',
             search: '',
@@ -185,7 +200,11 @@
                 this.initAiWaiterWelcome();
 
                 // Initial order type prompt for direct visitors (no table QR)
-                if (!this.isTableFixed) {
+                if (this.isPreOrderMode) {
+                    this.showOrderTypeModal = false;
+                    this.orderType = 'dine_in';
+                    this.initPreOrderState();
+                } else if (!this.isTableFixed) {
                     if (this.deliveryEnabled && this.takeawayEnabled) {
                         let sessionChosen = null;
                         try {
@@ -1040,6 +1059,104 @@
                     const key = 'storefront_cart_' + (this.vendorSlug || 'default');
                     localStorage.removeItem(key);
                 } catch(e) {}
+            },
+
+            initPreOrderState() {
+                try {
+                    const draftStr = localStorage.getItem('reservation_draft_' + this.vendorSlug);
+                    if (draftStr) {
+                        const draft = JSON.parse(draftStr);
+                        const parts = [];
+                        if (draft.selectedDate) parts.push(draft.selectedDate);
+                        if (draft.selectedTime) parts.push(draft.selectedTime);
+                        if (draft.guestCount) {
+                            const guestsLabel = translations.guests || 'անձ';
+                            parts.push(draft.guestCount + ' ' + guestsLabel);
+                        }
+                        if (parts.length > 0) {
+                            this.preOrderSummaryText = parts.join(' • ');
+                        }
+                    }
+
+                    // If cart is currently empty, check if preorder_items exists and restore into cart
+                    if ((!this.cart || this.cart.length === 0)) {
+                        const savedPreorder = localStorage.getItem('preorder_items_' + this.vendorSlug);
+                        if (savedPreorder) {
+                            const items = JSON.parse(savedPreorder);
+                            if (Array.isArray(items) && items.length > 0) {
+                                this.cart = items.map(i => ({
+                                    id: Number(i.product_id || i.id),
+                                    product_id: Number(i.product_id || i.id),
+                                    name: i.name,
+                                    price: Number(i.unit_price || i.price || 0),
+                                    variation_name: i.variation_name || null,
+                                    variation_id: i.variation_id ? Number(i.variation_id) : null,
+                                    qty: Number(i.quantity || i.qty || 1),
+                                    notes: i.notes || null,
+                                    available_for_dine_in: true,
+                                    available_for_takeaway: true,
+                                    available_for_delivery: true,
+                                    is_time_available: true
+                                }));
+                            }
+                        }
+                    }
+                } catch(e) {
+                    console.debug('Failed to init pre-order state:', e);
+                }
+            },
+
+            confirmPreOrderAndReturn() {
+                try {
+                    const preorderItems = (this.cart || []).map(item => ({
+                        product_id: Number(item.product_id || item.id),
+                        name: item.name,
+                        variation_name: item.variation_name || null,
+                        variation_id: item.variation_id ? Number(item.variation_id) : null,
+                        unit_price: Number(item.price || 0),
+                        quantity: Number(item.qty || 1),
+                        notes: item.notes || null
+                    }));
+                    localStorage.setItem('preorder_items_' + this.vendorSlug, JSON.stringify(preorderItems));
+                    localStorage.removeItem('active_preorder_mode_' + this.vendorSlug);
+                    const reserveUrl = routes.reserve || ('/m/' + this.vendorSlug + '/reserve');
+                    window.location.href = reserveUrl;
+                } catch(e) {
+                    console.error('Failed to confirm preorder:', e);
+                }
+            },
+
+            returnToReservation() {
+                this.confirmPreOrderAndReturn();
+            },
+
+            startReservationWithCart() {
+                try {
+                    const preorderItems = (this.cart || []).map(item => ({
+                        product_id: Number(item.product_id || item.id),
+                        name: item.name,
+                        variation_name: item.variation_name || null,
+                        variation_id: item.variation_id ? Number(item.variation_id) : null,
+                        unit_price: Number(item.price || 0),
+                        quantity: Number(item.qty || 1),
+                        notes: item.notes || null
+                    }));
+                    localStorage.setItem('preorder_items_' + this.vendorSlug, JSON.stringify(preorderItems));
+                    localStorage.removeItem('active_preorder_mode_' + this.vendorSlug);
+                    const reserveUrl = routes.reserve || ('/m/' + this.vendorSlug + '/reserve');
+                    window.location.href = reserveUrl;
+                } catch(e) {
+                    console.error('Failed to start reservation with cart:', e);
+                }
+            },
+
+            goToReservationPage() {
+                if (this.cart && this.cart.length > 0) {
+                    this.startReservationWithCart();
+                } else {
+                    const reserveUrl = routes.reserve || ('/m/' + this.vendorSlug + '/reserve');
+                    window.location.href = reserveUrl;
+                }
             },
 
             restoreCartFromStorage() {

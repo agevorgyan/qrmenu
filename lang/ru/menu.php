@@ -153,4 +153,13 @@ return [
     'closed_hours' => 'Вне часов заказа',
     'only_available_hours_notice' => 'Можно заказать только :time',
     'product_time_restriction_toast' => 'Данный товар можно заказать только :time',
+
+    // Pre-Order for Reservation
+    'preorder_for_reservation' => 'Предзаказ для бронирования',
+    'preorder_active' => 'Предзаказ',
+    'return_to_reservation' => 'Вернуться к бронированию',
+    'confirm_preorder_return' => 'Подтвердить предзаказ и вернуться к бронированию',
+    'reserve_table_with_this_order' => 'Забронировать стол с этим предзаказом',
+    'items_prepared_on_arrival' => 'Блюда будут приготовлены к вашему приходу',
+    'select_dishes_for_arrival' => 'Выберите блюда из главного меню',
 ];

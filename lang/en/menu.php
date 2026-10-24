@@ -153,4 +153,13 @@ return [
     'closed_hours' => 'Outside order hours',
     'only_available_hours_notice' => 'Can only be ordered :time',
     'product_time_restriction_toast' => 'This item can only be ordered :time',
+
+    // Pre-Order for Reservation
+    'preorder_for_reservation' => 'Pre-order for Reservation',
+    'preorder_active' => 'Pre-Order',
+    'return_to_reservation' => 'Return to Reservation',
+    'confirm_preorder_return' => 'Confirm Pre-Order & Return to Reservation',
+    'reserve_table_with_this_order' => 'Reserve a table with this pre-order',
+    'items_prepared_on_arrival' => 'Dishes will be prepared for your arrival',
+    'select_dishes_for_arrival' => 'Select dishes from the main menu',
 ];
