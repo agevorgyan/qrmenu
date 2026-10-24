@@ -214,4 +214,12 @@ return [
     'payment_success' => '🎉 Վճարումը հաջողությամբ կատարվել է:',
     'attention_item_unavailable' => 'Ուշադրություն. :items հասանելի չէ ընտրված պատվերի եղանակի համար',
     'out_of_stock' => 'Ուտեստը ժամանակավորապես սպառված է այս մասնաճյուղում',
+    'daily_offers_title' => 'Օրվա առաջարկներ',
+    'daily_offer_single_title' => 'Օրվա առաջարկ',
+    'offers_count' => ':count առաջարկ',
+    'special_badge_default' => '⭐ ՕՐՎԱ ԱՌԱՋԱՐԿ',
+    'chef_selection_default' => 'Շեֆ խոհարարի հատուկ ընտրանի',
+    'view_offer' => 'Դիտել',
+    'prev_offer' => 'Նախորդ առաջարկ',
+    'next_offer' => 'Հաջորդ առաջարկ',
 ];

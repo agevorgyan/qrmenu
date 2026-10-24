@@ -214,4 +214,12 @@ return [
     'payment_success' => '🎉 Payment completed successfully!',
     'attention_item_unavailable' => 'Attention: :items not available for selected order method',
     'out_of_stock' => 'Item is temporarily out of stock at this branch',
+    'daily_offers_title' => 'Daily Offers',
+    'daily_offer_single_title' => 'Daily Offer',
+    'offers_count' => ':count offers',
+    'special_badge_default' => "⭐ TODAY'S SPECIAL",
+    'chef_selection_default' => "Chef's special selection",
+    'view_offer' => 'View',
+    'prev_offer' => 'Previous offer',
+    'next_offer' => 'Next offer',
 ];
