@@ -256,10 +256,10 @@ class ReservationAvailabilityService
                     }
                 })
                     ->whereIn('status', [
-                    Reservation::STATUS_PENDING,
-                    Reservation::STATUS_CONFIRMED,
-                    Reservation::STATUS_SEATED,
-                ])
+                        Reservation::STATUS_PENDING,
+                        Reservation::STATUS_CONFIRMED,
+                        Reservation::STATUS_SEATED,
+                    ])
                     ->where(function ($q) use ($bufferedStartUtc, $bufferedEndUtc) {
                         $q->where('reservation_datetime', '<', $bufferedEndUtc)
                             ->whereRaw('(reservation_datetime + (duration_minutes || \' minutes\')::interval) > ?', [$bufferedStartUtc]);

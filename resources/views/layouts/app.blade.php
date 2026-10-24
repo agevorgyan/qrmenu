@@ -866,320 +866,136 @@
                 display: inline-flex;
             }
         }
+        /* Enterprise Navigation Groups & Sub-items */
+        .nav-group {
+            margin: 0.15rem 0.35rem;
+        }
+        .nav-group-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0.65rem 0.85rem;
+            border-radius: 12px;
+            color: var(--text-muted);
+            background: none;
+            border: none;
+            font-size: 0.88rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+        .nav-group-header:hover {
+            color: var(--text-main);
+            background: var(--nav-hover);
+        }
+        .nav-group-header.active {
+            color: var(--text-main);
+            background: var(--nav-active);
+            font-weight: 700;
+            border-left: 3px solid var(--nav-active-border);
+        }
+        .nav-group-children {
+            padding-left: 0.75rem;
+            margin-top: 0.25rem;
+            margin-bottom: 0.35rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            border-left: 2px solid var(--border-color);
+            margin-left: 1.35rem;
+        }
+        .nav-sub-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.65rem;
+            padding: 0.45rem 0.75rem;
+            border-radius: 10px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .nav-sub-item:hover {
+            color: var(--text-main);
+            background: var(--nav-hover);
+            transform: translateX(2px);
+        }
+        .nav-sub-item.active {
+            color: var(--primary);
+            background: var(--nav-active);
+            font-weight: 700;
+        }
+        .nav-chevron {
+            font-size: 0.65rem;
+            opacity: 0.7;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .nav-chevron.rotate-180 {
+            transform: rotate(180deg);
+        }
+        .nav-lock-badge {
+            font-size: 0.65rem;
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            padding: 0.15rem 0.4rem;
+            border-radius: 6px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .nav-lock-badge-biz {
+            font-size: 0.65rem;
+            background: rgba(6, 182, 212, 0.2);
+            color: #06b6d4;
+            padding: 0.15rem 0.4rem;
+            border-radius: 6px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .nav-ai-badge {
+            font-size: 0.62rem;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(236, 72, 153, 0.25));
+            color: #8b5cf6;
+            padding: 0.15rem 0.4rem;
+            border-radius: 6px;
+            font-weight: 700;
+            flex-shrink: 0;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+        .sidebar-storefront-btn {
+            width: 100%;
+            justify-content: center;
+            font-size: 0.8rem;
+            border-radius: 12px;
+            gap: 0.5rem;
+            border-color: rgba(245, 158, 11, 0.3);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            padding: 0.55rem 0.75rem;
+        }
+        /* Accessible Focus Indicators */
+        .nav-item:focus-visible,
+        .nav-group-header:focus-visible,
+        .nav-sub-item:focus-visible,
+        .sidebar-quick-action-btn:focus-visible,
+        .sidebar-lang-pill:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
     </style>
     @yield('styles')
 </head>
 <body x-data="themeApp()">
 
     <!-- Mobile Overlay Backdrop -->
-    <div class="sidebar-overlay" :class="{ 'mobile-open': mobileOpen }" @click="mobileOpen = false"></div>
+    <div class="sidebar-overlay" :class="{ 'mobile-open': mobileOpen }" @click="mobileOpen = false" aria-hidden="true"></div>
 
-    <!-- Sidebar Navigation -->
-    <aside class="sidebar" :class="{ 'mobile-open': mobileOpen }">
-        <div class="sidebar-brand">
-            @if(Auth::user()?->isSuperAdmin())
-                @php
-                    $sysLogo = \App\Models\SystemSetting::getLogoDark();
-                    $sysName = \App\Models\SystemSetting::getSiteName();
-                @endphp
-                <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%; min-width: 0;">
-                    @if($sysLogo)
-                        <img src="{{ $sysLogo }}" alt="{{ $sysName }}" style="max-height: 38px; max-width: 140px; object-fit: contain;">
-                    @else
-                        <div style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 1.2rem; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4); flex-shrink: 0;">
-                            <i class="fa-solid fa-crown"></i>
-                        </div>
-                        <div style="flex: 1; min-width: 0;">
-                            <h1 style="font-size: 1.15rem; font-weight: 800; margin: 0; background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $sysName }}</h1>
-                            <div style="font-size: 0.68rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">SuperAdmin Console</div>
-                        </div>
-                    @endif
-                </div>
-            @else
-                @php 
-                    $currVendor = Auth::user()?->vendor;
-                    $activeLocation = session('active_location_id') 
-                        ? $currVendor?->locations->firstWhere('id', session('active_location_id')) 
-                        : $currVendor?->locations->first();
-                @endphp
-                <div style="display: flex; align-items: center; gap: 0.85rem; width: 100%; min-width: 0;">
-                    @if($currVendor?->logo)
-                        <img src="{{ $currVendor->logo }}" alt="{{ $currVendor->name }}" style="width: 42px; height: 42px; border-radius: 12px; object-fit: cover; border: 2px solid var(--border-color); flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                    @else
-                        <div style="width: 42px; height: 42px; border-radius: 12px; background: var(--primary-gradient); display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 1.2rem; font-weight: 800; flex-shrink: 0; box-shadow: 0 4px 14px var(--primary-glow);">
-                            <i class="fa-solid fa-utensils"></i>
-                        </div>
-                    @endif
-                    <div style="flex: 1; min-width: 0;">
-                        <h1 style="font-size: 1.05rem; font-weight: 800; margin: 0; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ $currVendor?->name ?? 'QRMenu Admin' }}">
-                            {{ $currVendor?->name ?? 'QRMenu Admin' }}
-                        </h1>
-                        <div style="display: flex; align-items: center; gap: 0.35rem; margin-top: 0.15rem;">
-                            <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981; flex-shrink: 0;"></span>
-                            <span style="font-size: 0.7rem; font-weight: 600; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                {{ $activeLocation?->name ?? 'Live Multi-Branch' }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-            <button type="button" class="sidebar-close-btn" @click="mobileOpen = false" aria-label="Close menu">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-
-        <!-- Mobile Burger Menu Quick Controls: Language, Theme & 2FA -->
-        <div class="sidebar-quick-panel">
-            <div class="sidebar-quick-row">
-                <!-- Theme Switcher -->
-                <button type="button" class="sidebar-quick-action-btn" @click="toggleTheme()" title="Toggle Light / Dark Mode">
-                    <i class="fa-solid" :class="currentTheme === 'dark' ? 'fa-sun' : 'fa-moon'" style="color: var(--primary); font-size: 0.95rem;"></i>
-                    <span x-text="currentTheme === 'dark' ? '{{ __('Light') }}' : '{{ __('Dark') }}'"></span>
-                </button>
-
-                <!-- Security & 2FA Profile -->
-                <a href="{{ Auth::user()?->isSuperAdmin() ? route('superadmin.settings.index') . '#security-section' : route('admin.profile') }}" class="sidebar-quick-action-btn" title="{{ __('Security & 2FA') }}">
-                    <i class="fa-solid fa-shield-halved" style="color: {{ Auth::user()?->hasTwoFactorEnabled() ? '#10b981' : '#f59e0b' }}; font-size: 0.95rem;"></i>
-                    <span>{{ __('2FA & Profile') }}</span>
-                </a>
-            </div>
-
-            <!-- Language Switcher Segmented Pills -->
-            <div class="sidebar-lang-selector">
-                <a href="{{ route('lang.switch', 'hy') }}" class="sidebar-lang-pill {{ app()->getLocale() === 'hy' ? 'active' : '' }}">
-                    <span>🇦🇲</span> <span>ՀԱՅ</span>
-                </a>
-                <a href="{{ route('lang.switch', 'ru') }}" class="sidebar-lang-pill {{ app()->getLocale() === 'ru' ? 'active' : '' }}">
-                    <span>🇷🇺</span> <span>РУС</span>
-                </a>
-                <a href="{{ route('lang.switch', 'en') }}" class="sidebar-lang-pill {{ app()->getLocale() === 'en' ? 'active' : '' }}">
-                    <span>🇬🇧</span> <span>ENG</span>
-                </a>
-            </div>
-        </div>
-
-        <nav class="sidebar-menu">
-            @if(Auth::user()?->isSuperAdmin())
-                <div class="menu-category">{{ __('Super Admin') }}</div>
-                <a href="{{ route('superadmin.dashboard') }}" class="nav-item {{ request()->routeIs('superadmin.dashboard') ? 'active' : '' }}">
-                    <i class="fa-solid fa-chart-line" style="color: #6366f1;"></i> <span>{{ __('Dashboard') }}</span>
-                </a>
-                <a href="{{ route('superadmin.vendors.index') }}" class="nav-item {{ request()->routeIs('superadmin.vendors.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-store" style="color: #10b981;"></i> <span>{{ __('Vendor Directory') }}</span>
-                </a>
-                <a href="{{ route('superadmin.plans.index') }}" class="nav-item {{ request()->routeIs('superadmin.plans.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-box-archive" style="color: #f59e0b;"></i> <span>{{ __('Plans') }}</span>
-                </a>
-                <a href="{{ route('superadmin.subscriptions.index') }}" class="nav-item {{ request()->routeIs('superadmin.subscriptions.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-credit-card" style="color: #ec4899;"></i> <span>{{ __('Vendor Subscriptions') }}</span>
-                </a>
-                <a href="{{ route('superadmin.settings.index') }}" class="nav-item {{ request()->routeIs('superadmin.settings.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-sliders" style="color: #06b6d4;"></i> <span>{{ __('Settings & Landing') }}</span>
-                </a>
-                <a href="{{ route('superadmin.languages.index') }}" class="nav-item {{ request()->routeIs('superadmin.languages.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-language" style="color: #a855f7;"></i> <span>{{ __('Languages & i18n') }}</span>
-                </a>
-
-                <div class="menu-category">{{ __('Email Management') }}</div>
-                <a href="{{ route('superadmin.emails.overview') }}" class="nav-item {{ request()->routeIs('superadmin.emails.overview') ? 'active' : '' }}">
-                    <i class="fa-solid fa-gauge-high" style="color: #3b82f6;"></i> <span>{{ __('Overview') }}</span>
-                </a>
-                <a href="{{ route('superadmin.emails.senders.index') }}" class="nav-item {{ request()->routeIs('superadmin.emails.senders.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-id-card-clip" style="color: #10b981;"></i> <span>{{ __('Sender Identities') }}</span>
-                </a>
-                <a href="{{ route('superadmin.emails.connections.index') }}" class="nav-item {{ request()->routeIs('superadmin.emails.connections.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-server" style="color: #f59e0b;"></i> <span>{{ __('SMTP Connections') }}</span>
-                </a>
-                <a href="{{ route('superadmin.emails.routing.index') }}" class="nav-item {{ request()->routeIs('superadmin.emails.routing.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-route" style="color: #8b5cf6;"></i> <span>{{ __('Email Routing') }}</span>
-                </a>
-                <a href="{{ route('superadmin.emails.templates.index') }}" class="nav-item {{ request()->routeIs('superadmin.emails.templates.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-envelope-open-text" style="color: #ec4899;"></i> <span>{{ __('Templates') }}</span>
-                </a>
-                <a href="{{ route('superadmin.emails.logs.index') }}" class="nav-item {{ request()->routeIs('superadmin.emails.logs.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-list-check" style="color: #06b6d4;"></i> <span>{{ __('Email Logs') }}</span>
-                </a>
-                <a href="{{ route('superadmin.emails.queue.index') }}" class="nav-item {{ request()->routeIs('superadmin.emails.queue.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-clock-rotate-left" style="color: #eab308;"></i> <span>{{ __('Queue Monitor') }}</span>
-                </a>
-                <a href="{{ route('superadmin.emails.failed.index') }}" class="nav-item {{ request()->routeIs('superadmin.emails.failed.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i> <span>{{ __('Failed Emails') }}</span>
-                </a>
-                <a href="{{ route('superadmin.emails.reports.index') }}" class="nav-item {{ request()->routeIs('superadmin.emails.reports.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-chart-pie" style="color: #6366f1;"></i> <span>{{ __('Reports') }}</span>
-                </a>
-                <a href="{{ route('superadmin.emails.settings.index') }}" class="nav-item {{ request()->routeIs('superadmin.emails.settings.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-gear" style="color: #94a3b8;"></i> <span>{{ __('Email Settings') }}</span>
-                </a>
-            @else
-                @php $v = Auth::user()?->vendor; @endphp
-                
-                <div class="menu-category">{{ __('Vendor Operations') }}</div>
-                <a href="{{ route('admin.dashboard') }}" class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                    <i class="fa-solid fa-gauge-high" style="color: #f59e0b;"></i> <span>{{ __('Dashboard') }}</span>
-                </a>
-                @can('orders.view')
-                <a href="{{ route('admin.orders.index') }}" class="nav-item {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}" style="justify-content: space-between;">
-                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                        <i class="fa-solid fa-bell-concierge" style="color: #ef4444;"></i> <span>{{ __('Kitchen Orders') }}</span>
-                    </span>
-                    @if($v && !$v->hasFeature('orders'))
-                        <span style="font-size: 0.65rem; background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 0.15rem 0.4rem; border-radius: 6px; font-weight: 700; flex-shrink: 0;">🔒 PRO</span>
-                    @endif
-                </a>
-                @endcan
-
-                @can('locations.view')
-                <a href="{{ route('admin.floor_plan.index') }}" class="nav-item {{ request()->routeIs('admin.floor_plan.*') ? 'active' : '' }}" style="justify-content: space-between;">
-                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                        <i class="fa-solid fa-map-location-dot" style="color: #3b82f6;"></i> <span>{{ __('Floor Plan') }}</span>
-                    </span>
-                    @if($v && !$v->hasFeature('orders'))
-                        <span style="font-size: 0.65rem; background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 0.15rem 0.4rem; border-radius: 6px; font-weight: 700; flex-shrink: 0;">🔒 PRO</span>
-                    @endif
-                </a>
-                @endcan
-
-                <div class="menu-category">{{ __('Reservations & Tables') }}</div>
-                <a href="{{ route('admin.reservations.index') }}" class="nav-item {{ request()->routeIs('admin.reservations.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-calendar-check" style="color: #ec4899;"></i> <span>{{ __('Reservations') }}</span>
-                </a>
-                <a href="{{ route('admin.tables.index') }}" class="nav-item {{ request()->routeIs('admin.tables.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-chair" style="color: #06b6d4;"></i> <span>{{ __('Restaurant Tables') }}</span>
-                </a>
-                <a href="{{ route('admin.settings.reservations') }}" class="nav-item {{ request()->routeIs('admin.settings.reservations*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-sliders" style="color: #8b5cf6;"></i> <span>{{ __('Booking Rules') }}</span>
-                </a>
-
-                @can('menu.view')
-                <div class="menu-category">{{ __('Menu & Content') }}</div>
-                <a href="{{ route('admin.menu.index') }}" class="nav-item {{ request()->routeIs('admin.menu.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-utensils" style="color: #10b981;"></i> <span>{{ __('Menu Builder') }}</span>
-                </a>
-                <a href="{{ route('admin.translations.index') }}" class="nav-item {{ request()->routeIs('admin.translations.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-language" style="color: #6366f1;"></i> <span>{{ __('Translations & AI') }}</span>
-                </a>
-                @endcan
-
-                @can('ai.view')
-                <a href="{{ route('admin.ai.import') }}" class="nav-item {{ request()->routeIs('admin.ai.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-wand-magic-sparkles" style="color: #8b5cf6;"></i> <span>{{ __('AI Menu & Translate') }}</span>
-                </a>
-                @endcan
-
-                <div class="menu-category">{{ __('Storefront & Growth') }}</div>
-                @can('settings.view')
-                <a href="{{ route('admin.branding.index') }}" class="nav-item {{ request()->routeIs('admin.branding.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-palette" style="color: #ec4899;"></i> <span>{{ __('Theme Customizer') }}</span>
-                </a>
-                <a href="{{ route('admin.qr.index') }}" class="nav-item {{ request()->routeIs('admin.qr.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-qrcode" style="color: #06b6d4;"></i> <span>{{ __('Table QR Studio') }}</span>
-                </a>
-                @endcan
-
-                @can('customers.view')
-                <a href="{{ route('admin.customers.index') }}" class="nav-item {{ request()->routeIs('admin.customers.*') ? 'active' : '' }}" style="justify-content: space-between;">
-                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                        <i class="fa-solid fa-users-gear" style="color: #3b82f6;"></i> <span>{{ __('Customers & CRM') }}</span>
-                    </span>
-                    @if($v && !$v->hasFeature('customers'))
-                        <span style="font-size: 0.65rem; background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 0.15rem 0.4rem; border-radius: 6px; font-weight: 700; flex-shrink: 0;">🔒 PRO</span>
-                    @endif
-                </a>
-                @endcan
-
-                @can('reports.view')
-                <a href="{{ route('admin.analytics.index') }}" class="nav-item {{ request()->routeIs('admin.analytics.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-chart-pie" style="color: #f97316;"></i> <span>{{ __('Analytics & Traffic') }}</span>
-                </a>
-                @endcan
-
-                <div class="menu-category">{{ __('Settings & Administration') }}</div>
-                <a href="{{ route('admin.profile') }}" class="nav-item {{ request()->routeIs('admin.profile') ? 'active' : '' }}">
-                    <i class="fa-solid fa-user-shield" style="color: #10b981;"></i> <span>{{ __('Security & 2FA') }}</span>
-                </a>
-
-                @can('settings.view')
-                <a href="{{ route('admin.settings.index') }}" class="nav-item {{ request()->routeIs('admin.settings.index') ? 'active' : '' }}">
-                    <i class="fa-solid fa-sliders" style="color: #64748b;"></i> <span>{{ __('Settings') }}</span>
-                </a>
-                <a href="{{ route('admin.settings.reservations.notifications') }}" class="nav-item {{ request()->routeIs('admin.settings.reservations.notifications*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-bell-concierge" style="color: #6366f1;"></i> <span>{{ __('Reservation Notifications') }}</span>
-                </a>
-                @endcan
-
-                @can('ai.view')
-                <a href="{{ route('admin.settings.ai') }}" class="nav-item {{ request()->routeIs('admin.settings.ai*') ? 'active' : '' }}" style="justify-content: space-between;">
-                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                        <i class="fa-solid fa-robot" style="color: #8b5cf6;"></i> <span>{{ __('AI Settings') }}</span>
-                    </span>
-                    <span style="font-size: 0.65rem; background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2)); color: #8b5cf6; padding: 0.15rem 0.4rem; border-radius: 6px; font-weight: 700; flex-shrink: 0;">AI</span>
-                </a>
-                @endcan
-
-                @can('billing.view')
-                <a href="{{ route('admin.subscription') }}" class="nav-item {{ request()->routeIs('admin.subscription') ? 'active' : '' }}">
-                    <i class="fa-solid fa-file-invoice-dollar" style="color: #f59e0b;"></i> <span>{{ __('Subscription') }}</span>
-                </a>
-                @endcan
-
-                @can('locations.view')
-                <a href="{{ route('admin.locations.index') }}" class="nav-item {{ request()->routeIs('admin.locations.*') ? 'active' : '' }}" style="justify-content: space-between;">
-                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                        <i class="fa-solid fa-location-dot" style="color: #14b8a6;"></i> <span>{{ __('Multi-Locations') }}</span>
-                    </span>
-                    @if($v && !$v->hasFeature('locations'))
-                        <span style="font-size: 0.65rem; background: rgba(6, 182, 212, 0.2); color: #06b6d4; padding: 0.15rem 0.4rem; border-radius: 6px; font-weight: 700; flex-shrink: 0;">🔒 BIZ</span>
-                    @endif
-                </a>
-                @endcan
-
-                @can('team.view')
-                <a href="{{ route('admin.team.index') }}" class="nav-item {{ request()->routeIs('admin.team.*') ? 'active' : '' }}" style="justify-content: space-between;">
-                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                        <i class="fa-solid fa-users" style="color: #0ea5e9;"></i> <span>{{ __('Team & Staff') }}</span>
-                    </span>
-                    @if($v && !$v->hasFeature('team'))
-                        <span style="font-size: 0.65rem; background: rgba(6, 182, 212, 0.2); color: #06b6d4; padding: 0.15rem 0.4rem; border-radius: 6px; font-weight: 700; flex-shrink: 0;">🔒 BIZ</span>
-                    @endif
-                </a>
-                @endcan
-
-                @if(Auth::user()?->vendor)
-                    <div style="padding: 0.75rem 0.65rem 0.25rem;">
-                        <a href="{{ Auth::user()->vendor->getStorefrontUrl() }}" target="_blank" class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 0.8rem; border-radius: 12px; gap: 0.5rem; border-color: rgba(245, 158, 11, 0.3);">
-                            <i class="fa-solid fa-arrow-up-right-from-square" style="color: var(--primary);"></i> <span>{{ __('Live Storefront') }}</span>
-                        </a>
-                    </div>
-                @endif
-            @endif
-        </nav>
-
-        <!-- Sidebar Help / Support Widget -->
-        @if(Auth::user()?->isSuperAdmin())
-            <div class="sidebar-widget" style="text-align: left; padding: 0.85rem 1rem; margin: 0.75rem 0.85rem 1.25rem;">
-                <div style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.4rem;">
-                    <i class="fa-solid fa-server" style="color: #6366f1;"></i> Core Platform
-                </div>
-                <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-main);">Laravel 13 & Reverb</div>
-                <div style="font-size: 0.72rem; color: #10b981; margin-top: 0.25rem; display: flex; align-items: center; gap: 0.35rem;">
-                    <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span>
-                    <span>WebSocket: Port 8080 Active</span>
-                </div>
-            </div>
-        @else
-            <div class="sidebar-widget">
-                <div style="font-weight: 700; font-size: 0.8rem; color: var(--text-main); margin-bottom: 0.25rem;">
-                    <i class="fa-solid fa-headset" style="color: var(--primary);"></i> Support Desk
-                </div>
-                <p>{{ __('Need help or custom menu translation?') }}</p>
-                <a href="mailto:{{ \App\Models\SystemSetting::get('contact_email') ?: 'support@elab.am' }}" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.75rem; border-radius: 8px; width: 100%;">
-                    {{ __('Get Support') }}
-                </a>
-            </div>
-        @endif
-    </aside>
+    <!-- Enterprise Sidebar Navigation -->
+    @include('layouts.partials.sidebar')
 
     <!-- Main Content Shell -->
     <div class="main-wrapper">
@@ -1323,6 +1139,15 @@
             return {
                 mobileOpen: false,
                 currentTheme: document.documentElement.getAttribute('data-theme') || 'dark',
+                init() {
+                    this.$watch('mobileOpen', value => {
+                        if (value) {
+                            document.body.style.overflow = 'hidden';
+                        } else {
+                            document.body.style.overflow = '';
+                        }
+                    });
+                },
                 toggleTheme() {
                     this.currentTheme = this.currentTheme === 'dark' ? 'light' : 'dark';
                     document.documentElement.setAttribute('data-theme', this.currentTheme);
