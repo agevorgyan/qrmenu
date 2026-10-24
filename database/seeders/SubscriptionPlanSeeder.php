@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\SubscriptionPlan;
+use App\Models\SubscriptionPlanPrice;
 use Illuminate\Database\Seeder;
 
 class SubscriptionPlanSeeder extends Seeder
@@ -95,7 +96,39 @@ class SubscriptionPlanSeeder extends Seeder
         ];
 
         foreach ($plans as $p) {
-            SubscriptionPlan::updateOrCreate(['slug' => $p['slug']], $p);
+            $plan = SubscriptionPlan::updateOrCreate(['slug' => $p['slug']], $p);
+
+            $basePrice = (float) $plan->price;
+            $currency = $plan->currency ?: 'AMD';
+
+            // Seed Monthly Price
+            SubscriptionPlanPrice::updateOrCreate(
+                [
+                    'subscription_plan_id' => $plan->id,
+                    'billing_interval' => 'monthly',
+                    'currency' => $currency,
+                ],
+                [
+                    'price' => $basePrice,
+                    'is_active' => true,
+                    'description' => "Monthly {$plan->name} billing tier",
+                ]
+            );
+
+            // Seed Yearly Price (20% discount for non-custom)
+            $yearlyPrice = $basePrice > 0 ? round($basePrice * 12 * 0.80, 2) : 0;
+            SubscriptionPlanPrice::updateOrCreate(
+                [
+                    'subscription_plan_id' => $plan->id,
+                    'billing_interval' => 'yearly',
+                    'currency' => $currency,
+                ],
+                [
+                    'price' => $yearlyPrice,
+                    'is_active' => true,
+                    'description' => "Yearly {$plan->name} billing tier (20% discount)",
+                ]
+            );
         }
     }
 }

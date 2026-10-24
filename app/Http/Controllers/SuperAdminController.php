@@ -479,6 +479,11 @@ class SuperAdminController extends Controller
             $plan = SubscriptionPlan::find($validated['subscription_plan_id']);
             if ($plan) {
                 $validated['subscription_plan'] = $plan->slug;
+                $subscriptionService = app(SubscriptionService::class);
+                $subscription = $vendor->subscription ?? $subscriptionService->getOrCreateForVendor($vendor);
+                if ((int) $subscription->subscription_plan_id !== (int) $plan->id) {
+                    $subscriptionService->changePlan($subscription, $plan, reason: 'SuperAdmin updated vendor profile', actor: Auth::user());
+                }
             }
         }
 

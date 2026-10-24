@@ -339,9 +339,7 @@ class SubscriptionBillingHardeningTest extends TestCase
         $this->subscriptionService->cancel($subscription, immediately: false);
 
         $subscription->refresh();
-        $vendor->refresh();
-
-        $this->assertEquals(SubscriptionStatus::Cancelled, $subscription->status);
+        $this->assertEquals(SubscriptionStatus::CancelAtPeriodEnd, $subscription->status);
         $this->assertNotNull($subscription->cancelled_at);
         $this->assertFalse($subscription->auto_renew);
         $this->assertEquals('cancelled', $subscription->renewal_state);
