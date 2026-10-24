@@ -288,8 +288,21 @@ class TelegramNotificationTest extends TestCase
             'https://api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 99]], 200),
         ]);
 
-        $vendor = Vendor::first();
-        $user = User::where('vendor_id', $vendor->id)->where('role', 'vendor_owner')->first();
+        $vendor = Vendor::query()->where('slug', 'bistro-yerevan')->firstOrFail();
+        $user = User::where('vendor_id', $vendor->id)->where('role', 'vendor_owner')->first()
+            ?? User::create([
+                'vendor_id' => $vendor->id,
+                'name' => 'Telegram Test Owner',
+                'email' => 'telegram-test-owner@example.test',
+        $vendor = Vendor::whereHas('users', fn ($q) => $q->where('role', 'vendor_owner'))->first() ?? Vendor::first();
+        $user = User::where('vendor_id', $vendor->id)->where('role', 'vendor_owner')->first()
+            ?? User::create([
+                'vendor_id' => $vendor->id,
+                'name' => 'Owner',
+                'email' => 'owner-tg-test@test.com',
+                'password' => bcrypt('password'),
+                'role' => 'vendor_owner',
+            ]);
 
         $this->actingAs($user);
 

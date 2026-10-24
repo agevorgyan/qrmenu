@@ -7,11 +7,11 @@
     <!-- Breadcrumb & Header -->
     <div style="margin-bottom: 1.75rem;">
         <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; flex-wrap: wrap;">
-            <a href="{{ route('admin.settings.index') }}" style="color: var(--text-muted); text-decoration: none;">{{ __('Settings') }}</a>
-            <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem;"></i>
-            <span>{{ __('Reservations & Pre-Orders') }}</span>
-            <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem;"></i>
-            <span style="color: var(--primary); font-weight: 700;">{{ __('Notifications') }}</span>
+            <a href="{{ route('admin.dashboard') }}" style="color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 0.35rem;"><i class="fa-solid fa-gauge-high"></i> {{ __('Dashboard') }}</a>
+            <i class="fa-solid fa-chevron-right" style="font-size: 0.65rem; opacity: 0.6;"></i>
+            <a href="{{ route('admin.settings.index', ['tab' => 'notifications']) }}" style="color: var(--text-muted); text-decoration: none;">{{ __('Settings') }}</a>
+            <i class="fa-solid fa-chevron-right" style="font-size: 0.65rem; opacity: 0.6;"></i>
+            <span style="color: var(--primary); font-weight: 700;">{{ __('Notifications & Email') }}</span>
         </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
@@ -28,7 +28,7 @@
             </div>
 
             <div style="display: flex; gap: 0.75rem; align-items: center;">
-                <a href="{{ route('admin.settings.index') }}" class="btn btn-secondary" style="border-radius: 12px; font-weight: 600; font-size: 0.88rem; text-decoration: none;">
+                <a href="{{ route('admin.settings.index', ['tab' => 'notifications']) }}" class="btn btn-secondary" style="border-radius: 12px; font-weight: 600; font-size: 0.88rem; text-decoration: none;">
                     <i class="fa-solid fa-arrow-left"></i> {{ __('Back to Settings') }}
                 </a>
                 <button type="submit" form="notificationsForm" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem; border-radius: 12px; font-weight: 700; padding: 0.65rem 1.4rem; font-size: 0.92rem; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);">

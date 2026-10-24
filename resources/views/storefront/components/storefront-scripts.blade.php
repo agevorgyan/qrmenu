@@ -1,6 +1,6 @@
 @php
-    $allCatalogProducts = ($categories ?? collect())->flatMap(function($cat) use ($lang, $location) {
-        return $cat->products->map(function($prod) use ($cat, $lang, $location) {
+    $allCatalogProducts = ($categories ?? collect())->flatMap(function($cat) use ($vendor, $lang, $location) {
+        return $cat->products->map(function($prod) use ($vendor, $cat, $lang, $location) {
             return [
                 'id' => $prod->id,
                 'product_id' => $prod->id,
@@ -20,16 +20,17 @@
                 'variations' => $prod->variations->map(fn($v) => [
                     'id' => $v->id,
                     'name' => $v->getTranslatedName($lang),
-                    'price' => (float)$v->price
+                    'price' => (float)$v->price,
+                    'secondary_price' => $vendor?->formatSecondaryPrice($v->getEffectivePrice(), $lang),
                 ])->toArray(),
             ];
         });
     })->values()->toArray();
 
     $channelSchedules = [
-        'dine_in' => $vendor->resolveOperatingSchedule('dine_in', $location),
-        'delivery' => $vendor->resolveOperatingSchedule('delivery', $location),
-        'takeaway' => $vendor->resolveOperatingSchedule('takeaway', $location),
+        'dine_in' => $vendor->resolveOperatingSchedule('dine_in', $location, null, $lang),
+        'delivery' => $vendor->resolveOperatingSchedule('delivery', $location, null, $lang),
+        'takeaway' => $vendor->resolveOperatingSchedule('takeaway', $location, null, $lang),
     ];
 
     $initialOrderType = !empty($table) ? 'dine_in' : ($vendor->takeaway_enabled ? 'takeaway' : ($vendor->delivery_enabled ? 'delivery' : 'takeaway'));
@@ -44,6 +45,8 @@
             'ai_waiter_enabled' => (bool) $vendor->ai_waiter_enabled,
             'ai_waiter_languages' => $vendor->getAiWaiterLanguages(),
             'ai_waiter_language_details' => $vendor->getAiWaiterLanguageDetails(),
+            'reservation_enabled' => (bool) $vendor->isReservationFeatureEnabled(),
+            'preorder_enabled' => (bool) $vendor->isPreOrderFeatureEnabled(),
         ],
         'catalogProducts' => $allCatalogProducts,
         'activeCat' => 'cat-' . ($categories->first()?->id ?? 1),
@@ -61,6 +64,7 @@
             'callWaiter' => route('client.waiter.call', ['vendor_slug' => $vendor->slug]),
             'aiSessionStart' => route('client.ai_waiter.session.start', ['vendor_slug' => $vendor->slug]),
             'aiSessionBase' => url('/api/m/' . $vendor->slug . '/ai-waiter/session'),
+            'reserve' => route('client.reserve', ['vendor_slug' => $vendor->slug, 'location_slug' => $location?->slug, 'lang' => $lang ?? app()->getLocale()]),
         ],
         'settings' => [
             'paymentMethod' => !empty($vendor->getPaymentSettings()['cash_enabled']) ? 'cash' : (!empty($vendor->getPaymentSettings()['pos_terminal_enabled']) ? 'pos_terminal' : 'cash'),
@@ -115,6 +119,33 @@
             'closed_hours' => __('menu.closed_hours'),
             'only_available_hours_notice' => __('menu.only_available_hours_notice', ['time' => ':time']),
             'product_time_restriction_toast' => __('menu.product_time_restriction_toast', ['time' => ':time']),
+            'preorder_for_reservation' => __('menu.preorder_for_reservation'),
+            'preorder_active' => __('menu.preorder_active'),
+            'return_to_reservation' => __('menu.return_to_reservation'),
+            'confirm_preorder_return' => __('menu.confirm_preorder_return'),
+            'reserve_table_with_this_order' => __('menu.reserve_table_with_this_order'),
+            'items_prepared_on_arrival' => __('menu.items_prepared_on_arrival'),
+            'select_dishes_for_arrival' => __('menu.select_dishes_for_arrival'),
+            'kitchen_service' => __('menu.kitchen_service'),
+            'delivery_service' => __('menu.delivery_service'),
+            'takeaway_service' => __('menu.takeaway_service'),
+            'default_service' => __('menu.default_service'),
+            'closing_soon_notice_title' => __('menu.closing_soon_notice_title'),
+            'service_closed_notice_title' => __('menu.service_closed_notice_title'),
+            'delivery_closed' => __('menu.delivery_closed'),
+            'takeaway_closed' => __('menu.takeaway_closed'),
+            'kitchen_closed' => __('menu.kitchen_closed'),
+            'orders_closed' => __('menu.orders_closed'),
+            'orders_closed_toast' => __('menu.orders_closed_toast', ['channel' => ':channel']),
+            'item_added_to_cart_toast' => __('menu.item_added_to_cart_toast', ['name' => ':name']),
+            'attention_item_unavailable' => __('menu.attention_item_unavailable', ['items' => ':items']),
+            'payment_success' => __('menu.payment_success'),
+            'network_error' => __('menu.network_error'),
+            'connection_error_retry' => __('menu.connection_error_retry'),
+            'error_try_again' => __('menu.error_try_again'),
+            'order_tracking_finished' => __('menu.order_tracking_finished'),
+            'call_waiter_table_required' => __('menu.call_waiter_table_required'),
+            'close' => __('menu.close'),
         ],
     ];
 @endphp

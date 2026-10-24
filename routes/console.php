@@ -14,23 +14,9 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 /**
- * Reconcile tenant subscription statuses daily in tenant-isolated context.
+ * Actively reconcile tenant subscription statuses and trials daily.
  */
-Schedule::call(function () {
-    $tenantContext = app(TenantContext::class);
-    $vendors = Vendor::where('is_active', true)->get();
-
-    foreach ($vendors as $vendor) {
-        $tenantContext->runInTenantContext($vendor->id, function () use ($vendor) {
-            try {
-                // Accessing subscription_status dynamically evaluates grace period and expired status
-                $status = $vendor->subscription_status;
-            } catch (Throwable $e) {
-                Log::warning("Tenant subscription reconciliation failed for vendor #{$vendor->id}: ".$e->getMessage());
-            }
-        });
-    }
-})->daily()->name('tenant-subscription-reconcile');
+Schedule::command('subscriptions:reconcile')->daily()->name('tenant-subscription-reconcile');
 
 /**
  * Process vendor deletions whose retention period has passed.

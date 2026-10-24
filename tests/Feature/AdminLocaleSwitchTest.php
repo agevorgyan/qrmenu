@@ -280,7 +280,7 @@ class AdminLocaleSwitchTest extends TestCase
         $res->assertSee('Готово');
         $res->assertSee('Заказов не найдено');
         $res->assertSee('Новые заказы со столов и на доставку будут автоматически появляться здесь в реальном времени.');
-        $res->assertSee('Переводы и AI');
+        $res->assertSee('Языки и переводы');
 
         $resHy = $this->actingAs($user)
             ->withSession(['admin_locale' => 'hy', 'app_locale' => 'hy'])
@@ -296,7 +296,7 @@ class AdminLocaleSwitchTest extends TestCase
         $resHy->assertSee('Պատրաստ է');
         $resHy->assertSee('Պատվերներ չեն գտնվել');
         $resHy->assertSee('Սեղանների և առաքման նոր պատվերներն ավտոմատ կհայտնվեն այստեղ իրական ժամանակում:');
-        $resHy->assertSee('Թարգմանություններ և AI');
+        $resHy->assertSee('Լեզուներ և թարգմանություններ');
     }
 
     public function test_analytics_subscription_and_settings_render_in_selected_locale(): void

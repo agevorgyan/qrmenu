@@ -6,7 +6,9 @@ use App\Models\Category;
 use App\Models\Reservation;
 use App\Models\ReservationPreOrder;
 use App\Models\Vendor;
+use App\Security\QuotaCatalog;
 use App\Services\PreOrderService;
+use App\Services\QuotaService;
 use App\Services\ReservationAvailabilityService;
 use App\Services\ReservationNotificationService;
 use Carbon\Carbon;
@@ -41,6 +43,7 @@ class StorefrontReservationController extends Controller
             app()->setLocale($locale);
             session(['app_locale' => $locale, 'locale' => $locale]);
         }
+        Carbon::setLocale(app()->getLocale());
 
         $location = null;
         if ($location_slug) {
@@ -209,6 +212,15 @@ class StorefrontReservationController extends Controller
                 bufferMinutes: $bufferMinutes
             );
 
+            // Record reservations.period quota usage (fails closed if quota exceeded)
+            app(QuotaService::class)->recordUsage(
+                vendor: $vendor,
+                quotaKey: QuotaCatalog::KEY_RESERVATIONS_PERIOD,
+                quantity: 1,
+                idempotencyKey: 'res_'.$vendor->id.'_'.$validated['reservation_date'].'_'.$validated['reservation_time'].'_'.$allocatedTable->id,
+                metadata: ['date' => $validated['reservation_date'], 'time' => $validated['reservation_time']]
+            );
+
             // 2. Persist reservation
             $reservation = new Reservation([
                 'vendor_id' => $vendor->id,
@@ -292,6 +304,7 @@ class StorefrontReservationController extends Controller
         $locale = $reservation->locale ?: ($vendor->getDefaultLanguageCode() ?: 'hy');
         if (in_array($locale, ['hy', 'en', 'ru'], true)) {
             app()->setLocale($locale);
+            Carbon::setLocale($locale);
         }
 
         return view('storefront.reservation_status', compact('vendor', 'reservation'));

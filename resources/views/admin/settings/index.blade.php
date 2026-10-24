@@ -1,36 +1,112 @@
 @extends('layouts.app')
 
-@section('title', __('Restaurant Settings') . ' - ' . $vendor->name)
+@section('title', __('Settings') . ' - ' . $vendor->name)
 
 @section('content')
-<div style="max-width: 1050px; margin: 0 auto; width: 100%; box-sizing: border-box;">
-    <!-- Page Header -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
-        <div style="min-width: 0; flex: 1;">
-            <h1 style="font-family: 'Outfit', sans-serif; font-size: clamp(1.4rem, 2.5vw, 1.85rem); font-weight: 800; margin: 0; color: var(--text-main); display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-                <span style="background: rgba(245, 158, 11, 0.15); color: var(--primary); width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
-                    <i class="fa-solid fa-sliders"></i>
-                </span>
-                <span>{{ __('Settings') }}</span>
-            </h1>
-            <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0.35rem 0 0 0; word-break: break-word;">
-                {{ __('Manage branch public information, legal details, service fee, and delivery parameters') }}
-            </p>
-        </div>
+<script>
+window.settingsModule = function() {
+    return {
+        activeTab: 'profile',
+        isDirty: false,
+        init() {
+            // Check query param first, then hash
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+            const hash = window.location.hash.replace('#', '');
+            const validTabs = ['profile', 'orders', 'reservations', 'payments', 'delivery', 'notifications', 'regional', 'ai', 'integrations', 'security'];
 
-        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-            <a href="{{ route('admin.settings.reservations.notifications') }}" class="btn btn-secondary" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 0.88rem;">
-                <i class="fa-solid fa-bell-concierge" style="color: #6366f1;"></i> {{ __('Reservation Notifications') }}
-            </a>
-            <a href="{{ route('admin.profile') }}" class="btn btn-secondary" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 0.88rem;">
-                <i class="fa-solid fa-user-shield" style="color: {{ Auth::user()->hasTwoFactorEnabled() ? '#10b981' : '#f59e0b' }};"></i> {{ __('Security & 2FA') }}
-            </a>
-            <a href="{{ route('client.menu', ['vendor_slug' => $vendor->slug]) }}" target="_blank" class="btn btn-secondary" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 0.88rem;">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i> {{ __('View Menu') }}
-            </a>
-            <button type="submit" form="vendorSettingsForm" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem; border-radius: 12px; font-weight: 700; padding: 0.65rem 1.4rem; font-size: 0.92rem; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);">
-                <i class="fa-solid fa-floppy-disk"></i> {{ __('Save') }}
-            </button>
+            if (tabParam && validTabs.includes(tabParam)) {
+                this.activeTab = tabParam;
+            } else if (hash && validTabs.includes(hash)) {
+                this.activeTab = hash;
+            }
+
+            // Detect errors and navigate to erroneous tab automatically
+            @if(isset($errors) && $errors->any())
+                @if($errors->has('name') || $errors->has('address') || $errors->has('phone') || $errors->has('whatsapp_number') || $errors->has('wifi_ssid') || $errors->has('wifi_password') || $errors->has('working_hours') || $errors->has('legal_name') || $errors->has('tax_id') || $errors->has('operating_address') || $errors->has('director_name') || $errors->has('director_phone') || $errors->has('contact_person_name') || $errors->has('contact_person_phone'))
+                    this.activeTab = 'profile';
+                @elseif($errors->has('service_fee_type') || $errors->has('service_fee_value') || $errors->has('service_fee_min_order') || $errors->has('dine_in_start_time') || $errors->has('dine_in_end_time'))
+                    this.activeTab = 'orders';
+                @elseif($errors->has('delivery_fee') || $errors->has('delivery_min_amount') || $errors->has('delivery_free_from') || $errors->has('takeaway_min_amount') || $errors->has('delivery_start_time') || $errors->has('delivery_end_time'))
+                    this.activeTab = 'delivery';
+                @elseif($errors->has('timezone') || $errors->has('currency') || $errors->has('secondary_currency') || $errors->has('secondary_currency_exchange_rate') || $errors->has('secondary_currency_enabled') || $errors->has('weight_unit') || $errors->has('volume_unit'))
+                    this.activeTab = 'regional';
+                @elseif($errors->has('custom_domain'))
+                    this.activeTab = 'integrations';
+                @endif
+            @endif
+
+            // Track form dirty status
+            this.$nextTick(() => {
+                const form = document.getElementById('vendorSettingsForm');
+                if (form) {
+                    form.addEventListener('input', () => { this.isDirty = true; });
+                    form.addEventListener('change', () => { this.isDirty = true; });
+                    form.addEventListener('submit', () => { this.isDirty = false; });
+                }
+            });
+
+            window.addEventListener('beforeunload', (e) => {
+                if (this.isDirty) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+        },
+        setTab(tab) {
+            this.activeTab = tab;
+            if (window.history && window.history.replaceState) {
+                const url = new URL(window.location);
+                url.searchParams.set('tab', tab);
+                window.history.replaceState(null, '', url.pathname + url.search + '#' + tab);
+            } else {
+                window.location.hash = tab;
+            }
+        }
+    };
+};
+
+if (window.Alpine) {
+    Alpine.data('settingsModule', window.settingsModule);
+} else {
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('settingsModule', window.settingsModule);
+    });
+}
+</script>
+
+<div style="max-width: 1250px; margin: 0 auto; width: 100%; box-sizing: border-box;" x-data="settingsModule()">
+    <!-- Breadcrumb & Header -->
+    <div style="margin-bottom: 1.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+            <a href="{{ route('admin.dashboard') }}" style="color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 0.35rem;"><i class="fa-solid fa-gauge-high"></i> {{ __('Dashboard') }}</a>
+            <i class="fa-solid fa-chevron-right" style="font-size: 0.65rem; opacity: 0.6;"></i>
+            <span style="color: var(--primary); font-weight: 700;">{{ __('Settings') }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div style="min-width: 0; flex: 1;">
+                <h1 style="font-family: 'Outfit', sans-serif; font-size: clamp(1.4rem, 2.5vw, 1.85rem); font-weight: 800; margin: 0; color: var(--text-main); display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                    <span style="background: rgba(245, 158, 11, 0.15); color: var(--primary); width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
+                        <i class="fa-solid fa-sliders"></i>
+                    </span>
+                    <span>{{ __('Settings') }}</span>
+                </h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0.35rem 0 0 0; word-break: break-word;">
+                    {{ __('Manage branch public information, legal details, service fee, and delivery parameters') }}
+                </p>
+            </div>
+            <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                <div x-show="isDirty" x-cloak style="display: inline-flex; align-items: center; gap: 0.45rem; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 10px; padding: 0.45rem 0.85rem; font-size: 0.82rem; font-weight: 700; color: #f59e0b;">
+                    <span style="width: 7px; height: 7px; border-radius: 50%; background: #f59e0b;"></span>
+                    <span>{{ __('Unsaved Changes') }}</span>
+                </div>
+                <a href="{{ route('client.menu', ['vendor_slug' => $vendor->slug]) }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 0.88rem;">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> {{ __('Live Storefront') }}
+                </a>
+                <button type="submit" form="vendorSettingsForm" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem; border-radius: 12px; font-weight: 700; padding: 0.65rem 1.4rem; font-size: 0.92rem; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);">
+                    <i class="fa-solid fa-floppy-disk"></i> {{ __('Save Changes') }}
+                </button>
+            </div>
         </div>
     </div>
 
@@ -68,15 +144,166 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.settings.update') }}" method="POST" id="vendorSettingsForm">
-        @csrf
-        @if($location)
-            <input type="hidden" name="location_id" value="{{ $location->id }}">
-        @endif
+    <!-- Mobile / Tablet Category Navigation Bar -->
+    <div class="settings-mobile-tabs hide-on-desktop" role="tablist" aria-label="{{ __('Settings category navigation') }}">
+        <button type="button" class="settings-mobile-tab-btn" :class="{ 'active': activeTab === 'profile' }" @click="setTab('profile')" role="tab" :aria-selected="activeTab === 'profile'">
+            <i class="fa-solid fa-store" style="color: #10b981;"></i>
+            <span>{{ __('Restaurant Profile') }}</span>
+        </button>
+        <button type="button" class="settings-mobile-tab-btn" :class="{ 'active': activeTab === 'orders' }" @click="setTab('orders')" role="tab" :aria-selected="activeTab === 'orders'">
+            <i class="fa-solid fa-bell-concierge" style="color: #ef4444;"></i>
+            <span>{{ __('Orders & Kitchen') }}</span>
+        </button>
+        <button type="button" class="settings-mobile-tab-btn" :class="{ 'active': activeTab === 'reservations' }" @click="setTab('reservations')" role="tab" :aria-selected="activeTab === 'reservations'">
+            <i class="fa-solid fa-calendar-check" style="color: #ec4899;"></i>
+            <span>{{ __('Reservations & Booking Rules') }}</span>
+        </button>
+        <button type="button" class="settings-mobile-tab-btn" :class="{ 'active': activeTab === 'payments' }" @click="setTab('payments')" role="tab" :aria-selected="activeTab === 'payments'">
+            <i class="fa-solid fa-credit-card" style="color: #3b82f6;"></i>
+            <span>{{ __('Payments & Gateways') }}</span>
+        </button>
+        <button type="button" class="settings-mobile-tab-btn" :class="{ 'active': activeTab === 'delivery' }" @click="setTab('delivery')" role="tab" :aria-selected="activeTab === 'delivery'">
+            <i class="fa-solid fa-truck" style="color: #f59e0b;"></i>
+            <span>{{ __('Delivery & Pickup') }}</span>
+        </button>
+        <button type="button" class="settings-mobile-tab-btn" :class="{ 'active': activeTab === 'notifications' }" @click="setTab('notifications')" role="tab" :aria-selected="activeTab === 'notifications'">
+            <i class="fa-solid fa-bell" style="color: #8b5cf6;"></i>
+            <span>{{ __('Notifications & Email') }}</span>
+        </button>
+        <button type="button" class="settings-mobile-tab-btn" :class="{ 'active': activeTab === 'regional' }" @click="setTab('regional')" role="tab" :aria-selected="activeTab === 'regional'">
+            <i class="fa-solid fa-globe" style="color: #06b6d4;"></i>
+            <span>{{ __('Languages & Regional Preferences') }}</span>
+        </button>
+        <button type="button" class="settings-mobile-tab-btn" :class="{ 'active': activeTab === 'ai' }" @click="setTab('ai')" role="tab" :aria-selected="activeTab === 'ai'">
+            <i class="fa-solid fa-wand-magic-sparkles" style="color: #a855f7;"></i>
+            <span>{{ __('AI & Automation') }}</span>
+        </button>
+        <button type="button" class="settings-mobile-tab-btn" :class="{ 'active': activeTab === 'integrations' }" @click="setTab('integrations')" role="tab" :aria-selected="activeTab === 'integrations'">
+            <i class="fa-solid fa-plug" style="color: #14b8a6;"></i>
+            <span>{{ __('Integrations') }}</span>
+        </button>
+        <button type="button" class="settings-mobile-tab-btn" :class="{ 'active': activeTab === 'security' }" @click="setTab('security')" role="tab" :aria-selected="activeTab === 'security'">
+            <i class="fa-solid fa-shield-halved" style="color: #10b981;"></i>
+            <span>{{ __('Security & Access') }}</span>
+        </button>
+    </div>
 
-        <div style="display: grid; grid-template-columns: 1fr; gap: 1.75rem;">
+    <div class="settings-layout-wrapper">
+        <!-- Category Navigation Sidebar (Desktop) -->
+        <aside class="settings-nav-sidebar hide-on-mobile" aria-label="{{ __('Settings category navigation') }}">
+            <div class="settings-nav-title">{{ __('Settings category navigation') }}</div>
+            <nav class="settings-nav-list" role="tablist">
+                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'profile' }" @click="setTab('profile')" role="tab" :aria-selected="activeTab === 'profile'">
+                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                        <span class="settings-nav-icon-box" style="background: #10b98122; color: #10b981;">
+                            <i class="fa-solid fa-store"></i>
+                        </span>
+                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Restaurant Profile') }}</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
+                </button>
+                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'orders' }" @click="setTab('orders')" role="tab" :aria-selected="activeTab === 'orders'">
+                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                        <span class="settings-nav-icon-box" style="background: #ef444422; color: #ef4444;">
+                            <i class="fa-solid fa-bell-concierge"></i>
+                        </span>
+                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Orders & Kitchen') }}</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
+                </button>
+                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'reservations' }" @click="setTab('reservations')" role="tab" :aria-selected="activeTab === 'reservations'">
+                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                        <span class="settings-nav-icon-box" style="background: #ec489922; color: #ec4899;">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </span>
+                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Reservations & Booking Rules') }}</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
+                </button>
+                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'payments' }" @click="setTab('payments')" role="tab" :aria-selected="activeTab === 'payments'">
+                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                        <span class="settings-nav-icon-box" style="background: #3b82f622; color: #3b82f6;">
+                            <i class="fa-solid fa-credit-card"></i>
+                        </span>
+                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Payments & Gateways') }}</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
+                </button>
+                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'delivery' }" @click="setTab('delivery')" role="tab" :aria-selected="activeTab === 'delivery'">
+                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                        <span class="settings-nav-icon-box" style="background: #f59e0b22; color: #f59e0b;">
+                            <i class="fa-solid fa-truck"></i>
+                        </span>
+                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Delivery & Pickup') }}</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
+                </button>
+                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'notifications' }" @click="setTab('notifications')" role="tab" :aria-selected="activeTab === 'notifications'">
+                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                        <span class="settings-nav-icon-box" style="background: #8b5cf622; color: #8b5cf6;">
+                            <i class="fa-solid fa-bell"></i>
+                        </span>
+                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Notifications & Email') }}</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
+                </button>
+                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'regional' }" @click="setTab('regional')" role="tab" :aria-selected="activeTab === 'regional'">
+                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                        <span class="settings-nav-icon-box" style="background: #06b6d422; color: #06b6d4;">
+                            <i class="fa-solid fa-globe"></i>
+                        </span>
+                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Languages & Regional Preferences') }}</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
+                </button>
+                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'ai' }" @click="setTab('ai')" role="tab" :aria-selected="activeTab === 'ai'">
+                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                        <span class="settings-nav-icon-box" style="background: #a855f722; color: #a855f7;">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </span>
+                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('AI & Automation') }}</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
+                </button>
+                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'integrations' }" @click="setTab('integrations')" role="tab" :aria-selected="activeTab === 'integrations'">
+                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                        <span class="settings-nav-icon-box" style="background: #14b8a622; color: #14b8a6;">
+                            <i class="fa-solid fa-plug"></i>
+                        </span>
+                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Integrations') }}</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
+                </button>
+                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'security' }" @click="setTab('security')" role="tab" :aria-selected="activeTab === 'security'">
+                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                        <span class="settings-nav-icon-box" style="background: #10b98122; color: #10b981;">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </span>
+                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Security & Access') }}</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
+                </button>
+            </nav>
+        </aside>
 
-            <!-- 1. BRANCH & STOREFRONT PUBLIC INFO CARD -->
+        <!-- Content Area -->
+        <div class="settings-content-area">
+            <form action="{{ route('admin.settings.update') }}" method="POST" id="vendorSettingsForm">
+                @csrf
+                @if($location)
+                    <input type="hidden" name="location_id" value="{{ $location->id }}">
+                @endif
+                <input type="hidden" name="active_tab" :value="activeTab">
+
+                @php
+                    $paymentSettings = $vendor->getSafePaymentSettings();
+                    $crmSettings = $vendor->getSafeCrmSettings();
+                    $printerSettings = $vendor->getThermalPrinterSettings();
+                @endphp
+
+                <!-- 1. RESTAURANT PROFILE TAB -->
+                <div x-show="activeTab === 'profile'" x-transition.opacity role="tabpanel" style="display: flex; flex-direction: column; gap: 1.75rem;">
+                    <!-- 1. BRANCH & STOREFRONT PUBLIC INFO CARD -->
             <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                     <div style="display: flex; align-items: center; gap: 0.9rem;">
@@ -254,152 +481,127 @@
                 </div>
             </div>
 
-            <!-- 2. REGIONAL & LOCALIZATION SETTINGS CARD -->
-            @php
-                $currentTz = old('timezone', $vendor->timezone ?? 'Asia/Yerevan');
-                $currentCurrency = old('currency', $vendor->currency ?? 'AMD');
-                $currentWeightUnit = old('weight_unit', $vendor->weight_unit ?? 'g');
-                $currentVolumeUnit = old('volume_unit', $vendor->volume_unit ?? 'ml');
-            @endphp
-
+            
+                    <!-- 4. LEGAL & CONTACT INFORMATION CARD (SUPERADMIN) -->
             <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                     <div style="display: flex; align-items: center; gap: 0.9rem;">
-                        <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(14, 165, 233, 0.15); color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
-                            <i class="fa-solid fa-earth-americas"></i>
+                        <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(99, 102, 241, 0.15); color: #6366f1; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
+                            <i class="fa-solid fa-scale-balanced"></i>
                         </span>
                         <div>
                             <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
-                                {{ __('Տարածաշրջանային և տեղայնացման կարգավորումներ') }}
+                                {{ __('Legal & Contact Details') }}
                             </h3>
                             <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
-                                {{ __('Սահմանեք ռեստորանի ժամային գոտին, հիմնական արժույթը և ճաշատեսակների/խմիչքների չափման միավորները') }}
+                                {{ __('Information accessible to platform SuperAdmin') }}
                             </p>
                         </div>
                     </div>
 
-                    <span style="font-size: 0.78rem; font-weight: 700; background: rgba(14, 165, 233, 0.15); color: #0284c7; border: 1px solid rgba(14, 165, 233, 0.3); border-radius: 8px; padding: 0.3rem 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem;">
-                        <i class="fa-solid fa-globe"></i> {{ __('Տեղայնացում') }}
+                    <span style="font-size: 0.78rem; font-weight: 700; background: rgba(99, 102, 241, 0.15); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 8px; padding: 0.3rem 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+                        <i class="fa-solid fa-shield-halved"></i> {{ __('Visible to SuperAdmin') }}
                     </span>
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 1.25rem;">
-                    <!-- A. Timezone -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1.25rem;">
+                    <!-- Legal Business Name -->
                     <div class="form-group">
-                        <label for="vendor_timezone" class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem;">
-                            <i class="fa-solid fa-clock" style="color: #0284c7;"></i>
-                            <span>{{ __('Ժամային գոտի (Timezone)') }}</span>
-                            <span style="color: #ef4444;">*</span>
+                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            {{ __('Legal Business Name') }}
                         </label>
-                        <select name="timezone" id="vendor_timezone" class="form-input" style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); cursor: pointer;">
-                            <optgroup label="⭐ {{ __('Հիմնական ժամային գոտիներ') }}">
-                                @foreach($popularTimezones ?? [] as $tzKey => $tzLabel)
-                                    <option value="{{ $tzKey }}" {{ $currentTz === $tzKey ? 'selected' : '' }}>
-                                        {{ $tzLabel }}
-                                    </option>
-                                @endforeach
-                            </optgroup>
-                            @if(!empty($groupedTimezones))
-                                @foreach($groupedTimezones as $region => $tzList)
-                                    <optgroup label="🌐 {{ $region }}">
-                                        @foreach($tzList as $tz)
-                                            <option value="{{ $tz }}" {{ $currentTz === $tz ? 'selected' : '' }}>
-                                                {{ $tz }}
-                                            </option>
-                                        @endforeach
-                                    </optgroup>
-                                @endforeach
-                            @endif
-                        </select>
-                        <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
-                            {{ __('Օգտագործվում է պատվերների ժամերի, խոհանոցի գրաֆիկի և վիճակագրության համար:') }}
-                        </span>
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <input type="text" name="legal_name" value="{{ old('legal_name', $vendor->legal_name) }}" class="form-control" placeholder="{{ __('e.g. \"Bistro Group\" LLC') }}" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
+                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
+                                <i class="fa-solid fa-building"></i>
+                            </span>
+                        </div>
                     </div>
 
-                    <!-- B. Primary Currency -->
+                    <!-- Tax ID -->
                     <div class="form-group">
-                        <label for="vendor_currency" class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem;">
-                            <i class="fa-solid fa-coins" style="color: #f59e0b;"></i>
-                            <span>{{ __('Հիմնական արժույթ') }}</span>
-                            <span style="color: #ef4444;">*</span>
+                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            {{ __('Tax ID (TIN)') }}
                         </label>
-                        <select name="currency" id="vendor_currency" class="form-input" onchange="onCurrencyChanged(this.value)" style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); cursor: pointer;">
-                            @php
-                                $currencyOptions = [
-                                    'AMD' => 'AMD (֏ - ' . __('Armenian Dram') . ')',
-                                    'USD' => 'USD ($ - ' . __('US Dollar') . ')',
-                                    'EUR' => 'EUR (€ - ' . __('Euro') . ')',
-                                    'RUB' => 'RUB (₽ - ' . __('Russian Ruble') . ')',
-                                    'GEL' => 'GEL (₾ - ' . __('Georgian Lari') . ')',
-                                    'GBP' => 'GBP (£ - ' . __('British Pound') . ')',
-                                    'AED' => 'AED (د.إ - ' . __('UAE Dirham') . ')',
-                                ];
-                            @endphp
-                            @foreach($currencyOptions as $currCode => $currLabel)
-                                <option value="{{ $currCode }}" {{ strtoupper($currentCurrency) === $currCode ? 'selected' : '' }}>
-                                    {{ $currLabel }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
-                            {{ __('Արտացոլվում է ճաշացանկի գներում, հաշիվներում և վճարումներում:') }}
-                        </span>
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <input type="text" name="tax_id" value="{{ old('tax_id', $vendor->tax_id) }}" class="form-control" placeholder="02589412" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
+                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
+                                <i class="fa-solid fa-receipt"></i>
+                            </span>
+                        </div>
                     </div>
 
-                    <!-- C. Weight Unit -->
-                    <div class="form-group">
-                        <label for="vendor_weight_unit" class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem;">
-                            <i class="fa-solid fa-weight-scale" style="color: #10b981;"></i>
-                            <span>{{ __('Քաշի չափման միավոր') }}</span>
+                    <!-- Operating Address -->
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            {{ __('Operating Address') }}
                         </label>
-                        <select name="weight_unit" id="vendor_weight_unit" class="form-input" style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); cursor: pointer;">
-                            @php
-                                $weightUnitOptions = [
-                                    'g' => __('Gram (g)'),
-                                    'kg' => __('Kilogram (kg)'),
-                                    'oz' => __('Ounce (oz)'),
-                                    'lb' => __('Pound (lb)'),
-                                ];
-                            @endphp
-                            @foreach($weightUnitOptions as $wKey => $wLabel)
-                                <option value="{{ $wKey }}" {{ $currentWeightUnit === $wKey ? 'selected' : '' }}>
-                                    {{ $wLabel }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
-                            {{ __('Կերակրատեսակների չափաբաժնի և քաշի հիմնական միավոր:') }}
-                        </span>
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <input type="text" name="operating_address" value="{{ old('operating_address', $vendor->operating_address ?? ($location?->address ?? $vendor->legal_address)) }}" class="form-control" placeholder="{{ __('Physical operating address') }}" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
+                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
+                                <i class="fa-solid fa-map-pin"></i>
+                            </span>
+                        </div>
                     </div>
 
-                    <!-- D. Volume Unit -->
+                    <!-- Director & Phone -->
                     <div class="form-group">
-                        <label for="vendor_volume_unit" class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem;">
-                            <i class="fa-solid fa-glass-water" style="color: #6366f1;"></i>
-                            <span>{{ __('Ծավալի չափման միավոր') }}</span>
+                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            {{ __('Director (Full Name)') }}
                         </label>
-                        <select name="volume_unit" id="vendor_volume_unit" class="form-input" style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); cursor: pointer;">
-                            @php
-                                $volumeUnitOptions = [
-                                    'ml' => __('Milliliter (ml)'),
-                                    'l' => __('Liter (l)'),
-                                    'fl_oz' => __('Fluid Ounce (fl oz)'),
-                                ];
-                            @endphp
-                            @foreach($volumeUnitOptions as $vKey => $vLabel)
-                                <option value="{{ $vKey }}" {{ $currentVolumeUnit === $vKey ? 'selected' : '' }}>
-                                    {{ $vLabel }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
-                            {{ __('Խմիչքների, կոկտեյլների և հեղուկների չափման հիմնական միավոր:') }}
-                        </span>
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <input type="text" name="director_name" value="{{ old('director_name', $vendor->director_name) }}" class="form-control" placeholder="{{ __("Director's Name") }}" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
+                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
+                                <i class="fa-solid fa-user-tie"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            {{ __("Director's Phone Number") }}
+                        </label>
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <input type="text" name="director_phone" value="{{ old('director_phone', $vendor->director_phone) }}" class="form-control" placeholder="+374 91 000000" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
+                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
+                                <i class="fa-solid fa-mobile-screen"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Manager & Phone -->
+                    <div class="form-group">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            {{ __('Manager / Contact Person') }}
+                        </label>
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <input type="text" name="contact_person_name" value="{{ old('contact_person_name', $vendor->contact_person_name) }}" class="form-control" placeholder="{{ __("Manager's Name") }}" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
+                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
+                                <i class="fa-solid fa-user-gear"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            {{ __("Manager's Phone Number") }}
+                        </label>
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <input type="text" name="contact_person_phone" value="{{ old('contact_person_phone', $vendor->contact_person_phone) }}" class="form-control" placeholder="+374 93 000000" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
+                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
+                                <i class="fa-solid fa-mobile-screen"></i>
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 3. OPERATING HOURS, KITCHEN & ORDER SCHEDULE CARD -->
+            
+                </div>
+
+                <!-- 2. ORDERS & KITCHEN TAB -->
+                <div x-show="activeTab === 'orders'" x-transition.opacity role="tabpanel" style="display: flex; flex-direction: column; gap: 1.75rem;">
+                    <!-- 3. OPERATING HOURS, KITCHEN & ORDER SCHEDULE CARD -->
             @php
                 $hasMultipleLocations = $vendor->locations->count() > 1;
                 $locDineInEnabled = old('dine_in_schedule_enabled', $location ? (bool)$location->dine_in_schedule_enabled : (bool)$vendor->dine_in_schedule_enabled);
@@ -652,456 +854,8 @@
                 </div>
             </div>
 
-            <!-- 3. CUSTOM DOMAIN & BRANDING URL -->
-            <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                    <div style="display: flex; align-items: center; gap: 0.9rem;">
-                        <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(6, 182, 212, 0.15); color: #06b6d4; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
-                            <i class="fa-solid fa-globe"></i>
-                        </span>
-                        <div>
-                            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
-                                {{ __('Custom Domain & White-Label') }}
-                            </h3>
-                            <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
-                                {{ __('Connect your custom domain so the menu opens on your domain (e.g. menu.restaurant.com) and admins access yourdomain/admin') }}
-                            </p>
-                        </div>
-                    </div>
-
-                    @php
-                        $primaryDomain = $vendor->primaryCustomDomain;
-                    @endphp
-                    @if($primaryDomain && $primaryDomain->isActive())
-                        <span style="font-size: 0.78rem; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 0.3rem 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem;">
-                            <i class="fa-solid fa-circle-check"></i> {{ __('Active & Connected') }}
-                        </span>
-                    @elseif($primaryDomain && $primaryDomain->isVerified())
-                        <span style="font-size: 0.78rem; font-weight: 700; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 0.3rem 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem;">
-                            <i class="fa-solid fa-shield-halved"></i> {{ __('Ownership Verified (Awaiting DNS)') }}
-                        </span>
-                    @elseif($primaryDomain && $primaryDomain->isDnsDetected())
-                        <span style="font-size: 0.78rem; font-weight: 700; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 0.3rem 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem;">
-                            <i class="fa-solid fa-bolt"></i> {{ __('DNS Detected (Awaiting Verification)') }}
-                        </span>
-                    @elseif($vendor->hasCustomDomain())
-                        <span style="font-size: 0.78rem; font-weight: 700; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 0.3rem 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem;">
-                            <i class="fa-solid fa-hourglass-half"></i> {{ __('Pending Configuration') }}
-                        </span>
-                    @else
-                        <span style="font-size: 0.78rem; font-weight: 700; background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; padding: 0.3rem 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem;">
-                            <i class="fa-solid fa-circle-minus"></i> {{ __('Disabled') }}
-                        </span>
-                    @endif
-                </div>
-
-                <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem; margin-bottom: 1.25rem;">
-                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: end; flex-wrap: wrap;">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                                {{ __('Custom Domain FQDN') }}
-                            </label>
-                            <div style="position: relative; display: flex; align-items: center;">
-                                <input type="text" name="custom_domain" id="customDomainInput" value="{{ old('custom_domain', $vendor->custom_domain) }}" class="form-control" placeholder="e.g. menu.restaurant.com or restaurant.com" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
-                                <span style="position: absolute; left: 1rem; color: #06b6d4; font-size: 1rem;">
-                                    <i class="fa-solid fa-link"></i>
-                                </span>
-                            </div>
-                        </div>
-
-                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                            <button type="button" id="btnVerifyDomain" class="btn btn-secondary" style="padding: 0.75rem 1rem; font-size: 0.88rem; font-weight: 700; border-radius: 12px; display: inline-flex; align-items: center; gap: 0.5rem; border-color: rgba(16, 185, 129, 0.4); color: #10b981; white-space: nowrap;">
-                                <i class="fa-solid fa-shield-check"></i> {{ __('Verify Ownership') }}
-                            </button>
-                            <button type="button" id="btnCheckDomainDns" class="btn btn-secondary" style="padding: 0.75rem 1rem; font-size: 0.88rem; font-weight: 700; border-radius: 12px; display: inline-flex; align-items: center; gap: 0.5rem; border-color: rgba(6, 182, 212, 0.4); color: #06b6d4; white-space: nowrap;">
-                                <i class="fa-solid fa-bolt"></i> {{ __('Check DNS') }}
-                            </button>
-                        </div>
-                    </div>
-
-                    <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem; display: block;">
-                        {{ __('Enter domain without http:// or https:// (e.g. menu.restaurant.com). Leave blank to disable custom domain:') }}
-                    </span>
-
-                    <!-- Live Check / Verification Result Alert Box -->
-                    <div id="dnsCheckResultBox" style="display: none; margin-top: 1rem; padding: 0.85rem 1.1rem; border-radius: 12px; font-size: 0.86rem; font-weight: 600;"></div>
-
-                    @if($primaryDomain)
-                        <!-- TXT Challenge Info Box -->
-                        <div style="margin-top: 1rem; padding: 0.9rem 1.1rem; border-radius: 12px; background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.84rem;">
-                            <div style="font-weight: 700; color: #38bdf8; margin-bottom: 0.45rem; display: flex; align-items: center; justify-content: space-between;">
-                                <span><i class="fa-solid fa-key"></i> {{ __('DNS TXT Record for Ownership Verification') }}</span>
-                                @if($primaryDomain->isVerified())
-                                    <span style="color: #10b981; font-size: 0.76rem;"><i class="fa-solid fa-circle-check"></i> {{ __('Verified') }} ({{ $primaryDomain->verified_at?->format('d.m.Y H:i') }})</span>
-                                @else
-                                    <span style="color: #f59e0b; font-size: 0.76rem;"><i class="fa-solid fa-clock"></i> {{ __('Waiting for TXT record') }}</span>
-                                @endif
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr; gap: 0.4rem; font-family: monospace; font-size: 0.8rem;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.25); padding: 0.35rem 0.6rem; border-radius: 6px;">
-                                    <span style="color: var(--text-muted);">Host/Name: <strong style="color: var(--text-main);">{{ $primaryDomain->getChallengeHost() }}</strong></span>
-                                    <button type="button" onclick="navigator.clipboard.writeText('{{ $primaryDomain->getChallengeHost() }}'); alert('Host copied');" style="background: none; border: none; color: #38bdf8; cursor: pointer;" title="Copy"><i class="fa-solid fa-copy"></i></button>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.25); padding: 0.35rem 0.6rem; border-radius: 6px;">
-                                    <span style="color: var(--text-muted); word-break: break-all;">TXT Value: <strong style="color: #a5f3fc;">{{ $primaryDomain->verification_token }}</strong></span>
-                                    <button type="button" onclick="navigator.clipboard.writeText('{{ $primaryDomain->verification_token }}'); alert('Token copied');" style="background: none; border: none; color: #38bdf8; cursor: pointer;" title="Copy"><i class="fa-solid fa-copy"></i></button>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
-                    <!-- Action Links if domain exists -->
-                    @if($vendor->hasCustomDomain())
-                        <div style="margin-top: 1.1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06); display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
-                            <a href="{{ $vendor->getStorefrontUrl() }}" target="_blank" class="btn btn-secondary" style="font-size: 0.82rem; font-weight: 600; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.45rem;">
-                                <i class="fa-solid fa-arrow-up-right-from-square" style="color: #06b6d4;"></i> {{ __('Open Menu (Storefront)') }}
-                            </a>
-                            <a href="{{ $vendor->getAdminUrl() }}" target="_blank" class="btn btn-secondary" style="font-size: 0.82rem; font-weight: 600; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.45rem;">
-                                <i class="fa-solid fa-shield-halved" style="color: #f59e0b;"></i> {{ __('Open Admin Panel') }}
-                            </a>
-                        </div>
-                    @endif
-                </div>
-
-                <!-- DNS & cPanel Setup Instructions Box -->
-                <div style="background: rgba(30, 41, 59, 0.4); border: 1px dashed rgba(6, 182, 212, 0.35); border-radius: 16px; padding: 1.25rem;">
-                    <div style="font-size: 0.92rem; font-weight: 800; color: #38bdf8; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
-                        <i class="fa-solid fa-circle-info"></i> {{ __('How to connect your domain (DNS & cPanel steps)') }}
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; font-size: 0.84rem; color: var(--text-muted);">
-                        <!-- Step 1: TXT Verification -->
-                        <div style="background: rgba(15, 23, 42, 0.5); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                            <div style="font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem;">
-                                {{ __('1. Ownership Verification (TXT Record)') }}
-                            </div>
-                            <p style="margin: 0 0 0.5rem 0; line-height: 1.4;">
-                                {{ __('Add a TXT Record in your domain DNS with the Host and Value above, then click "Verify Ownership":') }}
-                            </p>
-                            <div style="font-size: 0.78rem; color: #a5f3fc;">
-                                <i class="fa-solid fa-lock"></i> {{ __('This ensures that only the verified domain owner can link it to their restaurant.') }}
-                            </div>
-                        </div>
-
-                        <!-- Step 2: DNS Routing -->
-                        <div style="background: rgba(15, 23, 42, 0.5); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                            <div style="font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem;">
-                                {{ __('2. DNS Routing (A or CNAME)') }}
-                            </div>
-                            <p style="margin: 0 0 0.5rem 0; line-height: 1.4;">
-                                {{ __('Add an A Record in your domain DNS pointing to:') }}
-                            </p>
-                            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.3); padding: 0.4rem 0.65rem; border-radius: 6px; font-family: monospace; color: #a5f3fc; font-size: 0.82rem;">
-                                <span>A &rarr; {{ $_SERVER['SERVER_ADDR'] ?? gethostbyname('menu.elab.am') }}</span>
-                                <button type="button" onclick="navigator.clipboard.writeText('{{ $_SERVER['SERVER_ADDR'] ?? gethostbyname('menu.elab.am') }}'); alert('IP copied');" style="background: none; border: none; color: #38bdf8; cursor: pointer; padding: 2px 4px;" title="Copy IP">
-                                    <i class="fa-solid fa-copy"></i>
-                                </button>
-                            </div>
-                            <div style="margin-top: 0.4rem; font-size: 0.78rem;">
-                                {{ __('or CNAME to') }} <code>menu.elab.am</code>
-                            </div>
-                        </div>
-
-                        <!-- Step 3: cPanel / SSL -->
-                        <div style="background: rgba(15, 23, 42, 0.5); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                            <div style="font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem;">
-                                {{ __('3. cPanel & SSL Certificate') }}
-                            </div>
-                            <p style="margin: 0 0 0.5rem 0; line-height: 1.4;">
-                                {{ __('In cPanel create a new Domain/Alias with the same Document Root (e.g. menu.elab.am/public).') }}
-                            </p>
-                            <div style="font-size: 0.78rem; color: #a5f3fc;">
-                                <i class="fa-solid fa-shield"></i> {{ __('In cPanel SSL/TLS Status, run AutoSSL for a free HTTPS certificate.') }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 3. FEATURED DISH OF THE DAY BANNER CARD -->
-            <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                    <div style="display: flex; align-items: center; gap: 0.9rem;">
-                        <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
-                            <i class="fa-solid fa-fire-flame-curved"></i>
-                        </span>
-                        <div>
-                            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                                <span>{{ __('Dish of the Day Banner') }}</span>
-                                <span style="font-size: 0.72rem; font-weight: 700; background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; padding: 0.15rem 0.55rem; border-radius: 6px; letter-spacing: 0.03em;">PROMO BANNER</span>
-                            </h3>
-                            <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
-                                {{ __('Promote a special dish of the day at the very top of the menu with an eye-catching banner') }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Enable/Disable Switch -->
-                    <label style="display: inline-flex; align-items: center; gap: 0.75rem; cursor: pointer; background: var(--bg-body); padding: 0.5rem 1rem; border-radius: 14px; border: 1px solid var(--border-color);">
-                        <input type="checkbox" name="featured_dish_enabled" value="1" id="featuredDishToggle" {{ old('featured_dish_enabled', $vendor->featured_dish_enabled) ? 'checked' : '' }} style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
-                        <span style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">
-                            {{ __('Activate in Menu') }}
-                        </span>
-                    </label>
-                </div>
-
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1.25rem;">
-                    <!-- Select Dish -->
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                            {{ __('Select Dish of the Day') }}
-                        </label>
-                        <div style="position: relative; display: flex; align-items: center;">
-                            <select name="featured_product_id" id="featuredProductSelect" class="form-control" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
-                                <option value="">-- {{ __('Select a dish from the list') }} --</option>
-                                @foreach($products as $prod)
-                                    <option value="{{ $prod->id }}"
-                                            data-name="{{ $prod->name }}"
-                                            data-image="{{ $prod->image }}"
-                                            data-price="{{ number_format($prod->price, 0) }}"
-                                            data-desc="{{ $prod->description }}"
-                                            {{ old('featured_product_id', $vendor->featured_product_id) == $prod->id ? 'selected' : '' }}>
-                                        🍽️ {{ $prod->name }} — {{ number_format($prod->price, 0) }} {{ $vendor->currency ?? 'AMD' }} ({{ $prod->category?->name ?? 'Uncategorized' }})
-                                    </option>
-                                @endforeach
-                            </select>
-                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
-                                <i class="fa-solid fa-utensils"></i>
-                            </span>
-                        </div>
-                        <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
-                            {{ __('This dish will be featured prominently right beneath the categories') }}
-                        </span>
-                    </div>
-
-                    <!-- Badge Text -->
-                    <div class="form-group">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                            {{ __('Badge Text') }}
-                        </label>
-                        <div style="position: relative; display: flex; align-items: center;">
-                            <input type="text" name="featured_dish_badge" id="featuredDishBadgeInput" value="{{ old('featured_dish_badge', $vendor->featured_dish_badge ?? "⭐ TODAY'S SPECIAL") }}" placeholder="e.g. ⭐ TODAY'S SPECIAL" class="form-control" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
-                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
-                                <i class="fa-solid fa-tag"></i>
-                            </span>
-                        </div>
-                        <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
-                            {{ __('Default: "⭐ TODAY\'S SPECIAL" or "CHEF\'S SPECIAL"') }}
-                        </span>
-                    </div>
-
-                    <!-- Promo Subtitle -->
-                    <div class="form-group">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                            {{ __('Promo Subtitle') }}
-                        </label>
-                        <div style="position: relative; display: flex; align-items: center;">
-                            <input type="text" name="featured_dish_subtitle" id="featuredDishSubtitleInput" value="{{ old('featured_dish_subtitle', $vendor->featured_dish_subtitle) }}" placeholder="e.g. Chef's special recommendation for today only" class="form-control" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
-                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
-                                <i class="fa-solid fa-comment-dots"></i>
-                            </span>
-                        </div>
-                        <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
-                            {{ __("If left empty, the dish's original description will be used") }}
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Live Preview in Admin -->
-                <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px dashed var(--border-color);">
-                    <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.45rem;">
-                        <i class="fa-solid fa-eye" style="color: var(--primary);"></i>
-                        <span>{{ __('Preview (how customers will see it in the menu)') }}</span>
-                    </div>
-
-                    <div id="featuredDishPreviewCard" style="max-width: 480px; border-radius: 16px; overflow: hidden; background: var(--bg-body); border: 2px solid var(--primary); box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
-                        <div style="position: relative; height: 140px; background: #000; overflow: hidden;">
-                            <img id="previewDishImg" src="{{ $vendor->featuredProduct?->image ?: asset('images/default-dish.png') }}" onerror="this.onerror=null;this.src='{{ asset('images/default-dish.png') }}';" style="width: 100%; height: 100%; object-fit: cover;">
-                            <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);"></div>
-                            <span id="previewDishBadge" style="position: absolute; top: 0.75rem; left: 0.75rem; background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; font-size: 0.7rem; font-weight: 800; padding: 0.25rem 0.6rem; border-radius: 9999px; text-transform: uppercase;">
-                                {{ $vendor->featured_dish_badge ?: "⭐ TODAY'S SPECIAL" }}
-                            </span>
-                        </div>
-                        <div style="padding: 1rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.25rem;">
-                                <h4 id="previewDishName" style="margin: 0; font-size: 1.1rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit';">
-                                    {{ $vendor->featuredProduct?->name ?? 'Select dish' }}
-                                </h4>
-                                <span id="previewDishPrice" style="font-size: 1.05rem; font-weight: 800; color: var(--primary);">
-                                    {{ $vendor->featuredProduct ? number_format($vendor->featuredProduct->price, 0) . ' ' . ($vendor->currency ?? 'AMD') : '' }}
-                                </span>
-                            </div>
-                            <p id="previewDishDesc" style="margin: 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
-                                {{ $vendor->featured_dish_subtitle ?: ($vendor->featuredProduct?->description ?: "Chef's special selection") }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 3. AI CONTROL CENTER BANNER CARD -->
-            <div class="card settings-card" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(236, 72, 153, 0.05)); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card); position: relative; overflow: hidden;">
-                <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #8b5cf6, #ec4899, #f59e0b);"></div>
-
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem;">
-                    <div style="display: flex; align-items: center; gap: 1.1rem; min-width: 0; flex: 1;">
-                        <span style="width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, #8b5cf6, #ec4899); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);">
-                            <i class="fa-solid fa-robot"></i>
-                        </span>
-                        <div>
-                            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
-                                    {{ __('AI Control Center & AI Waiter') }}
-                                </h3>
-                                <span style="font-size: 0.72rem; font-weight: 700; background: linear-gradient(135deg, #8b5cf6, #d946ef); color: #fff; padding: 0.15rem 0.5rem; border-radius: 6px;">
-                                    NEW DEDICATED HUB
-                                </span>
-                            </div>
-                            <p style="margin: 0.35rem 0 0; font-size: 0.88rem; color: var(--text-muted); line-height: 1.45;">
-                                {{ __('AI Waiter, AI providers (Gemini, OpenAI, Claude, DeepSeek, Groq), API keys, and model settings have been moved to the dedicated AI section:') }}
-                            </p>
-
-                            <div style="display: flex; gap: 0.75rem; align-items: center; margin-top: 0.75rem; flex-wrap: wrap;">
-                                <span style="font-size: 0.78rem; font-weight: 700; color: #8b5cf6; background: rgba(139, 92, 246, 0.12); padding: 0.2rem 0.55rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
-                                    <i class="fa-solid fa-microchip"></i> {{ strtoupper($vendor->getAiProvider()) }} ({{ $vendor->getAiModel() }})
-                                </span>
-                                @if($vendor->ai_waiter_enabled)
-                                    <span style="font-size: 0.78rem; font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.12); padding: 0.2rem 0.55rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
-                                        <i class="fa-solid fa-circle-check"></i> {{ __('AI Waiter: Active') }}
-                                    </span>
-                                @else
-                                    <span style="font-size: 0.78rem; font-weight: 700; color: #64748b; background: rgba(100, 116, 139, 0.12); padding: 0.2rem 0.55rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
-                                        <i class="fa-solid fa-pause"></i> {{ __('AI Waiter: Disabled') }}
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <a href="{{ route('admin.settings.ai') }}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 0.92rem; padding: 0.75rem 1.4rem; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border: none; color: #fff; box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35); white-space: nowrap;">
-                            <i class="fa-solid fa-gear"></i> {{ __('Open AI Settings') }}
-                            <i class="fa-solid fa-arrow-right" style="font-size: 0.8rem;"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 4. LEGAL & CONTACT INFORMATION CARD (SUPERADMIN) -->
-            <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                    <div style="display: flex; align-items: center; gap: 0.9rem;">
-                        <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(99, 102, 241, 0.15); color: #6366f1; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
-                            <i class="fa-solid fa-scale-balanced"></i>
-                        </span>
-                        <div>
-                            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
-                                {{ __('Legal & Contact Details') }}
-                            </h3>
-                            <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
-                                {{ __('Information accessible to platform SuperAdmin') }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <span style="font-size: 0.78rem; font-weight: 700; background: rgba(99, 102, 241, 0.15); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 8px; padding: 0.3rem 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem;">
-                        <i class="fa-solid fa-shield-halved"></i> {{ __('Visible to SuperAdmin') }}
-                    </span>
-                </div>
-
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1.25rem;">
-                    <!-- Legal Business Name -->
-                    <div class="form-group">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                            {{ __('Legal Business Name') }}
-                        </label>
-                        <div style="position: relative; display: flex; align-items: center;">
-                            <input type="text" name="legal_name" value="{{ old('legal_name', $vendor->legal_name) }}" class="form-control" placeholder="{{ __('e.g. \"Bistro Group\" LLC') }}" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
-                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
-                                <i class="fa-solid fa-building"></i>
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Tax ID -->
-                    <div class="form-group">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                            {{ __('Tax ID (TIN)') }}
-                        </label>
-                        <div style="position: relative; display: flex; align-items: center;">
-                            <input type="text" name="tax_id" value="{{ old('tax_id', $vendor->tax_id) }}" class="form-control" placeholder="02589412" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
-                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
-                                <i class="fa-solid fa-receipt"></i>
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Operating Address -->
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                            {{ __('Operating Address') }}
-                        </label>
-                        <div style="position: relative; display: flex; align-items: center;">
-                            <input type="text" name="operating_address" value="{{ old('operating_address', $vendor->operating_address ?? ($location?->address ?? $vendor->legal_address)) }}" class="form-control" placeholder="{{ __('Physical operating address') }}" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
-                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
-                                <i class="fa-solid fa-map-pin"></i>
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Director & Phone -->
-                    <div class="form-group">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                            {{ __('Director (Full Name)') }}
-                        </label>
-                        <div style="position: relative; display: flex; align-items: center;">
-                            <input type="text" name="director_name" value="{{ old('director_name', $vendor->director_name) }}" class="form-control" placeholder="{{ __("Director's Name") }}" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
-                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
-                                <i class="fa-solid fa-user-tie"></i>
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                            {{ __("Director's Phone Number") }}
-                        </label>
-                        <div style="position: relative; display: flex; align-items: center;">
-                            <input type="text" name="director_phone" value="{{ old('director_phone', $vendor->director_phone) }}" class="form-control" placeholder="+374 91 000000" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
-                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
-                                <i class="fa-solid fa-mobile-screen"></i>
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Manager & Phone -->
-                    <div class="form-group">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                            {{ __('Manager / Contact Person') }}
-                        </label>
-                        <div style="position: relative; display: flex; align-items: center;">
-                            <input type="text" name="contact_person_name" value="{{ old('contact_person_name', $vendor->contact_person_name) }}" class="form-control" placeholder="{{ __("Manager's Name") }}" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
-                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
-                                <i class="fa-solid fa-user-gear"></i>
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                            {{ __("Manager's Phone Number") }}
-                        </label>
-                        <div style="position: relative; display: flex; align-items: center;">
-                            <input type="text" name="contact_person_phone" value="{{ old('contact_person_phone', $vendor->contact_person_phone) }}" class="form-control" placeholder="+374 93 000000" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
-                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
-                                <i class="fa-solid fa-mobile-screen"></i>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 5. SERVICE FEE CARD -->
+            
+                    <!-- 5. SERVICE FEE CARD -->
             <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                     <div style="display: flex; align-items: center; gap: 0.9rem;">
@@ -1194,344 +948,8 @@
                 </div>
             </div>
 
-            <!-- 6. DELIVERY SETTINGS CARD -->
-            <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                    <div style="display: flex; align-items: center; gap: 0.9rem;">
-                        <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(59, 130, 246, 0.15); color: #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
-                            <i class="fa-solid fa-motorcycle"></i>
-                        </span>
-                        <div>
-                            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
-                                {{ __('Delivery Service Settings') }}
-                            </h3>
-                            <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
-                                {{ __('Configure delivery fee, minimum order amount, and free delivery threshold') }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Enable Switch -->
-                    <label class="modern-switch-wrapper" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; user-select: none;">
-                        <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-main);" id="deliveryStatusLabel">
-                            {{ old('delivery_enabled', $vendor->delivery_enabled) ? __('Active') : __('Disabled') }}
-                        </span>
-                        <input type="checkbox" name="delivery_enabled" value="1" id="deliveryToggle" {{ old('delivery_enabled', $vendor->delivery_enabled) ? 'checked' : '' }} onchange="toggleDeliveryFields()" style="width: 20px; height: 20px; accent-color: #3b82f6; cursor: pointer;">
-                    </label>
-                </div>
-
-                <div id="deliveryContainer" style="{{ old('delivery_enabled', $vendor->delivery_enabled) ? '' : 'opacity: 0.55; pointer-events: none;' }}; transition: opacity 0.2s ease;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1.25rem;">
-                        <!-- Delivery Fee -->
-                        <div class="form-group">
-                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                                {{ __('Delivery Fee') }} <span style="color: #ef4444;">*</span>
-                            </label>
-                            <div style="position: relative; display: flex; align-items: center;">
-                                <input type="number" step="any" min="0" name="delivery_fee" id="deliveryFeeInput" value="{{ old('delivery_fee', $vendor->delivery_fee ?? 0) }}" required class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem; font-size: 1rem; font-weight: 700;" oninput="updateCalculationsPreview()">
-                                <span class="currency-label-display" style="position: absolute; right: 1rem; font-weight: 800; color: #3b82f6; font-size: 0.85rem;">
-                                    {{ $vendor->currency }}
-                                </span>
-                            </div>
-                            <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
-                                {{ __('Standard fixed fee for delivery (0 = free)') }}
-                            </span>
-                        </div>
-
-                        <!-- Minimum Order for Delivery -->
-                        <div class="form-group">
-                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                                {{ __('Minimum Order Amount') }} <span style="color: #ef4444;">*</span>
-                            </label>
-                            <div style="position: relative; display: flex; align-items: center;">
-                                <input type="number" step="any" min="0" name="delivery_min_amount" id="deliveryMinAmount" value="{{ old('delivery_min_amount', $vendor->delivery_min_amount ?? 0) }}" required class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem; font-size: 1rem; font-weight: 700;" oninput="updateCalculationsPreview()">
-                                <span class="currency-label-display" style="position: absolute; right: 1rem; font-weight: 800; color: var(--text-muted); font-size: 0.85rem;">
-                                    {{ $vendor->currency }}
-                                </span>
-                            </div>
-                            <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
-                                {{ __('Minimum order threshold for delivery (0 = no limit)') }}
-                            </span>
-                        </div>
-
-                        <!-- Free Delivery From Threshold -->
-                        <div class="form-group">
-                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                                {{ __('Free Delivery From') }}
-                            </label>
-                            <div style="position: relative; display: flex; align-items: center;">
-                                <input type="number" step="any" min="0" name="delivery_free_from" id="deliveryFreeFrom" value="{{ old('delivery_free_from', $vendor->delivery_free_from) }}" placeholder="No free threshold" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem; font-size: 1rem; font-weight: 700;" oninput="updateCalculationsPreview()">
-                                <span class="currency-label-display" style="position: absolute; right: 1rem; font-weight: 800; color: #10b981; font-size: 0.85rem;">
-                                    {{ $vendor->currency }}
-                                </span>
-                            </div>
-                            <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
-                                {{ __('If order exceeds this amount, delivery becomes free (empty = always paid)') }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Storefront Motivation Banner Preview -->
-                    <div style="margin-top: 1.25rem; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 14px; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem;">
-                            <span style="width: 32px; height: 32px; border-radius: 8px; background: rgba(16, 185, 129, 0.2); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0;">
-                                <i class="fa-solid fa-gift"></i>
-                            </span>
-                            <div>
-                                <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);" id="deliveryPreviewText">
-                                    {{ __('Free delivery indicator in cart') }}
-                                </div>
-                                <div style="font-size: 0.78rem; color: var(--text-muted);" id="deliveryPreviewSubtext">
-                                    {{ __('Customers will see a progress bar encouraging higher cart totals') }}
-                                </div>
-                            </div>
-                        </div>
-                        <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981; font-weight: 800; border-radius: 8px; padding: 0.35rem 0.75rem; font-size: 0.8rem;">
-                            <i class="fa-solid fa-sparkles"></i> {{ __('Upsell Feature') }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 7. TAKEAWAY SETTINGS CARD -->
-            <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                    <div style="display: flex; align-items: center; gap: 0.9rem;">
-                        <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(139, 92, 246, 0.15); color: #8b5cf6; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
-                            <i class="fa-solid fa-bag-shopping"></i>
-                        </span>
-                        <div>
-                            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
-                                {{ __('Takeaway Service Settings') }}
-                            </h3>
-                            <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
-                                {{ __('Allow customers to pre-order and pick up in person') }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Enable Switch -->
-                    <label class="modern-switch-wrapper" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; user-select: none;">
-                        <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-main);" id="takeawayStatusLabel">
-                            {{ old('takeaway_enabled', $vendor->takeaway_enabled) ? __('Active') : __('Disabled') }}
-                        </span>
-                        <input type="checkbox" name="takeaway_enabled" value="1" id="takeawayToggle" {{ old('takeaway_enabled', $vendor->takeaway_enabled) ? 'checked' : '' }} onchange="toggleTakeawayFields()" style="width: 20px; height: 20px; accent-color: #8b5cf6; cursor: pointer;">
-                    </label>
-                </div>
-
-                <div id="takeawayContainer" style="{{ old('takeaway_enabled', $vendor->takeaway_enabled) ? '' : 'opacity: 0.55; pointer-events: none;' }}; transition: opacity 0.2s ease;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1.25rem;">
-                        <!-- Minimum Order for Takeaway -->
-                        <div class="form-group">
-                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                                {{ __('Minimum Order Amount') }}
-                            </label>
-                            <div style="position: relative; display: flex; align-items: center;">
-                                <input type="number" step="any" min="0" name="takeaway_min_amount" id="takeawayMinAmount" value="{{ old('takeaway_min_amount', $vendor->takeaway_min_amount ?? 0) }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem; font-size: 1rem; font-weight: 700;" oninput="updateCalculationsPreview()">
-                                <span class="currency-label-display" style="position: absolute; right: 1rem; font-weight: 800; color: var(--text-muted); font-size: 0.85rem;">
-                                    {{ $vendor->currency }}
-                                </span>
-                            </div>
-                            <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
-                                {{ __('Minimum order threshold for takeaway (0 = no limit)') }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Storefront Takeaway Banner Preview -->
-                    <div style="margin-top: 1.25rem; background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 14px; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem;">
-                            <span style="width: 32px; height: 32px; border-radius: 8px; background: rgba(139, 92, 246, 0.2); color: #8b5cf6; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0;">
-                                <i class="fa-solid fa-bag-shopping"></i>
-                            </span>
-                            <div>
-                                <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);" id="takeawayPreviewText">
-                                    {{ __('Takeaway pickup option is available') }}
-                                </div>
-                                <div style="font-size: 0.78rem; color: var(--text-muted);" id="takeawayPreviewSubtext">
-                                    {{ __('Customers can pre-order without a table QR code') }}
-                                </div>
-                            </div>
-                        </div>
-                        <span class="badge" style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6; font-weight: 800; border-radius: 8px; padding: 0.35rem 0.75rem; font-size: 0.8rem;">
-                            <i class="fa-solid fa-store"></i> {{ __('Takeaway Mode') }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            @php
-                $paymentSettings = $vendor->getSafePaymentSettings();
-                $crmSettings = $vendor->getSafeCrmSettings();
-                $printerSettings = $vendor->getThermalPrinterSettings();
-            @endphp
-
-            <!-- 5. ONLINE PAYMENTS & GATEWAYS -->
-            <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                    <div style="display: flex; align-items: center; gap: 0.9rem;">
-                        <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(59, 130, 246, 0.15); color: #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
-                            <i class="fa-solid fa-credit-card"></i>
-                        </span>
-                        <div>
-                            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
-                                {{ __('Payment Systems (Local & International Payments)') }}
-                            </h3>
-                            <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
-                                {{ __('Manage online and on-premise payment methods for customers') }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <label class="switch" style="position: relative; display: inline-block; width: 48px; height: 26px;">
-                        <input type="checkbox" name="payment_settings[online_enabled]" value="1" {{ !empty($paymentSettings['online_enabled']) ? 'checked' : '' }} id="onlinePaymentsToggle" onchange="toggleOnlinePaymentsFields()">
-                        <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
-                    </label>
-                </div>
-
-                <!-- Payment Methods Choice (Cash / Terminal) -->
-                <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
-                    <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.75rem;">
-                        {{ __('General Payment Methods in Cart') }}
-                    </div>
-                    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
-                        <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; color: var(--text-main);">
-                            <input type="checkbox" name="payment_settings[cash_enabled]" value="1" {{ !empty($paymentSettings['cash_enabled']) ? 'checked' : '' }} style="width: 18px; height: 18px; accent-color: var(--primary);">
-                            <span>💵 {{ __('Cash payment on-site') }}</span>
-                        </label>
-                        <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; color: var(--text-main);">
-                            <input type="checkbox" name="payment_settings[pos_terminal_enabled]" value="1" {{ !empty($paymentSettings['pos_terminal_enabled']) ? 'checked' : '' }} style="width: 18px; height: 18px; accent-color: var(--primary);">
-                            <span>💳 {{ __('POS terminal payment on-site') }}</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div id="onlineGatewaysContainer" style="{{ empty($paymentSettings['online_enabled']) ? 'opacity: 0.55; pointer-events: none;' : '' }}; transition: all 0.25s ease;">
-                    <div style="font-size: 0.92rem; font-weight: 800; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                        <span>🇦🇲 {{ __('Armenian Payment Gateways') }}</span>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
-                        <!-- Idram -->
-                        <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem 1.25rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                                <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--text-main);">
-                                    <span style="background: #ff6f00; color: #fff; width: 26px; height: 26px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900;">Id</span>
-                                    <span>Idram</span>
-                                </div>
-                                <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 22px;">
-                                    <input type="checkbox" name="payment_settings[gateways][idram][enabled]" value="1" {{ !empty($paymentSettings['gateways']['idram']['enabled']) ? 'checked' : '' }}>
-                                    <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
-                                </label>
-                            </div>
-                            <div style="display: flex; flex-direction: column; gap: 0.65rem;">
-                                <input type="text" name="payment_settings[gateways][idram][merchant_id]" value="{{ $paymentSettings['gateways']['idram']['merchant_id'] ?? '' }}" placeholder="Receiver / Merchant ID" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
-                                <input type="password" name="payment_settings[gateways][idram][secret_key]" value="" placeholder="{{ !empty($paymentSettings['gateways']['idram']['configured']) ? '•••••••• (' . ($paymentSettings['gateways']['idram']['masked'] ?? 'Configured') . ')' : 'Secret Key' }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
-                                <label style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--text-muted); cursor: pointer;">
-                                    <input type="checkbox" name="payment_settings[gateways][idram][sandbox]" value="1" {{ !empty($paymentSettings['gateways']['idram']['sandbox']) ? 'checked' : '' }} style="accent-color: #ff6f00;">
-                                    <span>{{ __('Sandbox / Test Mode') }}</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Telcell Wallet -->
-                        <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem 1.25rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                                <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--text-main);">
-                                    <span style="background: #e11d48; color: #fff; width: 26px; height: 26px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900;">TC</span>
-                                    <span>Telcell Wallet</span>
-                                </div>
-                                <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 22px;">
-                                    <input type="checkbox" name="payment_settings[gateways][telcell][enabled]" value="1" {{ !empty($paymentSettings['gateways']['telcell']['enabled']) ? 'checked' : '' }}>
-                                    <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
-                                </label>
-                            </div>
-                            <div style="display: flex; flex-direction: column; gap: 0.65rem;">
-                                <input type="text" name="payment_settings[gateways][telcell][shop_id]" value="{{ $paymentSettings['gateways']['telcell']['shop_id'] ?? '' }}" placeholder="Shop ID" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
-                                <input type="password" name="payment_settings[gateways][telcell][key]" value="" placeholder="{{ !empty($paymentSettings['gateways']['telcell']['configured']) ? '•••••••• (' . ($paymentSettings['gateways']['telcell']['masked'] ?? 'Configured') . ')' : 'Security Key' }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
-                                <label style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--text-muted); cursor: pointer;">
-                                    <input type="checkbox" name="payment_settings[gateways][telcell][sandbox]" value="1" {{ !empty($paymentSettings['gateways']['telcell']['sandbox']) ? 'checked' : '' }} style="accent-color: #e11d48;">
-                                    <span>{{ __('Sandbox / Test Mode') }}</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- FastShift -->
-                        <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem 1.25rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                                <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--text-main);">
-                                    <span style="background: #2563eb; color: #fff; width: 26px; height: 26px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900;">FS</span>
-                                    <span>FastShift</span>
-                                </div>
-                                <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 22px;">
-                                    <input type="checkbox" name="payment_settings[gateways][fastshift][enabled]" value="1" {{ !empty($paymentSettings['gateways']['fastshift']['enabled']) ? 'checked' : '' }}>
-                                    <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
-                                </label>
-                            </div>
-                            <div style="display: flex; flex-direction: column; gap: 0.65rem;">
-                                <input type="text" name="payment_settings[gateways][fastshift][merchant_id]" value="{{ $paymentSettings['gateways']['fastshift']['merchant_id'] ?? '' }}" placeholder="Merchant ID" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
-                                <input type="password" name="payment_settings[gateways][fastshift][api_key]" value="" placeholder="{{ !empty($paymentSettings['gateways']['fastshift']['configured']) ? '•••••••• (' . ($paymentSettings['gateways']['fastshift']['masked'] ?? 'Configured') . ')' : 'API Key' }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
-                                <label style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--text-muted); cursor: pointer;">
-                                    <input type="checkbox" name="payment_settings[gateways][fastshift][sandbox]" value="1" {{ !empty($paymentSettings['gateways']['fastshift']['sandbox']) ? 'checked' : '' }} style="accent-color: #2563eb;">
-                                    <span>{{ __('Sandbox / Test Mode') }}</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- ArCa / Ameriabank vPOS -->
-                        <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem 1.25rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                                <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--text-main);">
-                                    <span style="background: #059669; color: #fff; width: 26px; height: 26px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900;">AC</span>
-                                    <span>ArCa / Ameriabank vPOS</span>
-                                </div>
-                                <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 22px;">
-                                    <input type="checkbox" name="payment_settings[gateways][arca][enabled]" value="1" {{ !empty($paymentSettings['gateways']['arca']['enabled']) ? 'checked' : '' }}>
-                                    <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
-                                </label>
-                            </div>
-                            <div style="display: flex; flex-direction: column; gap: 0.65rem;">
-                                <input type="text" name="payment_settings[gateways][arca][merchant_id]" value="{{ $paymentSettings['gateways']['arca']['merchant_id'] ?? '' }}" placeholder="Merchant / Client ID" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
-                                <input type="text" name="payment_settings[gateways][arca][terminal_id]" value="{{ $paymentSettings['gateways']['arca']['terminal_id'] ?? '' }}" placeholder="Terminal ID" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
-                                <label style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--text-muted); cursor: pointer;">
-                                    <input type="checkbox" name="payment_settings[gateways][arca][sandbox]" value="1" {{ !empty($paymentSettings['gateways']['arca']['sandbox']) ? 'checked' : '' }} style="accent-color: #059669;">
-                                    <span>{{ __('Sandbox / Test Mode') }}</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="font-size: 0.92rem; font-weight: 800; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                        <span>🌍 {{ __('International Payment Gateways') }}</span>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 1.25rem;">
-                        <!-- Stripe -->
-                        <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem 1.25rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                                <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--text-main);">
-                                    <span style="background: #6366f1; color: #fff; width: 26px; height: 26px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900;">S</span>
-                                    <span>Stripe (Visa, Mastercard, Apple Pay)</span>
-                                </div>
-                                <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 22px;">
-                                    <input type="checkbox" name="payment_settings[gateways][stripe][enabled]" value="1" {{ !empty($paymentSettings['gateways']['stripe']['enabled']) ? 'checked' : '' }}>
-                                    <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
-                                </label>
-                            </div>
-                            <div style="display: flex; flex-direction: column; gap: 0.65rem;">
-                                <input type="text" name="payment_settings[gateways][stripe][publishable_key]" value="{{ $paymentSettings['gateways']['stripe']['publishable_key'] ?? '' }}" placeholder="Publishable Key (pk_test_...)" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
-                                <input type="password" name="payment_settings[gateways][stripe][secret_key]" value="" placeholder="{{ !empty($paymentSettings['gateways']['stripe']['configured']) ? '•••••••• (' . ($paymentSettings['gateways']['stripe']['masked'] ?? 'Configured') . ')' : 'Secret Key (sk_test_...)' }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
-                                <label style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--text-muted); cursor: pointer;">
-                                    <input type="checkbox" name="payment_settings[gateways][stripe][sandbox]" value="1" {{ !empty($paymentSettings['gateways']['stripe']['sandbox']) ? 'checked' : '' }} style="accent-color: #6366f1;">
-                                    <span>{{ __('Test Mode (pk_test / sk_test)') }}</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 6. ESC/POS THERMAL PRINTERS & RECEIPT STUDIO -->
+            
+                    <!-- 6. ESC/POS THERMAL PRINTERS & RECEIPT STUDIO -->
             <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                     <div style="display: flex; align-items: center; gap: 0.9rem;">
@@ -1932,99 +1350,452 @@
                 </div>
             </div>
 
-            <!-- 7. CRM AUTOMATION & BIRTHDAY DISCOUNTS -->
+            
+                </div>
+
+                <!-- 3. RESERVATIONS TAB -->
+                <div x-show="activeTab === 'reservations'" x-transition.opacity role="tabpanel" style="display: flex; flex-direction: column; gap: 1.75rem;">
+                    <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 0.9rem;">
+                                <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(236, 72, 153, 0.15); color: #ec4899; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
+                                    <i class="fa-solid fa-calendar-check"></i>
+                                </span>
+                                <div>
+                                    <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
+                                        {{ __('Reservations & Booking Rules') }}
+                                    </h3>
+                                    <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
+                                        {{ __('Manage table booking availability, advance windows, table holding duration, and reservation reminders') }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            @if($vendor->hasFeature('reservations'))
+                                <span style="font-size: 0.78rem; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 0.3rem 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                    <i class="fa-solid fa-circle-check"></i> {{ __('Active') }}
+                                </span>
+                            @else
+                                <span style="font-size: 0.78rem; font-weight: 700; background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 8px; padding: 0.3rem 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                    🔒 PRO
+                                </span>
+                            @endif
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 1.25rem;">
+                            <!-- Card 1: Capacity & Rules -->
+                            <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
+                                        <i class="fa-solid fa-sliders" style="color: #8b5cf6;"></i> {{ __('Booking Rules & Capacity') }}
+                                    </div>
+                                    <div style="font-size: 1rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.35rem;">
+                                        {{ __('Table Capacity & Durations') }}
+                                    </div>
+                                    <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0 0 1rem 0; line-height: 1.4;">
+                                        {{ __('Configure time slots, advance booking window, minimum notice, buffer intervals, and guest confirmation rules.') }}
+                                    </p>
+                                </div>
+                                <a href="{{ route('admin.settings.reservations') }}" class="btn btn-secondary" style="font-size: 0.82rem; padding: 0.5rem 0.95rem; border-radius: 10px; width: 100%; justify-content: center; text-decoration: none; font-weight: 700;">
+                                    <i class="fa-solid fa-arrow-up-right-from-square" style="color: #8b5cf6;"></i> {{ __('Configure Booking Rules') }}
+                                </a>
+                            </div>
+
+                            <!-- Card 2: Notifications -->
+                            <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
+                                        <i class="fa-solid fa-envelope" style="color: #ec4899;"></i> {{ __('Notifications & Email') }}
+                                    </div>
+                                    <div style="font-size: 1rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.35rem;">
+                                        {{ __('Customer Confirmations') }}
+                                    </div>
+                                    <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0 0 1rem 0; line-height: 1.4;">
+                                        {{ __('Customized email templates for booking confirmation, arrival reminders, status change notices, and cancelation.') }}
+                                    </p>
+                                </div>
+                                <a href="{{ route('admin.settings.reservations.notifications') }}" class="btn btn-secondary" style="font-size: 0.82rem; padding: 0.5rem 0.95rem; border-radius: 10px; width: 100%; justify-content: center; text-decoration: none; font-weight: 700;">
+                                    <i class="fa-solid fa-arrow-up-right-from-square" style="color: #ec4899;"></i> {{ __('Edit Email Templates') }}
+                                </a>
+                            </div>
+
+                            <!-- Card 3: Tables & Map -->
+                            <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
+                                        <i class="fa-solid fa-chair" style="color: #06b6d4;"></i> {{ __('Dining Room & Tables') }}
+                                    </div>
+                                    <div style="font-size: 1rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.35rem;">
+                                        {{ __('Tables & Floor Plan') }}
+                                    </div>
+                                    <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0 0 1rem 0; line-height: 1.4;">
+                                        {{ __('Add and organize restaurant dining tables, assign seating capacities, and arrange the interactive floor plan.') }}
+                                    </p>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <a href="{{ route('admin.tables.index') }}" class="btn btn-secondary" style="font-size: 0.82rem; padding: 0.5rem 0.65rem; border-radius: 10px; flex: 1; justify-content: center; text-decoration: none; font-weight: 700;">
+                                        <i class="fa-solid fa-chair" style="color: #06b6d4;"></i> {{ __('Tables') }}
+                                    </a>
+                                    <a href="{{ route('admin.floor_plan.index') }}" class="btn btn-secondary" style="font-size: 0.82rem; padding: 0.5rem 0.65rem; border-radius: 10px; flex: 1; justify-content: center; text-decoration: none; font-weight: 700;">
+                                        <i class="fa-solid fa-map" style="color: #3b82f6;"></i> {{ __('Floor Plan') }}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. PAYMENTS & GATEWAYS TAB -->
+                <div x-show="activeTab === 'payments'" x-transition.opacity role="tabpanel" style="display: flex; flex-direction: column; gap: 1.75rem;">
+                    <!-- 5. ONLINE PAYMENTS & GATEWAYS -->
             <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                     <div style="display: flex; align-items: center; gap: 0.9rem;">
-                        <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(236, 72, 153, 0.15); color: #ec4899; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
-                            <i class="fa-solid fa-cake-candles"></i>
+                        <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(59, 130, 246, 0.15); color: #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
+                            <i class="fa-solid fa-credit-card"></i>
                         </span>
                         <div>
                             <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
-                                {{ __('CRM Automation & Birthday Discounts') }}
+                                {{ __('Payment Systems (Local & International Payments)') }}
                             </h3>
                             <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
-                                {{ __('Automated birthday discounts on orders and SMS notifications (Mobipace, SMS.am, Twilio)') }}
+                                {{ __('Manage online and on-premise payment methods for customers') }}
                             </p>
                         </div>
                     </div>
 
                     <label class="switch" style="position: relative; display: inline-block; width: 48px; height: 26px;">
-                        <input type="checkbox" name="crm_settings[birthday_discount_enabled]" value="1" {{ !empty($crmSettings['birthday_discount_enabled']) ? 'checked' : '' }} id="crmBirthdayToggle" onchange="toggleCrmFields()">
+                        <input type="checkbox" name="payment_settings[online_enabled]" value="1" {{ !empty($paymentSettings['online_enabled']) ? 'checked' : '' }} id="onlinePaymentsToggle" onchange="toggleOnlinePaymentsFields()">
                         <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
                     </label>
                 </div>
 
-                <div id="crmContainer" style="{{ empty($crmSettings['birthday_discount_enabled']) ? 'opacity: 0.55; pointer-events: none;' : '' }}; transition: all 0.25s ease;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
-                        <div>
-                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                                {{ __('Birthday Discount (%)') }}
-                            </label>
-                            <div style="position: relative; display: flex; align-items: center;">
-                                <input type="number" min="0" max="100" step="1" name="crm_settings[birthday_discount_percent]" value="{{ $crmSettings['birthday_discount_percent'] ?? 15 }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: #10b981; padding: 0.7rem 1rem 0.7rem 2.2rem; border-radius: 12px; font-weight: 700; font-size: 0.95rem;">
-                                <span style="position: absolute; left: 0.9rem; color: var(--text-muted); font-weight: 700;">%</span>
+                <!-- Payment Methods Choice (Cash / Terminal) -->
+                <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
+                    <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.75rem;">
+                        {{ __('General Payment Methods in Cart') }}
+                    </div>
+                    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                        <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; color: var(--text-main);">
+                            <input type="checkbox" name="payment_settings[cash_enabled]" value="1" {{ !empty($paymentSettings['cash_enabled']) ? 'checked' : '' }} style="width: 18px; height: 18px; accent-color: var(--primary);">
+                            <span>💵 {{ __('Cash payment on-site') }}</span>
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; color: var(--text-main);">
+                            <input type="checkbox" name="payment_settings[pos_terminal_enabled]" value="1" {{ !empty($paymentSettings['pos_terminal_enabled']) ? 'checked' : '' }} style="width: 18px; height: 18px; accent-color: var(--primary);">
+                            <span>💳 {{ __('POS terminal payment on-site') }}</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="onlineGatewaysContainer" style="{{ empty($paymentSettings['online_enabled']) ? 'opacity: 0.55; pointer-events: none;' : '' }}; transition: all 0.25s ease;">
+                    <div style="font-size: 0.92rem; font-weight: 800; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>🇦🇲 {{ __('Armenian Payment Gateways') }}</span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+                        <!-- Idram -->
+                        <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem 1.25rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--text-main);">
+                                    <span style="background: #ff6f00; color: #fff; width: 26px; height: 26px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900;">Id</span>
+                                    <span>Idram</span>
+                                </div>
+                                <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 22px;">
+                                    <input type="checkbox" name="payment_settings[gateways][idram][enabled]" value="1" {{ !empty($paymentSettings['gateways']['idram']['enabled']) ? 'checked' : '' }}>
+                                    <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
+                                </label>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+                                <input type="text" name="payment_settings[gateways][idram][merchant_id]" value="{{ $paymentSettings['gateways']['idram']['merchant_id'] ?? '' }}" placeholder="Receiver / Merchant ID" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
+                                <input type="password" name="payment_settings[gateways][idram][secret_key]" value="" placeholder="{{ !empty($paymentSettings['gateways']['idram']['configured']) ? '•••••••• (' . ($paymentSettings['gateways']['idram']['masked'] ?? 'Configured') . ')' : 'Secret Key' }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
+                                <label style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--text-muted); cursor: pointer;">
+                                    <input type="checkbox" name="payment_settings[gateways][idram][sandbox]" value="1" {{ !empty($paymentSettings['gateways']['idram']['sandbox']) ? 'checked' : '' }} style="accent-color: #ff6f00;">
+                                    <span>{{ __('Sandbox / Test Mode') }}</span>
+                                </label>
                             </div>
                         </div>
 
-                        <div>
-                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                                {{ __('Validity Period (days)') }}
-                            </label>
-                            <input type="number" min="0" max="30" name="crm_settings[birthday_validity_days]" value="{{ $crmSettings['birthday_validity_days'] ?? 3 }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.7rem 1rem; border-radius: 12px; font-weight: 600; font-size: 0.92rem;">
-                            <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; display: block;">{{ __('Discount is valid ± specified days around birthday') }}</span>
+                        <!-- Telcell Wallet -->
+                        <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem 1.25rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--text-main);">
+                                    <span style="background: #e11d48; color: #fff; width: 26px; height: 26px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900;">TC</span>
+                                    <span>Telcell Wallet</span>
+                                </div>
+                                <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 22px;">
+                                    <input type="checkbox" name="payment_settings[gateways][telcell][enabled]" value="1" {{ !empty($paymentSettings['gateways']['telcell']['enabled']) ? 'checked' : '' }}>
+                                    <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
+                                </label>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+                                <input type="text" name="payment_settings[gateways][telcell][shop_id]" value="{{ $paymentSettings['gateways']['telcell']['shop_id'] ?? '' }}" placeholder="Shop ID" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
+                                <input type="password" name="payment_settings[gateways][telcell][key]" value="" placeholder="{{ !empty($paymentSettings['gateways']['telcell']['configured']) ? '•••••••• (' . ($paymentSettings['gateways']['telcell']['masked'] ?? 'Configured') . ')' : 'Security Key' }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
+                                <label style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--text-muted); cursor: pointer;">
+                                    <input type="checkbox" name="payment_settings[gateways][telcell][sandbox]" value="1" {{ !empty($paymentSettings['gateways']['telcell']['sandbox']) ? 'checked' : '' }} style="accent-color: #e11d48;">
+                                    <span>{{ __('Sandbox / Test Mode') }}</span>
+                                </label>
+                            </div>
                         </div>
 
-                        <div>
-                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                                {{ __('SMS Provider') }}
-                            </label>
-                            <select name="crm_settings[sms_provider]" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.7rem 1rem; border-radius: 12px; font-weight: 600; font-size: 0.92rem;">
-                                <option value="mobipace" {{ ($crmSettings['sms_provider'] ?? '') === 'mobipace' ? 'selected' : '' }}>Mobipace SMS (Armenia)</option>
-                                <option value="smsam" {{ ($crmSettings['sms_provider'] ?? '') === 'smsam' ? 'selected' : '' }}>SMS.am (Armenia)</option>
-                                <option value="twilio" {{ ($crmSettings['sms_provider'] ?? '') === 'twilio' ? 'selected' : '' }}>Twilio (International)</option>
-                                <option value="log" {{ ($crmSettings['sms_provider'] ?? '') === 'log' ? 'selected' : '' }}>Log / Test Mode (no SMS sent)</option>
-                            </select>
+                        <!-- FastShift -->
+                        <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem 1.25rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--text-main);">
+                                    <span style="background: #2563eb; color: #fff; width: 26px; height: 26px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900;">FS</span>
+                                    <span>FastShift</span>
+                                </div>
+                                <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 22px;">
+                                    <input type="checkbox" name="payment_settings[gateways][fastshift][enabled]" value="1" {{ !empty($paymentSettings['gateways']['fastshift']['enabled']) ? 'checked' : '' }}>
+                                    <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
+                                </label>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+                                <input type="text" name="payment_settings[gateways][fastshift][merchant_id]" value="{{ $paymentSettings['gateways']['fastshift']['merchant_id'] ?? '' }}" placeholder="Merchant ID" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
+                                <input type="password" name="payment_settings[gateways][fastshift][api_key]" value="" placeholder="{{ !empty($paymentSettings['gateways']['fastshift']['configured']) ? '•••••••• (' . ($paymentSettings['gateways']['fastshift']['masked'] ?? 'Configured') . ')' : 'API Key' }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
+                                <label style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--text-muted); cursor: pointer;">
+                                    <input type="checkbox" name="payment_settings[gateways][fastshift][sandbox]" value="1" {{ !empty($paymentSettings['gateways']['fastshift']['sandbox']) ? 'checked' : '' }} style="accent-color: #2563eb;">
+                                    <span>{{ __('Sandbox / Test Mode') }}</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- ArCa / Ameriabank vPOS -->
+                        <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem 1.25rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--text-main);">
+                                    <span style="background: #059669; color: #fff; width: 26px; height: 26px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900;">AC</span>
+                                    <span>ArCa / Ameriabank vPOS</span>
+                                </div>
+                                <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 22px;">
+                                    <input type="checkbox" name="payment_settings[gateways][arca][enabled]" value="1" {{ !empty($paymentSettings['gateways']['arca']['enabled']) ? 'checked' : '' }}>
+                                    <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
+                                </label>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+                                <input type="text" name="payment_settings[gateways][arca][merchant_id]" value="{{ $paymentSettings['gateways']['arca']['merchant_id'] ?? '' }}" placeholder="Merchant / Client ID" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
+                                <input type="text" name="payment_settings[gateways][arca][terminal_id]" value="{{ $paymentSettings['gateways']['arca']['terminal_id'] ?? '' }}" placeholder="Terminal ID" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
+                                <label style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--text-muted); cursor: pointer;">
+                                    <input type="checkbox" name="payment_settings[gateways][arca][sandbox]" value="1" {{ !empty($paymentSettings['gateways']['arca']['sandbox']) ? 'checked' : '' }} style="accent-color: #059669;">
+                                    <span>{{ __('Sandbox / Test Mode') }}</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
-                        <div>
-                            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                                <span>{{ __('SMS API Key / Token') }}</span>
-                                @if(!empty($crmSettings['configured']))
-                                    <span style="font-size: 0.72rem; color: #10b981; font-weight: 700;">✓ {{ __('Configured') }}</span>
-                                @endif
-                            </label>
-                            <input type="password" name="crm_settings[sms_api_key]" value="" placeholder="{{ !empty($crmSettings['configured']) ? '•••••••• (' . ($crmSettings['masked'] ?? 'Configured') . ')' : 'API Key' }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.7rem 1rem; border-radius: 12px; font-size: 0.92rem;">
-                        </div>
-
-                        <div>
-                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                                {{ __('SMS Sender ID') }}
-                            </label>
-                            <input type="text" name="crm_settings[sms_sender_id]" value="{{ $crmSettings['sms_sender_id'] ?? 'QRMENU' }}" placeholder="e.g. QRMENU or Restaurant" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.7rem 1rem; border-radius: 12px; font-weight: 600; font-size: 0.92rem;">
-                        </div>
-
-                        <div style="display: flex; align-items: flex-end; padding-bottom: 0.5rem;">
-                            <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; font-weight: 600; cursor: pointer;">
-                                <input type="checkbox" name="crm_settings[birthday_sms_enabled]" value="1" {{ !empty($crmSettings['birthday_sms_enabled']) ? 'checked' : '' }} style="accent-color: var(--primary);">
-                                <span>{{ __('Enable automated birthday greeting SMS') }}</span>
-                            </label>
-                        </div>
+                    <div style="font-size: 0.92rem; font-weight: 800; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>🌍 {{ __('International Payment Gateways') }}</span>
                     </div>
 
-                    <div>
-                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
-                            {{ __('Birthday SMS Message Template') }}
-                        </label>
-                        <textarea name="crm_settings[birthday_sms_template]" rows="2" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.7rem 1rem; border-radius: 12px; font-size: 0.9rem; resize: vertical;">{{ $crmSettings['birthday_sms_template'] ?? 'Happy Birthday {NAME}! Enjoy a {DISCOUNT}% discount at {VENDOR}.' }}</textarea>
-                        <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; display: block;">{{ __('Available placeholders: {NAME} - customer name, {DISCOUNT} - discount %, {VENDOR} - restaurant name') }}</span>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 1.25rem;">
+                        <!-- Stripe -->
+                        <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem 1.25rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--text-main);">
+                                    <span style="background: #6366f1; color: #fff; width: 26px; height: 26px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900;">S</span>
+                                    <span>Stripe (Visa, Mastercard, Apple Pay)</span>
+                                </div>
+                                <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 22px;">
+                                    <input type="checkbox" name="payment_settings[gateways][stripe][enabled]" value="1" {{ !empty($paymentSettings['gateways']['stripe']['enabled']) ? 'checked' : '' }}>
+                                    <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
+                                </label>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+                                <input type="text" name="payment_settings[gateways][stripe][publishable_key]" value="{{ $paymentSettings['gateways']['stripe']['publishable_key'] ?? '' }}" placeholder="Publishable Key (pk_test_...)" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
+                                <input type="password" name="payment_settings[gateways][stripe][secret_key]" value="" placeholder="{{ !empty($paymentSettings['gateways']['stripe']['configured']) ? '•••••••• (' . ($paymentSettings['gateways']['stripe']['masked'] ?? 'Configured') . ')' : 'Secret Key (sk_test_...)' }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
+                                <label style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--text-muted); cursor: pointer;">
+                                    <input type="checkbox" name="payment_settings[gateways][stripe][sandbox]" value="1" {{ !empty($paymentSettings['gateways']['stripe']['sandbox']) ? 'checked' : '' }} style="accent-color: #6366f1;">
+                                    <span>{{ __('Test Mode (pk_test / sk_test)') }}</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 8. TELEGRAM NOTIFICATIONS CARD -->
+            
+                </div>
+
+                <!-- 5. DELIVERY & PICKUP TAB -->
+                <div x-show="activeTab === 'delivery'" x-transition.opacity role="tabpanel" style="display: flex; flex-direction: column; gap: 1.75rem;">
+                    <!-- 6. DELIVERY SETTINGS CARD -->
+            <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.9rem;">
+                        <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(59, 130, 246, 0.15); color: #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
+                            <i class="fa-solid fa-motorcycle"></i>
+                        </span>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
+                                {{ __('Delivery Service Settings') }}
+                            </h3>
+                            <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
+                                {{ __('Configure delivery fee, minimum order amount, and free delivery threshold') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Enable Switch -->
+                    <label class="modern-switch-wrapper" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; user-select: none;">
+                        <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-main);" id="deliveryStatusLabel">
+                            {{ old('delivery_enabled', $vendor->delivery_enabled) ? __('Active') : __('Disabled') }}
+                        </span>
+                        <input type="checkbox" name="delivery_enabled" value="1" id="deliveryToggle" {{ old('delivery_enabled', $vendor->delivery_enabled) ? 'checked' : '' }} onchange="toggleDeliveryFields()" style="width: 20px; height: 20px; accent-color: #3b82f6; cursor: pointer;">
+                    </label>
+                </div>
+
+                <div id="deliveryContainer" style="{{ old('delivery_enabled', $vendor->delivery_enabled) ? '' : 'opacity: 0.55; pointer-events: none;' }}; transition: opacity 0.2s ease;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1.25rem;">
+                        <!-- Delivery Fee -->
+                        <div class="form-group">
+                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                                {{ __('Delivery Fee') }} <span style="color: #ef4444;">*</span>
+                            </label>
+                            <div style="position: relative; display: flex; align-items: center;">
+                                <input type="number" step="any" min="0" name="delivery_fee" id="deliveryFeeInput" value="{{ old('delivery_fee', $vendor->delivery_fee ?? 0) }}" required class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem; font-size: 1rem; font-weight: 700;" oninput="updateCalculationsPreview()">
+                                <span class="currency-label-display" style="position: absolute; right: 1rem; font-weight: 800; color: #3b82f6; font-size: 0.85rem;">
+                                    {{ $vendor->currency }}
+                                </span>
+                            </div>
+                            <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                                {{ __('Standard fixed fee for delivery (0 = free)') }}
+                            </span>
+                        </div>
+
+                        <!-- Minimum Order for Delivery -->
+                        <div class="form-group">
+                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                                {{ __('Minimum Order Amount') }} <span style="color: #ef4444;">*</span>
+                            </label>
+                            <div style="position: relative; display: flex; align-items: center;">
+                                <input type="number" step="any" min="0" name="delivery_min_amount" id="deliveryMinAmount" value="{{ old('delivery_min_amount', $vendor->delivery_min_amount ?? 0) }}" required class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem; font-size: 1rem; font-weight: 700;" oninput="updateCalculationsPreview()">
+                                <span class="currency-label-display" style="position: absolute; right: 1rem; font-weight: 800; color: var(--text-muted); font-size: 0.85rem;">
+                                    {{ $vendor->currency }}
+                                </span>
+                            </div>
+                            <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                                {{ __('Minimum order threshold for delivery (0 = no limit)') }}
+                            </span>
+                        </div>
+
+                        <!-- Free Delivery From Threshold -->
+                        <div class="form-group">
+                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                                {{ __('Free Delivery From') }}
+                            </label>
+                            <div style="position: relative; display: flex; align-items: center;">
+                                <input type="number" step="any" min="0" name="delivery_free_from" id="deliveryFreeFrom" value="{{ old('delivery_free_from', $vendor->delivery_free_from) }}" placeholder="No free threshold" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem; font-size: 1rem; font-weight: 700;" oninput="updateCalculationsPreview()">
+                                <span class="currency-label-display" style="position: absolute; right: 1rem; font-weight: 800; color: #10b981; font-size: 0.85rem;">
+                                    {{ $vendor->currency }}
+                                </span>
+                            </div>
+                            <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                                {{ __('If order exceeds this amount, delivery becomes free (empty = always paid)') }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Storefront Motivation Banner Preview -->
+                    <div style="margin-top: 1.25rem; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 14px; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span style="width: 32px; height: 32px; border-radius: 8px; background: rgba(16, 185, 129, 0.2); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0;">
+                                <i class="fa-solid fa-gift"></i>
+                            </span>
+                            <div>
+                                <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);" id="deliveryPreviewText">
+                                    {{ __('Free delivery indicator in cart') }}
+                                </div>
+                                <div style="font-size: 0.78rem; color: var(--text-muted);" id="deliveryPreviewSubtext">
+                                    {{ __('Customers will see a progress bar encouraging higher cart totals') }}
+                                </div>
+                            </div>
+                        </div>
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981; font-weight: 800; border-radius: 8px; padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+                            <i class="fa-solid fa-sparkles"></i> {{ __('Upsell Feature') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            
+                    <!-- 7. TAKEAWAY SETTINGS CARD -->
+            <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.9rem;">
+                        <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(139, 92, 246, 0.15); color: #8b5cf6; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
+                            <i class="fa-solid fa-bag-shopping"></i>
+                        </span>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
+                                {{ __('Takeaway Service Settings') }}
+                            </h3>
+                            <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
+                                {{ __('Allow customers to pre-order and pick up in person') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Enable Switch -->
+                    <label class="modern-switch-wrapper" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; user-select: none;">
+                        <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-main);" id="takeawayStatusLabel">
+                            {{ old('takeaway_enabled', $vendor->takeaway_enabled) ? __('Active') : __('Disabled') }}
+                        </span>
+                        <input type="checkbox" name="takeaway_enabled" value="1" id="takeawayToggle" {{ old('takeaway_enabled', $vendor->takeaway_enabled) ? 'checked' : '' }} onchange="toggleTakeawayFields()" style="width: 20px; height: 20px; accent-color: #8b5cf6; cursor: pointer;">
+                    </label>
+                </div>
+
+                <div id="takeawayContainer" style="{{ old('takeaway_enabled', $vendor->takeaway_enabled) ? '' : 'opacity: 0.55; pointer-events: none;' }}; transition: opacity 0.2s ease;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1.25rem;">
+                        <!-- Minimum Order for Takeaway -->
+                        <div class="form-group">
+                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                                {{ __('Minimum Order Amount') }}
+                            </label>
+                            <div style="position: relative; display: flex; align-items: center;">
+                                <input type="number" step="any" min="0" name="takeaway_min_amount" id="takeawayMinAmount" value="{{ old('takeaway_min_amount', $vendor->takeaway_min_amount ?? 0) }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem; font-size: 1rem; font-weight: 700;" oninput="updateCalculationsPreview()">
+                                <span class="currency-label-display" style="position: absolute; right: 1rem; font-weight: 800; color: var(--text-muted); font-size: 0.85rem;">
+                                    {{ $vendor->currency }}
+                                </span>
+                            </div>
+                            <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                                {{ __('Minimum order threshold for takeaway (0 = no limit)') }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Storefront Takeaway Banner Preview -->
+                    <div style="margin-top: 1.25rem; background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 14px; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span style="width: 32px; height: 32px; border-radius: 8px; background: rgba(139, 92, 246, 0.2); color: #8b5cf6; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0;">
+                                <i class="fa-solid fa-bag-shopping"></i>
+                            </span>
+                            <div>
+                                <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);" id="takeawayPreviewText">
+                                    {{ __('Takeaway pickup option is available') }}
+                                </div>
+                                <div style="font-size: 0.78rem; color: var(--text-muted);" id="takeawayPreviewSubtext">
+                                    {{ __('Customers can pre-order without a table QR code') }}
+                                </div>
+                            </div>
+                        </div>
+                        <span class="badge" style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6; font-weight: 800; border-radius: 8px; padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+                            <i class="fa-solid fa-store"></i> {{ __('Takeaway Mode') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            @php
+                $paymentSettings = $vendor->getSafePaymentSettings();
+                $crmSettings = $vendor->getSafeCrmSettings();
+                $printerSettings = $vendor->getThermalPrinterSettings();
+            @endphp
+
+            
+                </div>
+
+                <!-- 6. NOTIFICATIONS & EMAIL TAB -->
+                <div x-show="activeTab === 'notifications'" x-transition.opacity role="tabpanel" style="display: flex; flex-direction: column; gap: 1.75rem;">
+                    <!-- 8. TELEGRAM NOTIFICATIONS CARD -->
             @php
                 $tgSettings = $vendor->telegram_settings ?? [];
                 $tgEnabled = !empty($tgSettings['enabled']);
@@ -2204,7 +1975,1104 @@
                 </div>
             </div>
 
-            <!-- 9. USER PROFILE & 2FA SECURITY CARD -->
+            
+                    <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 0.9rem;">
+                                <span style="width: 44px; height: 44px; border-radius: 12px; background: rgba(99, 102, 241, 0.15); color: #6366f1; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
+                                    <i class="fa-solid fa-envelope-circle-check"></i>
+                                </span>
+                                <div>
+                                    <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
+                                        {{ __('Reservation & Pre-Order Email Notifications') }}
+                                    </h3>
+                                    <p style="margin: 0.25rem 0 0; font-size: 0.85rem; color: var(--text-muted);">
+                                        {{ __('Configure automated customer email confirmations, kitchen alerts, and 2-hour arrival reminders.') }}
+                                    </p>
+                                </div>
+                            </div>
+                            <a href="{{ route('admin.settings.reservations.notifications') }}" class="btn btn-secondary" style="text-decoration: none; font-weight: 700; border-radius: 12px; font-size: 0.88rem;">
+                                <i class="fa-solid fa-arrow-up-right-from-square" style="color: #6366f1;"></i> {{ __('Manage Email Templates') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7. REGIONAL & LANGUAGES TAB -->
+                <div x-show="activeTab === 'regional'" x-transition.opacity role="tabpanel" style="display: flex; flex-direction: column; gap: 1.75rem;">
+                    <!-- 2. REGIONAL & LOCALIZATION SETTINGS CARD -->
+            @php
+                $currentTz = old('timezone', $vendor->timezone ?? 'Asia/Yerevan');
+                $currentCurrency = old('currency', $vendor->currency ?? 'AMD');
+                $currentWeightUnit = old('weight_unit', $vendor->weight_unit ?? 'g');
+                $currentVolumeUnit = old('volume_unit', $vendor->volume_unit ?? 'ml');
+            @endphp
+
+            <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.9rem;">
+                        <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(14, 165, 233, 0.15); color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
+                            <i class="fa-solid fa-earth-americas"></i>
+                        </span>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
+                                {{ __('Տարածաշրջանային և տեղայնացման կարգավորումներ') }}
+                            </h3>
+                            <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
+                                {{ __('Սահմանեք ռեստորանի ժամային գոտին, հիմնական արժույթը և ճաշատեսակների/խմիչքների չափման միավորները') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <span style="font-size: 0.78rem; font-weight: 700; background: rgba(14, 165, 233, 0.15); color: #0284c7; border: 1px solid rgba(14, 165, 233, 0.3); border-radius: 8px; padding: 0.3rem 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+                        <i class="fa-solid fa-globe"></i> {{ __('Տեղայնացում') }}
+                    </span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 1.25rem;">
+                    <!-- A. Timezone -->
+                    <div class="form-group">
+                        <label for="vendor_timezone" class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem;">
+                            <i class="fa-solid fa-clock" style="color: #0284c7;"></i>
+                            <span>{{ __('Ժամային գոտի (Timezone)') }}</span>
+                            <span style="color: #ef4444;">*</span>
+                        </label>
+                        <select name="timezone" id="vendor_timezone" class="form-input" style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); cursor: pointer;">
+                            <optgroup label="⭐ {{ __('Հիմնական ժամային գոտիներ') }}">
+                                @foreach($popularTimezones ?? [] as $tzKey => $tzLabel)
+                                    <option value="{{ $tzKey }}" {{ $currentTz === $tzKey ? 'selected' : '' }}>
+                                        {{ $tzLabel }}
+                                    </option>
+                                @endforeach
+                            </optgroup>
+                            @if(!empty($groupedTimezones))
+                                @foreach($groupedTimezones as $region => $tzList)
+                                    <optgroup label="🌐 {{ $region }}">
+                                        @foreach($tzList as $tz)
+                                            <option value="{{ $tz }}" {{ $currentTz === $tz ? 'selected' : '' }}>
+                                                {{ $tz }}
+                                            </option>
+                                        @endforeach
+                                    </optgroup>
+                                @endforeach
+                            @endif
+                        </select>
+                        <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                            {{ __('Օգտագործվում է պատվերների ժամերի, խոհանոցի գրաֆիկի և վիճակագրության համար:') }}
+                        </span>
+                    </div>
+
+                    <!-- B. Primary Currency -->
+                    <div class="form-group">
+                        <label for="vendor_currency" class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem;">
+                            <i class="fa-solid fa-coins" style="color: #f59e0b;"></i>
+                            <span>{{ __('Հիմնական արժույթ') }}</span>
+                            <span style="color: #ef4444;">*</span>
+                        </label>
+                        <select name="currency" id="vendor_currency" class="form-input" onchange="onCurrencyChanged(this.value)" style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); cursor: pointer;">
+                            @php
+                                $currencyOptions = [
+                                    'AMD' => 'AMD (֏ - ' . __('Armenian Dram') . ')',
+                                    'USD' => 'USD ($ - ' . __('US Dollar') . ')',
+                                    'EUR' => 'EUR (€ - ' . __('Euro') . ')',
+                                    'RUB' => 'RUB (₽ - ' . __('Russian Ruble') . ')',
+                                    'GEL' => 'GEL (₾ - ' . __('Georgian Lari') . ')',
+                                    'GBP' => 'GBP (£ - ' . __('British Pound') . ')',
+                                    'AED' => 'AED (د.إ - ' . __('UAE Dirham') . ')',
+                                ];
+                            @endphp
+                            @foreach($currencyOptions as $currCode => $currLabel)
+                                <option value="{{ $currCode }}" {{ strtoupper($currentCurrency) === $currCode ? 'selected' : '' }}>
+                                    {{ $currLabel }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                            {{ __('Արտացոլվում է ճաշացանկի գներում, հաշիվներում և վճարումներում:') }}
+                        </span>
+                    </div>
+
+                    <!-- C. Weight Unit -->
+                    <div class="form-group">
+                        <label for="vendor_weight_unit" class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem;">
+                            <i class="fa-solid fa-weight-scale" style="color: #10b981;"></i>
+                            <span>{{ __('Քաշի չափման միավոր') }}</span>
+                        </label>
+                        <select name="weight_unit" id="vendor_weight_unit" class="form-input" style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); cursor: pointer;">
+                            @php
+                                $weightUnitOptions = [
+                                    'g' => __('Gram (g)'),
+                                    'kg' => __('Kilogram (kg)'),
+                                    'oz' => __('Ounce (oz)'),
+                                    'lb' => __('Pound (lb)'),
+                                ];
+                            @endphp
+                            @foreach($weightUnitOptions as $wKey => $wLabel)
+                                <option value="{{ $wKey }}" {{ $currentWeightUnit === $wKey ? 'selected' : '' }}>
+                                    {{ $wLabel }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                            {{ __('Կերակրատեսակների չափաբաժնի և քաշի հիմնական միավոր:') }}
+                        </span>
+                    </div>
+
+                    <!-- D. Volume Unit -->
+                    <div class="form-group">
+                        <label for="vendor_volume_unit" class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem;">
+                            <i class="fa-solid fa-glass-water" style="color: #6366f1;"></i>
+                            <span>{{ __('Ծավալի չափման միավոր') }}</span>
+                        </label>
+                        <select name="volume_unit" id="vendor_volume_unit" class="form-input" style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); cursor: pointer;">
+                            @php
+                                $volumeUnitOptions = [
+                                    'ml' => __('Milliliter (ml)'),
+                                    'l' => __('Liter (l)'),
+                                    'fl_oz' => __('Fluid Ounce (fl oz)'),
+                                ];
+                            @endphp
+                            @foreach($volumeUnitOptions as $vKey => $vLabel)
+                                <option value="{{ $vKey }}" {{ $currentVolumeUnit === $vKey ? 'selected' : '' }}>
+                                    {{ $vLabel }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                            {{ __('Խմիչքների, կոկտեյլների և հեղուկների չափման հիմնական միավոր:') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2.1 SECONDARY CURRENCY & PRICING CARD -->
+            @php
+                $secEnabled = old('secondary_currency_enabled', $vendor->secondary_currency_enabled ?? false);
+                $secCurrency = old('secondary_currency', $vendor->secondary_currency ?? 'USD');
+                $secRateMode = old('secondary_currency_rate_mode', $vendor->secondary_currency_rate_mode ?? 'manual');
+                $secRate = old('secondary_currency_exchange_rate', $vendor->secondary_currency_exchange_rate ?? '350');
+                $secDecimals = old('secondary_currency_decimal_places', $vendor->secondary_currency_decimal_places ?? 2);
+                $secPrefix = old('secondary_currency_prefix', $vendor->secondary_currency_prefix ?? '≈');
+            @endphp
+            <div class="card settings-card" 
+                 id="secondary-currency-card"
+                 style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);"
+                 x-data="{
+                     enabled: {{ $secEnabled ? 'true' : 'false' }},
+                     primaryCurrency: '{{ strtoupper(old('currency', $vendor->currency ?? 'AMD')) }}',
+                     secondaryCurrency: '{{ strtoupper($secCurrency) }}',
+                     rateMode: '{{ $secRateMode }}',
+                     exchangeRate: '{{ $secRate }}',
+                     decimalPlaces: {{ (int) $secDecimals }},
+                     prefix: '{{ addslashes($secPrefix) }}',
+                     isLoadingRate: false,
+                     rateFetchStatus: '',
+                     symbols: {
+                         'USD': '$',
+                         'EUR': '€',
+                         'RUB': '₽',
+                         'GEL': '₾',
+                         'GBP': '£',
+                         'AED': 'د.إ',
+                         'AMD': '֏',
+                         'CNY': '¥',
+                         'TRY': '₺',
+                         'KZT': '₸',
+                         'IRR': '﷼'
+                     },
+                     get isSameAsPrimary() {
+                         return this.secondaryCurrency && this.primaryCurrency && this.secondaryCurrency.toUpperCase() === this.primaryCurrency.toUpperCase();
+                     },
+                     get secondarySymbol() {
+                         return this.symbols[this.secondaryCurrency] || this.secondaryCurrency;
+                     },
+                     get primarySymbol() {
+                         return this.symbols[this.primaryCurrency] || this.primaryCurrency;
+                     },
+                     formatPreview(price) {
+                         const r = parseFloat(this.exchangeRate);
+                         if (!r || r <= 0 || isNaN(r)) return '—';
+                         const converted = price / r;
+                         const dec = Math.max(0, Math.min(4, parseInt(this.decimalPlaces) || 0));
+                         const pfx = (this.prefix || '').trim();
+                         const sym = this.secondarySymbol;
+                         const formatted = converted.toLocaleString(undefined, { minimumFractionDigits: dec, maximumFractionDigits: dec });
+                         const beforeSymbols = ['$', '€', '£', '¥', '₺'];
+                         const isBefore = beforeSymbols.includes(sym);
+                         const priceStr = isBefore ? (sym + formatted) : (formatted + ' ' + sym);
+                         return (pfx ? pfx + ' ' : '') + priceStr;
+                     },
+                     fetchLiveRate() {
+                         if (this.isSameAsPrimary) return;
+                         this.isLoadingRate = true;
+                         this.rateFetchStatus = '';
+                         const url = `{{ route('admin.settings.currency.live_rate') }}?currency=${encodeURIComponent(this.primaryCurrency)}&secondary_currency=${encodeURIComponent(this.secondaryCurrency)}`;
+                         fetch(url)
+                             .then(res => res.json())
+                             .then(data => {
+                                 this.isLoadingRate = false;
+                                 if (data && data.success && data.rate) {
+                                     this.exchangeRate = data.rate;
+                                     this.rateFetchStatus = 'success';
+                                     setTimeout(() => { this.rateFetchStatus = ''; }, 3500);
+                                 } else {
+                                     this.rateFetchStatus = 'error';
+                                 }
+                             })
+                             .catch(() => {
+                                 this.isLoadingRate = false;
+                                 this.rateFetchStatus = 'error';
+                             });
+                     },
+                     init() {
+                         this.$watch('secondaryCurrency', (val) => {
+                             if (this.rateMode === 'automatic') {
+                                 this.fetchLiveRate();
+                             }
+                         });
+                         this.$watch('rateMode', (val) => {
+                             if (val === 'automatic' && (!this.exchangeRate || parseFloat(this.exchangeRate) <= 0 || this.exchangeRate === '350')) {
+                                 this.fetchLiveRate();
+                             }
+                         });
+                     }
+                 }"
+                 @primary-currency-changed.window="primaryCurrency = $event.detail">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.9rem;">
+                        <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
+                            <i class="fa-solid fa-money-bill-transfer"></i>
+                        </span>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                <span>{{ __('Երկրորդային արժույթ և փոխարժեք (Secondary Currency)') }}</span>
+                                <span style="font-size: 0.72rem; font-weight: 700; background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 6px; padding: 0.15rem 0.5rem;">
+                                    OPTIONAL DISPLAY
+                                </span>
+                            </h3>
+                            <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
+                                {{ __('Ցուցադրել մոտավոր գները երկրորդ արժույթով (օր.՝ USD, EUR, RUB) հանրային ճաշացանկում՝ հիմնական գնի տակ') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Feature Enable/Disable Switch -->
+                    <label style="display: inline-flex; align-items: center; gap: 0.75rem; cursor: pointer; background: var(--bg-body); padding: 0.5rem 1rem; border-radius: 14px; border: 1.5px solid var(--border-color); transition: all 0.2s ease;">
+                        <input type="checkbox" 
+                               name="secondary_currency_enabled" 
+                               value="1" 
+                               id="secondaryCurrencyToggle" 
+                               x-model="enabled" 
+                               style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+                        <span style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">
+                            {{ __('Show prices in a secondary currency') }}
+                        </span>
+                        <span :style="enabled ? 'background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);' : 'background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);'" 
+                              style="font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 6px;"
+                              x-text="enabled ? '{{ __('Ակտիվ (Active)') }}' : '{{ __('Անջատված է (Disabled)') }}'">
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Informational Warning Banner -->
+                <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; display: flex; align-items: flex-start; gap: 0.75rem; font-size: 0.84rem; color: var(--text-muted); line-height: 1.45;">
+                    <i class="fa-solid fa-circle-info" style="color: #3b82f6; font-size: 1.1rem; margin-top: 0.1rem; flex-shrink: 0;"></i>
+                    <div>
+                        <strong style="color: var(--text-main);">{{ __('Ցուցադրական կարգավիճակ (Display-Only):') }}</strong>
+                        {{ __('Երկրորդային արժույթը կրում է բացառապես տեղեկատվական բնույթ։ Ճաշատեսակների հիմնական գները, զամբյուղի հաշվարկը, վճարումները, հաշիվ-ապրանքագրերը և ֆինանսական հաշվետվությունները մնում են հիմնական արժույթով') }} (<strong>{{ $vendor->currency }}</strong>)։
+                    </div>
+                </div>
+
+                <!-- Conditional Configuration Fields (Visible only when toggle is enabled) -->
+                <div x-show="enabled" 
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 transform -translate-y-2"
+                     x-transition:enter-end="opacity-100 transform translate-y-0"
+                     style="display: flex; flex-direction: column; gap: 1.5rem; border-top: 1px dashed var(--border-color); padding-top: 1.5rem;">
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 1.25rem;">
+                        <!-- 1. Secondary Currency / Fallback -->
+                        <div class="form-group">
+                            <label for="secondary_currency" class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem;">
+                                <i class="fa-solid fa-globe" style="color: #0284c7;"></i>
+                                <span x-show="rateMode !== 'auto_by_language'">{{ __('Երկրորդային արժույթ (Secondary Currency)') }}</span>
+                                <span x-show="rateMode === 'auto_by_language'" x-cloak>{{ __('Պահուստային արժույթ (Fallback Currency)') }}</span>
+                                <span style="color: #ef4444;">*</span>
+                            </label>
+                            <select name="secondary_currency" 
+                                    id="secondary_currency" 
+                                    class="form-input" 
+                                    x-model="secondaryCurrency"
+                                    style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); cursor: pointer;">
+                                @php
+                                    $secondaryCurrenciesList = $secondaryCurrencies ?? [
+                                        'USD' => 'USD ($ - US Dollar)',
+                                        'EUR' => 'EUR (€ - Euro)',
+                                        'RUB' => 'RUB (₽ - Russian Ruble)',
+                                        'GEL' => 'GEL (₾ - Georgian Lari)',
+                                        'GBP' => 'GBP (£ - British Pound)',
+                                        'AED' => 'AED (د.إ - UAE Dirham)',
+                                        'AMD' => 'AMD (֏ - Armenian Dram)',
+                                        'CNY' => 'CNY (¥ - Chinese Yuan)',
+                                        'TRY' => 'TRY (₺ - Turkish Lira)',
+                                        'KZT' => 'KZT (₸ - Kazakhstani Tenge)',
+                                    ];
+                                @endphp
+                                @foreach($secondaryCurrenciesList as $sCode => $sLabel)
+                                    <option value="{{ $sCode }}">
+                                        {{ $sLabel }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div x-show="isSameAsPrimary && rateMode !== 'auto_by_language'" x-cloak style="color: #ef4444; font-size: 0.78rem; font-weight: 700; margin-top: 0.35rem; display: flex; align-items: center; gap: 0.35rem;">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <span>{{ __('Երկրորդային արժույթը պետք է տարբերվի հիմնական արժույթից') }} (<span x-text="primaryCurrency"></span>)</span>
+                            </div>
+                            <span x-show="rateMode === 'auto_by_language'" x-cloak style="font-size: 0.75rem; color: #0284c7; margin-top: 0.35rem; display: block; font-weight: 600;">
+                                {{ __('Ծառայում է որպես լռելյայն պահուստային արժույթ այն լեզուների համար, որոնք առանձին քարտեզագրված չեն:') }}
+                            </span>
+                            @error('secondary_currency')
+                                <span style="color: #ef4444; font-size: 0.78rem; font-weight: 700; margin-top: 0.35rem; display: block;">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <!-- 2. Exchange Rate Mode -->
+                        <div class="form-group">
+                            <label for="secondary_currency_rate_mode" class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem;">
+                                <i class="fa-solid fa-calculator" style="color: #f59e0b;"></i>
+                                <span>{{ __('Փոխարժեքի ռեժիմ (Exchange Rate Mode)') }}</span>
+                            </label>
+                            <select name="secondary_currency_rate_mode" 
+                                    id="secondary_currency_rate_mode" 
+                                    class="form-input" 
+                                    x-model="rateMode"
+                                    style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); cursor: pointer;">
+                                <option value="manual">✍️ {{ __('Ձեռքով մուտքագրում (Manual Entry)') }}</option>
+                                <option value="automatic">🤖 {{ __('Ավտոմատ փոխարժեք (Live Auto Rate)') }}</option>
+                                <option value="auto_by_language">🌐 {{ __('Ամբողջական ավտոմատ՝ ըստ լեզվի (Full Auto: Dynamic by Menu Language)') }}</option>
+                            </select>
+                            <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                                <span x-show="rateMode === 'manual'">{{ __('Մուտքագրեք ընթացիկ փոխարժեքը ձեռքով:') }}</span>
+                                <span x-show="rateMode === 'automatic'" x-cloak>{{ __('Փոխարժեքը ստացվում է ուղիղ եթերում API-ից (ExchangeRate-API, 6ժ քեշավորմամբ):') }}</span>
+                                <span x-show="rateMode === 'auto_by_language'" x-cloak>{{ __('Արժույթը և փոխարժեքը փոխվում են ավտոմատ՝ ըստ հաճախորդի ընտրած լեզվի:') }}</span>
+                            </span>
+                        </div>
+
+                        <!-- 3. Approximation Prefix -->
+                        <div class="form-group">
+                            <label for="secondary_currency_prefix" class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem;">
+                                <i class="fa-solid fa-wave-square" style="color: #8b5cf6;"></i>
+                                <span>{{ __('Մոտավորության նախածանց (Prefix)') }}</span>
+                            </label>
+                            <input type="text" 
+                                   name="secondary_currency_prefix" 
+                                   id="secondary_currency_prefix" 
+                                   class="form-input" 
+                                   x-model="prefix"
+                                   placeholder="≈"
+                                   maxlength="10"
+                                   style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main);">
+                            <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                                {{ __('Լռելյայն նախածանց (օր.՝ ≈, ~, ca.):') }}
+                            </span>
+                        </div>
+
+                        <!-- 4. Decimal Precision -->
+                        <div class="form-group">
+                            <label for="secondary_currency_decimal_places" class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem;">
+                                <i class="fa-solid fa-hashtag" style="color: #10b981;"></i>
+                                <span>{{ __('Կլորացման ճշգրտություն (Precision)') }}</span>
+                            </label>
+                            <select name="secondary_currency_decimal_places" 
+                                    id="secondary_currency_decimal_places" 
+                                    class="form-input" 
+                                    x-model="decimalPlaces"
+                                    style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); cursor: pointer;">
+                                <option value="0">0 նիշ (օր.՝ 10)</option>
+                                <option value="1">1 նիշ (օր.՝ 10.0)</option>
+                                <option value="2">2 նիշ (օր.՝ 10.00 - Ստանդարտ)</option>
+                                <option value="3">3 նիշ (օր.՝ 10.000)</option>
+                                <option value="4">4 նիշ (օր.՝ 10.0000)</option>
+                            </select>
+                            <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                                {{ __('Ստորակետից հետո թվանշանների քանակը (լռելյայն՝ 2):') }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- 🌐 Dynamic Language-to-Currency Map Banner (Visible when rateMode === 'auto_by_language') -->
+                    <div x-show="rateMode === 'auto_by_language'" 
+                         x-cloak
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 transform -translate-y-1"
+                         x-transition:enter-end="opacity-100 transform translate-y-0"
+                         style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(99, 102, 241, 0.08) 100%); border: 1.5px solid rgba(14, 165, 233, 0.3); border-radius: 16px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                <span style="font-size: 1.35rem;">🌐</span>
+                                <div>
+                                    <h4 style="margin: 0; font-size: 0.96rem; font-weight: 800; color: var(--text-main);">
+                                        {{ __('Ամբողջական ավտոմատ ճաշացանկ՝ ըստ ընտրված լեզվի') }}
+                                    </h4>
+                                    <p style="margin: 0.15rem 0 0; font-size: 0.8rem; color: var(--text-muted);">
+                                        {{ __('Հյուրի կողմից լեզուն փոխելիս երկրորդային արժույթը և փոխարժեքը դինամիկ կերպով կհամապատասխանեցվեն:') }}
+                                    </p>
+                                </div>
+                            </div>
+                            <span style="font-size: 0.72rem; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; padding: 0.2rem 0.6rem;">
+                                LIVE MULTI-CURRENCY
+                            </span>
+                        </div>
+
+                        <!-- Language Badges Grid -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 0.65rem;">
+                            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.6rem 0.85rem; display: flex; align-items: center; gap: 0.6rem;">
+                                <span style="font-size: 1.2rem;">🇷🇺</span>
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">{{ __('Ռուսերեն (ru)') }}</div>
+                                    <div style="font-size: 0.74rem; font-weight: 800; color: #0284c7;">RUB (₽ - Ռուբլի)</div>
+                                </div>
+                            </div>
+
+                            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.6rem 0.85rem; display: flex; align-items: center; gap: 0.6rem;">
+                                <span style="font-size: 1.2rem;">🇺🇸</span>
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">{{ __('Անգլերեն (en)') }}</div>
+                                    <div style="font-size: 0.74rem; font-weight: 800; color: #0284c7;">USD ($ - Դոլար)</div>
+                                </div>
+                            </div>
+
+                            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.6rem 0.85rem; display: flex; align-items: center; gap: 0.6rem;">
+                                <span style="font-size: 1.2rem;">🇩🇪 🇫🇷 🇪🇸 🇮🇹</span>
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">{{ __('de / fr / es / it') }}</div>
+                                    <div style="font-size: 0.74rem; font-weight: 800; color: #0284c7;">EUR (€ - Եվրո)</div>
+                                </div>
+                            </div>
+
+                            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.6rem 0.85rem; display: flex; align-items: center; gap: 0.6rem;">
+                                <span style="font-size: 1.2rem;">🇬🇪</span>
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">{{ __('Վրացերեն (ge / ka)') }}</div>
+                                    <div style="font-size: 0.74rem; font-weight: 800; color: #0284c7;">GEL (₾ - Լարի)</div>
+                                </div>
+                            </div>
+
+                            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.6rem 0.85rem; display: flex; align-items: center; gap: 0.6rem;">
+                                <span style="font-size: 1.2rem;">🇦🇪</span>
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">{{ __('Արաբերեն (ar)') }}</div>
+                                    <div style="font-size: 0.74rem; font-weight: 800; color: #0284c7;">AED (د.إ - Դիրհամ)</div>
+                                </div>
+                            </div>
+
+                            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.6rem 0.85rem; display: flex; align-items: center; gap: 0.6rem;">
+                                <span style="font-size: 1.2rem;">🇨🇳</span>
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">{{ __('Չինարեն (zh)') }}</div>
+                                    <div style="font-size: 0.74rem; font-weight: 800; color: #0284c7;">CNY (¥ - Յուան)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.45;">
+                            💡 <strong>{{ __('Նշում:') }}</strong> {{ __('Հայերենի (hy) կամ չքարտեզագրված լեզուների համար կօգտագործվի նշված պահուստային արժույթը') }} (<strong style="color: var(--text-main);" x-text="secondaryCurrency">USD</strong>)։ {{ __('Բոլոր փոխարժեքները թարմացվում են ինքնաշխատորեն ExchangeRate-API միջոցով (6 ժամ քեշավորմամբ):') }}
+                        </div>
+                    </div>
+
+                    <!-- Exchange Rate Direction & Value Input Box -->
+                    <div style="background: var(--bg-body); border: 1.5px solid var(--border-color); border-radius: 16px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <label for="secondary_currency_exchange_rate" style="font-weight: 700; font-size: 0.9rem; color: var(--text-main); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                            <span style="display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-arrow-right-arrow-left" style="color: var(--primary);"></i>
+                                <span x-show="rateMode === 'manual'">{{ __('Փոխարժեք և ուղղություն (Manual Exchange Rate)') }}</span>
+                                <span x-show="rateMode === 'automatic'" x-cloak>{{ __('Ընթացիկ ավտոմատ փոխարժեք (Live Auto Rate)') }}</span>
+                                <span x-show="rateMode === 'auto_by_language'" x-cloak>{{ __('Պահուստային արժույթի փոխարժեք (Fallback Exchange Rate)') }}</span>
+                                <span style="color: #ef4444;" x-show="rateMode === 'manual'">*</span>
+                            </span>
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <!-- Live Rate Fetch Button -->
+                                <button type="button" 
+                                        @click="fetchLiveRate()" 
+                                        :disabled="isLoadingRate || isSameAsPrimary"
+                                        style="font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.75rem; border-radius: 8px; border: 1px solid rgba(14, 165, 233, 0.4); background: rgba(14, 165, 233, 0.1); color: #0284c7; cursor: pointer; transition: all 0.2s ease;">
+                                    <i class="fa-solid fa-arrows-rotate" :class="{ 'fa-spin': isLoadingRate }"></i>
+                                    <span x-text="isLoadingRate ? '{{ __('Ստացվում է...') }}' : '{{ __('Թարմացնել API-ից') }}'"></span>
+                                </button>
+
+                                @if(!empty($vendor->secondary_currency_rate_updated_at))
+                                    <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">
+                                        <i class="fa-regular fa-clock"></i> {{ __('Վերջին թարմացում:') }} {{ $vendor->secondary_currency_rate_updated_at->format('d.m.Y H:i') }}
+                                    </span>
+                                @endif
+                            </div>
+                        </label>
+
+                        <!-- Feedback banner for AJAX live fetch -->
+                        <div x-show="rateFetchStatus === 'success'" x-cloak style="font-size: 0.8rem; font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 0.4rem 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>{{ __('Փոխարժեքը հաջողությամբ թարմացվեց ExchangeRate-API մատակարարից:') }}</span>
+                        </div>
+                        <div x-show="rateFetchStatus === 'error'" x-cloak style="font-size: 0.8rem; font-weight: 700; color: #ef4444; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 0.4rem 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <span>{{ __('Չհաջողվեց կապ հաստատել API-ի հետ։ Ստուգեք կապը կամ մուտքագրեք փոխարժեքը ձեռքով:') }}</span>
+                        </div>
+
+                        <!-- Direction Formula Box -->
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.85rem 1.25rem;">
+                            <div style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <span>1</span>
+                                <span style="color: var(--primary);" x-text="secondaryCurrency">USD</span>
+                                <span>=</span>
+                            </div>
+
+                            <div style="position: relative; display: inline-flex; align-items: center;">
+                                <input type="number" 
+                                       step="any" 
+                                       min="0.000001" 
+                                       max="100000000"
+                                       name="secondary_currency_exchange_rate" 
+                                       id="secondary_currency_exchange_rate" 
+                                       class="form-input" 
+                                       x-model="exchangeRate"
+                                       placeholder="350"
+                                       :readonly="rateMode === 'auto_by_language'"
+                                       :style="rateMode === 'auto_by_language' ? 'opacity: 0.85; background: var(--bg-body); cursor: not-allowed;' : ''"
+                                       style="width: 150px; font-size: 1.15rem; font-weight: 800; padding: 0.55rem 0.85rem; border-radius: 10px; background: var(--bg-body); border: 2px solid var(--primary); color: var(--text-main); text-align: center;">
+                            </div>
+
+                            <div style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <span style="color: #10b981;" x-text="primaryCurrency">AMD</span>
+                            </div>
+
+                            <span x-show="rateMode === 'automatic'" x-cloak style="font-size: 0.75rem; font-weight: 700; background: rgba(14, 165, 233, 0.15); color: #0284c7; border: 1px solid rgba(14, 165, 233, 0.3); padding: 0.2rem 0.5rem; border-radius: 6px;">
+                                LIVE RATE
+                            </span>
+                            <span x-show="rateMode === 'auto_by_language'" x-cloak style="font-size: 0.75rem; font-weight: 700; background: rgba(99, 102, 241, 0.15); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.3); padding: 0.2rem 0.5rem; border-radius: 6px;">
+                                DYNAMIC PER LANGUAGE
+                            </span>
+                        </div>
+
+                        <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.45;">
+                            {{ __('Հաշվարկման կարգ. Երկրորդային գին = Հիմնական գին / Փոխարժեք։ Օրինակ՝ եթե հիմնական գինը 3,500 AMD է և 1 USD = 350 AMD, ապա հաճախորդը կտեսնի') }}
+                            <strong style="color: var(--text-main);">≈ $10.00</strong>։
+                        </div>
+
+                        @error('secondary_currency_exchange_rate')
+                            <span style="color: #ef4444; font-size: 0.82rem; font-weight: 700; display: block;">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <!-- Live Calculation Preview on Menu Card -->
+                    <div style="background: var(--bg-body); border: 1.5px solid var(--border-color); border-radius: 16px; padding: 1.25rem;">
+                        <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-eye" style="color: #3b82f6;"></i>
+                            <span>{{ __('Հանրային ճաշացանկի նախադիտում (Live Menu Card Preview)') }}</span>
+                        </div>
+
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem 1.25rem; max-width: 380px; box-shadow: var(--shadow-card);">
+                            <div style="display: flex; gap: 0.85rem; align-items: center;">
+                                <div style="width: 54px; height: 54px; border-radius: 10px; background: rgba(245, 158, 11, 0.15); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #f59e0b; flex-shrink: 0;">
+                                    🥩
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        {{ __('Հորթի խորոված (Grilled Veal)') }}
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);">
+                                        {{ __('Մատուցվում է բանջարեղենով') }}
+                                    </div>
+                                    <div style="margin-top: 0.4rem;">
+                                        <!-- Primary Price -->
+                                        <div style="font-family: 'Outfit', sans-serif; font-size: 1.05rem; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: baseline; gap: 0.25rem;">
+                                            <span>3,500</span>
+                                            <span style="font-size: 0.85rem; color: var(--primary); font-weight: 700;" x-text="primarySymbol">֏</span>
+                                        </div>
+
+                                        <!-- Converted Secondary Price Underneath -->
+                                        <div style="font-size: 0.76rem; font-weight: 600; color: var(--text-muted); margin-top: 0.1rem; display: flex; align-items: center; gap: 0.3rem;"
+                                             x-show="enabled">
+                                            <span style="background: rgba(14, 165, 233, 0.12); color: #0284c7; padding: 0.1rem 0.4rem; border-radius: 4px; font-weight: 700;"
+                                                  x-text="formatPreview(3500)">
+                                                ≈ $10.00
+                                            </span>
+                                            <span style="font-size: 0.7rem; opacity: 0.7;">({{ __('մոտավոր') }})</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            
+                </div>
+
+                <!-- 8. AI & AUTOMATION TAB -->
+                <div x-show="activeTab === 'ai'" x-transition.opacity role="tabpanel" style="display: flex; flex-direction: column; gap: 1.75rem;">
+                    <!-- 3. FEATURED DISH OF THE DAY BANNER CARD -->
+            <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.9rem;">
+                        <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
+                            <i class="fa-solid fa-fire-flame-curved"></i>
+                        </span>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                <span>{{ __('Dish of the Day Banner') }}</span>
+                                <span style="font-size: 0.72rem; font-weight: 700; background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; padding: 0.15rem 0.55rem; border-radius: 6px; letter-spacing: 0.03em;">PROMO BANNER</span>
+                            </h3>
+                            <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
+                                {{ __('Promote a special dish of the day at the very top of the menu with an eye-catching banner') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Enable/Disable Switch -->
+                    <label style="display: inline-flex; align-items: center; gap: 0.75rem; cursor: pointer; background: var(--bg-body); padding: 0.5rem 1rem; border-radius: 14px; border: 1px solid var(--border-color);">
+                        <input type="checkbox" name="featured_dish_enabled" value="1" id="featuredDishToggle" {{ old('featured_dish_enabled', $vendor->featured_dish_enabled) ? 'checked' : '' }} style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+                        <span style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">
+                            {{ __('Activate in Menu') }}
+                        </span>
+                    </label>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1.25rem;">
+                    <!-- Select Dish -->
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            {{ __('Select Dish of the Day') }}
+                        </label>
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <select name="featured_product_id" id="featuredProductSelect" class="form-control" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
+                                <option value="">-- {{ __('Select a dish from the list') }} --</option>
+                                @foreach($products as $prod)
+                                    <option value="{{ $prod->id }}"
+                                            data-name="{{ $prod->name }}"
+                                            data-image="{{ $prod->image }}"
+                                            data-price="{{ number_format($prod->price, 0) }}"
+                                            data-desc="{{ $prod->description }}"
+                                            {{ old('featured_product_id', $vendor->featured_product_id) == $prod->id ? 'selected' : '' }}>
+                                        🍽️ {{ $prod->name }} — {{ number_format($prod->price, 0) }} {{ $vendor->currency ?? 'AMD' }} ({{ $prod->category?->name ?? 'Uncategorized' }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
+                                <i class="fa-solid fa-utensils"></i>
+                            </span>
+                        </div>
+                        <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                            {{ __('This dish will be featured prominently right beneath the categories') }}
+                        </span>
+                    </div>
+
+                    <!-- Badge Text -->
+                    <div class="form-group">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            {{ __('Badge Text') }}
+                        </label>
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <input type="text" name="featured_dish_badge" id="featuredDishBadgeInput" value="{{ old('featured_dish_badge', $vendor->featured_dish_badge ?? "⭐ TODAY'S SPECIAL") }}" placeholder="e.g. ⭐ TODAY'S SPECIAL" class="form-control" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
+                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
+                                <i class="fa-solid fa-tag"></i>
+                            </span>
+                        </div>
+                        <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                            {{ __('Default: "⭐ TODAY\'S SPECIAL" or "CHEF\'S SPECIAL"') }}
+                        </span>
+                    </div>
+
+                    <!-- Promo Subtitle -->
+                    <div class="form-group">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            {{ __('Promo Subtitle') }}
+                        </label>
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <input type="text" name="featured_dish_subtitle" id="featuredDishSubtitleInput" value="{{ old('featured_dish_subtitle', $vendor->featured_dish_subtitle) }}" placeholder="e.g. Chef's special recommendation for today only" class="form-control" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
+                            <span style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 1rem;">
+                                <i class="fa-solid fa-comment-dots"></i>
+                            </span>
+                        </div>
+                        <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                            {{ __("If left empty, the dish's original description will be used") }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Live Preview in Admin -->
+                <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px dashed var(--border-color);">
+                    <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.45rem;">
+                        <i class="fa-solid fa-eye" style="color: var(--primary);"></i>
+                        <span>{{ __('Preview (how customers will see it in the menu)') }}</span>
+                    </div>
+
+                    <div id="featuredDishPreviewCard" style="max-width: 480px; border-radius: 16px; overflow: hidden; background: var(--bg-body); border: 2px solid var(--primary); box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+                        <div style="position: relative; height: 140px; background: #000; overflow: hidden;">
+                            <img id="previewDishImg" src="{{ $vendor->featuredProduct?->image ?: asset('images/default-dish.png') }}" onerror="this.onerror=null;this.src='{{ asset('images/default-dish.png') }}';" style="width: 100%; height: 100%; object-fit: cover;">
+                            <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);"></div>
+                            <span id="previewDishBadge" style="position: absolute; top: 0.75rem; left: 0.75rem; background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; font-size: 0.7rem; font-weight: 800; padding: 0.25rem 0.6rem; border-radius: 9999px; text-transform: uppercase;">
+                                {{ $vendor->featured_dish_badge ?: "⭐ TODAY'S SPECIAL" }}
+                            </span>
+                        </div>
+                        <div style="padding: 1rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.25rem;">
+                                <h4 id="previewDishName" style="margin: 0; font-size: 1.1rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit';">
+                                    {{ $vendor->featuredProduct?->name ?? 'Select dish' }}
+                                </h4>
+                                <span id="previewDishPrice" style="font-size: 1.05rem; font-weight: 800; color: var(--primary);">
+                                    {{ $vendor->featuredProduct ? number_format($vendor->featuredProduct->price, 0) . ' ' . ($vendor->currency ?? 'AMD') : '' }}
+                                </span>
+                            </div>
+                            <p id="previewDishDesc" style="margin: 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+                                {{ $vendor->featured_dish_subtitle ?: ($vendor->featuredProduct?->description ?: "Chef's special selection") }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+                    <!-- 3. AI CONTROL CENTER BANNER CARD -->
+            <div class="card settings-card" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(236, 72, 153, 0.05)); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card); position: relative; overflow: hidden;">
+                <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #8b5cf6, #ec4899, #f59e0b);"></div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem;">
+                    <div style="display: flex; align-items: center; gap: 1.1rem; min-width: 0; flex: 1;">
+                        <span style="width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, #8b5cf6, #ec4899); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);">
+                            <i class="fa-solid fa-robot"></i>
+                        </span>
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
+                                    {{ __('AI Control Center & AI Waiter') }}
+                                </h3>
+                                <span style="font-size: 0.72rem; font-weight: 700; background: linear-gradient(135deg, #8b5cf6, #d946ef); color: #fff; padding: 0.15rem 0.5rem; border-radius: 6px;">
+                                    NEW DEDICATED HUB
+                                </span>
+                            </div>
+                            <p style="margin: 0.35rem 0 0; font-size: 0.88rem; color: var(--text-muted); line-height: 1.45;">
+                                {{ __('AI Waiter, AI providers (Gemini, OpenAI, Claude, DeepSeek, Groq), API keys, and model settings have been moved to the dedicated AI section:') }}
+                            </p>
+
+                            <div style="display: flex; gap: 0.75rem; align-items: center; margin-top: 0.75rem; flex-wrap: wrap;">
+                                <span style="font-size: 0.78rem; font-weight: 700; color: #8b5cf6; background: rgba(139, 92, 246, 0.12); padding: 0.2rem 0.55rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                    <i class="fa-solid fa-microchip"></i> {{ strtoupper($vendor->getAiProvider()) }} ({{ $vendor->getAiModel() }})
+                                </span>
+                                @if($vendor->ai_waiter_enabled)
+                                    <span style="font-size: 0.78rem; font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.12); padding: 0.2rem 0.55rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                        <i class="fa-solid fa-circle-check"></i> {{ __('AI Waiter: Active') }}
+                                    </span>
+                                @else
+                                    <span style="font-size: 0.78rem; font-weight: 700; color: #64748b; background: rgba(100, 116, 139, 0.12); padding: 0.2rem 0.55rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                        <i class="fa-solid fa-pause"></i> {{ __('AI Waiter: Disabled') }}
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <a href="{{ route('admin.settings.ai') }}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 0.92rem; padding: 0.75rem 1.4rem; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border: none; color: #fff; box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35); white-space: nowrap;">
+                            <i class="fa-solid fa-gear"></i> {{ __('Open AI Settings') }}
+                            <i class="fa-solid fa-arrow-right" style="font-size: 0.8rem;"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            
+                    <!-- 7. CRM AUTOMATION & BIRTHDAY DISCOUNTS -->
+            <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.9rem;">
+                        <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(236, 72, 153, 0.15); color: #ec4899; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
+                            <i class="fa-solid fa-cake-candles"></i>
+                        </span>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
+                                {{ __('CRM Automation & Birthday Discounts') }}
+                            </h3>
+                            <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
+                                {{ __('Automated birthday discounts on orders and SMS notifications (Mobipace, SMS.am, Twilio)') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <label class="switch" style="position: relative; display: inline-block; width: 48px; height: 26px;">
+                        <input type="checkbox" name="crm_settings[birthday_discount_enabled]" value="1" {{ !empty($crmSettings['birthday_discount_enabled']) ? 'checked' : '' }} id="crmBirthdayToggle" onchange="toggleCrmFields()">
+                        <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px;"></span>
+                    </label>
+                </div>
+
+                <div id="crmContainer" style="{{ empty($crmSettings['birthday_discount_enabled']) ? 'opacity: 0.55; pointer-events: none;' : '' }}; transition: all 0.25s ease;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                                {{ __('Birthday Discount (%)') }}
+                            </label>
+                            <div style="position: relative; display: flex; align-items: center;">
+                                <input type="number" min="0" max="100" step="1" name="crm_settings[birthday_discount_percent]" value="{{ $crmSettings['birthday_discount_percent'] ?? 15 }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: #10b981; padding: 0.7rem 1rem 0.7rem 2.2rem; border-radius: 12px; font-weight: 700; font-size: 0.95rem;">
+                                <span style="position: absolute; left: 0.9rem; color: var(--text-muted); font-weight: 700;">%</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                                {{ __('Validity Period (days)') }}
+                            </label>
+                            <input type="number" min="0" max="30" name="crm_settings[birthday_validity_days]" value="{{ $crmSettings['birthday_validity_days'] ?? 3 }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.7rem 1rem; border-radius: 12px; font-weight: 600; font-size: 0.92rem;">
+                            <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; display: block;">{{ __('Discount is valid ± specified days around birthday') }}</span>
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                                {{ __('SMS Provider') }}
+                            </label>
+                            <select name="crm_settings[sms_provider]" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.7rem 1rem; border-radius: 12px; font-weight: 600; font-size: 0.92rem;">
+                                <option value="mobipace" {{ ($crmSettings['sms_provider'] ?? '') === 'mobipace' ? 'selected' : '' }}>Mobipace SMS (Armenia)</option>
+                                <option value="smsam" {{ ($crmSettings['sms_provider'] ?? '') === 'smsam' ? 'selected' : '' }}>SMS.am (Armenia)</option>
+                                <option value="twilio" {{ ($crmSettings['sms_provider'] ?? '') === 'twilio' ? 'selected' : '' }}>Twilio (International)</option>
+                                <option value="log" {{ ($crmSettings['sms_provider'] ?? '') === 'log' ? 'selected' : '' }}>Log / Test Mode (no SMS sent)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
+                        <div>
+                            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                                <span>{{ __('SMS API Key / Token') }}</span>
+                                @if(!empty($crmSettings['configured']))
+                                    <span style="font-size: 0.72rem; color: #10b981; font-weight: 700;">✓ {{ __('Configured') }}</span>
+                                @endif
+                            </label>
+                            <input type="password" name="crm_settings[sms_api_key]" value="" placeholder="{{ !empty($crmSettings['configured']) ? '•••••••• (' . ($crmSettings['masked'] ?? 'Configured') . ')' : 'API Key' }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.7rem 1rem; border-radius: 12px; font-size: 0.92rem;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                                {{ __('SMS Sender ID') }}
+                            </label>
+                            <input type="text" name="crm_settings[sms_sender_id]" value="{{ $crmSettings['sms_sender_id'] ?? 'QRMENU' }}" placeholder="e.g. QRMENU or Restaurant" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.7rem 1rem; border-radius: 12px; font-weight: 600; font-size: 0.92rem;">
+                        </div>
+
+                        <div style="display: flex; align-items: flex-end; padding-bottom: 0.5rem;">
+                            <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; font-weight: 600; cursor: pointer;">
+                                <input type="checkbox" name="crm_settings[birthday_sms_enabled]" value="1" {{ !empty($crmSettings['birthday_sms_enabled']) ? 'checked' : '' }} style="accent-color: var(--primary);">
+                                <span>{{ __('Enable automated birthday greeting SMS') }}</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            {{ __('Birthday SMS Message Template') }}
+                        </label>
+                        <textarea name="crm_settings[birthday_sms_template]" rows="2" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.7rem 1rem; border-radius: 12px; font-size: 0.9rem; resize: vertical;">{{ $crmSettings['birthday_sms_template'] ?? 'Happy Birthday {NAME}! Enjoy a {DISCOUNT}% discount at {VENDOR}.' }}</textarea>
+                        <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; display: block;">{{ __('Available placeholders: {NAME} - customer name, {DISCOUNT} - discount %, {VENDOR} - restaurant name') }}</span>
+                    </div>
+                </div>
+            </div>
+
+            
+                </div>
+
+                <!-- 9. INTEGRATIONS TAB -->
+                <div x-show="activeTab === 'integrations'" x-transition.opacity role="tabpanel" style="display: flex; flex-direction: column; gap: 1.75rem;">
+                    <!-- 3. CUSTOM DOMAIN & BRANDING URL -->
+            <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.9rem;">
+                        <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(6, 182, 212, 0.15); color: #06b6d4; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
+                            <i class="fa-solid fa-globe"></i>
+                        </span>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
+                                {{ __('Custom Domain & White-Label') }}
+                            </h3>
+                            <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); word-break: break-word;">
+                                {{ __('Connect your custom domain so the menu opens on your domain (e.g. menu.restaurant.com) and admins access yourdomain/admin') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    @php
+                        $primaryDomain = $vendor->primaryCustomDomain;
+                    @endphp
+                    @if($primaryDomain && $primaryDomain->isActive())
+                        <span style="font-size: 0.78rem; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 0.3rem 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+                            <i class="fa-solid fa-circle-check"></i> {{ __('Active & Connected') }}
+                        </span>
+                    @elseif($primaryDomain && $primaryDomain->isVerified())
+                        <span style="font-size: 0.78rem; font-weight: 700; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 0.3rem 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+                            <i class="fa-solid fa-shield-halved"></i> {{ __('Ownership Verified (Awaiting DNS)') }}
+                        </span>
+                    @elseif($primaryDomain && $primaryDomain->isDnsDetected())
+                        <span style="font-size: 0.78rem; font-weight: 700; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 0.3rem 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+                            <i class="fa-solid fa-bolt"></i> {{ __('DNS Detected (Awaiting Verification)') }}
+                        </span>
+                    @elseif($vendor->hasCustomDomain())
+                        <span style="font-size: 0.78rem; font-weight: 700; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 0.3rem 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+                            <i class="fa-solid fa-hourglass-half"></i> {{ __('Pending Configuration') }}
+                        </span>
+                    @else
+                        <span style="font-size: 0.78rem; font-weight: 700; background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; padding: 0.3rem 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+                            <i class="fa-solid fa-circle-minus"></i> {{ __('Disabled') }}
+                        </span>
+                    @endif
+                </div>
+
+                <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem; margin-bottom: 1.25rem;">
+                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: end; flex-wrap: wrap;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                                {{ __('Custom Domain FQDN') }}
+                            </label>
+                            <div style="position: relative; display: flex; align-items: center;">
+                                <input type="text" name="custom_domain" id="customDomainInput" value="{{ old('custom_domain', $vendor->custom_domain) }}" class="form-control" placeholder="e.g. menu.restaurant.com or restaurant.com" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem 0.75rem 2.6rem; font-size: 0.95rem; font-weight: 600;">
+                                <span style="position: absolute; left: 1rem; color: #06b6d4; font-size: 1rem;">
+                                    <i class="fa-solid fa-link"></i>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <button type="button" id="btnVerifyDomain" class="btn btn-secondary" style="padding: 0.75rem 1rem; font-size: 0.88rem; font-weight: 700; border-radius: 12px; display: inline-flex; align-items: center; gap: 0.5rem; border-color: rgba(16, 185, 129, 0.4); color: #10b981; white-space: nowrap;">
+                                <i class="fa-solid fa-shield-check"></i> {{ __('Verify Ownership') }}
+                            </button>
+                            <button type="button" id="btnCheckDomainDns" class="btn btn-secondary" style="padding: 0.75rem 1rem; font-size: 0.88rem; font-weight: 700; border-radius: 12px; display: inline-flex; align-items: center; gap: 0.5rem; border-color: rgba(6, 182, 212, 0.4); color: #06b6d4; white-space: nowrap;">
+                                <i class="fa-solid fa-bolt"></i> {{ __('Check DNS') }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem; display: block;">
+                        {{ __('Enter domain without http:// or https:// (e.g. menu.restaurant.com). Leave blank to disable custom domain:') }}
+                    </span>
+
+                    <!-- Live Check / Verification Result Alert Box -->
+                    <div id="dnsCheckResultBox" style="display: none; margin-top: 1rem; padding: 0.85rem 1.1rem; border-radius: 12px; font-size: 0.86rem; font-weight: 600;"></div>
+
+                    @if($primaryDomain)
+                        <!-- TXT Challenge Info Box -->
+                        <div style="margin-top: 1rem; padding: 0.9rem 1.1rem; border-radius: 12px; background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.84rem;">
+                            <div style="font-weight: 700; color: #38bdf8; margin-bottom: 0.45rem; display: flex; align-items: center; justify-content: space-between;">
+                                <span><i class="fa-solid fa-key"></i> {{ __('DNS TXT Record for Ownership Verification') }}</span>
+                                @if($primaryDomain->isVerified())
+                                    <span style="color: #10b981; font-size: 0.76rem;"><i class="fa-solid fa-circle-check"></i> {{ __('Verified') }} ({{ $primaryDomain->verified_at?->format('d.m.Y H:i') }})</span>
+                                @else
+                                    <span style="color: #f59e0b; font-size: 0.76rem;"><i class="fa-solid fa-clock"></i> {{ __('Waiting for TXT record') }}</span>
+                                @endif
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr; gap: 0.4rem; font-family: monospace; font-size: 0.8rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.25); padding: 0.35rem 0.6rem; border-radius: 6px;">
+                                    <span style="color: var(--text-muted);">Host/Name: <strong style="color: var(--text-main);">{{ $primaryDomain->getChallengeHost() }}</strong></span>
+                                    <button type="button" onclick="navigator.clipboard.writeText('{{ $primaryDomain->getChallengeHost() }}'); alert('Host copied');" style="background: none; border: none; color: #38bdf8; cursor: pointer;" title="Copy"><i class="fa-solid fa-copy"></i></button>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.25); padding: 0.35rem 0.6rem; border-radius: 6px;">
+                                    <span style="color: var(--text-muted); word-break: break-all;">TXT Value: <strong style="color: #a5f3fc;">{{ $primaryDomain->verification_token }}</strong></span>
+                                    <button type="button" onclick="navigator.clipboard.writeText('{{ $primaryDomain->verification_token }}'); alert('Token copied');" style="background: none; border: none; color: #38bdf8; cursor: pointer;" title="Copy"><i class="fa-solid fa-copy"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Action Links if domain exists -->
+                    @if($vendor->hasCustomDomain())
+                        <div style="margin-top: 1.1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06); display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+                            <a href="{{ $vendor->getStorefrontUrl() }}" target="_blank" class="btn btn-secondary" style="font-size: 0.82rem; font-weight: 600; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.45rem;">
+                                <i class="fa-solid fa-arrow-up-right-from-square" style="color: #06b6d4;"></i> {{ __('Open Menu (Storefront)') }}
+                            </a>
+                            <a href="{{ $vendor->getAdminUrl() }}" target="_blank" class="btn btn-secondary" style="font-size: 0.82rem; font-weight: 600; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.45rem;">
+                                <i class="fa-solid fa-shield-halved" style="color: #f59e0b;"></i> {{ __('Open Admin Panel') }}
+                            </a>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- DNS & cPanel Setup Instructions Box -->
+                <div style="background: rgba(30, 41, 59, 0.4); border: 1px dashed rgba(6, 182, 212, 0.35); border-radius: 16px; padding: 1.25rem;">
+                    <div style="font-size: 0.92rem; font-weight: 800; color: #38bdf8; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-circle-info"></i> {{ __('How to connect your domain (DNS & cPanel steps)') }}
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; font-size: 0.84rem; color: var(--text-muted);">
+                        <!-- Step 1: TXT Verification -->
+                        <div style="background: rgba(15, 23, 42, 0.5); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem;">
+                                {{ __('1. Ownership Verification (TXT Record)') }}
+                            </div>
+                            <p style="margin: 0 0 0.5rem 0; line-height: 1.4;">
+                                {{ __('Add a TXT Record in your domain DNS with the Host and Value above, then click "Verify Ownership":') }}
+                            </p>
+                            <div style="font-size: 0.78rem; color: #a5f3fc;">
+                                <i class="fa-solid fa-lock"></i> {{ __('This ensures that only the verified domain owner can link it to their restaurant.') }}
+                            </div>
+                        </div>
+
+                        <!-- Step 2: DNS Routing -->
+                        <div style="background: rgba(15, 23, 42, 0.5); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem;">
+                                {{ __('2. DNS Routing (A or CNAME)') }}
+                            </div>
+                            <p style="margin: 0 0 0.5rem 0; line-height: 1.4;">
+                                {{ __('Add an A Record in your domain DNS pointing to:') }}
+                            </p>
+                            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.3); padding: 0.4rem 0.65rem; border-radius: 6px; font-family: monospace; color: #a5f3fc; font-size: 0.82rem;">
+                                <span>A &rarr; {{ $_SERVER['SERVER_ADDR'] ?? gethostbyname('menu.elab.am') }}</span>
+                                <button type="button" onclick="navigator.clipboard.writeText('{{ $_SERVER['SERVER_ADDR'] ?? gethostbyname('menu.elab.am') }}'); alert('IP copied');" style="background: none; border: none; color: #38bdf8; cursor: pointer; padding: 2px 4px;" title="Copy IP">
+                                    <i class="fa-solid fa-copy"></i>
+                                </button>
+                            </div>
+                            <div style="margin-top: 0.4rem; font-size: 0.78rem;">
+                                {{ __('or CNAME to') }} <code>menu.elab.am</code>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: cPanel / SSL -->
+                        <div style="background: rgba(15, 23, 42, 0.5); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem;">
+                                {{ __('3. cPanel & SSL Certificate') }}
+                            </div>
+                            <p style="margin: 0 0 0.5rem 0; line-height: 1.4;">
+                                {{ __('In cPanel create a new Domain/Alias with the same Document Root (e.g. menu.elab.am/public).') }}
+                            </p>
+                            <div style="font-size: 0.78rem; color: #a5f3fc;">
+                                <i class="fa-solid fa-shield"></i> {{ __('In cPanel SSL/TLS Status, run AutoSSL for a free HTTPS certificate.') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+                    <!-- Network Thermal Printer Integration -->
+                    <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+                            <div style="display: flex; align-items: center; gap: 0.9rem;">
+                                <span style="width: 44px; height: 44px; border-radius: 12px; background: rgba(16, 185, 129, 0.15); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
+                                    <i class="fa-solid fa-print"></i>
+                                </span>
+                                <div>
+                                    <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
+                                        {{ __('Thermal Printers & ESC/POS') }}
+                                    </h3>
+                                    <p style="margin: 0.25rem 0 0; font-size: 0.85rem; color: var(--text-muted);">
+                                        {{ __('Direct TCP/IP socket printing for kitchen, bar, and cashier thermal receipt printers') }}
+                                    </p>
+                                </div>
+                            </div>
+                            <button type="button" @click="setTab('orders')" class="btn btn-secondary" style="font-size: 0.85rem; border-radius: 12px; font-weight: 700;">
+                                <i class="fa-solid fa-sliders"></i> {{ __('Configure in Orders') }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 10. SECURITY & ACCESS TAB -->
+                <div x-show="activeTab === 'security'" x-transition.opacity role="tabpanel" style="display: flex; flex-direction: column; gap: 1.75rem;">
+                    <!-- 9. USER PROFILE & 2FA SECURITY CARD -->
             <div class="card settings-card" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(245, 158, 11, 0.05) 100%); border: 1.5px solid {{ Auth::user()->hasTwoFactorEnabled() ? '#10b981' : 'var(--border-color)' }}; border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                     <div style="display: flex; align-items: center; gap: 1rem;">
@@ -2238,21 +3106,166 @@
                 </div>
             </div>
 
-            <!-- Sticky Bottom Save Bar -->
-            <div class="sticky-save-bar" style="position: sticky; bottom: 1.5rem; z-index: 30; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 0.85rem 1.25rem; box-shadow: 0 12px 30px rgba(0,0,0,0.25); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
-                <div style="display: flex; align-items: center; gap: 0.6rem; color: var(--text-muted); font-size: 0.85rem;">
-                    <i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary);"></i>
-                    <span>{{ __('All changes will be saved for the current branch') }}</span>
+            
+                    <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem;">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="width: 48px; height: 48px; border-radius: 14px; background: rgba(14, 165, 233, 0.15); color: #0ea5e9; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; flex-shrink: 0;">
+                                    <i class="fa-solid fa-users"></i>
+                                </span>
+                                <div>
+                                    <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
+                                        {{ __('Team & Access Policies') }}
+                                    </h3>
+                                    <p style="margin: 0.25rem 0 0; font-size: 0.85rem; color: var(--text-muted);">
+                                        {{ __('Manage team roles (manager, staff, chef, cashier) and location-specific permissions.') }}
+                                    </p>
+                                </div>
+                            </div>
+                            <a href="{{ route('admin.team.index') }}" class="btn btn-secondary" style="text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 0.88rem;">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> {{ __('Team & Employees') }}
+                            </a>
+                        </div>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.6rem; border-radius: 14px; font-weight: 700; padding: 0.75rem 2rem; font-size: 0.95rem; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);">
-                    <i class="fa-solid fa-check"></i> {{ __('Save All Settings') }}
-                </button>
-            </div>
+
+                <!-- Sticky Bottom Save Bar -->
+                <div class="sticky-save-bar" style="position: sticky; bottom: 1.5rem; z-index: 30; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 0.85rem 1.25rem; box-shadow: 0 12px 30px rgba(0,0,0,0.25); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); margin-top: 2rem;">
+                    <div style="display: flex; align-items: center; gap: 0.6rem; color: var(--text-muted); font-size: 0.85rem;">
+                        <i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary);"></i>
+                        <span>{{ __('All changes will be saved for the current branch') }}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <button type="button" x-show="isDirty" x-cloak @click="window.location.reload()" class="btn btn-secondary" style="border-radius: 12px; font-size: 0.88rem; font-weight: 600;">
+                            {{ __('Discard') }}
+                        </button>
+                        <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.6rem; border-radius: 14px; font-weight: 700; padding: 0.75rem 2rem; font-size: 0.95rem; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);">
+                            <i class="fa-solid fa-check"></i> {{ __('Save All Settings') }}
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
-    </form>
+    </div>
 </div>
 
 <style>
+/* Enterprise Settings Layout Styles */
+.settings-layout-wrapper {
+    display: grid;
+    grid-template-columns: 270px minmax(0, 1fr);
+    gap: 2rem;
+    align-items: start;
+}
+@media (max-width: 992px) {
+    .settings-layout-wrapper {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+}
+.settings-nav-sidebar {
+    position: sticky;
+    top: 90px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 0.85rem;
+    box-shadow: var(--shadow-card);
+}
+.settings-nav-title {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-subtle);
+    padding: 0.45rem 0.65rem 0.65rem;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 0.5rem;
+}
+.settings-nav-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.settings-nav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border-radius: 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+}
+.settings-nav-btn:hover {
+    color: var(--text-main);
+    background: var(--nav-hover);
+}
+.settings-nav-btn.active {
+    color: var(--text-main);
+    background: var(--nav-active);
+    border-color: rgba(245, 158, 11, 0.25);
+    font-weight: 700;
+}
+.settings-nav-icon-box {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+.settings-mobile-tabs {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.65rem;
+    margin-bottom: 1.25rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+.settings-mobile-tabs::-webkit-scrollbar {
+    display: none;
+}
+.settings-mobile-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.95rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.settings-mobile-tab-btn.active {
+    background: var(--primary-gradient);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 4px 12px var(--primary-glow);
+}
+@media (min-width: 993px) {
+    .hide-on-desktop {
+        display: none !important;
+    }
+}
+[x-cloak] {
+    display: none !important;
+}
+
 .settings-card {
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
@@ -2322,6 +3335,7 @@
 .switch input:checked + .slider.round:before {
     transform: translateX(21px);
 }
+
 </style>
 
 <script>
@@ -2527,7 +3541,7 @@ function updateFeaturedDishPreview() {
         if (nameEl) nameEl.textContent = opt.dataset.name || opt.text;
         if (priceEl) priceEl.textContent = (opt.dataset.price || '') + ' ' + '{{ $vendor->currency ?? "AMD" }}';
         if (imgEl && opt.dataset.image) imgEl.src = opt.dataset.image;
-        if (descEl) descEl.textContent = subtitleInput.value.trim() || opt.dataset.desc || 'Chef's special selection';
+        if (descEl) descEl.textContent = subtitleInput.value.trim() || opt.dataset.desc || "Chef's special selection";
     } else {
         if (nameEl) nameEl.textContent = 'Select dish';
         if (priceEl) priceEl.textContent = '';
@@ -2535,7 +3549,7 @@ function updateFeaturedDishPreview() {
     }
 
     if (badgeEl) {
-        badgeEl.textContent = badgeInput.value.trim() || '⭐ TODAY'S SPECIAL';
+        badgeEl.textContent = badgeInput.value.trim() || "⭐ TODAY'S SPECIAL";
     }
 }
 
@@ -2925,5 +3939,7 @@ function testPrinterConnection() {
 document.addEventListener('DOMContentLoaded', function() {
     updateReceiptLivePreview();
 });
+
 </script>
+
 @endsection

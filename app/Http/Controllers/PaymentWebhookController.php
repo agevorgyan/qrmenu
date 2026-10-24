@@ -29,6 +29,10 @@ class PaymentWebhookController extends Controller
 
         $payload = $request->all();
         $headers = $request->headers->all();
+        $rawBody = $request->getContent();
+        if (! empty($rawBody)) {
+            $headers['x-raw-body'] = $rawBody;
+        }
 
         Log::info("Payment webhook received for gateway: {$gateway}", [
             'payload' => $sanitizer->sanitize($payload),

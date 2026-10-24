@@ -147,6 +147,37 @@ class PaymentVerificationService
     }
 
     /**
+     * Apply authoritative verification result (e.g. from reconciliation or direct provider query).
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    public function applyAuthoritativeResult(
+        PaymentAttempt $attempt,
+        PaymentVerificationResult $verification,
+        array $payload = []
+    ): PaymentVerificationResult {
+        return DB::transaction(function () use ($attempt, $verification, $payload): PaymentVerificationResult {
+            $lockedAttempt = PaymentAttempt::where('id', $attempt->id)->lockForUpdate()->first();
+            if (! $lockedAttempt) {
+                return PaymentVerificationResult::failed('Payment attempt not found');
+            }
+
+            if ($lockedAttempt->status === PaymentStatus::Paid) {
+                return PaymentVerificationResult::paid(
+                    providerTransactionId: (string) $lockedAttempt->provider_transaction_id,
+                    amount: (float) $lockedAttempt->amount,
+                    currency: $lockedAttempt->currency,
+                    merchantReference: $lockedAttempt->merchant_reference,
+                    rawPayload: $lockedAttempt->response_payload ?? [],
+                    signatureValid: true
+                );
+            }
+
+            return $this->applyVerificationResult($lockedAttempt, $verification, $payload);
+        });
+    }
+
+    /**
      * Apply verification result to PaymentAttempt, Order, and SubscriptionPayment within transaction.
      *
      * @param  array<string, mixed>  $payload

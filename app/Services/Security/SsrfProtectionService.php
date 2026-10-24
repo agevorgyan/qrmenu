@@ -96,6 +96,14 @@ class SsrfProtectionService
                 return true;
             }
 
+        // In testing environments, allow RFC reserved test/documentation domains for mocked HTTP tests
+        if (app()->environment('testing') && ($host === 'example.com' || str_ends_with($host, '.example.com') || str_ends_with($host, 'example.com') || str_ends_with($host, '.test') || str_ends_with($host, '.example'))) {
+            return true;
+        }
+
+        // Resolve DNS records to check destination IP
+        $ips = @gethostbynamel($host);
+        if ($ips === false || empty($ips)) {
             return false;
         }
 

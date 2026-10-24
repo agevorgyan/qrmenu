@@ -6,6 +6,7 @@ use App\Actions\CreateOrderAction;
 use App\DTOs\CreateOrderDTO;
 use App\Enums\PaymentStatus;
 use App\Events\WaiterCalled;
+use App\Exceptions\QuotaExceededException;
 use App\Http\Requests\CallWaiterRequest;
 use App\Http\Requests\SubmitOrderRequest;
 use App\Jobs\RecordAnalyticsVisitJob;
@@ -262,9 +263,11 @@ self.addEventListener('fetch', event => {
     {
         $vendor = Vendor::where('slug', $vendor_slug)->where('is_active', true)->firstOrFail();
 
-        if (! $vendor->hasFeature('orders')) {
+        if (! $vendor->hasFeature('orders.online')) {
             return response()->json([
                 'success' => false,
+                'error' => 'FEATURE_NOT_ENTITLED',
+                'code' => 'FEATURE_NOT_ENTITLED',
                 'message' => 'Օնլայն պատվերների ֆունկցիան ակտիվ չէ այս մենյուի համար (Basic փաթեթ)։',
             ], 403);
         }
@@ -295,6 +298,17 @@ self.addEventListener('fetch', event => {
                 'success' => false,
                 'message' => collect($e->errors())->flatten()->first(),
                 'errors' => $e->errors(),
+            ], 422);
+        } catch (QuotaExceededException $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'quota_exceeded',
+                'code' => 'QUOTA_EXCEEDED',
+                'quota_key' => $e->status->quotaKey,
+                'limit' => $e->status->limit,
+                'current_usage' => $e->status->currentUsage,
+                'remaining_capacity' => $e->status->remainingCapacity,
+                'message' => 'Այս ռեստորանը հասել է ամսական պատվերների առավելագույն սահմանաչափին:',
             ], 422);
         }
 
@@ -585,6 +599,15 @@ self.addEventListener('fetch', event => {
     public function callWaiter(CallWaiterRequest $request, string $vendor_slug)
     {
         $vendor = Vendor::where('slug', $vendor_slug)->where('is_active', true)->firstOrFail();
+
+        if (! $vendor->hasFeature('orders.online')) {
+            return response()->json([
+                'success' => false,
+                'error' => 'FEATURE_NOT_ENTITLED',
+                'code' => 'FEATURE_NOT_ENTITLED',
+                'message' => 'Մատուցողի կանչի ֆունկցիան ակտիվ չէ այս մենյուի համար (Basic փաթեթ)։',
+            ], 403);
+        }
 
         $validated = $request->validated();
 

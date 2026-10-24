@@ -7,11 +7,11 @@
     <!-- Page Header -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem; flex-wrap: wrap; gap: 1rem;">
         <div style="min-width: 0; flex: 1;">
-            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 0.85rem;">
-                <a href="{{ route('admin.settings.index') }}" style="color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 0.35rem;">
-                    <i class="fa-solid fa-arrow-left"></i> {{ __('Settings') }}
-                </a>
-                <span style="color: var(--text-muted);">/</span>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 0.85rem; flex-wrap: wrap;">
+                <a href="{{ route('admin.dashboard') }}" style="color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 0.35rem;"><i class="fa-solid fa-gauge-high"></i> {{ __('Dashboard') }}</a>
+                <i class="fa-solid fa-chevron-right" style="font-size: 0.65rem; opacity: 0.6;"></i>
+                <a href="{{ route('admin.settings.index', ['tab' => 'ai']) }}" style="color: var(--text-muted); text-decoration: none;">{{ __('Settings') }}</a>
+                <i class="fa-solid fa-chevron-right" style="font-size: 0.65rem; opacity: 0.6;"></i>
                 <span style="color: var(--primary); font-weight: 700;">{{ __('AI Settings & Models') }}</span>
             </div>
 
@@ -28,8 +28,8 @@
         </div>
 
         <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-            <a href="{{ route('admin.settings.index') }}" class="btn btn-secondary" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 0.88rem;">
-                <i class="fa-solid fa-sliders"></i> {{ __('General Settings') }}
+            <a href="{{ route('admin.settings.index', ['tab' => 'ai']) }}" class="btn btn-secondary" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 0.88rem;">
+                <i class="fa-solid fa-arrow-left"></i> {{ __('Back to Settings') }}
             </a>
             <button type="submit" form="aiSettingsForm" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem; border-radius: 12px; font-weight: 700; padding: 0.65rem 1.4rem; font-size: 0.92rem; box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35); background: linear-gradient(135deg, #8b5cf6, #7c3aed); border: none; color: #fff;">
                 <i class="fa-solid fa-floppy-disk"></i> {{ __('Save All Changes') }}

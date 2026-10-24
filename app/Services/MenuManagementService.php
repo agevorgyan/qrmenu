@@ -9,6 +9,7 @@ use App\Models\LocationProductOverride;
 use App\Models\Product;
 use App\Models\ProductVariation;
 use App\Models\Vendor;
+use App\Security\QuotaCatalog;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -17,10 +18,14 @@ class MenuManagementService
 {
     protected StorageService $storageService;
 
+    protected QuotaService $quotaService;
+
     public function __construct(
-        ?StorageService $storageService = null
+        ?StorageService $storageService = null,
+        ?QuotaService $quotaService = null
     ) {
         $this->storageService = $storageService ?? app(StorageService::class);
+        $this->quotaService = $quotaService ?? app(QuotaService::class);
     }
 
     /**
@@ -64,21 +69,27 @@ class MenuManagementService
 
     public function createCategory(Vendor $vendor, array $data): Category
     {
-        $name = $data['name'];
-        $translations = $this->extractTranslations($data, 'name');
+        return $this->quotaService->executeWithResourceQuota(
+            $vendor,
+            QuotaCatalog::KEY_CATEGORIES_COUNT,
+            function (Vendor $lockedVendor) use ($data) {
+                $name = $data['name'];
+                $translations = $this->extractTranslations($data, 'name');
 
-        $category = Category::create([
-            'vendor_id' => $vendor->id,
-            'name' => $name,
-            'name_translations' => $translations,
-            'description' => $data['description'] ?? null,
-            'sort_order' => (int) (Category::where('vendor_id', $vendor->id)->max('sort_order') ?? 0) + 1,
-            'is_active' => true,
-        ]);
+                $category = Category::create([
+                    'vendor_id' => $lockedVendor->id,
+                    'name' => $name,
+                    'name_translations' => $translations,
+                    'description' => $data['description'] ?? null,
+                    'sort_order' => (int) (Category::where('vendor_id', $lockedVendor->id)->max('sort_order') ?? 0) + 1,
+                    'is_active' => true,
+                ]);
 
-        TenantCache::invalidateMenu($vendor);
+                TenantCache::invalidateMenu($lockedVendor);
 
-        return $category;
+                return $category;
+            }
+        );
     }
 
     /**
@@ -119,102 +130,108 @@ class MenuManagementService
      */
     public function createProduct(Vendor $vendor, array $data, ?UploadedFile $imageFile = null): Product
     {
-        $imageUrl = $this->resolveProductImage(
-            imageFile: $imageFile,
-            vendor: $vendor,
-            fallbackUrl: $data['image'] ?? null,
-            defaultUrl: Product::DEFAULT_IMAGE
-        );
+        return $this->quotaService->executeWithResourceQuota(
+            $vendor,
+            QuotaCatalog::KEY_PRODUCTS_COUNT,
+            function (Vendor $lockedVendor) use ($data, $imageFile) {
+                $imageUrl = $this->resolveProductImage(
+                    imageFile: $imageFile,
+                    vendor: $lockedVendor,
+                    fallbackUrl: $data['image'] ?? null,
+                    defaultUrl: Product::DEFAULT_IMAGE
+                );
 
-        $name = $data['name'];
-        $desc = $data['description'] ?? null;
+                $name = $data['name'];
+                $desc = $data['description'] ?? null;
 
-        $nameTranslations = $this->extractTranslations($data, 'name');
-        $descTranslations = $this->extractTranslations($data, 'description');
+                $nameTranslations = $this->extractTranslations($data, 'name');
+                $descTranslations = $this->extractTranslations($data, 'description');
 
-        $product = Product::create([
-            'vendor_id' => $vendor->id,
-            'category_id' => $data['category_id'],
-            'name' => $name,
-            'name_translations' => $nameTranslations,
-            'description' => $desc,
-            'description_translations' => $descTranslations,
-            'price' => $data['price'],
-            'discount_price' => ! empty($data['discount_price']) ? $data['discount_price'] : null,
-            'discount_days' => ! empty($data['discount_days']) ? $data['discount_days'] : null,
-            'discount_start_time' => ! empty($data['discount_start_time']) ? $data['discount_start_time'] : null,
-            'discount_end_time' => ! empty($data['discount_end_time']) ? $data['discount_end_time'] : null,
-            'is_discount_active' => array_key_exists('is_discount_active', $data) ? (bool) $data['is_discount_active'] : true,
-            'available_start_time' => ! empty($data['available_start_time']) ? $data['available_start_time'] : null,
-            'available_end_time' => ! empty($data['available_end_time']) ? $data['available_end_time'] : null,
-            'available_days' => ! empty($data['available_days']) ? $data['available_days'] : null,
-            'available_for_dine_in' => array_key_exists('available_for_dine_in', $data) ? (bool) $data['available_for_dine_in'] : true,
-            'available_for_takeaway' => array_key_exists('available_for_takeaway', $data) ? (bool) $data['available_for_takeaway'] : true,
-            'available_for_delivery' => array_key_exists('available_for_delivery', $data) ? (bool) $data['available_for_delivery'] : true,
-            'image' => $imageUrl,
-            'dietary_tags' => $data['dietary_tags'] ?? [],
-            'calories' => $data['calories'] ?? null,
-            'protein_g' => $data['protein_g'] ?? null,
-            'carbs_g' => $data['carbs_g'] ?? null,
-            'fat_g' => $data['fat_g'] ?? null,
-            'preparation_time_min' => $data['preparation_time_min'] ?? null,
-            'is_featured' => ! empty($data['is_featured']),
-            'ai_priority' => ! empty($data['ai_priority']),
-            'ai_priority_level' => (int) ($data['ai_priority_level'] ?? 0),
-            'ai_group' => ! empty($data['ai_group']) ? $data['ai_group'] : null,
-            'ai_tags' => $data['ai_tags'] ?? [],
-            'ai_spicy_level' => (int) ($data['ai_spicy_level'] ?? 0),
-            'ai_pairs_with' => $data['ai_pairs_with'] ?? [],
-            'ai_enabled' => array_key_exists('ai_enabled', $data) ? (bool) $data['ai_enabled'] : true,
-            'is_available' => true,
-            'sort_order' => (int) (Product::where('category_id', $data['category_id'])->max('sort_order') ?? 0) + 1,
-        ]);
-
-        if (array_key_exists('locations', $data)) {
-            $this->syncLocationAvailability($product, $vendor, $data['locations']);
-        }
-
-        if (! empty($data['allergens'])) {
-            $product->allergens()->sync($data['allergens']);
-        }
-
-        if (! empty($data['variations']) && is_array($data['variations'])) {
-            $hasDefault = false;
-            foreach ($data['variations'] as $idx => $vData) {
-                if (empty($vData['name'])) {
-                    continue;
-                }
-                $isDef = ! empty($vData['is_default']) || (! $hasDefault && $idx === 0);
-                if ($isDef) {
-                    $hasDefault = true;
-                }
-                $varName = trim($vData['name']);
-                $transData = $this->extractTranslations($vData, 'name');
-
-                ProductVariation::create([
-                    'product_id' => $product->id,
-                    'name' => $varName,
-                    'name_translations' => $transData,
-                    'price' => (float) ($vData['price'] ?? $data['price']),
-                    'is_default' => $isDef,
+                $product = Product::create([
+                    'vendor_id' => $lockedVendor->id,
+                    'category_id' => $data['category_id'],
+                    'name' => $name,
+                    'name_translations' => $nameTranslations,
+                    'description' => $desc,
+                    'description_translations' => $descTranslations,
+                    'price' => $data['price'],
+                    'discount_price' => ! empty($data['discount_price']) ? $data['discount_price'] : null,
+                    'discount_days' => ! empty($data['discount_days']) ? $data['discount_days'] : null,
+                    'discount_start_time' => ! empty($data['discount_start_time']) ? $data['discount_start_time'] : null,
+                    'discount_end_time' => ! empty($data['discount_end_time']) ? $data['discount_end_time'] : null,
+                    'is_discount_active' => array_key_exists('is_discount_active', $data) ? (bool) $data['is_discount_active'] : true,
+                    'available_start_time' => ! empty($data['available_start_time']) ? $data['available_start_time'] : null,
+                    'available_end_time' => ! empty($data['available_end_time']) ? $data['available_end_time'] : null,
+                    'available_days' => ! empty($data['available_days']) ? $data['available_days'] : null,
+                    'available_for_dine_in' => array_key_exists('available_for_dine_in', $data) ? (bool) $data['available_for_dine_in'] : true,
+                    'available_for_takeaway' => array_key_exists('available_for_takeaway', $data) ? (bool) $data['available_for_takeaway'] : true,
+                    'available_for_delivery' => array_key_exists('available_for_delivery', $data) ? (bool) $data['available_for_delivery'] : true,
+                    'image' => $imageUrl,
+                    'dietary_tags' => $data['dietary_tags'] ?? [],
+                    'calories' => $data['calories'] ?? null,
+                    'protein_g' => $data['protein_g'] ?? null,
+                    'carbs_g' => $data['carbs_g'] ?? null,
+                    'fat_g' => $data['fat_g'] ?? null,
+                    'preparation_time_min' => $data['preparation_time_min'] ?? null,
+                    'is_featured' => ! empty($data['is_featured']),
+                    'ai_priority' => ! empty($data['ai_priority']),
+                    'ai_priority_level' => (int) ($data['ai_priority_level'] ?? 0),
+                    'ai_group' => ! empty($data['ai_group']) ? $data['ai_group'] : null,
+                    'ai_tags' => $data['ai_tags'] ?? [],
+                    'ai_spicy_level' => (int) ($data['ai_spicy_level'] ?? 0),
+                    'ai_pairs_with' => $data['ai_pairs_with'] ?? [],
+                    'ai_enabled' => array_key_exists('ai_enabled', $data) ? (bool) $data['ai_enabled'] : true,
+                    'is_available' => true,
+                    'sort_order' => (int) (Product::where('category_id', $data['category_id'])->max('sort_order') ?? 0) + 1,
                 ]);
+
+                if (array_key_exists('locations', $data)) {
+                    $this->syncLocationAvailability($product, $lockedVendor, $data['locations']);
+                }
+
+                if (! empty($data['allergens'])) {
+                    $product->allergens()->sync($data['allergens']);
+                }
+
+                if (! empty($data['variations']) && is_array($data['variations'])) {
+                    $hasDefault = false;
+                    foreach ($data['variations'] as $idx => $vData) {
+                        if (empty($vData['name'])) {
+                            continue;
+                        }
+                        $isDef = ! empty($vData['is_default']) || (! $hasDefault && $idx === 0);
+                        if ($isDef) {
+                            $hasDefault = true;
+                        }
+                        $varName = trim($vData['name']);
+                        $transData = $this->extractTranslations($vData, 'name');
+
+                        ProductVariation::create([
+                            'product_id' => $product->id,
+                            'name' => $varName,
+                            'name_translations' => $transData,
+                            'price' => (float) ($vData['price'] ?? $data['price']),
+                            'is_default' => $isDef,
+                        ]);
+                    }
+                } else {
+                    // Initialize default standard portion variation
+                    ProductVariation::create([
+                        'product_id' => $product->id,
+                        'name' => 'Standard Portion',
+                        'name_translations' => [
+                            'en' => 'Standard Portion',
+                        ],
+                        'price' => $data['price'],
+                        'is_default' => true,
+                    ]);
+                }
+
+                TenantCache::invalidateMenu($lockedVendor);
+
+                return $product;
             }
-        } else {
-            // Initialize default standard portion variation
-            ProductVariation::create([
-                'product_id' => $product->id,
-                'name' => 'Standard Portion',
-                'name_translations' => [
-                    'en' => 'Standard Portion',
-                ],
-                'price' => $data['price'],
-                'is_default' => true,
-            ]);
-        }
-
-        TenantCache::invalidateMenu($vendor);
-
-        return $product;
+        );
     }
 
     /**

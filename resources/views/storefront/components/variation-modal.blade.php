@@ -67,12 +67,19 @@
                         </div>
                         <span class="variation-name-text" x-text="v.name"></span>
                     </div>
-                    <div class="variation-price-display">
-                        <template x-if="v.regular_price && v.regular_price > v.price">
-                            <span style="font-size: 0.8rem; text-decoration: line-through; color: var(--text-muted); margin-right: 0.35rem; font-weight: 500;" x-text="Number(v.regular_price).toLocaleString()"></span>
-                        </template>
-                        <span class="variation-price-num" :style="v.regular_price && v.regular_price > v.price ? 'color: #ef4444;' : ''" x-text="Number(v.price).toLocaleString()"></span>
-                        <span class="variation-price-currency" :style="v.regular_price && v.regular_price > v.price ? 'color: #ef4444;' : ''">{{ $vendor->currency }}</span>
+                    <div class="variation-price-display" style="display: flex; flex-direction: column; align-items: flex-end;">
+                        <div>
+                            <template x-if="v.regular_price && v.regular_price > v.price">
+                                <span style="font-size: 0.8rem; text-decoration: line-through; color: var(--text-muted); margin-right: 0.35rem; font-weight: 500;" x-text="Number(v.regular_price).toLocaleString()"></span>
+                            </template>
+                            <span class="variation-price-num" :style="v.regular_price && v.regular_price > v.price ? 'color: #ef4444;' : ''" x-text="Number(v.price).toLocaleString()"></span>
+                            <span class="variation-price-currency" :style="v.regular_price && v.regular_price > v.price ? 'color: #ef4444;' : ''">{{ $vendor->currency }}</span>
+                        </div>
+                        @if($vendor->isSecondaryCurrencyActive())
+                            <template x-if="v.secondary_price">
+                                <span style="font-size: 0.72rem; font-weight: 600; color: var(--text-muted); opacity: 0.85; margin-top: 0.1rem;" x-text="v.secondary_price"></span>
+                            </template>
+                        @endif
                     </div>
                 </div>
             </template>
