@@ -43,6 +43,7 @@ class StorefrontReservationController extends Controller
             app()->setLocale($locale);
             session(['app_locale' => $locale, 'locale' => $locale]);
         }
+        Carbon::setLocale(app()->getLocale());
 
         $location = null;
         if ($location_slug) {
@@ -303,6 +304,7 @@ class StorefrontReservationController extends Controller
         $locale = $reservation->locale ?: ($vendor->getDefaultLanguageCode() ?: 'hy');
         if (in_array($locale, ['hy', 'en', 'ru'], true)) {
             app()->setLocale($locale);
+            Carbon::setLocale($locale);
         }
 
         return view('storefront.reservation_status', compact('vendor', 'reservation'));
