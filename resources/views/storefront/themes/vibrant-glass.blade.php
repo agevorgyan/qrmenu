@@ -238,22 +238,15 @@
 
         <!-- Cafe Header -->
         <div class="cafe-header">
-            <!-- Redesigned Top Info Button -->
-            <button type="button" 
-                    class="header-info-pill-btn" 
-                    style="position: absolute; top: 0; right: 0;"
-                    @click="showInfoModal = true" 
-                    title="{{ __('menu.nav_info') }}">
-                <i class="fa-solid fa-circle-info"></i>
-                <span class="info-btn-text">{{ __('menu.nav_info') }}</span>
-            </button>
             <img src="{{ $vendor->logo ?? 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&q=80' }}" class="cafe-logo">
-            <h1 style="font-size: 1.65rem; font-weight: 800; margin-top: 0.5rem; color: var(--text-main);">{{ $vendor->name }}</h1>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.15rem;">
-                <i class="fa-solid fa-mug-hot" style="color: var(--primary);"></i> {{ $location?->name ?? 'Cafe Spot' }}
+            <h1 style="font-size: 1.65rem; font-weight: 800; margin-top: 0.5rem; color: var(--text-main); word-break: break-word;">{{ $vendor->name }}</h1>
+            <p @click="showInfoModal = true" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.15rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;" title="{{ __('menu.restaurant_info') }}">
+                <i class="fa-solid fa-mug-hot" style="color: var(--primary);"></i> 
+                <span>{{ $location?->name ?? 'Cafe Spot' }}</span>
                 @if($table)
                     • <span style="background: var(--primary); color: #fff; padding: 0.1rem 0.4rem; border-radius: 4px; font-weight: 700;">Table {{ $table }}</span>
                 @endif
+                • <span style="color: var(--primary); font-weight: 600;"><i class="fa-solid fa-circle-info" style="font-size: 0.78rem;"></i> {{ __('menu.nav_info') }}</span>
             </p>
         </div>
 
@@ -261,13 +254,23 @@
     @include('storefront.components.order-type-header-toggle')
 
     <!-- Search & Lang Bar -->
-    <div style="margin-bottom: 1rem; display: flex; gap: 0.75rem;">
+    <div style="margin-bottom: 1rem; display: flex; gap: 0.65rem; align-items: center;">
         <div style="flex: 1; position: relative;">
             <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
             <input type="text" x-model.debounce.250ms="search" placeholder="{{ __('menu.search_placeholder') }}" style="width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); outline: none; font-size: 0.85rem;">
         </div>
 
-        <select @change="changeLanguage($event.target.value)" onchange="const u = new URL(window.location.href); u.searchParams.set('lang', this.value); window.location.href = u.toString();" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 700; cursor: pointer;">
+        <!-- Info Button (moved here so it never obstructs or crowds the restaurant name) -->
+        <button type="button" 
+                class="header-info-pill-btn" 
+                @click="showInfoModal = true" 
+                title="{{ __('menu.nav_info') }}"
+                aria-label="{{ __('menu.nav_info') }}">
+            <i class="fa-solid fa-circle-info"></i>
+            <span class="info-btn-text">{{ __('menu.nav_info') }}</span>
+        </button>
+
+        <select @change="changeLanguage($event.target.value)" onchange="const u = new URL(window.location.href); u.searchParams.set('lang', this.value); window.location.href = u.toString();" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 700; cursor: pointer; height: 38px;">
             @foreach($vendor->getSupportedLanguages() as $sLang)
                 <option value="{{ $sLang['code'] }}" {{ $lang == $sLang['code'] ? 'selected' : '' }}>
                     {{ $sLang['flag'] ?? '🌐' }} {{ strtoupper($sLang['code']) }}

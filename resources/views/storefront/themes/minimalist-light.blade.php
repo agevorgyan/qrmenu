@@ -455,9 +455,9 @@
                     </div>
                 @endif
 
-                <div class="vendor-info" style="min-width: 0;">
-                    <h1 class="vendor-name">{{ $vendor->name }}</h1>
-                    <div class="vendor-subline">
+                <div class="vendor-info" style="min-width: 0; flex: 1;">
+                    <h1 class="vendor-name" style="word-break: break-word;">{{ $vendor->name }}</h1>
+                    <div class="vendor-subline" @click="showInfoModal = true" style="cursor: pointer; flex-wrap: wrap;" title="{{ __('menu.restaurant_info') }}">
                         <span class="status-pill">
                             <span class="status-dot"></span>
                             {{ __('menu.open') ?? 'Բաց է' }}
@@ -468,17 +468,10 @@
                         @if(!empty($table))
                             <span style="font-weight: 700; color: var(--primary);">{{ __('Սեղան') }} #{{ $table }}</span>
                         @endif
+                        <span style="color: var(--primary); font-weight: 600;"><i class="fa-solid fa-circle-info" style="font-size: 0.78rem;"></i> {{ __('menu.nav_info') }}</span>
                     </div>
                 </div>
             </div>
-            <!-- Redesigned Top Info Button -->
-            <button type="button" 
-                    class="header-info-pill-btn" 
-                    @click="showInfoModal = true" 
-                    title="{{ __('menu.nav_info') }}">
-                <i class="fa-solid fa-circle-info"></i>
-                <span class="info-btn-text">{{ __('menu.nav_info') }}</span>
-            </button>
         </div>
     </header>
 
@@ -492,7 +485,17 @@
             <input type="text" x-model.debounce.250ms="search" placeholder="{{ __('menu.search_placeholder') }}" class="search-input">
         </div>
 
-        <select @change="changeLanguage($event.target.value)" onchange="const u = new URL(window.location.href); u.searchParams.set('lang', this.value); window.location.href = u.toString();" class="lang-select" aria-label="Language selection">
+        <!-- Info Button (moved here so it never obstructs or crowds the restaurant name) -->
+        <button type="button" 
+                class="header-info-pill-btn" 
+                @click="showInfoModal = true" 
+                title="{{ __('menu.nav_info') }}"
+                aria-label="{{ __('menu.nav_info') }}">
+            <i class="fa-solid fa-circle-info"></i>
+            <span class="info-btn-text">{{ __('menu.nav_info') }}</span>
+        </button>
+
+        <select @change="changeLanguage($event.target.value)" onchange="const u = new URL(window.location.href); u.searchParams.set('lang', this.value); window.location.href = u.toString();" class="lang-select" aria-label="Language selection" style="height: 38px;">
             @foreach($vendor->getSupportedLanguages() as $sLang)
                 <option value="{{ $sLang['code'] }}" {{ $lang == $sLang['code'] ? 'selected' : '' }}>
                     {{ $sLang['flag'] ?? '🌐' }} {{ strtoupper($sLang['code']) }}

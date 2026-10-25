@@ -176,21 +176,24 @@
     .header-info-pill-btn {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 0.45rem;
-        padding: 0.48rem 0.88rem;
-        border-radius: 9999px;
+        padding: 0.5rem 0.85rem;
+        border-radius: 12px;
         background: var(--bg-card);
         border: 1px solid var(--border-color);
         color: var(--text-main);
         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-        font-size: 0.8rem;
+        font-size: 0.82rem;
         font-weight: 700;
         cursor: pointer;
         flex-shrink: 0;
+        height: 38px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         -webkit-tap-highlight-color: transparent;
         text-decoration: none;
+        box-sizing: border-box;
     }
 
     .header-info-pill-btn i {
@@ -212,17 +215,17 @@
 
     .header-info-pill-btn .info-btn-text {
         letter-spacing: -0.01em;
+        white-space: nowrap;
     }
 
-    @media (max-width: 360px) {
+    @media (max-width: 380px) {
         .header-info-pill-btn .info-btn-text {
             display: none;
         }
         .header-info-pill-btn {
-            padding: 0.5rem;
-            width: 36px;
-            height: 36px;
-            justify-content: center;
+            padding: 0;
+            width: 38px;
+            height: 38px;
         }
     }
 </style>

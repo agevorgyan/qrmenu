@@ -271,40 +271,41 @@
     </div>
 
     <!-- Vendor Hero -->
-    <div class="vendor-hero" style="display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem;">
-        <div style="display: flex; align-items: flex-end; gap: 1.25rem; min-width: 0;">
-            <img src="{{ $vendor->logo ?? 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=300&q=80' }}" class="vendor-logo" style="flex-shrink: 0;">
-            <div class="vendor-meta" style="min-width: 0;">
-                <h1 style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $vendor->name }}</h1>
-                <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                    <span><i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> {{ $location?->name ?? 'Main Branch' }}</span>
-                    @if($table)
-                        <span style="background: var(--primary); color: #ffffff; padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 700;">Table {{ $table }}</span>
-                    @endif
-                </div>
+    <div class="vendor-hero" style="display: flex; align-items: flex-end; gap: 1.25rem;">
+        <img src="{{ $vendor->logo ?? 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=300&q=80' }}" class="vendor-logo" style="flex-shrink: 0;">
+        <div class="vendor-meta" style="min-width: 0; flex: 1;">
+            <h1 style="word-break: break-word;">{{ $vendor->name }}</h1>
+            <div @click="showInfoModal = true" style="font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; cursor: pointer; flex-wrap: wrap;" title="{{ __('menu.restaurant_info') }}">
+                <span><i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> {{ $location?->name ?? 'Main Branch' }}</span>
+                @if($table)
+                    <span style="background: var(--primary); color: #ffffff; padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 700;">Table {{ $table }}</span>
+                @endif
+                <span style="color: var(--primary); font-weight: 600;"><i class="fa-solid fa-circle-info" style="font-size: 0.78rem;"></i> {{ __('menu.nav_info') }}</span>
             </div>
         </div>
-        <!-- Redesigned Top Info Button -->
-        <button type="button" 
-                class="header-info-pill-btn" 
-                @click="showInfoModal = true" 
-                title="{{ __('menu.nav_info') }}">
-            <i class="fa-solid fa-circle-info"></i>
-            <span class="info-btn-text">{{ __('menu.nav_info') }}</span>
-        </button>
     </div>
 
     <!-- Order Type Selector Bar (Direct Visits: Delivery vs Takeaway, or Table QR badge) -->
     @include('storefront.components.order-type-header-toggle')
 
     <!-- Language & Search Bar -->
-    <div style="padding: 1.25rem 1.25rem 0.5rem; display: flex; gap: 0.75rem;">
+    <div style="padding: 1.25rem 1.25rem 0.5rem; display: flex; gap: 0.65rem; align-items: center;">
         <div style="flex: 1; position: relative;">
             <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
             <input type="text" x-model.debounce.250ms="search" placeholder="{{ __('menu.search_placeholder') }}" style="width: 100%; padding: 0.65rem 1rem 0.65rem 2.5rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); outline: none; font-size: 0.85rem;">
         </div>
 
-        <select @change="changeLanguage($event.target.value)" onchange="const u = new URL(window.location.href); u.searchParams.set('lang', this.value); window.location.href = u.toString();" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 700; cursor: pointer;">
+        <!-- Info Button (moved here so it never obstructs or crowds the restaurant name) -->
+        <button type="button" 
+                class="header-info-pill-btn" 
+                @click="showInfoModal = true" 
+                title="{{ __('menu.nav_info') }}"
+                aria-label="{{ __('menu.nav_info') }}">
+            <i class="fa-solid fa-circle-info"></i>
+            <span class="info-btn-text">{{ __('menu.nav_info') }}</span>
+        </button>
+
+        <select @change="changeLanguage($event.target.value)" onchange="const u = new URL(window.location.href); u.searchParams.set('lang', this.value); window.location.href = u.toString();" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 700; cursor: pointer; height: 38px;">
             @foreach($vendor->getSupportedLanguages() as $sLang)
                 <option value="{{ $sLang['code'] }}" {{ $lang == $sLang['code'] ? 'selected' : '' }}>
                     {{ $sLang['flag'] ?? '🌐' }} {{ strtoupper($sLang['code']) }}

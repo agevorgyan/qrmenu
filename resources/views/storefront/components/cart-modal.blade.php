@@ -208,7 +208,7 @@
                 <template x-if="isPreOrderMode">
                     <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(37, 99, 235, 0.05)); border: 1.5px solid var(--primary); border-radius: 14px; padding: 0.85rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
                         <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);">
-                            <i class="fa-solid fa-calendar-check"></i>
+                            <i class="fa-solid fa-calendar-days"></i>
                         </div>
                         <div style="flex: 1; min-width: 0;">
                             <div style="font-weight: 800; font-size: 0.9rem; color: var(--text-main);">
@@ -778,7 +778,7 @@
                                 class="cart-submit-btn"
                                 style="background: var(--primary); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);">
                             <div class="cart-submit-left">
-                                <i class="fa-solid fa-calendar-check"></i>
+                                <i class="fa-solid fa-calendar-days"></i>
                                 <span>{{ __('menu.confirm_preorder_return') }}</span>
                             </div>
                             <div class="cart-submit-price-pill">
