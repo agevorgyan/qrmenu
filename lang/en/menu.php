@@ -222,4 +222,7 @@ return [
     'view_offer' => 'View',
     'prev_offer' => 'Previous offer',
     'next_offer' => 'Next offer',
+    'event_planning_inquiry' => 'Event Planning Inquiry',
+    'private_events' => 'Private Events',
+    'inquiry' => 'Inquiry',
 ];

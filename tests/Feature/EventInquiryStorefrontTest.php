@@ -76,7 +76,7 @@ class EventInquiryStorefrontTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Verona Lounge');
-        $response->assertSee('«Միջոցառման կազմակերպման հարցում»');
+        $response->assertSee('Միջոցառման կազմակերպման հարցում');
     }
 
     public function test_customer_cannot_view_form_when_event_inquiries_are_disabled(): void

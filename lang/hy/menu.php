@@ -222,4 +222,7 @@ return [
     'view_offer' => 'Դիտել',
     'prev_offer' => 'Նախորդ առաջարկ',
     'next_offer' => 'Հաջորդ առաջարկ',
+    'event_planning_inquiry' => 'Միջոցառման կազմակերպման հարցում',
+    'private_events' => 'Միջոցառումներ',
+    'inquiry' => 'Հարցում',
 ];

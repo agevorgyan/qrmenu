@@ -208,7 +208,7 @@
                         </div>
                         <div class="info-item-content">
                             <div class="info-item-label">{{ __('Private Events') }}</div>
-                            <div class="info-item-value">{{ __('«Միջոցառման կազմակերպման հարցում»') }}</div>
+                            <div class="info-item-value">{{ __('Event Planning Inquiry') }}</div>
                         </div>
                         <a href="{{ route('client.event_inquiry', ['vendor_slug' => $vendor->slug, 'location_slug' => $location?->slug]) }}" 
                            class="info-action-pill"

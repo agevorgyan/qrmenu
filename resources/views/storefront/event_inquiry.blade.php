@@ -496,7 +496,7 @@
             <span>{{ $vendor->name }}</span>
         </div>
         <h1 class="page-title">
-            {{ filled($settings['form_title'] ?? '') ? $settings['form_title'] : __('«Միջոցառման կազմակերպման հարցում»') }}
+            {{ filled($settings['form_title'] ?? '') ? $settings['form_title'] : __('Event Planning Inquiry') }}
         </h1>
         <p class="page-desc">
             {{ filled($settings['form_description'] ?? '') ? $settings['form_description'] : __('Plan your private celebration, corporate dinner, birthday party or wedding with us. Fill in your details below and our team will get in touch.') }}

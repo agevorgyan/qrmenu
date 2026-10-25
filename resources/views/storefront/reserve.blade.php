@@ -770,7 +770,7 @@
             </div>
             <a href="{{ route('client.event_inquiry', ['vendor_slug' => $vendor->slug, 'location_slug' => $location?->slug]) }}" 
                style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.9rem; border-radius: 8px; background: #ec4899; color: #ffffff; text-decoration: none; font-size: 0.82rem; font-weight: 700; white-space: nowrap; box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3);">
-                <span>{{ __('«Միջոցառման կազմակերպման հարցում»') }}</span>
+                <span>{{ __('Event Planning Inquiry') }}</span>
                 <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem;"></i>
             </a>
         </div>
