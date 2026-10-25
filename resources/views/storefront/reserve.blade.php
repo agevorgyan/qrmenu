@@ -2,13 +2,13 @@
 <html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ __('Reserve a Table') }} — {{ $vendor->name }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+Armenian:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+Armenian:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     @php
@@ -22,6 +22,9 @@
         $luminance = (0.299 * $r + 0.587 * $g + 0.114 * $b) / 255;
         $primaryTextColor = $luminance > 0.62 ? '#0f172a' : '#ffffff';
         $isDark = ($vendor->theme_mode === 'dark');
+        $locale = app()->getLocale();
+        $isHy = ($locale === 'hy');
+        $isRu = ($locale === 'ru');
     @endphp
 
     <style>
@@ -35,6 +38,7 @@
             --bg-color: #0b1120;
             --card-bg: #141d2e;
             --card-border: #233149;
+            --card-hover-border: #384e72;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --text-subtle: #cbd5e1;
@@ -46,12 +50,15 @@
             --item-border: #283955;
             --stepper-bg: #0f172a;
             --stepper-border: #2b3b55;
-            --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.45);
+            --shadow-card: 0 8px 30px -4px rgba(0, 0, 0, 0.45);
+            --shadow-float: 0 16px 40px -6px rgba(0, 0, 0, 0.6);
             --cta-box-bg: rgba(59, 130, 246, 0.05);
+            --surface-glass: rgba(20, 29, 46, 0.88);
             @else
             --bg-color: #f8fafc;
             --card-bg: #ffffff;
             --card-border: #e2e8f0;
+            --card-hover-border: #cbd5e1;
             --text-main: #0f172a;
             --text-muted: #64748b;
             --text-subtle: #475569;
@@ -63,12 +70,16 @@
             --item-border: #e2e8f0;
             --stepper-bg: #ffffff;
             --stepper-border: #cbd5e1;
-            --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+            --shadow-card: 0 4px 24px -2px rgba(15, 23, 42, 0.06);
+            --shadow-float: 0 16px 36px -6px rgba(15, 23, 42, 0.12);
             --cta-box-bg: rgba(59, 130, 246, 0.03);
+            --surface-glass: rgba(255, 255, 255, 0.92);
             @endif
 
+            --radius-xl: 20px;
             --radius-lg: 16px;
             --radius-md: 12px;
+            --radius-sm: 8px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -78,21 +89,23 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             min-height: 100vh;
-            padding-bottom: 90px;
+            padding-bottom: calc(110px + env(safe-area-inset-bottom, 0.5rem));
+            -webkit-font-smoothing: antialiased;
         }
 
         .reserve-container {
-            max-width: 680px;
+            max-width: 660px;
             margin: 0 auto;
             padding: 1.25rem 1rem;
         }
 
+        /* Top Navigation Header */
         .header-bar {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 0.75rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.25rem;
         }
 
         .back-btn {
@@ -105,7 +118,7 @@
             border: 1px solid var(--card-border);
             color: var(--text-main);
             text-decoration: none;
-            font-size: 0.92rem;
+            font-size: 0.9rem;
             font-weight: 700;
             box-shadow: var(--shadow-card);
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -131,9 +144,11 @@
             object-fit: cover;
             border: 1px solid var(--card-border);
             flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
         }
 
         .brand-info h1 {
+            font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
             font-size: 1.15rem;
             font-weight: 800;
             line-height: 1.2;
@@ -148,66 +163,251 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
         }
 
+        /* Hero Booking Headline */
+        .booking-headline {
+            margin-bottom: 1.25rem;
+            text-align: left;
+        }
+        .booking-headline h2 {
+            font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.55rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            line-height: 1.25;
+        }
+        .booking-headline p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Private Event Banner (Compact & Refined) */
+        .event-banner-compact {
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.08) 0%, rgba(99, 102, 241, 0.08) 100%);
+            border: 1px solid rgba(236, 72, 153, 0.25);
+            border-radius: var(--radius-md);
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            transition: all 0.2s;
+        }
+        .event-banner-compact:hover {
+            border-color: rgba(236, 72, 153, 0.45);
+        }
+
+        /* Section Cards */
         .step-card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            border-radius: var(--radius-lg);
-            padding: 1.35rem;
+            border-radius: var(--radius-xl);
+            padding: 1.4rem;
             margin-bottom: 1.25rem;
             box-shadow: var(--shadow-card);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .step-card:focus-within {
+            border-color: var(--card-hover-border);
         }
 
         .step-header {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 0.75rem;
-            margin-bottom: 1.1rem;
+            margin-bottom: 1.2rem;
         }
 
-        .step-number {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: var(--primary);
-            color: var(--primary-contrast);
+        .step-header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .step-badge {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: color-mix(in srgb, var(--primary) 12%, transparent);
+            color: var(--primary);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.88rem;
+            font-size: 0.95rem;
             font-weight: 800;
             flex-shrink: 0;
-            box-shadow: 0 2px 8px color-mix(in srgb, var(--primary) 35%, transparent);
         }
 
         .step-title {
-            font-size: 1.05rem;
+            font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.12rem;
             font-weight: 800;
             color: var(--text-main);
             letter-spacing: -0.01em;
         }
 
-        /* Date Scrollable Track */
+        .step-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.1rem;
+        }
+
+        /* Interactive Guest Stepper & Quick Chips */
+        .guest-selector-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .guest-stepper-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--chip-bg);
+            border: 1.5px solid var(--chip-border);
+            border-radius: var(--radius-lg);
+            padding: 0.5rem 0.65rem;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+        }
+
+        .guest-stepper-btn {
+            width: 46px;
+            height: 46px;
+            border-radius: var(--radius-md);
+            background: var(--card-bg);
+            border: 1.5px solid var(--card-border);
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            cursor: pointer;
+            transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+
+        .guest-stepper-btn:hover:not(:disabled) {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--primary-contrast);
+            transform: scale(1.05);
+        }
+
+        .guest-stepper-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .guest-counter-display {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            user-select: none;
+        }
+
+        .guest-counter-icon {
+            font-size: 1.25rem;
+            color: var(--primary);
+        }
+
+        .guest-counter-text {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.01em;
+        }
+
+        .guest-counter-label {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-left: 0.2rem;
+        }
+
+        /* Quick Guest Pills */
+        .guest-quick-pills {
+            display: flex;
+            gap: 0.45rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+            padding-bottom: 0.2rem;
+        }
+        .guest-quick-pills::-webkit-scrollbar { display: none; }
+
+        .guest-pill {
+            flex: 1 1 0;
+            min-width: 44px;
+            padding: 0.65rem 0.4rem;
+            text-align: center;
+            border-radius: var(--radius-md);
+            background: var(--chip-bg);
+            border: 1.5px solid var(--chip-border);
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+        }
+
+        .guest-pill:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .guest-pill.active {
+            background: var(--primary);
+            color: var(--primary-contrast);
+            border-color: var(--primary);
+            box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 40%, transparent);
+            transform: translateY(-2px);
+        }
+
+        /* Date Scrollable Ribbon with Calendar Launcher */
+        .dates-ribbon-wrapper {
+            position: relative;
+            margin-top: 0.5rem;
+        }
+
         .dates-track {
             display: flex;
             gap: 0.55rem;
             overflow-x: auto;
             padding-bottom: 0.5rem;
-            scrollbar-width: thin;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
         }
+        .dates-track::-webkit-scrollbar { display: none; }
 
         .date-chip {
             flex: 0 0 auto;
-            min-width: 82px;
-            padding: 0.75rem 0.6rem;
-            border-radius: var(--radius-md);
+            min-width: 78px;
+            padding: 0.8rem 0.6rem;
+            border-radius: var(--radius-lg);
             border: 1.5px solid var(--chip-border);
             background: var(--chip-bg);
             text-align: center;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             user-select: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.2rem;
         }
 
         .date-chip:hover {
@@ -218,12 +418,12 @@
         .date-chip.active {
             background: var(--primary);
             border-color: var(--primary);
-            box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 40%, transparent);
+            box-shadow: 0 6px 18px color-mix(in srgb, var(--primary) 45%, transparent);
             transform: translateY(-2px);
         }
 
         .date-chip .day-name {
-            font-size: 0.76rem;
+            font-size: 0.75rem;
             font-weight: 700;
             color: var(--text-muted);
             text-transform: capitalize;
@@ -231,59 +431,92 @@
         }
 
         .date-chip .date-num {
-            font-size: 1.18rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.35rem;
             font-weight: 800;
             color: var(--text-main);
-            margin-top: 0.2rem;
+            line-height: 1;
         }
 
-        .date-chip.active .day-name {
+        .date-chip .date-month {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-subtle);
+            text-transform: capitalize;
+        }
+
+        .date-chip.active .day-name,
+        .date-chip.active .date-num,
+        .date-chip.active .date-month {
             color: var(--primary-contrast);
-            opacity: 0.92;
         }
 
-        .date-chip.active .date-num {
-            color: var(--primary-contrast);
-        }
-
-        /* Party Size Buttons */
-        .party-grid {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 0.5rem;
-        }
-        @media(max-width: 480px) {
-            .party-grid { grid-template-columns: repeat(4, 1fr); }
-        }
-
-        .party-chip {
-            padding: 0.7rem 0.35rem;
-            text-align: center;
-            border-radius: var(--radius-md);
-            background: var(--chip-bg);
-            border: 1.5px solid var(--chip-border);
-            font-size: 0.92rem;
-            font-weight: 700;
-            color: var(--text-main);
+        /* Calendar Picker Launcher Button */
+        .custom-calendar-btn {
+            flex: 0 0 auto;
+            min-width: 78px;
+            padding: 0.8rem 0.6rem;
+            border-radius: var(--radius-lg);
+            border: 1.5px dashed var(--card-border);
+            background: transparent;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            user-select: none;
+            position: relative;
+            transition: all 0.2s;
         }
-
-        .party-chip:hover {
+        .custom-calendar-btn:hover {
             border-color: var(--primary);
-            transform: translateY(-1px);
+            color: var(--primary);
+            background: color-mix(in srgb, var(--primary) 6%, transparent);
+        }
+        .custom-calendar-btn input[type="date"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
         }
 
-        .party-chip.active {
-            background: var(--primary);
-            color: var(--primary-contrast);
-            border-color: var(--primary);
-            box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 40%, transparent);
-            transform: translateY(-1px);
+        /* Step 2: Time Slots & Meal Period Filters */
+        .time-filter-tabs {
+            display: flex;
+            gap: 0.45rem;
+            margin-bottom: 1rem;
+            background: var(--chip-bg);
+            padding: 0.3rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--chip-border);
         }
 
-        /* Time Slots Grid */
+        .time-filter-tab {
+            flex: 1;
+            padding: 0.55rem 0.75rem;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            transition: all 0.18s;
+        }
+
+        .time-filter-tab.active {
+            background: var(--card-bg);
+            color: var(--text-main);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
         .slots-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -294,7 +527,7 @@
         }
 
         .slot-btn {
-            padding: 0.75rem 0.45rem;
+            padding: 0.8rem 0.5rem;
             border-radius: var(--radius-md);
             background: var(--chip-bg);
             border: 1.5px solid var(--chip-border);
@@ -311,62 +544,136 @@
         .slot-btn:hover:not(.disabled):not(.active) {
             border-color: var(--primary);
             background: color-mix(in srgb, var(--primary) 8%, var(--chip-bg));
-            transform: translateY(-1px);
+            transform: translateY(-2px);
         }
 
         .slot-btn.disabled {
-            opacity: 0.35;
+            opacity: 0.3;
             cursor: not-allowed;
-            text-decoration: none;
             filter: grayscale(1);
         }
 
         .slot-btn.active {
             background: var(--primary);
             border-color: var(--primary);
-            box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 40%, transparent);
+            box-shadow: 0 6px 18px color-mix(in srgb, var(--primary) 42%, transparent);
             transform: translateY(-2px);
         }
 
         .slot-btn .slot-time {
-            font-size: 1.02rem;
+            font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.05rem;
             font-weight: 800;
             color: var(--text-main);
             letter-spacing: -0.01em;
         }
 
         .slot-btn .slot-meta {
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             font-weight: 600;
             color: var(--text-subtle);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
         }
 
-        .slot-btn.active .slot-time {
-            color: var(--primary-contrast);
-        }
-
+        .slot-btn.active .slot-time,
         .slot-btn.active .slot-meta {
             color: var(--primary-contrast);
-            opacity: 0.95;
-            font-weight: 700;
         }
 
-        /* Form Inputs */
+        /* Step 3: Visual Seating Preference Cards */
+        .tables-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.65rem;
+            margin-top: 0.75rem;
+        }
+        @media(max-width: 360px) {
+            .tables-cards-grid { grid-template-columns: 1fr; }
+        }
+
+        .table-select-card {
+            padding: 0.85rem 0.95rem;
+            border-radius: var(--radius-md);
+            background: var(--chip-bg);
+            border: 1.5px solid var(--chip-border);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+        }
+
+        .table-select-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .table-select-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        .table-select-card.active {
+            background: color-mix(in srgb, var(--primary) 12%, var(--card-bg));
+            border-color: var(--primary);
+            box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 25%, transparent);
+        }
+
+        .table-card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.4rem;
+        }
+
+        .table-card-title {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .table-card-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.15rem 0.45rem;
+            border-radius: 6px;
+            background: color-mix(in srgb, var(--primary) 15%, transparent);
+            color: var(--primary);
+        }
+
+        .table-card-meta {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        /* Step 4: Contact Form Inputs */
         .form-group {
-            margin-bottom: 1rem;
+            margin-bottom: 1.15rem;
         }
 
         .form-label {
-            display: block;
-            font-size: 0.86rem;
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.88rem;
             font-weight: 700;
             color: var(--text-main);
-            margin-bottom: 0.4rem;
+            margin-bottom: 0.45rem;
+        }
+
+        .form-label i {
+            color: var(--primary);
+            font-size: 0.85rem;
         }
 
         .form-input {
             width: 100%;
-            padding: 0.8rem 1rem;
+            padding: 0.85rem 1.05rem;
             border-radius: var(--radius-md);
             background: var(--input-bg);
             border: 1.5px solid var(--input-border);
@@ -379,18 +686,13 @@
 
         .form-input::placeholder {
             color: var(--text-muted);
-            opacity: 0.75;
+            opacity: 0.7;
             font-size: 0.9rem;
         }
 
         .form-input:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
-        }
-
-        select.form-input option {
-            background: var(--card-bg);
-            color: var(--text-main);
+            box-shadow: 0 0 0 3.5px color-mix(in srgb, var(--primary) 22%, transparent);
         }
 
         .form-helper {
@@ -400,6 +702,43 @@
             display: block;
             margin-top: 0.35rem;
             font-weight: 500;
+        }
+
+        /* Special Requests Quick-Tags */
+        .quick-request-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            margin-top: 0.55rem;
+        }
+
+        .quick-tag-chip {
+            padding: 0.35rem 0.75rem;
+            border-radius: 9999px;
+            background: var(--chip-bg);
+            border: 1px solid var(--chip-border);
+            color: var(--text-subtle);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .quick-tag-chip:hover {
+            border-color: var(--primary);
+            color: var(--text-main);
+            transform: translateY(-1px);
+        }
+
+        .quick-tag-chip.active {
+            background: color-mix(in srgb, var(--primary) 15%, var(--card-bg));
+            border-color: var(--primary);
+            color: var(--primary);
+            font-weight: 700;
         }
 
         /* Phone Input Component matching Cart Modal */
@@ -421,12 +760,12 @@
 
         .cart-phone-input-box:focus-within {
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+            box-shadow: 0 0 0 3.5px color-mix(in srgb, var(--primary) 22%, transparent);
         }
 
         .cart-phone-input-box.has-error {
             border-color: #ef4444 !important;
-            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+            box-shadow: 0 0 0 3.5px rgba(239, 68, 68, 0.2) !important;
         }
 
         .cart-phone-input-box.is-valid {
@@ -437,7 +776,7 @@
             display: inline-flex;
             align-items: center;
             gap: 0.4rem;
-            padding: 0.72rem 0.65rem 0.72rem 0.85rem;
+            padding: 0.8rem 0.7rem 0.8rem 0.95rem;
             background: color-mix(in srgb, var(--text-main) 6%, transparent);
             border: none;
             border-right: 1px solid var(--input-border);
@@ -481,7 +820,7 @@
         .cart-phone-native-input {
             flex: 1;
             min-width: 0;
-            padding: 0.72rem 0.65rem;
+            padding: 0.8rem 0.75rem;
             background: transparent;
             border: none;
             outline: none;
@@ -500,7 +839,7 @@
         }
 
         .cart-phone-status-indicator {
-            padding-right: 0.75rem;
+            padding-right: 0.85rem;
             display: flex;
             align-items: center;
             flex-shrink: 0;
@@ -588,7 +927,7 @@
             color: var(--text-muted);
         }
 
-        /* Pre-Order Integration */
+        /* Step 5: Pre-Order Integration */
         .preorder-count-badge {
             background: var(--primary);
             color: var(--primary-contrast);
@@ -602,9 +941,9 @@
 
         .preorder-cta-box {
             padding: 1.5rem 1.25rem;
-            border-radius: var(--radius-md);
+            border-radius: var(--radius-lg);
             background: var(--cta-box-bg);
-            border: 1.5px dashed var(--primary);
+            border: 1.5px dashed color-mix(in srgb, var(--primary) 40%, transparent);
             text-align: center;
             display: flex;
             flex-direction: column;
@@ -612,28 +951,31 @@
             gap: 0.9rem;
             transition: all 0.2s;
         }
+        .preorder-cta-box:hover {
+            border-color: var(--primary);
+        }
 
         .preorder-cta-icon {
-            width: 54px;
-            height: 54px;
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
             background: color-mix(in srgb, var(--primary) 15%, transparent);
             color: var(--primary);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.4rem;
+            font-size: 1.35rem;
         }
 
         .preorder-cta-info h4 {
-            font-size: 1rem;
+            font-size: 1.02rem;
             font-weight: 800;
             margin-bottom: 0.35rem;
             color: var(--text-main);
         }
 
         .preorder-cta-info p {
-            font-size: 0.84rem;
+            font-size: 0.85rem;
             color: var(--text-muted);
             line-height: 1.5;
             max-width: 460px;
@@ -813,6 +1155,7 @@
         }
 
         .summary-amount {
+            font-family: 'Outfit', sans-serif;
             font-weight: 800;
             font-size: 1.25rem;
             color: var(--primary);
@@ -870,11 +1213,11 @@
             background: rgba(239, 68, 68, 0.08);
         }
 
-        /* Sticky Submit Footer */
+        /* Inline Submit Button */
         .submit-btn {
             width: 100%;
-            padding: 1.05rem;
-            border-radius: var(--radius-md);
+            padding: 1.1rem;
+            border-radius: var(--radius-lg);
             background: var(--primary);
             color: var(--primary-contrast);
             border: none;
@@ -885,26 +1228,110 @@
             align-items: center;
             justify-content: center;
             gap: 0.65rem;
-            box-shadow: 0 4px 18px color-mix(in srgb, var(--primary) 40%, transparent);
-            transition: all 0.2s;
+            box-shadow: 0 4px 20px color-mix(in srgb, var(--primary) 42%, transparent);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .submit-btn:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 24px color-mix(in srgb, var(--primary) 50%, transparent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 26px color-mix(in srgb, var(--primary) 55%, transparent);
         }
 
         .submit-btn:disabled {
-            opacity: 0.55;
+            opacity: 0.5;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
 
+        /* Sticky Bottom Summary Bar (Resy / OpenTable Style) */
+        .sticky-booking-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--surface-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid var(--card-border);
+            padding: 0.85rem 1.25rem calc(0.85rem + env(safe-area-inset-bottom, 0px));
+            z-index: 90;
+            box-shadow: var(--shadow-float);
+        }
+
+        .sticky-booking-content {
+            max-width: 660px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .sticky-summary-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            min-width: 0;
+        }
+
+        .sticky-summary-pills {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            flex-wrap: wrap;
+            font-size: 0.86rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .sticky-summary-sep {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .sticky-summary-sub {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sticky-action-btn {
+            padding: 0.85rem 1.45rem;
+            border-radius: var(--radius-md);
+            background: var(--primary);
+            color: var(--primary-contrast);
+            border: none;
+            font-size: 0.95rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+            box-shadow: 0 4px 16px color-mix(in srgb, var(--primary) 40%, transparent);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            flex-shrink: 0;
+        }
+
+        .sticky-action-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 22px color-mix(in srgb, var(--primary) 50%, transparent);
+        }
+
+        .sticky-action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Alert Box */
         .alert-box {
             padding: 0.9rem 1.1rem;
             border-radius: var(--radius-md);
-            margin-bottom: 1.1rem;
+            margin-bottom: 1.25rem;
             font-size: 0.92rem;
             font-weight: 600;
             display: flex;
@@ -938,13 +1365,22 @@
             @endif
             <div class="brand-info">
                 <h1>{{ $vendor->name }}</h1>
-                <p>{{ $location?->name ?: __('Table Reservation') }}</p>
+                <p>
+                    <i class="fa-solid fa-location-dot" style="font-size: 0.75rem; color: var(--primary);"></i>
+                    <span>{{ $location?->name ?: __('Table Reservation') }}</span>
+                </p>
             </div>
         </div>
     </header>
 
+    <!-- Page Title Headline -->
+    <div class="booking-headline">
+        <h2>{{ __('Reserve a Table') }}</h2>
+        <p>{{ $isHy ? 'Ակնթարթային առցանց հաստատում • Անվճար ամրագրում' : ($isRu ? 'Мгновенное подтверждение • Без комиссии' : __('Instant online confirmation • Zero booking fee')) }}</p>
+    </div>
+
     @if($vendor->isEventInquiryFeatureEnabled())
-        <div style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.08) 0%, rgba(99, 102, 241, 0.08) 100%); border: 1px solid rgba(236, 72, 153, 0.25); border-radius: var(--radius-md); padding: 0.85rem 1rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
+        <div class="event-banner-compact">
             <div style="display: flex; align-items: center; gap: 0.65rem;">
                 <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(236, 72, 153, 0.15); color: #ec4899; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0;">
                     <i class="fa-solid fa-champagne-glasses"></i>
@@ -955,7 +1391,7 @@
                 </div>
             </div>
             <a href="{{ route('client.event_inquiry', ['vendor_slug' => $vendor->slug, 'location_slug' => $location?->slug]) }}" 
-               style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.9rem; border-radius: 8px; background: #ec4899; color: #ffffff; text-decoration: none; font-size: 0.82rem; font-weight: 700; white-space: nowrap; box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3);">
+               style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.85rem; border-radius: 8px; background: #ec4899; color: #ffffff; text-decoration: none; font-size: 0.82rem; font-weight: 700; white-space: nowrap; box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3);">
                 <span>{{ __('Event Planning Inquiry') }}</span>
                 <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem;"></i>
             </a>
@@ -970,74 +1406,258 @@
         </div>
     </template>
 
-    <!-- Step 1: Date & Guests -->
+    <!-- Step 1: Party Size & Date (Unified Resy/OpenTable Style) -->
     <section class="step-card">
         <div class="step-header">
-            <span class="step-number">1</span>
-            <span class="step-title">{{ __('Choose Date & Guests') }}</span>
-        </div>
-
-        <label class="form-label">{{ __('Select Date') }}</label>
-        <div class="dates-track">
-            @foreach($availableDates as $idx => $d)
-                <div class="date-chip" :class="{ 'active': selectedDate === '{{ $d['date'] }}' }" @click="selectDate('{{ $d['date'] }}')">
-                    <div class="day-name">{{ $d['day_name'] }}</div>
-                    <div class="date-num">{{ substr($d['date'], 8, 2) }}</div>
+            <div class="step-header-left">
+                <span class="step-badge"><i class="fa-solid fa-user-group"></i></span>
+                <div>
+                    <div class="step-title">{{ __('Choose Date & Guests') }}</div>
+                    <div class="step-subtitle">{{ $isHy ? 'Ընտրեք հյուրերի քանակը և նախընտրելի օրը' : ($isRu ? 'Выберите количество гостей и дату' : __('Select party size and preferred day')) }}</div>
                 </div>
-            @endforeach
+            </div>
         </div>
 
-        <div style="margin-top: 1.25rem;">
-            <label class="form-label">{{ __('Number of Guests') }}</label>
-            <div class="party-grid">
+        <!-- Guest Selector Stepper + Quick Pills -->
+        <div class="guest-selector-container">
+            <div class="guest-stepper-box">
+                <button type="button" 
+                        class="guest-stepper-btn" 
+                        :disabled="guestCount <= minGuests" 
+                        @click="decrementGuests()"
+                        aria-label="Decrease guest count">
+                    <i class="fa-solid fa-minus"></i>
+                </button>
+
+                <div class="guest-counter-display">
+                    <i class="fa-solid fa-user-group guest-counter-icon"></i>
+                    <span class="guest-counter-text" x-text="guestCount"></span>
+                    <span class="guest-counter-label" x-text="guestCount === 1 ? '{{ __('guest') }}' : '{{ __('guests') }}'"></span>
+                </div>
+
+                <button type="button" 
+                        class="guest-stepper-btn" 
+                        :disabled="guestCount >= maxGuests" 
+                        @click="incrementGuests()"
+                        aria-label="Increase guest count">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+
+            <!-- Quick Party Size Chips -->
+            <div class="guest-quick-pills">
                 @for($p = max(1, $settings['min_party_size'] ?? 1); $p <= min(12, $settings['max_party_size'] ?? 20); $p++)
-                    <div class="party-chip" :class="{ 'active': guestCount === {{ $p }} }" @click="selectGuests({{ $p }})">
-                        <span>{{ $p }} {{ $p === 1 ? __('guest') : __('guests') }}</span>
+                    <div class="guest-pill party-chip" 
+                         :class="{ 'active': guestCount === {{ $p }} }" 
+                         @click="selectGuests({{ $p }})">
+                        <span>{{ $p }}</span>
                     </div>
                 @endfor
             </div>
         </div>
+
+        <!-- Date Selection Ribbon -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem;">
+            <label class="form-label" style="margin-bottom: 0;">
+                <i class="fa-regular fa-calendar-days"></i>
+                <span>{{ __('Select Date') }}</span>
+            </label>
+            <span style="font-size: 0.8rem; font-weight: 600; color: var(--primary);" x-text="formatSelectedDateShort(selectedDate)"></span>
+        </div>
+
+        <div class="dates-ribbon-wrapper">
+            <div class="dates-track">
+                @foreach($availableDates as $idx => $d)
+                    @php
+                        $cDate = \Carbon\Carbon::parse($d['date']);
+                        $isToday = $cDate->isToday();
+                        $isTomorrow = $cDate->isTomorrow();
+                        $dayShort = $isToday ? __('Today') : ($isTomorrow ? __('Tomorrow') : $cDate->translatedFormat('D'));
+                        $monthShort = $cDate->translatedFormat('M');
+                    @endphp
+                    <div class="date-chip" 
+                         :class="{ 'active': selectedDate === '{{ $d['date'] }}' }" 
+                         @click="selectDate('{{ $d['date'] }}')">
+                        <div class="day-name">{{ $dayShort }}</div>
+                        <div class="date-num">{{ substr($d['date'], 8, 2) }}</div>
+                        <div class="date-month">{{ $monthShort }}</div>
+                    </div>
+                @endforeach
+
+                <!-- Native Calendar Launcher for any future date -->
+                <label class="custom-calendar-btn" title="{{ __('Choose another date') }}">
+                    <i class="fa-regular fa-calendar-plus" style="font-size: 1.15rem;"></i>
+                    <span style="font-size: 0.72rem; font-weight: 700;">{{ __('More') }}</span>
+                    <input type="date" 
+                           min="{{ $availableDates[0]['date'] ?? date('Y-m-d') }}" 
+                           max="{{ end($availableDates)['date'] ?? date('Y-m-d', strtotime('+30 days')) }}"
+                           @change="onCustomDateChange($event)">
+                </label>
+            </div>
+        </div>
     </section>
 
-    <!-- Step 2: Time Slot -->
+    <!-- Step 2: Available Time Slots -->
     <section class="step-card" x-show="selectedDate">
         <div class="step-header">
-            <span class="step-number">2</span>
-            <span class="step-title">{{ __('Available Time Slots') }}</span>
+            <div class="step-header-left">
+                <span class="step-badge"><i class="fa-regular fa-clock"></i></span>
+                <div>
+                    <div class="step-title">{{ __('Available Time Slots') }}</div>
+                    <div class="step-subtitle">{{ $isHy ? 'Ընտրեք հարմար ժամը' : ($isRu ? 'Выберите удобное время' : __('Select a seating time')) }}</div>
+                </div>
+            </div>
         </div>
 
-        <div x-show="isLoadingSlots" style="text-align: center; padding: 1.5rem; color: var(--text-muted);">
-            <i class="fa-solid fa-circle-notch fa-spin fa-2x"></i>
-            <p style="margin-top: 0.5rem;">{{ __('Checking table availability...') }}</p>
+        <!-- Meal Period Filter Tabs -->
+        <div class="time-filter-tabs" x-show="!isLoadingSlots && timeSlots.length > 0">
+            <button type="button" 
+                    class="time-filter-tab" 
+                    :class="{ 'active': selectedTimeFilter === 'all' }" 
+                    @click="selectedTimeFilter = 'all'">
+                <i class="fa-solid fa-sparkles"></i>
+                <span>{{ $isHy ? 'Բոլոր ժամերը' : ($isRu ? 'Все часы' : __('All Times')) }}</span>
+            </button>
+            <button type="button" 
+                    class="time-filter-tab" 
+                    :class="{ 'active': selectedTimeFilter === 'lunch' }" 
+                    @click="selectedTimeFilter = 'lunch'">
+                <i class="fa-solid fa-sun"></i>
+                <span>{{ $isHy ? 'Կեսօր' : ($isRu ? 'Обед' : __('Lunch')) }}</span>
+            </button>
+            <button type="button" 
+                    class="time-filter-tab" 
+                    :class="{ 'active': selectedTimeFilter === 'dinner' }" 
+                    @click="selectedTimeFilter = 'dinner'">
+                <i class="fa-solid fa-moon"></i>
+                <span>{{ $isHy ? 'Երեկո' : ($isRu ? 'Ужин' : __('Dinner')) }}</span>
+            </button>
         </div>
 
-        <div x-show="!isLoadingSlots && timeSlots.length > 0" class="slots-grid">
-            <template x-for="slot in timeSlots" :key="slot.time">
+        <!-- Loading State -->
+        <div x-show="isLoadingSlots" style="text-align: center; padding: 2rem 1rem; color: var(--text-muted);">
+            <i class="fa-solid fa-circle-notch fa-spin fa-2x" style="color: var(--primary);"></i>
+            <p style="margin-top: 0.65rem; font-weight: 600; font-size: 0.92rem;">{{ __('Checking table availability...') }}</p>
+        </div>
+
+        <!-- Available Slots Grid -->
+        <div x-show="!isLoadingSlots && filteredTimeSlots.length > 0" class="slots-grid">
+            <template x-for="slot in filteredTimeSlots" :key="slot.time">
                 <button type="button" 
                         class="slot-btn" 
                         :class="{ 'disabled': !slot.available, 'active': selectedTime === slot.time }"
                         :disabled="!slot.available"
                         @click="selectTime(slot)">
                     <span class="slot-time" x-text="slot.time"></span>
-                    <span class="slot-meta" x-text="slot.available ? (slot.available_tables_count + ' ' + '{{ __('free') }}') : '{{ __('full') }}'"></span>
+                    <span class="slot-meta">
+                        <template x-if="slot.available">
+                            <span style="display: inline-flex; align-items: center; gap: 0.25rem;">
+                                <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span>
+                                <span x-text="slot.available_tables_count + ' ' + '{{ __('free') }}'"></span>
+                            </span>
+                        </template>
+                        <template x-if="!slot.available">
+                            <span>{{ __('full') }}</span>
+                        </template>
+                    </span>
                 </button>
             </template>
         </div>
 
-        <div x-show="!isLoadingSlots && timeSlots.length === 0" style="text-align: center; padding: 1rem; color: var(--text-muted);">
-            <p>{{ __('No available slots found for this party size on this day.') }}</p>
+        <!-- Empty Filtered Slots Message -->
+        <div x-show="!isLoadingSlots && timeSlots.length > 0 && filteredTimeSlots.length === 0" style="text-align: center; padding: 1.5rem; color: var(--text-muted);">
+            <p>{{ __('No slots found for this time period.') }}</p>
+            <button type="button" @click="selectedTimeFilter = 'all'" style="margin-top: 0.5rem; background: transparent; border: none; color: var(--primary); font-weight: 700; cursor: pointer;">
+                {{ __('View all available times') }}
+            </button>
+        </div>
+
+        <!-- Empty Slots Message -->
+        <div x-show="!isLoadingSlots && timeSlots.length === 0" style="text-align: center; padding: 1.5rem; color: var(--text-muted); background: var(--chip-bg); border-radius: var(--radius-md); border: 1.5px dashed var(--chip-border);">
+            <i class="fa-solid fa-calendar-xmark fa-2x" style="color: var(--text-muted); margin-bottom: 0.5rem;"></i>
+            <p style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">{{ __('No available slots found for this party size on this day.') }}</p>
+            <p style="font-size: 0.84rem; margin-top: 0.35rem;">{{ __('Please try selecting another date or adjusting party size.') }}</p>
         </div>
     </section>
 
-    <!-- Step 3: Table Preference (Optional) -->
-    <section class="step-card" x-show="selectedTime && eligibleTables.length > 0">
+    <!-- Step 3: Seating Preference & Table Selection (Optional) -->
+    <section class="step-card" x-show="selectedTime && eligibleTables.length > 0" x-transition>
         <div class="step-header">
-            <span class="step-number">3</span>
-            <span class="step-title">{{ __('Table Selection (Optional)') }}</span>
+            <div class="step-header-left">
+                <span class="step-badge"><i class="fa-solid fa-chair"></i></span>
+                <div>
+                    <div class="step-title">{{ __('Table Selection (Optional)') }}</div>
+                    <div class="step-subtitle">{{ $isHy ? 'Ընտրեք նախընտրելի սրահը կամ ավտոմատ նշանակում' : ($isRu ? 'Выберите зону зала или автоназначение' : __('Choose preferred area or auto-assign')) }}</div>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label class="form-label">{{ __('Select a Table or Auto-Assign') }}</label>
-            <select class="form-input" x-model="selectedTableId">
+
+        <!-- Section Filter Pills if multiple sections exist -->
+        <div class="time-filter-tabs" x-show="tableSections.length > 1" style="margin-top: 0.25rem; margin-bottom: 0.75rem;">
+            <button type="button" 
+                    class="time-filter-tab" 
+                    :class="{ 'active': selectedTableSection === 'all' }" 
+                    @click="selectedTableSection = 'all'">
+                <span>{{ $isHy ? 'Բոլոր սրահները' : ($isRu ? 'Все залы' : __('All Areas')) }}</span>
+            </button>
+            <template x-for="sec in tableSections" :key="sec">
+                <button type="button" 
+                        class="time-filter-tab" 
+                        :class="{ 'active': selectedTableSection === sec }" 
+                        @click="selectedTableSection = sec">
+                    <span x-text="sec"></span>
+                </button>
+            </template>
+        </div>
+
+        <!-- Visual Table / Area Cards Grid -->
+        <div class="tables-cards-grid">
+            <!-- Optimal Auto-Assign Card -->
+            <div class="table-select-card full-width" 
+                 :class="{ 'active': selectedTableId === '' }" 
+                 @click="selectedTableId = ''">
+                <div class="table-card-top">
+                    <span class="table-card-title">✨ {{ $isHy ? 'Ավտոմատ նշանակում' : ($isRu ? 'Автоназначение' : __('Auto-assign')) }}</span>
+                    <span class="table-card-badge">{{ $isHy ? 'Խորհուրդ է տրվում' : ($isRu ? 'Рекомендуется' : __('Recommended')) }}</span>
+                </div>
+                <div class="table-card-meta">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>{{ $isHy ? 'Համակարգը կընտրի լավագույն հասանելի սեղանը' : ($isRu ? 'Система подберет лучший свободный стол' : __('Best available table for your party')) }}</span>
+                </div>
+            </div>
+
+            <!-- Specific Tables -->
+            <template x-for="t in visibleEligibleTables" :key="t.id">
+                <div class="table-select-card" 
+                     :class="{ 'active': Number(selectedTableId) === Number(t.id) }" 
+                     @click="selectedTableId = t.id">
+                    <div class="table-card-top">
+                        <span class="table-card-title" x-text="t.display_name"></span>
+                        <template x-if="t.section">
+                            <span class="table-card-badge" x-text="t.section"></span>
+                        </template>
+                    </div>
+                    <div class="table-card-meta">
+                        <i class="fa-solid fa-users"></i>
+                        <span x-text="t.capacity + ' ' + '{{ $isHy ? 'նստատեղ' : ($isRu ? 'мест' : __('seats')) }}'"></span>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Show More / Fewer Tables Toggle -->
+            <div style="grid-column: 1 / -1; text-align: center; margin-top: 0.35rem;" x-show="eligibleTables.length > 5">
+                <button type="button" 
+                        @click="showAllTables = !showAllTables" 
+                        style="background: transparent; border: 1.5px dashed var(--card-border); padding: 0.6rem 1.25rem; border-radius: var(--radius-md); color: var(--primary); font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+                    <i class="fa-solid" :class="showAllTables ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                    <span x-text="showAllTables ? '{{ $isHy ? 'Ցուցադրել ավելի քիչ' : ($isRu ? 'Свернуть' : __('Show fewer')) }}' : ('+ ' + (eligibleTables.length - 5) + ' {{ $isHy ? 'այլ սեղաններ (Տեսնել բոլորը)' : ($isRu ? 'других столов (Показать все)' : __('more tables (Show all)')) }}')"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Select for native fallback / compatibility -->
+        <div style="display: none;" aria-hidden="true">
+            <select x-model="selectedTableId">
                 <option value="">✨ {{ __('Auto-assign optimal table (Recommended)') }}</option>
                 <template x-for="t in eligibleTables" :key="t.id">
                     <option :value="t.id" x-text="t.display_name + (t.section ? ' (' + t.section + ')' : '') + ' — ' + t.capacity + ' ' + '{{ __('seats') }}'"></option>
@@ -1046,26 +1666,40 @@
         </div>
     </section>
 
-    <!-- Step 4: Contact Details -->
-    <section class="step-card" x-show="selectedTime">
+    <!-- Step 4: Contact Details Form -->
+    <section class="step-card" x-show="selectedTime" x-transition>
         <div class="step-header">
-            <span class="step-number">4</span>
-            <span class="step-title">{{ __('Guest Details') }}</span>
+            <div class="step-header-left">
+                <span class="step-badge"><i class="fa-regular fa-address-card"></i></span>
+                <div>
+                    <div class="step-title">{{ __('Guest Details') }}</div>
+                    <div class="step-subtitle">{{ $isHy ? 'Հաստատման տվյալները կուղարկվեն այստեղ' : ($isRu ? 'Данные подтверждения будут отправлены сюда' : __('We\'ll send reservation confirmation here')) }}</div>
+                </div>
+            </div>
         </div>
 
         <div class="form-group">
-            <label class="form-label">{{ __('Your Name') }} *</label>
+            <label class="form-label">
+                <i class="fa-solid fa-user"></i>
+                <span>{{ __('Your Name') }} *</span>
+            </label>
             <input type="text" class="form-input" x-model="customerName" placeholder="{{ __('e.g. Aram Vardanyan') }}" required>
         </div>
 
         <div class="form-group">
-            <label class="form-label">{{ __('Email Address') }} *</label>
+            <label class="form-label">
+                <i class="fa-solid fa-envelope"></i>
+                <span>{{ __('Email Address') }} *</span>
+            </label>
             <input type="email" class="form-input" x-model="customerEmail" placeholder="{{ __('name@example.com') }}" required>
-            <small class="form-helper">{{ __('Confirmation reference and tracking link will be sent here.') }}</small>
+            <small class="form-helper">{{ $isHy ? 'Ամրագրման հաստատման կոդը և հղումը կուղարկվեն այս էլ. հասցեին:' : ($isRu ? 'Код подтверждения и ссылка на бронь будут отправлены на этот email.' : __('Confirmation reference and tracking link will be sent here.')) }}</small>
         </div>
 
         <div class="form-group">
-            <label class="form-label">{{ __('Phone Number') }}</label>
+            <label class="form-label">
+                <i class="fa-solid fa-phone"></i>
+                <span>{{ __('Phone Number') }}</span>
+            </label>
             <div class="cart-phone-field-wrapper">
                 <div class="cart-phone-input-box" :class="{ 'has-error': phoneErrorMsg, 'is-valid': isPhoneValid() && phoneCleanDigits.length > 0 }">
                     <!-- Country Selector Pill -->
@@ -1136,23 +1770,46 @@
             </div>
         </div>
 
-        <div class="form-group">
-            <label class="form-label">{{ __('Special Requests') }}</label>
+        <div class="form-group" style="margin-bottom: 0.5rem;">
+            <label class="form-label">
+                <i class="fa-solid fa-pen-to-square"></i>
+                <span>{{ __('Special Requests') }}</span>
+            </label>
             <textarea class="form-input" rows="2" x-model="specialRequests" placeholder="{{ __('e.g. Window booth, quiet area, celebrating anniversary...') }}"></textarea>
+
+            <!-- Quick Tap Request Chips (International UX Best Practice) -->
+            <div class="quick-request-tags">
+                <button type="button" class="quick-tag-chip" :class="{ 'active': specialRequests.includes('🎂') }" @click="toggleSpecialRequestTag('🎂 {{ $isHy ? 'Ծննդյան օր' : ($isRu ? 'День рождения' : __('Birthday')) }}')">
+                    <span>🎂 {{ $isHy ? 'Ծննդյան օր' : ($isRu ? 'День рождения' : __('Birthday')) }}</span>
+                </button>
+                <button type="button" class="quick-tag-chip" :class="{ 'active': specialRequests.includes('🕯️') }" @click="toggleSpecialRequestTag('🕯️ {{ $isHy ? 'Ռոմանտիկ' : ($isRu ? 'Романтический ужин' : __('Romantic')) }}')">
+                    <span>🕯️ {{ $isHy ? 'Ռոմանտիկ' : ($isRu ? 'Романтический ужин' : __('Romantic')) }}</span>
+                </button>
+                <button type="button" class="quick-tag-chip" :class="{ 'active': specialRequests.includes('💼') }" @click="toggleSpecialRequestTag('💼 {{ $isHy ? 'Գործնական' : ($isRu ? 'Деловая встреча' : __('Business')) }}')">
+                    <span>💼 {{ $isHy ? 'Գործնական' : ($isRu ? 'Деловая встреча' : __('Business')) }}</span>
+                </button>
+                <button type="button" class="quick-tag-chip" :class="{ 'active': specialRequests.includes('🪟') }" @click="toggleSpecialRequestTag('🪟 {{ $isHy ? 'Պատուհանի մոտ' : ($isRu ? 'У окна' : __('Window Table')) }}')">
+                    <span>🪟 {{ $isHy ? 'Պատուհանի մոտ' : ($isRu ? 'У окна' : __('Window Table')) }}</span>
+                </button>
+                <button type="button" class="quick-tag-chip" :class="{ 'active': specialRequests.includes('🤫') }" @click="toggleSpecialRequestTag('🤫 {{ $isHy ? 'Հանգիստ անկյուն' : ($isRu ? 'Тихий уголок' : __('Quiet Corner')) }}')">
+                    <span>🤫 {{ $isHy ? 'Հանգիստ անկյուն' : ($isRu ? 'Тихий уголок' : __('Quiet Corner')) }}</span>
+                </button>
+                <button type="button" class="quick-tag-chip" :class="{ 'active': specialRequests.includes('👶') }" @click="toggleSpecialRequestTag('👶 {{ $isHy ? 'Մանկական աթոռ' : ($isRu ? 'Детский стульчик' : __('High Chair')) }}')">
+                    <span>👶 {{ $isHy ? 'Մանկական աթոռ' : ($isRu ? 'Детский стульчик' : __('High Chair')) }}</span>
+                </button>
+            </div>
         </div>
     </section>
 
-    <!-- Step 5: Pre-Order from Main Menu -->
+    <!-- Step 5: Pre-Order from Main Menu (Optional VIP Experience) -->
     @if($vendor->isPreOrderFeatureEnabled())
-    <section class="step-card" x-show="selectedTime">
-        <div class="step-header" style="justify-content: space-between; align-items: flex-start;">
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span class="step-number">5</span>
+    <section class="step-card" x-show="selectedTime" x-transition>
+        <div class="step-header">
+            <div class="step-header-left">
+                <span class="step-badge"><i class="fa-solid fa-utensils"></i></span>
                 <div>
-                    <span class="step-title">{{ __('Pre-Order Food & Drinks (Optional)') }}</span>
-                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem;">
-                        {{ __('Choose your favorite dishes and drinks in advance from our digital menu.') }}
-                    </div>
+                    <div class="step-title">{{ __('Pre-Order Food & Drinks (Optional)') }}</div>
+                    <div class="step-subtitle">{{ $isHy ? 'Ընտրեք սիրելի ուտեստները նախապես մեր մենյուից' : ($isRu ? 'Предзакажите блюда заранее из нашего меню' : __('Choose favorite dishes in advance from our digital menu')) }}</div>
                 </div>
             </div>
             <span class="preorder-count-badge" x-show="preOrderItems.length > 0" x-text="preOrderItems.length + ' ' + '{{ __('dishes') }}'"></span>
@@ -1232,7 +1889,10 @@
 
             <!-- Pre-order notes field (Optional) -->
             <div class="form-group" style="margin-bottom: 1rem;">
-                <label class="form-label">{{ __('Pre-Order Notes / Special Requests (Optional)') }}</label>
+                <label class="form-label">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                    <span>{{ __('Pre-Order Notes / Special Requests (Optional)') }}</span>
+                </label>
                 <input type="text" class="form-input" x-model="preOrderNotes" placeholder="{{ __('e.g. Serve drinks first, allergy to peanuts, etc.') }}">
             </div>
 
@@ -1251,7 +1911,7 @@
     </section>
     @endif
 
-    <!-- Submit Action -->
+    <!-- Inline Bottom Submit Button (Desktop & Form Flow) -->
     <div x-show="selectedTime" style="margin-top: 1.5rem;">
         <button type="button" class="submit-btn" :disabled="isSubmitting" @click="submitBooking()">
             <template x-if="isSubmitting">
@@ -1262,6 +1922,41 @@
             </template>
         </button>
     </div>
+
+    <!-- Sticky Bottom Summary Bar (Mobile & Quick-Confirmation) -->
+    <div class="sticky-booking-bar" 
+         x-show="selectedTime" 
+         x-transition:enter="transition ease-out duration-250"
+         x-transition:enter-start="opacity-0 transform translate-y-8"
+         x-transition:enter-end="opacity-100 transform translate-y-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 transform translate-y-0"
+         x-transition:leave-end="opacity-0 transform translate-y-8"
+         style="display: none;">
+        <div class="sticky-booking-content">
+            <div class="sticky-summary-meta">
+                <div class="sticky-summary-pills">
+                    <span><i class="fa-solid fa-user-group" style="color: var(--primary); font-size: 0.8rem;"></i> <span x-text="guestCount"></span></span>
+                    <span class="sticky-summary-sep">•</span>
+                    <span x-text="formatSelectedDateShort(selectedDate)"></span>
+                    <span class="sticky-summary-sep">•</span>
+                    <span style="color: var(--primary);" x-text="selectedTime"></span>
+                </div>
+                <div class="sticky-summary-sub">
+                    <span x-text="getSelectedTableLabel()"></span>
+                </div>
+            </div>
+
+            <button type="button" class="sticky-action-btn" :disabled="isSubmitting" @click="submitBooking()">
+                <template x-if="isSubmitting">
+                    <span><i class="fa-solid fa-circle-notch fa-spin"></i> {{ __('Booking...') }}</span>
+                </template>
+                <template x-if="!isSubmitting">
+                    <span>{{ __('Confirm') }} <i class="fa-solid fa-arrow-right" style="font-size: 0.8rem;"></i></span>
+                </template>
+            </button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -1271,7 +1966,10 @@ function reservationBookingApp() {
         menuUrl: '{{ route('client.menu', ['vendor_slug' => $vendor->slug, 'location_slug' => $location?->slug, 'lang' => app()->getLocale()]) }}',
         selectedDate: '{{ $availableDates[0]['date'] ?? '' }}',
         guestCount: {{ max(2, $settings['min_party_size'] ?? 1) }},
+        minGuests: {{ max(1, $settings['min_party_size'] ?? 1) }},
+        maxGuests: {{ min(20, $settings['max_party_size'] ?? 20) }},
         selectedTime: '',
+        selectedTimeFilter: 'all', // 'all', 'lunch', 'dinner'
         selectedTableId: '',
         customerName: '',
         customerEmail: '',
@@ -1291,12 +1989,131 @@ function reservationBookingApp() {
             { code: 'IR', flag: '🇮🇷', dial: '+98', digits: 10, name: '{{ __('Iran') }}', placeholder: '912 123 4567' },
             { code: 'OTHER', flag: '🌐', dial: '+', digits: null, minDigits: 7, maxDigits: 15, name: '{{ __('Other Country') }}', placeholder: '123456789' }
         ],
+        specialRequests: '',
+        preOrderItems: [],
+        preOrderNotes: '',
+        timeSlots: [],
+        eligibleTables: [],
+        isLoadingSlots: false,
+        isSubmitting: false,
+        errorMessage: '',
+
         get selectedPhoneCountry() {
             return this.phoneCountries.find(c => c.code === this.phoneCountryCode) || this.phoneCountries[0];
         },
         get phoneCleanDigits() {
             return (this.phoneNationalNumber || '').replace(/\D/g, '');
         },
+        get filteredTimeSlots() {
+            if (!this.timeSlots || !Array.isArray(this.timeSlots)) return [];
+            if (this.selectedTimeFilter === 'lunch') {
+                return this.timeSlots.filter(s => {
+                    const h = parseInt(s.time.split(':')[0], 10);
+                    return h < 17;
+                });
+            }
+            if (this.selectedTimeFilter === 'dinner') {
+                return this.timeSlots.filter(s => {
+                    const h = parseInt(s.time.split(':')[0], 10);
+                    return h >= 17;
+                });
+            }
+            return this.timeSlots;
+        },
+
+        showAllTables: false,
+        selectedTableSection: 'all',
+        get tableSections() {
+            const set = new Set();
+            (this.eligibleTables || []).forEach(t => {
+                if (t.section) set.add(t.section);
+            });
+            return Array.from(set);
+        },
+        get visibleEligibleTables() {
+            let list = this.eligibleTables || [];
+            if (this.selectedTableSection !== 'all') {
+                list = list.filter(t => t.section === this.selectedTableSection);
+            }
+            if (!this.showAllTables && list.length > 5) {
+                return list.slice(0, 5);
+            }
+            return list;
+        },
+
+        init() {
+            this.restoreReservationDraft();
+            this.restorePreOrderItems();
+            if (this.selectedDate) {
+                this.loadSlots();
+            }
+        },
+
+        incrementGuests() {
+            if (this.guestCount < this.maxGuests) {
+                this.selectGuests(this.guestCount + 1);
+            }
+        },
+
+        decrementGuests() {
+            if (this.guestCount > this.minGuests) {
+                this.selectGuests(this.guestCount - 1);
+            }
+        },
+
+        onCustomDateChange(event) {
+            const val = event.target.value;
+            if (val) {
+                this.selectDate(val);
+            }
+        },
+
+        formatSelectedDateShort(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const parts = dateStr.split('-');
+                if (parts.length === 3) {
+                    const lang = '{{ app()->getLocale() }}';
+                    const d = new Date(parts[0], parseInt(parts[1], 10) - 1, parts[2]);
+                    if (lang === 'hy') {
+                        const days = ['Կիր', 'Երկ', 'Երք', 'Չրք', 'Հնգ', 'Ուրբ', 'Շբթ'];
+                        const months = ['հնվ', 'փտվ', 'մրտ', 'ապր', 'մայ', 'հնս', 'հլս', 'օգս', 'սեպ', 'հոկ', 'նոյ', 'դեկ'];
+                        return days[d.getDay()] + ', ' + parts[2] + ' ' + months[parseInt(parts[1], 10) - 1];
+                    } else if (lang === 'ru') {
+                        const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+                        const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+                        return days[d.getDay()] + ', ' + parts[2] + ' ' + months[parseInt(parts[1], 10) - 1];
+                    }
+                    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' });
+                }
+            } catch(e) {}
+            return dateStr;
+        },
+
+        getSelectedTableLabel() {
+            if (!this.selectedTableId) {
+                return '{{ $isHy ? '✨ Ավտոմատ լավագույն սեղան' : ($isRu ? '✨ Автоназначенный стол' : '✨ ' . __('Auto-assigned optimal table')) }}';
+            }
+            const tbl = (this.eligibleTables || []).find(t => String(t.id) === String(this.selectedTableId));
+            return tbl ? (tbl.display_name + (tbl.section ? ' (' + tbl.section + ')' : '')) : '{{ __('Selected Table') }}';
+        },
+
+        toggleSpecialRequestTag(tag) {
+            if (!this.specialRequests) {
+                this.specialRequests = tag;
+                return;
+            }
+            if (this.specialRequests.includes(tag)) {
+                this.specialRequests = this.specialRequests
+                    .replace(tag, '')
+                    .replace(/,\s*,/g, ', ')
+                    .replace(/^,\s*|,\s*$/g, '')
+                    .trim();
+            } else {
+                this.specialRequests = this.specialRequests.trim() + (this.specialRequests.trim() ? ', ' : '') + tag;
+            }
+        },
+
         isPhoneValid() {
             const digits = this.phoneCleanDigits;
             if (!digits) return true;
@@ -1308,12 +2125,14 @@ function reservationBookingApp() {
             const max = country.maxDigits || 15;
             return digits.length >= min && digits.length <= max;
         },
+
         selectPhoneCountry(code) {
             this.phoneCountryCode = code;
             this.showPhoneCountryDropdown = false;
             this.phoneErrorMsg = '';
             this.onPhoneInput();
         },
+
         onPhoneInput(event) {
             let raw = this.phoneNationalNumber || '';
             if (raw.trim().startsWith('+')) {
@@ -1414,6 +2233,7 @@ function reservationBookingApp() {
                 this.phoneErrorMsg = '';
             }
         },
+
         validatePhoneOnBlur() {
             const digits = this.phoneCleanDigits;
             if (!digits) {
@@ -1431,22 +2251,6 @@ function reservationBookingApp() {
                 this.phoneErrorMsg = '{{ __('Invalid phone format') }}';
             } else {
                 this.phoneErrorMsg = '';
-            }
-        },
-        specialRequests: '',
-        preOrderItems: [],
-        preOrderNotes: '',
-        timeSlots: [],
-        eligibleTables: [],
-        isLoadingSlots: false,
-        isSubmitting: false,
-        errorMessage: '',
-
-        init() {
-            this.restoreReservationDraft();
-            this.restorePreOrderItems();
-            if (this.selectedDate) {
-                this.loadSlots();
             }
         },
 
