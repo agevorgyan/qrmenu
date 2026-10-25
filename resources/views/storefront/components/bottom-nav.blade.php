@@ -1,3 +1,34 @@
+@php
+    $themeMode = $vendor->theme_mode ?? null;
+    $templateSlug = $vendor->menuTemplate?->slug ?? '';
+    
+    // Determine whether default mode is dark or light
+    if ($themeMode === 'dark') {
+        $isDarkNav = true;
+    } elseif ($themeMode === 'light') {
+        $isDarkNav = false;
+    } elseif ($templateSlug === 'luxury-dark') {
+        $isDarkNav = true;
+    } else {
+        $isDarkNav = false;
+    }
+
+    // If custom background color is specified, dynamically evaluate perceived luminance
+    if (!empty($vendor->bg_color)) {
+        $rawHex = ltrim($vendor->bg_color, '#');
+        if (strlen($rawHex) === 3) {
+            $rawHex = $rawHex[0].$rawHex[0].$rawHex[1].$rawHex[1].$rawHex[2].$rawHex[2];
+        }
+        if (strlen($rawHex) === 6 && ctype_xdigit($rawHex)) {
+            $r = hexdec(substr($rawHex, 0, 2));
+            $g = hexdec(substr($rawHex, 2, 2));
+            $b = hexdec(substr($rawHex, 4, 2));
+            $luminance = (0.299 * $r + 0.587 * $g + 0.114 * $b);
+            $isDarkNav = ($luminance < 140);
+        }
+    }
+@endphp
+
 <!-- Pre-Order Floating Top Banner (Shown when customer is choosing dishes from main menu for table reservation) -->
 <div class="storefront-preorder-top-banner" 
      x-show="isPreOrderMode" 
@@ -95,7 +126,7 @@
 
     <!-- Floating Scroll-To-Top Button (iOS Glass) -->
     <button type="button" 
-            class="storefront-scroll-top-btn" 
+            class="storefront-scroll-top-btn {{ $isDarkNav ? 'btn-dark' : 'btn-light' }}" 
             :class="{ 
                 'has-ai-bubble': {{ $vendor->ai_waiter_enabled ? 'true' : 'false' }} && !showAiWaiter && !showWelcomeModal && !showCartModal,
                 'has-active-order-pill': isOrderPillVisible()
@@ -114,7 +145,7 @@
     </button>
 
     <!-- Bottom Navigation Bar (iOS Floating Island Pill) -->
-    <nav class="storefront-bottom-nav" aria-label="Storefront Mobile Navigation">
+    <nav class="storefront-bottom-nav {{ $isDarkNav ? 'nav-dark' : 'nav-light' }}" aria-label="Storefront Mobile Navigation">
         <!-- 1. Home / Menu -->
         <button type="button" 
                 class="bottom-nav-item" 
@@ -202,10 +233,8 @@
     /* iOS Floating Island Pill Bar */
     .storefront-bottom-nav {
         pointer-events: auto;
-        background: rgba(26, 26, 29, 0.88);
         backdrop-filter: blur(28px) saturate(190%);
         -webkit-backdrop-filter: blur(28px) saturate(190%);
-        border: 1px solid rgba(255, 255, 255, 0.14);
         border-radius: 9999px;
         display: flex;
         justify-content: space-around;
@@ -215,8 +244,27 @@
         margin: 0 auto max(14px, env(safe-area-inset-bottom, 14px)) auto;
         width: calc(100% - 28px);
         max-width: 440px;
-        box-shadow: 0 16px 38px -4px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
         box-sizing: border-box;
+        transition: background 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    /* Light Theme (Սպիտակ պանել բաց ֆոնի դեպքում) */
+    .storefront-bottom-nav,
+    .storefront-bottom-nav.nav-light,
+    html.light .storefront-bottom-nav,
+    [data-theme="light"] .storefront-bottom-nav {
+        background: rgba(255, 255, 255, 0.94);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.9) inset;
+    }
+
+    /* Dark Theme (Մուգ պանել մուգ ֆոնի դեպքում) */
+    .storefront-bottom-nav.nav-dark,
+    html.dark .storefront-bottom-nav,
+    [data-theme="dark"] .storefront-bottom-nav {
+        background: rgba(26, 26, 29, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        box-shadow: 0 16px 38px -4px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
     }
 
     .bottom-nav-item {
@@ -231,7 +279,6 @@
         border: none;
         border-radius: 9999px;
         padding: 6px 8px;
-        color: rgba(255, 255, 255, 0.65);
         cursor: pointer;
         transition: all 0.22s cubic-bezier(0.2, 0, 0, 1);
         position: relative;
@@ -240,18 +287,79 @@
         user-select: none;
     }
 
-    .bottom-nav-item:hover {
-        color: #ffffff;
-    }
-
     .bottom-nav-item:active {
         transform: scale(0.92);
     }
 
-    .bottom-nav-item.active {
+    /* Light Theme Nav Item Colors */
+    .bottom-nav-item,
+    .storefront-bottom-nav.nav-light .bottom-nav-item,
+    html.light .bottom-nav-item,
+    [data-theme="light"] .bottom-nav-item {
+        color: #64748b;
+    }
+
+    .bottom-nav-item:hover,
+    .storefront-bottom-nav.nav-light .bottom-nav-item:hover,
+    html.light .bottom-nav-item:hover,
+    [data-theme="light"] .bottom-nav-item:hover {
+        color: var(--text-main, #0f172a);
+    }
+
+    .bottom-nav-item.active,
+    .storefront-bottom-nav.nav-light .bottom-nav-item.active,
+    html.light .bottom-nav-item.active,
+    [data-theme="light"] .bottom-nav-item.active {
+        background: rgba(0, 0, 0, 0.06);
+        color: var(--primary, #e11d48);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .bottom-nav-item.has-items,
+    .storefront-bottom-nav.nav-light .bottom-nav-item.has-items,
+    html.light .bottom-nav-item.has-items,
+    [data-theme="light"] .bottom-nav-item.has-items {
+        color: var(--text-main, #0f172a);
+    }
+
+    .bottom-nav-item.has-items.active,
+    .storefront-bottom-nav.nav-light .bottom-nav-item.has-items.active,
+    html.light .bottom-nav-item.has-items.active,
+    [data-theme="light"] .bottom-nav-item.has-items.active {
+        color: var(--primary, #e11d48);
+    }
+
+    /* Dark Theme Nav Item Colors */
+    .storefront-bottom-nav.nav-dark .bottom-nav-item,
+    html.dark .bottom-nav-item,
+    [data-theme="dark"] .bottom-nav-item {
+        color: rgba(255, 255, 255, 0.65);
+    }
+
+    .storefront-bottom-nav.nav-dark .bottom-nav-item:hover,
+    html.dark .bottom-nav-item:hover,
+    [data-theme="dark"] .bottom-nav-item:hover {
+        color: #ffffff;
+    }
+
+    .storefront-bottom-nav.nav-dark .bottom-nav-item.active,
+    html.dark .bottom-nav-item.active,
+    [data-theme="dark"] .bottom-nav-item.active {
         background: rgba(255, 255, 255, 0.14);
         color: var(--primary, #38bdf8);
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.22);
+    }
+
+    .storefront-bottom-nav.nav-dark .bottom-nav-item.has-items,
+    html.dark .bottom-nav-item.has-items,
+    [data-theme="dark"] .bottom-nav-item.has-items {
+        color: rgba(255, 255, 255, 0.95);
+    }
+
+    .storefront-bottom-nav.nav-dark .bottom-nav-item.has-items.active,
+    html.dark .bottom-nav-item.has-items.active,
+    [data-theme="dark"] .bottom-nav-item.has-items.active {
+        color: var(--primary, #38bdf8);
     }
 
     .bottom-nav-item .nav-icon-wrapper {
@@ -266,6 +374,13 @@
     }
 
     .bottom-nav-item.active .nav-icon-wrapper {
+        transform: translateY(-1px);
+        color: var(--primary, #e11d48);
+    }
+
+    .storefront-bottom-nav.nav-dark .bottom-nav-item.active .nav-icon-wrapper,
+    html.dark .bottom-nav-item.active .nav-icon-wrapper,
+    [data-theme="dark"] .bottom-nav-item.active .nav-icon-wrapper {
         transform: translateY(-1px);
         color: var(--primary, #38bdf8);
     }
@@ -284,14 +399,13 @@
 
     .bottom-nav-item.active .nav-label {
         font-weight: 700;
-        color: var(--primary, #38bdf8);
+        color: var(--primary, #e11d48);
     }
 
-    .bottom-nav-item.has-items {
-        color: rgba(255, 255, 255, 0.9);
-    }
-
-    .bottom-nav-item.has-items.active {
+    .storefront-bottom-nav.nav-dark .bottom-nav-item.active .nav-label,
+    html.dark .bottom-nav-item.active .nav-label,
+    [data-theme="dark"] .bottom-nav-item.active .nav-label {
+        font-weight: 700;
         color: var(--primary, #38bdf8);
     }
 
@@ -310,10 +424,25 @@
         align-items: center;
         justify-content: center;
         padding: 0 4px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
-        border: 2px solid #1a1a1d;
         animation: badgePulse 2s infinite;
         z-index: 5;
+    }
+
+    /* Light Theme Nav Badge */
+    .nav-badge,
+    .storefront-bottom-nav.nav-light .nav-badge,
+    html.light .nav-badge,
+    [data-theme="light"] .nav-badge {
+        border: 2px solid #ffffff;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
+    }
+
+    /* Dark Theme Nav Badge */
+    .storefront-bottom-nav.nav-dark .nav-badge,
+    html.dark .nav-badge,
+    [data-theme="dark"] .nav-badge {
+        border: 2px solid #1a1a1d;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
     }
 
     /* Floating Scroll Up Button (iOS style) */
@@ -326,19 +455,36 @@
         width: 44px;
         height: 44px;
         border-radius: 50%;
-        background: rgba(26, 26, 29, 0.88);
         backdrop-filter: blur(28px) saturate(190%);
         -webkit-backdrop-filter: blur(28px) saturate(190%);
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        color: #ffffff;
-        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1.05rem;
         cursor: pointer;
-        transition: bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.2, 0, 0, 1), border-color 0.2s, color 0.2s;
+        transition: bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.2, 0, 0, 1), border-color 0.2s, color 0.2s, background 0.25s, box-shadow 0.25s;
         -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Light Scroll Up Button */
+    .storefront-scroll-top-btn,
+    .storefront-scroll-top-btn.btn-light,
+    html.light .storefront-scroll-top-btn,
+    [data-theme="light"] .storefront-scroll-top-btn {
+        background: rgba(255, 255, 255, 0.94);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        color: #0f172a;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.09), 0 0 0 1px rgba(255, 255, 255, 0.9) inset;
+    }
+
+    /* Dark Scroll Up Button */
+    .storefront-scroll-top-btn.btn-dark,
+    html.dark .storefront-scroll-top-btn,
+    [data-theme="dark"] .storefront-scroll-top-btn {
+        background: rgba(26, 26, 29, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        color: #ffffff;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
     }
 
     .storefront-scroll-top-btn:hover {

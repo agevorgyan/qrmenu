@@ -103,7 +103,6 @@
             max-width: 440px !important;
             width: calc(100% - 28px) !important;
             border-radius: 9999px !important;
-            border: 1px solid rgba(255, 255, 255, 0.14) !important;
         }
 
         .active-order-floating-pill {

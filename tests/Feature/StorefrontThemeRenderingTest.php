@@ -186,4 +186,45 @@ class StorefrontThemeRenderingTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('--desktop-max-width: 480px', false);
     }
+
+    public function test_bottom_nav_adapts_to_light_and_dark_themes(): void
+    {
+        // 1. Light mode -> nav-light
+        $this->vendor->update([
+            'theme_mode' => 'light',
+            'bg_color' => null,
+        ]);
+        $response = $this->get(route('client.menu', ['vendor_slug' => $this->vendor->slug]));
+        $response->assertStatus(200);
+        $response->assertSee('storefront-bottom-nav nav-light', false);
+        $response->assertSee('storefront-scroll-top-btn btn-light', false);
+
+        // 2. Dark mode -> nav-dark
+        $this->vendor->update([
+            'theme_mode' => 'dark',
+            'bg_color' => null,
+        ]);
+        $response = $this->get(route('client.menu', ['vendor_slug' => $this->vendor->slug]));
+        $response->assertStatus(200);
+        $response->assertSee('storefront-bottom-nav nav-dark', false);
+        $response->assertSee('storefront-scroll-top-btn btn-dark', false);
+
+        // 3. Custom dark background color -> nav-dark
+        $this->vendor->update([
+            'theme_mode' => 'light',
+            'bg_color' => '#111827',
+        ]);
+        $response = $this->get(route('client.menu', ['vendor_slug' => $this->vendor->slug]));
+        $response->assertStatus(200);
+        $response->assertSee('storefront-bottom-nav nav-dark', false);
+
+        // 4. Custom light background color -> nav-light
+        $this->vendor->update([
+            'theme_mode' => 'dark',
+            'bg_color' => '#ffffff',
+        ]);
+        $response = $this->get(route('client.menu', ['vendor_slug' => $this->vendor->slug]));
+        $response->assertStatus(200);
+        $response->assertSee('storefront-bottom-nav nav-light', false);
+    }
 }
