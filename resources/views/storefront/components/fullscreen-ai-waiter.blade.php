@@ -902,6 +902,8 @@
                                                 </div>
                                             </template>
                                         </div>
+                                    </template>
+
                                     <!-- Interactive Contextual Quick Replies -->
                                     <template x-if="msg.quick_replies && msg.quick_replies.length > 0">
                                         <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.65rem;">

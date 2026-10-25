@@ -150,6 +150,7 @@
             tableNumber: bootConfig.tableNumber || '',
             activeMealPeriod: bootConfig.activeMealPeriod || null,
             timeAwareGreeting: bootConfig.greeting || '',
+            aiGreetingText: bootConfig.greeting || '',
 
             // AI Waiter State
             showWelcomeModal: false,
@@ -2165,6 +2166,7 @@
                         })
                     });
                     const data = await res.json();
+                    if (data.success || data.reply) {
                         this.aiChatMessages.push({
                             sender: 'ai',
                             text: data.reply,

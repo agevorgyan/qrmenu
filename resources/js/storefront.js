@@ -143,6 +143,15 @@
             closingNotice: bootConfig.closingNotice || {},
             dismissedWarningBanner: false,
 
+            // Language & Entry Context State
+            needsLanguageSelection: bootConfig.needsLanguageSelection || false,
+            showLanguageModal: bootConfig.needsLanguageSelection || false,
+            entryContext: bootConfig.entryContext || 'general_menu',
+            tableNumber: bootConfig.tableNumber || '',
+            activeMealPeriod: bootConfig.activeMealPeriod || null,
+            timeAwareGreeting: bootConfig.greeting || '',
+            aiGreetingText: bootConfig.greeting || '',
+
             // AI Waiter State
             showWelcomeModal: false,
             showAiWaiter: false,
@@ -2116,11 +2125,14 @@
                         })
                     });
                     const data = await res.json();
-                    if (data.success) {
+                    if (data.success || data.reply) {
                         this.aiChatMessages.push({
                             sender: 'ai',
                             text: data.reply,
                             products: data.suggested_products || [],
+                            quick_replies: data.quick_replies || [],
+                            action: data.action || null,
+                            intent: data.intent || null,
                             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                         });
                     } else {
