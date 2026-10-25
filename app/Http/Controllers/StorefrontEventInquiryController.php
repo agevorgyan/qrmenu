@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\EventInquiry;
 use App\Models\Location;
 use App\Models\Vendor;
+use App\Services\CustomerSyncService;
 use App\Services\EventInquiryNotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -16,6 +17,7 @@ class StorefrontEventInquiryController extends Controller
 {
     public function __construct(
         protected EventInquiryNotificationService $notificationService,
+        protected CustomerSyncService $customerSyncService,
     ) {}
 
     /**
@@ -72,13 +74,56 @@ class StorefrontEventInquiryController extends Controller
         $minGuests = isset($settings['min_guests']) && $settings['min_guests'] > 0 ? (int) $settings['min_guests'] : 1;
         $maxGuests = ! empty($settings['max_guests']) ? (int) $settings['max_guests'] : 5000;
 
+        $vendorTz = $vendor->timezone ?: 'Asia/Yerevan';
+        $todayVendor = Carbon::today($vendorTz)->format('Y-m-d');
+
         $rules = [
             'event_type' => 'required|string|max:64',
             'customer_name' => 'required|string|max:255',
-            'customer_phone' => 'required|string|max:50',
+            'customer_phone' => [
+                'required',
+                'string',
+                'max:50',
+                function ($attribute, $value, $fail) {
+                    if (empty($value)) {
+                        return;
+                    }
+
+                    $clean = preg_replace('/[\s\-\(\)\.]/', '', (string) $value);
+                    if (! preg_match('/^\+?[0-9]{8,15}$/', $clean)) {
+                        $fail(__('menu.invalid_phone_format'));
+
+                        return;
+                    }
+
+                    if (str_starts_with($clean, '+374')) {
+                        $digits = substr($clean, 4);
+                        if (strlen($digits) !== 8) {
+                            $fail('Հայկական հեռախոսահամարը պետք է ունենա ճիշտ 8 նիշ (+374-ից հետո)։');
+                        }
+                    } elseif (str_starts_with($clean, '0') && strlen($clean) !== 9) {
+                        $fail('Հայկական տեղական հեռախոսահամարը պետք է ունենա 9 նիշ (օր.՝ 091234567)։');
+                    } elseif (str_starts_with($clean, '+7')) {
+                        $digits = substr($clean, 2);
+                        if (strlen($digits) !== 10) {
+                            $fail('Ռուսական հեռախոսահամարը պետք է ունենա ճիշտ 10 նիշ (+7-ից հետո)։');
+                        }
+                    } elseif (str_starts_with($clean, '+995')) {
+                        $digits = substr($clean, 4);
+                        if (strlen($digits) !== 9) {
+                            $fail('Վրացական հեռախոսահամարը պետք է ունենա ճիշտ 9 նիշ (+995-ից հետո)։');
+                        }
+                    } elseif (str_starts_with($clean, '+1')) {
+                        $digits = substr($clean, 2);
+                        if (strlen($digits) !== 10) {
+                            $fail('ԱՄՆ/Կանադայի հեռախոսահամարը պետք է ունենա ճիշտ 10 նիշ (+1-ից հետո)։');
+                        }
+                    }
+                },
+            ],
             'customer_email' => 'nullable|email|max:255',
             'preferred_contact_method' => 'required|string|in:phone,whatsapp,email',
-            'event_date' => 'required|date_format:Y-m-d|after_or_equal:today',
+            'event_date' => "required|date_format:Y-m-d|after_or_equal:{$todayVendor}",
             'guest_count' => "required|integer|min:{$minGuests}|max:{$maxGuests}",
             'start_time' => 'nullable|string|max:16',
             'end_time' => 'nullable|string|max:16',
@@ -113,14 +158,39 @@ class StorefrontEventInquiryController extends Controller
             ? strtolower((string) $requestedLocale)
             : ($vendor->getDefaultLanguageCode() ?: 'hy');
 
-        $inquiry = DB::transaction(function () use ($vendor, $locationId, $validated, $customerLocale) {
+        $normalizedPhone = null;
+        if (! empty($validated['customer_phone'])) {
+            $clean = preg_replace('/[\s\-\(\)\.]/', '', (string) $validated['customer_phone']);
+            if (str_starts_with($clean, '0') && strlen($clean) === 9) {
+                $normalizedPhone = '+374'.substr($clean, 1);
+            } elseif (! str_starts_with($clean, '+') && preg_match('/^[0-9]+$/', $clean)) {
+                $normalizedPhone = '+'.$clean;
+            } else {
+                $normalizedPhone = $clean;
+            }
+        }
+        $normalizedEmail = ! empty($validated['customer_email']) ? strtolower(trim($validated['customer_email'])) : null;
+
+        // Automatically create or link CRM customer
+        $crmCustomer = $this->customerSyncService->syncCustomerFromEventInquiry(
+            vendor: $vendor,
+            data: [
+                'name' => trim($validated['customer_name']),
+                'phone' => $normalizedPhone,
+                'email' => $normalizedEmail,
+            ],
+            locationId: $locationId
+        );
+
+        $inquiry = DB::transaction(function () use ($vendor, $locationId, $crmCustomer, $validated, $normalizedPhone, $normalizedEmail, $customerLocale) {
             $inquiry = new EventInquiry([
                 'vendor_id' => $vendor->id,
                 'location_id' => $locationId,
+                'customer_id' => $crmCustomer?->id,
                 'event_type' => trim($validated['event_type']),
                 'customer_name' => trim($validated['customer_name']),
-                'customer_phone' => trim($validated['customer_phone']),
-                'customer_email' => ! empty($validated['customer_email']) ? strtolower(trim($validated['customer_email'])) : null,
+                'customer_phone' => $normalizedPhone ?: trim($validated['customer_phone']),
+                'customer_email' => $normalizedEmail,
                 'preferred_contact_method' => $validated['preferred_contact_method'],
                 'event_date' => $validated['event_date'],
                 'start_time' => ! empty($validated['start_time']) ? trim($validated['start_time']) : null,

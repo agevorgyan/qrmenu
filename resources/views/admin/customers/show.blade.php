@@ -322,4 +322,100 @@
         </div>
     @endif
 </div>
+
+<!-- Event Planning Inquiries History -->
+<div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.25rem, 3vw, 1.85rem); margin-top: 1.5rem; box-shadow: var(--shadow-card);">
+    <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin: 0 0 1.25rem 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+        <span style="display: flex; align-items: center; gap: 0.6rem;">
+            <span style="color: #f59e0b;"><i class="fa-solid fa-champagne-glasses"></i></span>
+            <span>{{ __('Event Planning Inquiries') }}</span>
+        </span>
+        <span style="font-size: 0.85rem; font-weight: 700; background: rgba(245, 158, 11, 0.12); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.25); padding: 0.25rem 0.75rem; border-radius: 9999px;">
+            {{ isset($eventInquiries) ? $eventInquiries->count() : 0 }} {{ __('Total') }}
+        </span>
+    </h2>
+
+    @if(isset($eventInquiries) && $eventInquiries->count() > 0)
+        <div class="timeline">
+            @foreach($eventInquiries as $inq)
+                <div class="timeline-item">
+                    <div class="timeline-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);">
+                        <i class="fa-solid fa-cake-candles"></i>
+                    </div>
+
+                    <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 16px; padding: clamp(1rem, 2.5vw, 1.35rem); box-shadow: 0 4px 14px rgba(0,0,0,0.06);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.75rem;">
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                    <a href="{{ route('admin.reservations.events.show', $inq->id) }}" style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: var(--primary); text-decoration: none;">
+                                        #{{ $inq->reference }}
+                                    </a>
+                                    @php
+                                        $inqBg = match($inq->status) {
+                                            'confirmed', 'completed' => 'rgba(16,185,129,0.15)',
+                                            'cancelled', 'declined' => 'rgba(239,68,68,0.15)',
+                                            'offer_sent', 'negotiation' => 'rgba(59,130,246,0.15)',
+                                            default => 'rgba(245,158,11,0.15)',
+                                        };
+                                        $inqColor = match($inq->status) {
+                                            'confirmed', 'completed' => '#10b981',
+                                            'cancelled', 'declined' => '#ef4444',
+                                            'offer_sent', 'negotiation' => '#3b82f6',
+                                            default => '#f59e0b',
+                                        };
+                                    @endphp
+                                    <span style="background: {{ $inqBg }}; color: {{ $inqColor }}; border: 1px solid {{ $inqColor }}40; padding: 0.15rem 0.55rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">
+                                        {{ $inq->status }}
+                                    </span>
+                                    <span style="background: rgba(99, 102, 241, 0.1); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.25); padding: 0.12rem 0.5rem; border-radius: 6px; font-size: 0.72rem; font-weight: 600;">
+                                        {{ ucfirst(str_replace('_', ' ', $inq->event_type)) }}
+                                    </span>
+                                </div>
+                                <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                                    <span><i class="fa-solid fa-calendar-day"></i> {{ \Carbon\Carbon::parse($inq->event_date)->format('d M Y') }}</span>
+                                    @if($inq->start_time)
+                                        <span>•</span>
+                                        <span><i class="fa-solid fa-clock"></i> {{ $inq->start_time }}</span>
+                                    @endif
+                                    <span>•</span>
+                                    <span><i class="fa-solid fa-user-group"></i> {{ $inq->guest_count }} {{ __('Guests') }}</span>
+                                    @if($inq->location)
+                                        <span>•</span>
+                                        <span><i class="fa-solid fa-location-dot"></i> {{ $inq->location->name }}</span>
+                                    @endif
+                                    @if($inq->budget)
+                                        <span>•</span>
+                                        <span style="font-weight: 700; color: #10b981;">{{ number_format((float) $inq->budget) }} {{ $inq->budget_currency }}</span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <a href="{{ route('admin.reservations.events.show', $inq->id) }}" class="btn btn-sm btn-secondary" style="font-size: 0.8rem; font-weight: 600; border-radius: 8px;">
+                                {{ __('View Inquiry') }} &rarr;
+                            </a>
+                        </div>
+
+                        @if($inq->comments || $inq->food_beverage_preferences)
+                            <div style="margin-top: 0.65rem; padding: 0.6rem 0.85rem; background: var(--bg-card); border-radius: 8px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">
+                                @if($inq->food_beverage_preferences)
+                                    <div><strong>{{ __('Preferences') }}:</strong> {{ $inq->food_beverage_preferences }}</div>
+                                @endif
+                                @if($inq->comments)
+                                    <div><strong>{{ __('Notes') }}:</strong> {{ $inq->comments }}</div>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @else
+        <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+            <div style="width: 50px; height: 50px; border-radius: 14px; background: rgba(245, 158, 11, 0.1); color: #f59e0b; display: inline-flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 0.75rem;">
+                <i class="fa-solid fa-champagne-glasses"></i>
+            </div>
+            <p style="margin: 0; font-size: 0.95rem; font-weight: 600;">{{ __('No event inquiries recorded for this customer yet.') }}</p>
+        </div>
+    @endif
+</div>
 @endsection

@@ -128,8 +128,9 @@ class CustomerController extends Controller
         $this->customerService->recalculateStats($customer);
         $orders = $customer->orders()->with('items', 'location')->paginate(20);
         $reservations = $customer->reservations()->with(['location', 'restaurantTable', 'preOrder'])->latest('reservation_date')->latest('reservation_time')->get();
+        $eventInquiries = $customer->eventInquiries()->with('location')->latest('event_date')->get();
 
-        return view('admin.customers.show', compact('vendor', 'customer', 'orders', 'reservations'));
+        return view('admin.customers.show', compact('vendor', 'customer', 'orders', 'reservations', 'eventInquiries'));
     }
 
     public function store(Request $request)

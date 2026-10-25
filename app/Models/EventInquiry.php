@@ -95,6 +95,7 @@ class EventInquiry extends Model
         'reference',
         'vendor_id',
         'location_id',
+        'customer_id',
         'assigned_user_id',
         'event_type',
         'customer_name',
@@ -186,6 +187,14 @@ class EventInquiry extends Model
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
+    }
+
+    /**
+     * Relationship: Customer (CRM)
+     */
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
     }
 
     /**

@@ -64,6 +64,11 @@ class Customer extends Model
         return $this->hasMany(Reservation::class)->latest('reservation_date');
     }
 
+    public function eventInquiries()
+    {
+        return $this->hasMany(EventInquiry::class)->latest('event_date');
+    }
+
     public function recalculateStats()
     {
         $this->total_orders_count = $this->orders()->count();

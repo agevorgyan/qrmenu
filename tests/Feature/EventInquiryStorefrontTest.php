@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Mail\EventInquiryCustomerAcknowledgmentMail;
 use App\Mail\EventInquirySubmittedVendorMail;
+use App\Models\Customer;
 use App\Models\EventInquiry;
 use App\Models\Language;
 use App\Models\Location;
@@ -280,5 +281,91 @@ class EventInquiryStorefrontTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee($inquiry->reference);
         $response->assertSee('Tigran');
+    }
+
+    public function test_submitting_event_inquiry_automatically_creates_or_syncs_crm_customer_and_links_customer_id(): void
+    {
+        Mail::fake();
+
+        $eventDate = Carbon::now('Asia/Yerevan')->addDays(20)->format('Y-m-d');
+
+        $payload = [
+            'event_type' => 'corporate',
+            'customer_name' => 'Armen Petrosyan',
+            'customer_phone' => '+37477998877',
+            'customer_email' => 'armen.petrosyan@example.com',
+            'preferred_contact_method' => 'whatsapp',
+            'event_date' => $eventDate,
+            'guest_count' => 40,
+            'location_id' => $this->location->id,
+        ];
+
+        $response = $this->postJson(
+            route('client.event_inquiry.submit', ['vendor_slug' => $this->vendor->slug]),
+            $payload
+        );
+
+        $response->assertStatus(201);
+        $reference = $response->json('reference');
+
+        // Check CRM customer was created
+        $this->assertDatabaseHas('customers', [
+            'vendor_id' => $this->vendor->id,
+            'name' => 'Armen Petrosyan',
+            'phone' => '+37477998877',
+            'email' => 'armen.petrosyan@example.com',
+        ]);
+
+        $customer = Customer::where('vendor_id', $this->vendor->id)
+            ->where('phone', '+37477998877')
+            ->first();
+        $this->assertNotNull($customer);
+
+        // Check EventInquiry has customer_id linked
+        $inquiry = EventInquiry::where('reference', $reference)->first();
+        $this->assertNotNull($inquiry);
+        $this->assertEquals($customer->id, $inquiry->customer_id);
+        $this->assertEquals($customer->id, $inquiry->customer->id);
+        $this->assertTrue($customer->eventInquiries->contains($inquiry));
+    }
+
+    public function test_phone_number_validation_rules_enforce_valid_country_formats(): void
+    {
+        $eventDate = Carbon::now('Asia/Yerevan')->addDays(10)->format('Y-m-d');
+
+        // Invalid Armenian phone (7 digits instead of 8 after +374)
+        $response = $this->postJson(
+            route('client.event_inquiry.submit', ['vendor_slug' => $this->vendor->slug]),
+            [
+                'event_type' => 'birthday',
+                'customer_name' => 'Karen',
+                'customer_phone' => '+3749112345',
+                'preferred_contact_method' => 'phone',
+                'event_date' => $eventDate,
+                'guest_count' => 10,
+            ]
+        );
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['customer_phone']);
+
+        // Valid Armenian local 091234567 should succeed and normalize to +37491234567
+        $validResponse = $this->postJson(
+            route('client.event_inquiry.submit', ['vendor_slug' => $this->vendor->slug]),
+            [
+                'event_type' => 'birthday',
+                'customer_name' => 'Karen S',
+                'customer_phone' => '091234567',
+                'preferred_contact_method' => 'phone',
+                'event_date' => $eventDate,
+                'guest_count' => 10,
+            ]
+        );
+
+        $validResponse->assertStatus(201);
+        $this->assertDatabaseHas('event_inquiries', [
+            'vendor_id' => $this->vendor->id,
+            'customer_phone' => '+37491234567',
+        ]);
     }
 }
