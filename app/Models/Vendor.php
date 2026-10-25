@@ -129,6 +129,7 @@ class Vendor extends Model
         'telegram_settings',
         'reservation_settings',
         'reservation_notification_settings',
+        'event_inquiry_settings',
         'superadmin_notification_restrictions',
         'dine_in_schedule_enabled',
         'dine_in_start_time',
@@ -191,6 +192,7 @@ class Vendor extends Model
         'telegram_settings' => 'array',
         'reservation_settings' => 'array',
         'reservation_notification_settings' => 'array',
+        'event_inquiry_settings' => 'array',
         'superadmin_notification_restrictions' => 'array',
         'allow_whatsapp_orders' => 'boolean',
         'supported_languages' => 'array',
@@ -1171,6 +1173,11 @@ class Vendor extends Model
         return $this->hasMany(RestaurantTable::class);
     }
 
+    public function eventInquiries(): HasMany
+    {
+        return $this->hasMany(EventInquiry::class);
+    }
+
     /**
      * Get effective reservation policy and booking rules merged with sensible defaults.
      *
@@ -1245,6 +1252,49 @@ class Vendor extends Model
             'restaurant_reminder_enabled' => true,
             'restaurant_reminder_intervals' => [180, 60], // 3h, 1h in minutes
             'restaurant_reminder_only_confirmed' => true,
+        ], $decoded ?: []);
+    }
+
+    /**
+     * Get effective event inquiry settings merged with sensible defaults.
+     *
+     * @return array<string, mixed>
+     */
+    public function getEventInquirySettingsAttribute(): array
+    {
+        $settings = $this->getRawOriginal('event_inquiry_settings');
+        $decoded = is_string($settings) ? json_decode($settings, true) : (is_array($settings) ? $settings : []);
+
+        return array_merge([
+            'enabled' => true,
+            'form_title' => '',
+            'form_description' => '',
+            'optional_fields' => [
+                'email' => true,
+                'start_time' => true,
+                'end_time' => true,
+                'budget' => true,
+                'venue_arrangement' => true,
+                'food_beverage_preferences' => true,
+                'additional_services' => true,
+                'comments' => true,
+            ],
+            'event_types' => [
+                'birthday' => 'Birthday Party',
+                'wedding' => 'Wedding & Engagement',
+                'corporate' => 'Corporate Event & Business Dinner',
+                'family_celebration' => 'Family Celebration',
+                'anniversary' => 'Anniversary',
+                'kids_party' => "Children's Party",
+                'other' => 'Other Custom Event',
+            ],
+            'min_guests' => 1,
+            'max_guests' => null,
+            'contact_methods' => ['phone', 'whatsapp', 'email'],
+            'email_notifications_enabled' => true,
+            'notification_recipients' => filled($this->email) ? [$this->email] : [],
+            'customer_acknowledgment_enabled' => true,
+            'confirmation_message' => '',
         ], $decoded ?: []);
     }
 
@@ -1393,6 +1443,20 @@ class Vendor extends Model
     public function isReservationFeatureEnabled(): bool
     {
         return $this->getEffectiveReservationMode() !== self::RESERVATION_MODE_DISABLED;
+    }
+
+    /**
+     * Determine if event inquiries are enabled and permitted.
+     */
+    public function isEventInquiryFeatureEnabled(): bool
+    {
+        if (! $this->hasFeature('reservations')) {
+            return false;
+        }
+
+        $settings = $this->event_inquiry_settings;
+
+        return (bool) ($settings['enabled'] ?? true);
     }
 
     /**

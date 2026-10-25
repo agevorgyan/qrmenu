@@ -1458,6 +1458,24 @@ if (window.Alpine) {
                                     </a>
                                 </div>
                             </div>
+
+                            <!-- Card 4: Event Planning Inquiries -->
+                            <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
+                                        <i class="fa-solid fa-champagne-glasses" style="color: #a855f7;"></i> {{ __('Private Events & Banquets') }}
+                                    </div>
+                                    <div style="font-size: 1rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.35rem;">
+                                        {{ __('Event Planning Inquiries') }}
+                                    </div>
+                                    <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0 0 1rem 0; line-height: 1.4;">
+                                        {{ __('Configure public inquiry form, event types, guest limits, optional fields, and email notifications.') }}
+                                    </p>
+                                </div>
+                                <a href="{{ route('admin.settings.reservations.events') }}" class="btn btn-secondary" style="font-size: 0.82rem; padding: 0.5rem 0.95rem; border-radius: 10px; width: 100%; justify-content: center; text-decoration: none; font-weight: 700;">
+                                    <i class="fa-solid fa-arrow-up-right-from-square" style="color: #a855f7;"></i> {{ __('Configure Event Inquiries') }}
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

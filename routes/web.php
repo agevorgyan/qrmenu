@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminEventInquiryController;
 use App\Http\Controllers\AdminReservationController;
 use App\Http\Controllers\AdminTableController;
 use App\Http\Controllers\AiMenuController;
@@ -22,6 +23,7 @@ use App\Http\Controllers\QrStudioController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\ReservationNotificationController;
 use App\Http\Controllers\ResetPasswordController;
+use App\Http\Controllers\StorefrontEventInquiryController;
 use App\Http\Controllers\StorefrontReservationController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\SuperAdminEmailController;
@@ -75,6 +77,17 @@ Route::post('/api/m/{vendor_slug}/reserve', [StorefrontReservationController::cl
 Route::post('/api/m/{vendor_slug}/reservation/{reference}/cancel', [StorefrontReservationController::class, 'cancelReservation'])
     ->middleware('throttle:30,1')
     ->name('client.reservation.cancel');
+
+// Event Planning Inquiries Storefront Routes
+Route::get('/m/{vendor_slug}/events/{location_slug?}', [StorefrontEventInquiryController::class, 'showInquiryForm'])
+    ->middleware('throttle:60,1')
+    ->name('client.event_inquiry');
+Route::get('/m/{vendor_slug}/events/status/{reference}', [StorefrontEventInquiryController::class, 'showInquiryStatus'])
+    ->middleware('throttle:60,1')
+    ->name('client.event_inquiry.status');
+Route::post('/api/m/{vendor_slug}/events', [StorefrontEventInquiryController::class, 'submitInquiry'])
+    ->middleware('throttle:15,1')
+    ->name('client.event_inquiry.submit');
 
 Route::get('/m/{vendor_slug}/{location_slug?}', [ClientStorefrontController::class, 'showMenu'])
     ->middleware('throttle:120,1')
@@ -419,6 +432,17 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cas
 
     // Table Reservations & Pre-Orders (Pro / Business Plan Feature)
     Route::middleware([EnsurePlanHasFeature::class.':reservations'])->group(function () {
+        // Event Planning Inquiries Management
+        Route::get('/reservations/events', [AdminEventInquiryController::class, 'index'])->name('event_inquiries.index');
+        Route::get('/reservations/events/{eventInquiry}', [AdminEventInquiryController::class, 'show'])->name('event_inquiries.show');
+        Route::patch('/reservations/events/{eventInquiry}/status', [AdminEventInquiryController::class, 'updateStatus'])->name('event_inquiries.status');
+        Route::post('/reservations/events/{eventInquiry}/status', [AdminEventInquiryController::class, 'updateStatus']);
+        Route::post('/reservations/events/{eventInquiry}/notes', [AdminEventInquiryController::class, 'storeNote'])->name('event_inquiries.notes.store');
+        Route::patch('/reservations/events/{eventInquiry}/assign', [AdminEventInquiryController::class, 'assign'])->name('event_inquiries.assign');
+        Route::patch('/reservations/events/{eventInquiry}/quote', [AdminEventInquiryController::class, 'updateQuote'])->name('event_inquiries.quote');
+        Route::delete('/reservations/events/{eventInquiry}', [AdminEventInquiryController::class, 'destroy'])->name('event_inquiries.destroy');
+
+        // Table Reservations
         Route::get('/reservations', [AdminReservationController::class, 'index'])->name('reservations.index');
         Route::get('/reservations/{reservation}', [AdminReservationController::class, 'show'])->name('reservations.show');
         Route::patch('/reservations/{reservation}/status', [AdminReservationController::class, 'updateStatus'])->name('reservations.status');
@@ -435,6 +459,10 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cas
         // Reservation Settings
         Route::get('/settings/reservations', [AdminReservationController::class, 'settingsIndex'])->name('settings.reservations');
         Route::post('/settings/reservations', [AdminReservationController::class, 'updateSettings'])->name('settings.reservations.update');
+
+        // Event Planning Settings
+        Route::get('/settings/reservations/events', [AdminEventInquiryController::class, 'settingsIndex'])->name('settings.reservations.events');
+        Route::post('/settings/reservations/events', [AdminEventInquiryController::class, 'updateSettings'])->name('settings.reservations.events.update');
     });
 
     // Branding & Theme Customizer

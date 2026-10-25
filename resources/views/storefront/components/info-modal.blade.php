@@ -200,6 +200,26 @@
                     </div>
                 </template>
 
+                <!-- Event Planning Inquiries -->
+                @if($vendor->isEventInquiryFeatureEnabled())
+                    <div class="info-detail-item">
+                        <div class="info-icon-square" style="background: rgba(168, 85, 247, 0.15); color: #a855f7;">
+                            <i class="fa-solid fa-champagne-glasses"></i>
+                        </div>
+                        <div class="info-item-content">
+                            <div class="info-item-label">{{ __('Private Events') }}</div>
+                            <div class="info-item-value">{{ __('«Միջոցառման կազմակերպման հարցում»') }}</div>
+                        </div>
+                        <a href="{{ route('client.event_inquiry', ['vendor_slug' => $vendor->slug, 'location_slug' => $location?->slug]) }}" 
+                           class="info-action-pill"
+                           style="background: #a855f7; color: #ffffff; border-color: #a855f7;"
+                           title="{{ __('Event Planning Inquiry') }}">
+                            <i class="fa-solid fa-arrow-right"></i>
+                            <span>{{ __('Inquiry') }}</span>
+                        </a>
+                    </div>
+                @endif
+
             </div>
 
             <!-- Bottom Close Button -->

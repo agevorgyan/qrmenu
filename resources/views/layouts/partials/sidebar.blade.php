@@ -5,6 +5,7 @@
        aria-modal="true" 
        aria-label="{{ __('Navigation Menu') }}"
        x-data="{
+           reservationsOpen: {{ (request()->routeIs('admin.reservations.*') || request()->routeIs('admin.event_inquiries.*') || request()->routeIs('admin.settings.reservations*')) ? 'true' : 'false' }},
            tablesOpen: {{ (request()->routeIs('admin.floor_plan.*') || request()->routeIs('admin.tables.*') || request()->routeIs('admin.qr.*')) ? 'true' : 'false' }},
            aiOpen: {{ (request()->routeIs('admin.ai.*') || request()->routeIs('admin.settings.ai*')) ? 'true' : 'false' }},
            settingsOpen: {{ (request()->routeIs('admin.settings.*') || request()->routeIs('admin.profile')) ? 'true' : 'false' }}
@@ -186,18 +187,41 @@
                 </a>
             @endcan
 
-            <a href="{{ route('admin.reservations.index') }}" 
-               class="nav-item {{ request()->routeIs('admin.reservations.*') ? 'active' : '' }}" 
-               style="justify-content: space-between;"
-               title="{{ __('Reservations') }}">
-                <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                    <i class="fa-solid fa-calendar-check" style="color: #ec4899;"></i>
-                    <span>{{ __('Reservations') }}</span>
-                </span>
-                @if($v && !$v->hasFeature('reservations'))
-                    <span class="nav-lock-badge">🔒 PRO</span>
-                @endif
-            </a>
+            <!-- Reservations & Event Inquiries (Collapsible Group) -->
+            <div class="nav-group">
+                <button type="button" 
+                        class="nav-group-header {{ (request()->routeIs('admin.reservations.*') || request()->routeIs('admin.event_inquiries.*') || request()->routeIs('admin.settings.reservations*')) ? 'active' : '' }}"
+                        @click="reservationsOpen = !reservationsOpen"
+                        aria-expanded="reservationsOpen"
+                        title="{{ __('Reservations') }}">
+                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                        <i class="fa-solid fa-calendar-check" style="color: #ec4899;"></i>
+                        <span>{{ __('Reservations') }}</span>
+                    </span>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        @if($v && !$v->hasFeature('reservations'))
+                            <span class="nav-lock-badge">🔒 PRO</span>
+                        @endif
+                        <i class="fa-solid fa-chevron-down nav-chevron" :class="reservationsOpen ? 'rotate-180' : ''"></i>
+                    </div>
+                </button>
+
+                <div class="nav-group-children" x-show="reservationsOpen" x-transition.opacity.duration.200ms style="display: {{ (request()->routeIs('admin.reservations.*') || request()->routeIs('admin.event_inquiries.*') || request()->routeIs('admin.settings.reservations*')) ? 'flex' : 'none' }};">
+                    <a href="{{ route('admin.reservations.index') }}" class="nav-sub-item {{ request()->routeIs('admin.reservations.index') || request()->routeIs('admin.reservations.show') ? 'active' : '' }}" title="{{ __('Table Reservations') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-chair" style="font-size: 0.85rem; color: #ec4899;"></i>
+                            <span>{{ __('Table Reservations') }}</span>
+                        </span>
+                    </a>
+
+                    <a href="{{ route('admin.event_inquiries.index') }}" class="nav-sub-item {{ request()->routeIs('admin.event_inquiries.*') ? 'active' : '' }}" title="{{ __('Event Planning Inquiries') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-champagne-glasses" style="font-size: 0.85rem; color: #a855f7;"></i>
+                            <span>{{ __('Event Planning Inquiries') }}</span>
+                        </span>
+                    </a>
+                </div>
+            </div>
 
             <!-- Dining Room & Tables (Collapsible Group) -->
             <div class="nav-group">

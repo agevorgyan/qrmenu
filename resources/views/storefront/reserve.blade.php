@@ -757,6 +757,25 @@
         </div>
     </header>
 
+    @if($vendor->isEventInquiryFeatureEnabled())
+        <div style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.08) 0%, rgba(99, 102, 241, 0.08) 100%); border: 1px solid rgba(236, 72, 153, 0.25); border-radius: var(--radius-md); padding: 0.85rem 1rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 0.65rem;">
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(236, 72, 153, 0.15); color: #ec4899; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0;">
+                    <i class="fa-solid fa-champagne-glasses"></i>
+                </div>
+                <div>
+                    <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">{{ __('Planning a Private Event or Celebration?') }}</div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">{{ __('Submit an inquiry for birthdays, corporate dinners & custom events') }}</div>
+                </div>
+            </div>
+            <a href="{{ route('client.event_inquiry', ['vendor_slug' => $vendor->slug, 'location_slug' => $location?->slug]) }}" 
+               style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.9rem; border-radius: 8px; background: #ec4899; color: #ffffff; text-decoration: none; font-size: 0.82rem; font-weight: 700; white-space: nowrap; box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3);">
+                <span>{{ __('«Միջոցառման կազմակերպման հարցում»') }}</span>
+                <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem;"></i>
+            </a>
+        </div>
+    @endif
+
     <!-- Error Alert Banner -->
     <template x-if="errorMessage">
         <div class="alert-box alert-error">

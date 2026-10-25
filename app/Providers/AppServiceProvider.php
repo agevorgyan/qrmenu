@@ -12,6 +12,7 @@ use App\Models\AiWaiterSession;
 use App\Models\Category;
 use App\Models\ContentTranslation;
 use App\Models\Customer;
+use App\Models\EventInquiry;
 use App\Models\Location;
 use App\Models\LocationProductOverride;
 use App\Models\Order;
@@ -27,6 +28,7 @@ use App\Policies\AiWaiterSessionPolicy;
 use App\Policies\CategoryPolicy;
 use App\Policies\ContentTranslationPolicy;
 use App\Policies\CustomerPolicy;
+use App\Policies\EventInquiryPolicy;
 use App\Policies\LocationPolicy;
 use App\Policies\LocationProductOverridePolicy;
 use App\Policies\OrderPolicy;
@@ -138,6 +140,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Reservation::class, ReservationPolicy::class);
         Gate::policy(RestaurantTable::class, RestaurantTablePolicy::class);
         Gate::policy(ReservationPreOrder::class, ReservationPreOrderPolicy::class);
+        Gate::policy(EventInquiry::class, EventInquiryPolicy::class);
 
         // Register Gates for all granular permissions
         foreach (Permission::all() as $permission) {

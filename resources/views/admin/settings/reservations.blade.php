@@ -37,6 +37,9 @@
             <a href="{{ route('admin.settings.reservations.notifications') }}" class="btn btn-secondary">
                 <i class="fa-solid fa-envelope" style="color: #f59e0b;"></i> {{ __('Email Notifications') }}
             </a>
+            <a href="{{ route('admin.settings.reservations.events') }}" class="btn btn-secondary">
+                <i class="fa-solid fa-champagne-glasses" style="color: #a855f7;"></i> {{ __('Event Settings') }}
+            </a>
         </div>
     </div>
 
