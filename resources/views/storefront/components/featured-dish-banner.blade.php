@@ -45,42 +45,63 @@
                 @endif
             </div>
 
-            <!-- Navigation Controls (Desktop Prev/Next) -->
+            <!-- Modern Navigation Pill Controls (Header) -->
             @if($totalOffers > 1)
-                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <div class="carousel-nav-pill" role="group" aria-label="{{ __('menu.daily_offers_title') }}">
                     <button type="button"
+                            class="carousel-nav-btn prev-btn"
                             @click="scrollPrev()"
                             :disabled="isAtStart"
-                            aria-label="{{ __('menu.prev_offer') }}"
-                            style="width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.06);"
-                            :style="isAtStart ? 'opacity: 0.4; cursor: not-allowed;' : 'opacity: 1;'"
-                            onmouseover="if(!this.disabled) { this.style.borderColor='var(--primary)'; this.style.color='var(--primary)'; }"
-                            onmouseout="this.style.borderColor='var(--border-color)'; this.style.color='var(--text-main)';">
-                        <i class="fa-solid fa-chevron-left" style="font-size: 0.85rem;"></i>
+                            aria-label="{{ __('menu.prev_offer') }}">
+                        <svg viewBox="0 0 24 24" class="carousel-arrow-icon" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
                     </button>
+
+                    <div class="carousel-counter-badge" aria-live="polite">
+                        <span x-text="currentIndex + 1" class="carousel-counter-current"></span>
+                        <span class="carousel-counter-divider">/</span>
+                        <span class="carousel-counter-total">{{ $totalOffers }}</span>
+                    </div>
+
                     <button type="button"
+                            class="carousel-nav-btn next-btn"
                             @click="scrollNext()"
                             :disabled="isAtEnd"
-                            aria-label="{{ __('menu.next_offer') }}"
-                            style="width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.06);"
-                            :style="isAtEnd ? 'opacity: 0.4; cursor: not-allowed;' : 'opacity: 1;'"
-                            onmouseover="if(!this.disabled) { this.style.borderColor='var(--primary)'; this.style.color='var(--primary)'; }"
-                            onmouseout="this.style.borderColor='var(--border-color)'; this.style.color='var(--text-main)';">
-                        <i class="fa-solid fa-chevron-right" style="font-size: 0.85rem;"></i>
+                            aria-label="{{ __('menu.next_offer') }}">
+                        <svg viewBox="0 0 24 24" class="carousel-arrow-icon" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
                     </button>
                 </div>
             @endif
         </div>
 
-        <!-- Carousel Track with CSS Scroll Snap -->
-        <div class="daily-offers-track"
-             x-ref="track"
-             @scroll.passive="onScroll()"
-             @keydown.arrow-left.prevent="scrollPrev()"
-             @keydown.arrow-right.prevent="scrollNext()"
-             tabindex="0"
-             role="list"
-             style="display: flex; gap: 1.15rem; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; padding: 0.25rem 0.25rem 0.85rem; margin: 0 -0.25rem; outline: none;">
+        <!-- Carousel Stage with Floating Modern Side Arrows -->
+        <div class="daily-offers-carousel-stage" style="position: relative;">
+            @if($totalOffers > 1)
+                <!-- Left Floating Arrow Button -->
+                <button type="button"
+                        class="carousel-floating-arrow carousel-floating-prev"
+                        @click="scrollPrev()"
+                        :class="{ 'hidden-arrow': isAtStart }"
+                        :disabled="isAtStart"
+                        aria-label="{{ __('menu.prev_offer') }}">
+                    <svg viewBox="0 0 24 24" class="carousel-floating-icon" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+            @endif
+
+            <!-- Carousel Track with CSS Scroll Snap -->
+            <div class="daily-offers-track"
+                 x-ref="track"
+                 @scroll.passive="onScroll()"
+                 @keydown.arrow-left.prevent="scrollPrev()"
+                 @keydown.arrow-right.prevent="scrollNext()"
+                 tabindex="0"
+                 role="list"
+                 style="display: flex; gap: 1.15rem; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; padding: 0.35rem 0.25rem 0.85rem; margin: 0 -0.25rem; outline: none;">
 
             @foreach($offersList as $index => $item)
                 @php
@@ -275,11 +296,27 @@
                 </div>
             @endforeach
 
+            </div>
+
+            @if($totalOffers > 1)
+                <!-- Right Floating Arrow Button -->
+                <button type="button"
+                        class="carousel-floating-arrow carousel-floating-next"
+                        @click="scrollNext()"
+                        :class="{ 'hidden-arrow': isAtEnd }"
+                        :disabled="isAtEnd"
+                        aria-label="{{ __('menu.next_offer') }}">
+                    <svg viewBox="0 0 24 24" class="carousel-floating-icon" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            @endif
         </div>
 
         <!-- Carousel Pagination Dots (When multiple offers) -->
         @if($totalOffers > 1)
-            <div style="display: flex; justify-content: center; align-items: center; gap: 0.45rem; margin-top: 0.5rem;"
+            <div class="carousel-dots-wrapper"
+                 style="display: flex; justify-content: center; align-items: center; gap: 0.45rem; margin-top: 0.75rem;"
                  role="tablist"
                  aria-label="{{ __('menu.daily_offers_title') }}">
                 <template x-for="idx in totalSlides" :key="idx">
@@ -288,8 +325,10 @@
                             :aria-selected="currentIndex === idx - 1"
                             :aria-label="'Slide ' + idx"
                             @click="scrollTo(idx - 1)"
-                            style="padding: 0; border: none; cursor: pointer; border-radius: 9999px; transition: all 0.25s ease;"
-                            :style="currentIndex === idx - 1 ? 'width: 24px; height: 6px; background: var(--primary);' : 'width: 6px; height: 6px; background: var(--border-color); opacity: 0.7;'">
+                            class="carousel-dot-btn"
+                            :class="{ 'active': currentIndex === idx - 1 }"
+                            style="padding: 0; border: none; cursor: pointer; border-radius: 9999px; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);"
+                            :style="currentIndex === idx - 1 ? 'width: 26px; height: 6px; background: var(--primary); box-shadow: 0 2px 8px rgba(225, 29, 72, 0.4);' : 'width: 6px; height: 6px; background: var(--border-color); opacity: 0.6;'">
                     </button>
                 </template>
             </div>
@@ -348,7 +387,141 @@
             .daily-offers-track::-webkit-scrollbar {
                 display: none;
             }
-            @media (max-width: 640px) {
+
+            /* Modern Header Navigation Pill */
+            .carousel-nav-pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 3px 4px;
+                background: var(--bg-card);
+                border: 1px solid var(--border-color);
+                border-radius: 9999px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+                backdrop-filter: blur(14px);
+                -webkit-backdrop-filter: blur(14px);
+                user-select: none;
+            }
+            .carousel-nav-btn {
+                width: 34px;
+                height: 34px;
+                border-radius: 50%;
+                border: 1px solid transparent;
+                background: transparent;
+                color: var(--text-main);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+                padding: 0;
+            }
+            .carousel-arrow-icon {
+                width: 15px;
+                height: 15px;
+                transition: transform 0.2s ease;
+            }
+            .carousel-nav-btn.prev-btn:hover:not(:disabled) .carousel-arrow-icon {
+                transform: translateX(-1.5px);
+            }
+            .carousel-nav-btn.next-btn:hover:not(:disabled) .carousel-arrow-icon {
+                transform: translateX(1.5px);
+            }
+            .carousel-nav-btn:hover:not(:disabled) {
+                background: var(--primary);
+                color: #ffffff;
+                box-shadow: 0 4px 14px rgba(225, 29, 72, 0.35);
+                transform: scale(1.06);
+            }
+            .carousel-nav-btn:active:not(:disabled) {
+                transform: scale(0.92);
+            }
+            .carousel-nav-btn:disabled {
+                opacity: 0.25;
+                cursor: not-allowed;
+            }
+            .carousel-counter-badge {
+                padding: 0 0.5rem;
+                font-family: 'Outfit', sans-serif;
+                font-size: 0.8rem;
+                font-weight: 700;
+                color: var(--text-muted);
+                display: inline-flex;
+                align-items: center;
+                line-height: 1;
+            }
+            .carousel-counter-current {
+                font-weight: 800;
+                color: var(--primary);
+                font-size: 0.88rem;
+            }
+            .carousel-counter-divider {
+                opacity: 0.4;
+                margin: 0 3px;
+                font-size: 0.72rem;
+            }
+            .carousel-counter-total {
+                opacity: 0.75;
+            }
+
+            /* Modern Floating Side Arrows on Track */
+            .carousel-floating-arrow {
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                z-index: 15;
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                background: var(--bg-card);
+                border: 1px solid var(--border-color);
+                color: var(--text-main);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.22), 0 4px 10px rgba(0, 0, 0, 0.08);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            .carousel-floating-prev {
+                left: -14px;
+            }
+            .carousel-floating-next {
+                right: -14px;
+            }
+            .carousel-floating-icon {
+                width: 18px;
+                height: 18px;
+                transition: transform 0.2s ease;
+            }
+            .carousel-floating-prev:hover:not(:disabled) .carousel-floating-icon {
+                transform: translateX(-1.5px);
+            }
+            .carousel-floating-next:hover:not(:disabled) .carousel-floating-icon {
+                transform: translateX(1.5px);
+            }
+            .carousel-floating-arrow:hover:not(:disabled) {
+                background: var(--primary);
+                color: #ffffff;
+                border-color: var(--primary);
+                transform: translateY(-50%) scale(1.1);
+                box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28), 0 0 0 3px rgba(225, 29, 72, 0.2);
+            }
+            .carousel-floating-arrow:active:not(:disabled) {
+                transform: translateY(-50%) scale(0.95);
+            }
+            .carousel-floating-arrow.hidden-arrow {
+                opacity: 0;
+                pointer-events: none;
+                transform: translateY(-50%) scale(0.75);
+            }
+
+            @media (max-width: 768px) {
+                .carousel-floating-arrow {
+                    display: none !important;
+                }
                 .daily-offer-slide {
                     flex: 0 0 calc(84vw) !important;
                     max-width: 320px;
