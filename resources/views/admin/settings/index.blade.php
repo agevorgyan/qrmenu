@@ -54,9 +54,22 @@ window.settingsModule = function() {
                     e.returnValue = '';
                 }
             });
+
+            // Listen to tab switch events from main sidebar
+            window.addEventListener('switch-settings-tab', (e) => {
+                if (e.detail && validTabs.includes(e.detail)) {
+                    this.setTab(e.detail);
+                }
+            });
+
+            // Initial broadcast so sidebar active tab matches
+            this.$nextTick(() => {
+                window.dispatchEvent(new CustomEvent('settings-tab-changed', { detail: this.activeTab }));
+            });
         },
         setTab(tab) {
             this.activeTab = tab;
+            window.dispatchEvent(new CustomEvent('settings-tab-changed', { detail: tab }));
             if (window.history && window.history.replaceState) {
                 const url = new URL(window.location);
                 url.searchParams.set('tab', tab);
@@ -195,115 +208,7 @@ if (window.Alpine) {
     </div>
 
     <div class="settings-layout-wrapper">
-        <!-- Category Navigation Sidebar (Desktop) -->
-        <aside class="settings-nav-sidebar hide-on-mobile" aria-label="{{ __('Settings category navigation') }}">
-            <div class="settings-nav-title">{{ __('Settings category navigation') }}</div>
-            <nav class="settings-nav-list" role="tablist">
-                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'profile' }" @click="setTab('profile')" role="tab" :aria-selected="activeTab === 'profile'">
-                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
-                        <span class="settings-nav-icon-box" style="background: #10b98122; color: #10b981;">
-                            <i class="fa-solid fa-store"></i>
-                        </span>
-                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Restaurant Profile') }}</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
-                </button>
-                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'daily_offers' }" @click="setTab('daily_offers')" role="tab" :aria-selected="activeTab === 'daily_offers'">
-                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
-                        <span class="settings-nav-icon-box" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
-                            <i class="fa-solid fa-fire-flame-curved"></i>
-                        </span>
-                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Daily Offers & Carousel') }}</span>
-                    </span>
-                    <span class="badge" style="background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 999px;">
-                        {{ $dailyOffers->count() }}
-                    </span>
-                </button>
-                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'orders' }" @click="setTab('orders')" role="tab" :aria-selected="activeTab === 'orders'">
-                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
-                        <span class="settings-nav-icon-box" style="background: #ef444422; color: #ef4444;">
-                            <i class="fa-solid fa-bell-concierge"></i>
-                        </span>
-                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Orders & Kitchen') }}</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
-                </button>
-                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'reservations' }" @click="setTab('reservations')" role="tab" :aria-selected="activeTab === 'reservations'">
-                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
-                        <span class="settings-nav-icon-box" style="background: #ec489922; color: #ec4899;">
-                            <i class="fa-solid fa-calendar-check"></i>
-                        </span>
-                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Reservations & Booking Rules') }}</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
-                </button>
-                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'payments' }" @click="setTab('payments')" role="tab" :aria-selected="activeTab === 'payments'">
-                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
-                        <span class="settings-nav-icon-box" style="background: #3b82f622; color: #3b82f6;">
-                            <i class="fa-solid fa-credit-card"></i>
-                        </span>
-                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Payments & Gateways') }}</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
-                </button>
-                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'delivery' }" @click="setTab('delivery')" role="tab" :aria-selected="activeTab === 'delivery'">
-                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
-                        <span class="settings-nav-icon-box" style="background: #f59e0b22; color: #f59e0b;">
-                            <i class="fa-solid fa-truck"></i>
-                        </span>
-                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Delivery & Pickup') }}</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
-                </button>
-                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'notifications' }" @click="setTab('notifications')" role="tab" :aria-selected="activeTab === 'notifications'">
-                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
-                        <span class="settings-nav-icon-box" style="background: #8b5cf622; color: #8b5cf6;">
-                            <i class="fa-solid fa-bell"></i>
-                        </span>
-                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Notifications & Email') }}</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
-                </button>
-                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'regional' }" @click="setTab('regional')" role="tab" :aria-selected="activeTab === 'regional'">
-                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
-                        <span class="settings-nav-icon-box" style="background: #06b6d422; color: #06b6d4;">
-                            <i class="fa-solid fa-globe"></i>
-                        </span>
-                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Languages & Regional Preferences') }}</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
-                </button>
-                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'ai' }" @click="setTab('ai')" role="tab" :aria-selected="activeTab === 'ai'">
-                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
-                        <span class="settings-nav-icon-box" style="background: #a855f722; color: #a855f7;">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i>
-                        </span>
-                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('AI & Automation') }}</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
-                </button>
-                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'integrations' }" @click="setTab('integrations')" role="tab" :aria-selected="activeTab === 'integrations'">
-                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
-                        <span class="settings-nav-icon-box" style="background: #14b8a622; color: #14b8a6;">
-                            <i class="fa-solid fa-plug"></i>
-                        </span>
-                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Integrations') }}</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
-                </button>
-                <button type="button" class="settings-nav-btn" :class="{ 'active': activeTab === 'security' }" @click="setTab('security')" role="tab" :aria-selected="activeTab === 'security'">
-                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
-                        <span class="settings-nav-icon-box" style="background: #10b98122; color: #10b981;">
-                            <i class="fa-solid fa-shield-halved"></i>
-                        </span>
-                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ __('Security & Access') }}</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; opacity: 0.4;"></i>
-                </button>
-            </nav>
-        </aside>
-
-        <!-- Content Area -->
+        <!-- Content Area (Full Width) -->
         <div class="settings-content-area">
             <form action="{{ route('admin.settings.update') }}" method="POST" id="vendorSettingsForm">
                 @csrf
@@ -3487,8 +3392,8 @@ if (window.Alpine) {
                     </div>
                 </div>
 
-                <!-- Sticky Bottom Save Bar -->
-                <div class="sticky-save-bar" style="position: sticky; bottom: 1.5rem; z-index: 30; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 0.85rem 1.25rem; box-shadow: 0 12px 30px rgba(0,0,0,0.25); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); margin-top: 2rem;">
+                <!-- Bottom Save Bar (Static, non-floating) -->
+                <div class="settings-save-bar" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 1rem 1.35rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-top: 2.5rem; margin-bottom: 2rem;">
                     <div style="display: flex; align-items: center; gap: 0.6rem; color: var(--text-muted); font-size: 0.85rem;">
                         <i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary);"></i>
                         <span>{{ __('All changes will be saved for the current branch') }}</span>
@@ -3510,77 +3415,11 @@ if (window.Alpine) {
 <style>
 /* Enterprise Settings Layout Styles */
 .settings-layout-wrapper {
-    display: grid;
-    grid-template-columns: 270px minmax(0, 1fr);
-    gap: 2rem;
-    align-items: start;
-}
-@media (max-width: 992px) {
-    .settings-layout-wrapper {
-        grid-template-columns: 1fr;
-        gap: 1.25rem;
-    }
-}
-.settings-nav-sidebar {
-    position: sticky;
-    top: 90px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 20px;
-    padding: 0.85rem;
-    box-shadow: var(--shadow-card);
-}
-.settings-nav-title {
-    font-size: 0.72rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-subtle);
-    padding: 0.45rem 0.65rem 0.65rem;
-    border-bottom: 1px solid var(--border-color);
-    margin-bottom: 0.5rem;
-}
-.settings-nav-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-.settings-nav-btn {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
+    display: block;
     width: 100%;
-    padding: 0.65rem 0.85rem;
-    border-radius: 12px;
-    background: transparent;
-    border: 1px solid transparent;
-    color: var(--text-muted);
-    font-size: 0.86rem;
-    font-weight: 600;
-    cursor: pointer;
-    text-align: left;
-    transition: all 0.2s ease;
 }
-.settings-nav-btn:hover {
-    color: var(--text-main);
-    background: var(--nav-hover);
-}
-.settings-nav-btn.active {
-    color: var(--text-main);
-    background: var(--nav-active);
-    border-color: rgba(245, 158, 11, 0.25);
-    font-weight: 700;
-}
-.settings-nav-icon-box {
-    width: 32px;
-    height: 32px;
-    border-radius: 9px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.95rem;
-    flex-shrink: 0;
+.settings-content-area {
+    width: 100%;
 }
 .settings-mobile-tabs {
     display: flex;

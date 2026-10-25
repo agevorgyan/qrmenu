@@ -8,9 +8,20 @@
            reservationsOpen: {{ (request()->routeIs('admin.reservations.*') || request()->routeIs('admin.event_inquiries.*') || request()->routeIs('admin.settings.reservations*')) ? 'true' : 'false' }},
            tablesOpen: {{ (request()->routeIs('admin.floor_plan.*') || request()->routeIs('admin.tables.*') || request()->routeIs('admin.qr.*')) ? 'true' : 'false' }},
            aiOpen: {{ (request()->routeIs('admin.ai.*') || request()->routeIs('admin.settings.ai*')) ? 'true' : 'false' }},
-           settingsOpen: {{ (request()->routeIs('admin.settings.*') || request()->routeIs('admin.profile')) ? 'true' : 'false' }}
+           settingsOpen: {{ (request()->routeIs('admin.settings.*') || request()->routeIs('admin.profile')) ? 'true' : 'false' }},
+           currentSettingsTab: '{{ request()->query('tab', 'profile') }}',
+           isSettingsPage: {{ request()->routeIs('admin.settings.index') ? 'true' : 'false' }},
+           selectSettingsTab(tab, event) {
+               if (this.isSettingsPage) {
+                   event.preventDefault();
+                   window.dispatchEvent(new CustomEvent('switch-settings-tab', { detail: tab }));
+                   this.currentSettingsTab = tab;
+                   if (this.mobileOpen) this.mobileOpen = false;
+               }
+           }
        }"
-       @keydown.window.escape="if (mobileOpen) mobileOpen = false">
+       @keydown.window.escape="if (mobileOpen) mobileOpen = false"
+       @settings-tab-changed.window="currentSettingsTab = $event.detail">
 
     <!-- Sidebar Brand & Identity Context -->
     <div class="sidebar-brand">
@@ -402,12 +413,143 @@
             <div class="menu-category">{{ __('Account & System Management') }}</div>
 
             @can('settings.view')
-                <a href="{{ route('admin.settings.index') }}" 
-                   class="nav-item {{ (request()->routeIs('admin.settings.index') || request()->routeIs('admin.settings.reservations*')) ? 'active' : '' }}" 
-                   title="{{ __('Settings') }}">
-                    <i class="fa-solid fa-sliders" style="color: #94a3b8;"></i>
-                    <span>{{ __('Settings') }}</span>
-                </a>
+                <!-- Settings (Collapsible Group) -->
+                <div class="nav-group">
+                    <button type="button" 
+                            class="nav-group-header {{ (request()->routeIs('admin.settings.*') || request()->routeIs('admin.profile')) ? 'active' : '' }}"
+                            @click="settingsOpen = !settingsOpen"
+                            aria-expanded="settingsOpen"
+                            title="{{ __('Settings') }}">
+                        <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                            <i class="fa-solid fa-sliders" style="color: #94a3b8;"></i>
+                            <span>{{ __('Settings') }}</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-down nav-chevron" :class="settingsOpen ? 'rotate-180' : ''"></i>
+                    </button>
+
+                    <div class="nav-group-children" x-show="settingsOpen" x-transition.opacity.duration.200ms style="display: {{ (request()->routeIs('admin.settings.*') || request()->routeIs('admin.profile')) ? 'flex' : 'none' }};">
+                        <a href="{{ route('admin.settings.index') }}" 
+                           class="nav-sub-item {{ (request()->routeIs('admin.settings.index') && request()->query('tab', 'profile') === 'profile') ? 'active' : '' }}"
+                           :class="{ 'active': isSettingsPage && currentSettingsTab === 'profile' }"
+                           @click="selectSettingsTab('profile', $event)"
+                           title="{{ __('Restaurant Profile') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                <i class="fa-solid fa-store" style="font-size: 0.85rem; color: #10b981; flex-shrink: 0;"></i>
+                                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ __('Restaurant Profile') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.settings.index', ['tab' => 'daily_offers']) }}" 
+                           class="nav-sub-item {{ (request()->routeIs('admin.settings.index') && request()->query('tab') === 'daily_offers') ? 'active' : '' }}"
+                           :class="{ 'active': isSettingsPage && currentSettingsTab === 'daily_offers' }"
+                           @click="selectSettingsTab('daily_offers', $event)"
+                           title="{{ __('Daily Offers & Carousel') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                <i class="fa-solid fa-fire-flame-curved" style="font-size: 0.85rem; color: #ef4444; flex-shrink: 0;"></i>
+                                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ __('Daily Offers & Carousel') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.settings.index', ['tab' => 'orders']) }}" 
+                           class="nav-sub-item {{ (request()->routeIs('admin.settings.index') && request()->query('tab') === 'orders') ? 'active' : '' }}"
+                           :class="{ 'active': isSettingsPage && currentSettingsTab === 'orders' }"
+                           @click="selectSettingsTab('orders', $event)"
+                           title="{{ __('Orders & Kitchen') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                <i class="fa-solid fa-bell-concierge" style="font-size: 0.85rem; color: #ef4444; flex-shrink: 0;"></i>
+                                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ __('Orders & Kitchen') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.settings.index', ['tab' => 'reservations']) }}" 
+                           class="nav-sub-item {{ (request()->routeIs('admin.settings.index') && request()->query('tab') === 'reservations') ? 'active' : '' }}"
+                           :class="{ 'active': isSettingsPage && currentSettingsTab === 'reservations' }"
+                           @click="selectSettingsTab('reservations', $event)"
+                           title="{{ __('Reservations & Booking Rules') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                <i class="fa-solid fa-calendar-check" style="font-size: 0.85rem; color: #ec4899; flex-shrink: 0;"></i>
+                                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ __('Reservations & Booking Rules') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.settings.index', ['tab' => 'payments']) }}" 
+                           class="nav-sub-item {{ (request()->routeIs('admin.settings.index') && request()->query('tab') === 'payments') ? 'active' : '' }}"
+                           :class="{ 'active': isSettingsPage && currentSettingsTab === 'payments' }"
+                           @click="selectSettingsTab('payments', $event)"
+                           title="{{ __('Payments & Gateways') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                <i class="fa-solid fa-credit-card" style="font-size: 0.85rem; color: #3b82f6; flex-shrink: 0;"></i>
+                                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ __('Payments & Gateways') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.settings.index', ['tab' => 'delivery']) }}" 
+                           class="nav-sub-item {{ (request()->routeIs('admin.settings.index') && request()->query('tab') === 'delivery') ? 'active' : '' }}"
+                           :class="{ 'active': isSettingsPage && currentSettingsTab === 'delivery' }"
+                           @click="selectSettingsTab('delivery', $event)"
+                           title="{{ __('Delivery & Pickup') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                <i class="fa-solid fa-truck" style="font-size: 0.85rem; color: #f59e0b; flex-shrink: 0;"></i>
+                                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ __('Delivery & Pickup') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.settings.index', ['tab' => 'notifications']) }}" 
+                           class="nav-sub-item {{ (request()->routeIs('admin.settings.index') && request()->query('tab') === 'notifications') ? 'active' : '' }}"
+                           :class="{ 'active': isSettingsPage && currentSettingsTab === 'notifications' }"
+                           @click="selectSettingsTab('notifications', $event)"
+                           title="{{ __('Notifications & Email') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                <i class="fa-solid fa-bell" style="font-size: 0.85rem; color: #8b5cf6; flex-shrink: 0;"></i>
+                                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ __('Notifications & Email') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.settings.index', ['tab' => 'regional']) }}" 
+                           class="nav-sub-item {{ (request()->routeIs('admin.settings.index') && request()->query('tab') === 'regional') ? 'active' : '' }}"
+                           :class="{ 'active': isSettingsPage && currentSettingsTab === 'regional' }"
+                           @click="selectSettingsTab('regional', $event)"
+                           title="{{ __('Languages & Regional Preferences') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                <i class="fa-solid fa-globe" style="font-size: 0.85rem; color: #06b6d4; flex-shrink: 0;"></i>
+                                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ __('Languages & Regional Preferences') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.settings.index', ['tab' => 'ai']) }}" 
+                           class="nav-sub-item {{ (request()->routeIs('admin.settings.index') && request()->query('tab') === 'ai') ? 'active' : '' }}"
+                           :class="{ 'active': isSettingsPage && currentSettingsTab === 'ai' }"
+                           @click="selectSettingsTab('ai', $event)"
+                           title="{{ __('AI & Automation') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                <i class="fa-solid fa-wand-magic-sparkles" style="font-size: 0.85rem; color: #a855f7; flex-shrink: 0;"></i>
+                                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ __('AI & Automation') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.settings.index', ['tab' => 'integrations']) }}" 
+                           class="nav-sub-item {{ (request()->routeIs('admin.settings.index') && request()->query('tab') === 'integrations') ? 'active' : '' }}"
+                           :class="{ 'active': isSettingsPage && currentSettingsTab === 'integrations' }"
+                           @click="selectSettingsTab('integrations', $event)"
+                           title="{{ __('Integrations') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                <i class="fa-solid fa-plug" style="font-size: 0.85rem; color: #14b8a6; flex-shrink: 0;"></i>
+                                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ __('Integrations') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.settings.index', ['tab' => 'security']) }}" 
+                           class="nav-sub-item {{ (request()->routeIs('admin.settings.index') && request()->query('tab') === 'security') ? 'active' : '' }}"
+                           :class="{ 'active': isSettingsPage && currentSettingsTab === 'security' }"
+                           @click="selectSettingsTab('security', $event)"
+                           title="{{ __('Security & Access') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                <i class="fa-solid fa-shield-halved" style="font-size: 0.85rem; color: #10b981; flex-shrink: 0;"></i>
+                                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ __('Security & Access') }}</span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
             @endcan
 
             @can('billing.view')

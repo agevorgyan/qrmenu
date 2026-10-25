@@ -158,6 +158,9 @@ class EnterpriseSidebarAndSettingsRefactoringTest extends TestCase
         $settingsResponse = $this->actingAs($this->owner)->get(route('admin.settings.index'));
         $settingsResponse->assertStatus(200);
         $settingsResponse->assertSee(route('admin.settings.index'), false);
+        $settingsResponse->assertSee('settingsOpen: true', false);
+        $settingsResponse->assertSee("selectSettingsTab('profile', \$event)", false);
+        $settingsResponse->assertSee("selectSettingsTab('payments', \$event)", false);
     }
 
     public function test_role_based_navigation_visibility(): void
