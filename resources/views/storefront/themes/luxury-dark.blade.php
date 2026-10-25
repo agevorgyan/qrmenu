@@ -557,6 +557,7 @@
     @include('storefront.components.info-modal')
     @include('storefront.components.order-tracker-modal')
     @include('storefront.components.waiter-modal')
+    @include('storefront.components.rating-modal')
     @include('storefront.components.storefront-scripts')
 </body>
 </html>

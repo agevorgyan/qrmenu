@@ -15,6 +15,7 @@ use App\Services\CustomerSyncService;
 use App\Services\OrderDispatchService;
 use App\Services\OrderPricingService;
 use App\Services\QuotaService;
+use App\Services\TipRatingService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -27,11 +28,13 @@ class CreateOrderAction
         protected ?OrderPricingService $pricingService = null,
         protected ?OrderDispatchService $dispatchService = null,
         protected ?QuotaService $quotaService = null,
+        protected ?TipRatingService $tipRatingService = null,
     ) {
         $this->crmService = $crmService ?? app(CrmAutomationService::class);
         $this->pricingService = $pricingService ?? app(OrderPricingService::class);
         $this->dispatchService = $dispatchService ?? app(OrderDispatchService::class);
         $this->quotaService = $quotaService ?? app(QuotaService::class);
+        $this->tipRatingService = $tipRatingService ?? app(TipRatingService::class);
     }
 
     /**
@@ -156,16 +159,41 @@ class CreateOrderAction
             $birthdate = $order->customer_birthdate ?? ($order->customer?->birthdate ? ($order->customer->birthdate instanceof \DateTimeInterface ? $order->customer->birthdate->format('Y-m-d') : (string) $order->customer->birthdate) : null);
             $birthdayDiscount = $this->crmService->calculateBirthdayDiscount($itemsSubtotal, $birthdate, $vendor);
             $fees = $this->calculateFees($vendor, $itemsSubtotal, $order->type);
-            $finalTotal = max(0, $fees['final_total'] - $birthdayDiscount);
+
+            $tipAmount = (float) ($order->tip_amount ?? 0);
+            if ($dto->tipAmount > 0) {
+                $tipCalc = $this->tipRatingService->calculateTip(
+                    vendor: $vendor,
+                    baseAmount: $itemsSubtotal,
+                    tipType: $dto->tipType ?? 'custom',
+                    tipValue: $dto->tipValue ?? $dto->tipAmount,
+                    orderType: $order->type
+                );
+                $tipAmount = $tipCalc['amount'];
+            }
+
+            $finalTotal = max(0, $fees['final_total'] - $birthdayDiscount + $tipAmount);
 
             $order->update([
                 'subtotal' => $itemsSubtotal,
                 'birthday_discount_amount' => $birthdayDiscount,
                 'service_fee' => $fees['service_fee'],
                 'delivery_fee' => $fees['delivery_fee'],
+                'tip_amount' => $tipAmount,
                 'total_amount' => $finalTotal,
                 'notes' => $order->notes,
             ]);
+
+            if ($tipAmount > 0) {
+                $this->tipRatingService->recordOrderTip(
+                    order: $order,
+                    tipAmount: $tipAmount,
+                    paymentMethod: $order->payment_method ?? 'cash',
+                    tipType: $dto->tipType ?? 'custom',
+                    percentage: $dto->tipType === 'percentage' ? $dto->tipValue : null,
+                    waiterId: $dto->waiterId ?? $order->waiter_id
+                );
+            }
 
             if ($order->customer) {
                 $this->customerSyncService->recalculateStats($order->customer);
@@ -240,6 +268,7 @@ class CreateOrderAction
                 'type' => $dto->type,
                 'total_amount' => 0,
                 'status' => 'pending',
+                'waiter_id' => $dto->waiterId,
                 'customer_name' => $dto->customerName ?? 'Guest',
                 'customer_phone' => $dto->customerPhone,
                 'customer_email' => $dto->customerEmail,
@@ -249,6 +278,7 @@ class CreateOrderAction
                 'payment_method' => $paymentMethod,
                 'payment_status' => $paymentStatus,
                 'birthday_discount_amount' => 0,
+                'tip_amount' => 0,
             ]);
 
             $totalAmount = 0;
@@ -319,15 +349,37 @@ class CreateOrderAction
             $effectiveBirthdate = $dto->customerBirthdate ?? ($customer?->birthdate ? ($customer->birthdate instanceof \DateTimeInterface ? $customer->birthdate->format('Y-m-d') : (string) $customer->birthdate) : null);
             $birthdayDiscount = $this->crmService->calculateBirthdayDiscount($itemsSubtotal, $effectiveBirthdate, $vendor);
             $fees = $this->calculateFees($vendor, $itemsSubtotal, $dto->type);
-            $finalTotal = max(0, $fees['final_total'] - $birthdayDiscount);
+
+            $tipResult = $this->tipRatingService->calculateTip(
+                vendor: $vendor,
+                baseAmount: $itemsSubtotal,
+                tipType: $dto->tipType ?? 'custom',
+                tipValue: $dto->tipValue ?? $dto->tipAmount,
+                orderType: $dto->type
+            );
+            $tipAmount = $tipResult['amount'];
+
+            $finalTotal = max(0, $fees['final_total'] - $birthdayDiscount + $tipAmount);
 
             $order->update([
                 'subtotal' => $itemsSubtotal,
                 'birthday_discount_amount' => $birthdayDiscount,
                 'service_fee' => $fees['service_fee'],
                 'delivery_fee' => $fees['delivery_fee'],
+                'tip_amount' => $tipAmount,
                 'total_amount' => $finalTotal,
             ]);
+
+            if ($tipAmount > 0) {
+                $this->tipRatingService->recordOrderTip(
+                    order: $order,
+                    tipAmount: $tipAmount,
+                    paymentMethod: $paymentMethod,
+                    tipType: $tipResult['type'],
+                    percentage: $tipResult['percentage'],
+                    waiterId: $dto->waiterId
+                );
+            }
 
             if ($customer) {
                 $this->customerSyncService->recalculateStats($customer);

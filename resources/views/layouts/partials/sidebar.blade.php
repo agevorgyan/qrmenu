@@ -365,6 +365,16 @@
                 </a>
             @endcan
 
+            @can('tips.view')
+                <a href="{{ route('admin.tips_ratings.reports') }}" class="nav-item {{ request()->routeIs('admin.tips_ratings.*') ? 'active' : '' }}" title="{{ __('Tips & Service Ratings') }}">
+                    <i class="fa-solid fa-hand-holding-dollar" style="color: #10b981;"></i>
+                    <span>{{ __('Tips & Service Ratings') }}</span>
+                    @if($v && !$v->hasFeature('tips.ratings'))
+                        <span class="nav-lock-badge">🔒 PRO</span>
+                    @endif
+                </a>
+            @endcan
+
             @can('reports.view')
                 <a href="{{ route('admin.analytics.index') }}" class="nav-item {{ request()->routeIs('admin.analytics.*') ? 'active' : '' }}" title="{{ __('Analytics & Reports') }}">
                     <i class="fa-solid fa-chart-pie" style="color: #f97316;"></i>
@@ -537,6 +547,34 @@
                                 <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ __('Integrations') }}</span>
                             </span>
                         </a>
+
+                        @can('tips.manage')
+                        <a href="{{ route('admin.settings.tips_ratings') }}" 
+                           class="nav-sub-item {{ request()->routeIs('admin.settings.tips_ratings*') ? 'active' : '' }}"
+                           title="{{ __('Tips & Ratings Settings') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                <i class="fa-solid fa-star-half-stroke" style="font-size: 0.85rem; color: #f59e0b; flex-shrink: 0;"></i>
+                                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ __('Tips & Ratings Settings') }}</span>
+                            </span>
+                            @if($v && !$v->hasFeature('tips.ratings'))
+                                <span class="nav-lock-badge">🔒 PRO</span>
+                            @endif
+                        </a>
+                        @endcan
+
+                        @can('split_bill.manage')
+                        <a href="{{ route('admin.settings.split_bill') }}" 
+                           class="nav-sub-item {{ request()->routeIs('admin.settings.split_bill*') ? 'active' : '' }}"
+                           title="{{ __('Split Bill Settings') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                <i class="fa-solid fa-divide" style="font-size: 0.85rem; color: #3b82f6; flex-shrink: 0;"></i>
+                                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ __('Split Bill Settings') }}</span>
+                            </span>
+                            @if($v && !$v->hasFeature('bills.split'))
+                                <span class="nav-lock-badge">🔒 PRO</span>
+                            @endif
+                        </a>
+                        @endcan
 
                         <a href="{{ route('admin.settings.index', ['tab' => 'security']) }}" 
                            class="nav-sub-item {{ (request()->routeIs('admin.settings.index') && request()->query('tab') === 'security') ? 'active' : '' }}"

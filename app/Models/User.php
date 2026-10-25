@@ -311,4 +311,14 @@ class User extends Authenticatable implements MustVerifyEmail
 
         return $maskedName.'@'.$domain;
     }
+
+    public function tips()
+    {
+        return $this->hasMany(Tip::class, 'waiter_id');
+    }
+
+    public function serviceRatings()
+    {
+        return $this->hasMany(ServiceRating::class, 'waiter_id');
+    }
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\DTOs\QuotaStatus;
+use App\Security\FeatureCatalog;
 use App\Services\CredentialService;
 use App\Services\Currency\CurrencyExchangeService;
 use App\Services\EntitlementService;
@@ -2763,5 +2764,67 @@ class Vendor extends Model
         }
 
         return $val;
+    }
+
+    public function tipRatingSetting(): HasOne
+    {
+        return $this->hasOne(TipRatingSetting::class);
+    }
+
+    public function getTipRatingSetting(): TipRatingSetting
+    {
+        return TipRatingSetting::forVendor($this);
+    }
+
+    public function tips(): HasMany
+    {
+        return $this->hasMany(Tip::class);
+    }
+
+    public function serviceRatings(): HasMany
+    {
+        return $this->hasMany(ServiceRating::class);
+    }
+
+    public function isTipsEnabled(?string $orderType = null): bool
+    {
+        if (! $this->hasFeature(FeatureCatalog::TIPS_RATINGS)) {
+            return false;
+        }
+
+        return $this->getTipRatingSetting()->isTipActiveFor($orderType);
+    }
+
+    public function isRatingsEnabled(): bool
+    {
+        if (! $this->hasFeature(FeatureCatalog::TIPS_RATINGS)) {
+            return false;
+        }
+
+        return $this->getTipRatingSetting()->isRatingActive();
+    }
+
+    public function splitBillSetting(): HasOne
+    {
+        return $this->hasOne(SplitBillSetting::class);
+    }
+
+    public function getSplitBillSetting(): SplitBillSetting
+    {
+        return SplitBillSetting::forVendor($this);
+    }
+
+    public function splitBills(): HasMany
+    {
+        return $this->hasMany(SplitBill::class);
+    }
+
+    public function isSplitBillEnabled(): bool
+    {
+        if (! $this->hasFeature(FeatureCatalog::BILLS_SPLIT)) {
+            return false;
+        }
+
+        return (bool) $this->getSplitBillSetting()->is_enabled;
     }
 }

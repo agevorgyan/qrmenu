@@ -26,9 +26,11 @@ class Order extends Model
         'subtotal',
         'service_fee',
         'delivery_fee',
+        'tip_amount',
         'birthday_discount_amount',
         'total_amount',
         'status',
+        'waiter_id',
         'customer_name',
         'customer_phone',
         'customer_email',
@@ -41,6 +43,7 @@ class Order extends Model
         'subtotal' => 'decimal:2',
         'service_fee' => 'decimal:2',
         'delivery_fee' => 'decimal:2',
+        'tip_amount' => 'decimal:2',
         'birthday_discount_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'marketing_opt_in' => 'boolean',
@@ -70,6 +73,13 @@ class Order extends Model
                 $customer = Customer::withoutGlobalScopes()->find($order->customer_id);
                 if ($customer && (int) $customer->vendor_id !== (int) $order->vendor_id) {
                     throw new \InvalidArgumentException('Cross-vendor customer attached to order.');
+                }
+            }
+
+            if ($order->waiter_id && $order->vendor_id) {
+                $waiter = User::find($order->waiter_id);
+                if ($waiter && (int) $waiter->vendor_id !== (int) $order->vendor_id) {
+                    throw new \InvalidArgumentException('Cross-vendor waiter attached to order.');
                 }
             }
         });
@@ -111,5 +121,30 @@ class Order extends Model
     public function latestPaymentAttempt()
     {
         return $this->hasOne(PaymentAttempt::class)->latestOfMany();
+    }
+
+    public function waiter()
+    {
+        return $this->belongsTo(User::class, 'waiter_id');
+    }
+
+    public function tip()
+    {
+        return $this->hasOne(Tip::class);
+    }
+
+    public function serviceRating()
+    {
+        return $this->hasOne(ServiceRating::class);
+    }
+
+    public function splitBills()
+    {
+        return $this->hasMany(SplitBill::class);
+    }
+
+    public function activeSplitBill()
+    {
+        return $this->hasOne(SplitBill::class)->where('status', 'active')->latestOfMany();
     }
 }

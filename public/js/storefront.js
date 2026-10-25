@@ -140,8 +140,27 @@
             csrfToken: bootConfig.csrfToken || '',
             locationId: bootConfig.locationId || 1,
             schedules: bootConfig.schedules || {},
-            closingNotice: bootConfig.closingNotice || {},
             dismissedWarningBanner: false,
+
+            // Tips & Ratings State
+            tipsRatingsSettings: settings.tipsRatings || {},
+            splitBillSettings: settings.splitBill || {},
+            selectedTipType: (settings.tipsRatings && settings.tipsRatings.default_tip_selection) || 'none',
+            selectedTipValue: 0,
+            customTipInput: '',
+            selectedWaiterId: null,
+
+            // Service & Waiter Rating Modal State
+            showRatingModal: false,
+            ratingOrderNumber: null,
+            ratingWaiterId: null,
+            ratingScore: 5,
+            ratingCategories: [],
+            ratingComment: '',
+            ratingIsAnonymous: false,
+            ratingSubmitting: false,
+            ratingSubmitted: false,
+            ratingErrorMessage: '',
 
             // Language & Entry Context State
             needsLanguageSelection: bootConfig.needsLanguageSelection || false,
@@ -680,8 +699,50 @@
                 return Math.round((this.cartSubtotal * this.birthdayDiscountPercent) / 100);
             },
 
+            get isTipsApplicable() {
+                if (!this.tipsRatingsSettings || !this.tipsRatingsSettings.tips_enabled) return false;
+                const types = this.tipsRatingsSettings.applicable_order_types || ['dine_in'];
+                if (!types.includes(this.orderType)) return false;
+                if (this.paymentMethod === 'cash' && !this.tipsRatingsSettings.allow_cash_tips) return false;
+                return true;
+            },
+
+            get tipPercentage() {
+                return this.selectedTipType === 'percentage' ? Number(this.selectedTipValue || 0) : 0;
+            },
+
+            get tipAmount() {
+                if (!this.isTipsApplicable || this.selectedTipType === 'none') {
+                    return 0;
+                }
+                let base = this.cartSubtotal;
+                if (this.tipsRatingsSettings.calculation_base === 'after_discount') {
+                    base = Math.max(0, this.cartSubtotal - this.birthdayDiscountAmount);
+                } else if (this.tipsRatingsSettings.calculation_base === 'total_with_fees') {
+                    base = Math.max(0, this.cartSubtotal - this.birthdayDiscountAmount + this.calculatedServiceFee + this.calculatedDeliveryFee);
+                }
+
+                let amount = 0;
+                if (this.selectedTipType === 'percentage') {
+                    amount = Math.round((base * Number(this.selectedTipValue || 0)) / 100);
+                } else if (this.selectedTipType === 'fixed') {
+                    amount = Number(this.selectedTipValue || 0);
+                } else if (this.selectedTipType === 'custom') {
+                    amount = Math.max(0, Number(this.customTipInput || 0));
+                }
+
+                if (amount > 0) {
+                    const min = Number(this.tipsRatingsSettings.min_tip_amount || 0);
+                    const max = Number(this.tipsRatingsSettings.max_tip_amount || 50000);
+                    if (min > 0 && amount < min) amount = min;
+                    if (max > 0 && amount > max) amount = max;
+                }
+
+                return Math.round(amount);
+            },
+
             get cartFinalTotal() {
-                const rawTotal = this.cartSubtotal + this.calculatedServiceFee + this.calculatedDeliveryFee - this.birthdayDiscountAmount;
+                const rawTotal = this.cartSubtotal + this.calculatedServiceFee + this.calculatedDeliveryFee - this.birthdayDiscountAmount + this.tipAmount;
                 return Math.max(0, rawTotal);
             },
 
@@ -896,6 +957,10 @@
                             payment_method: this.paymentMethod || 'cash',
                             marketing_opt_in: this.marketingOptIn,
                             notes: this.orderNotes,
+                            tip_amount: this.tipAmount,
+                            tip_type: this.selectedTipType,
+                            tip_value: this.selectedTipValue,
+                            waiter_id: this.selectedWaiterId || null,
                             active_order_number: (this.activeOrder && !['completed', 'cancelled'].includes(this.activeOrder.status)) ? this.activeOrder.order_number : null,
                             items: this.cart.map(c => ({
                                 product_id: c.id || c.product_id,
@@ -1002,7 +1067,96 @@
                 this.showCartModal = false;
                 this.showInfoModal = false;
                 this.showOrderTracker = false;
+                this.showRatingModal = false;
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+            },
+
+            setTip(type, value) {
+                this.selectedTipType = type;
+                this.selectedTipValue = value;
+                if (type === 'custom') {
+                    this.customTipInput = value;
+                }
+            },
+
+            openRatingModal(orderNumber = null, waiterId = null) {
+                this.ratingOrderNumber = orderNumber || (this.activeOrder ? this.activeOrder.order_number : null);
+                this.ratingWaiterId = waiterId || (this.activeOrder ? this.activeOrder.waiter_id : null) || this.selectedWaiterId || null;
+                this.ratingScore = Number(this.tipsRatingsSettings.rating_scale || 5);
+                this.ratingCategories = [];
+                this.ratingComment = '';
+                this.ratingIsAnonymous = false;
+                this.ratingSubmitting = false;
+                this.ratingSubmitted = false;
+                this.ratingErrorMessage = '';
+                this.showRatingModal = true;
+            },
+
+            toggleRatingCategory(cat) {
+                if (this.ratingCategories.includes(cat)) {
+                    this.ratingCategories = this.ratingCategories.filter(c => c !== cat);
+                } else {
+                    this.ratingCategories.push(cat);
+                }
+            },
+
+            formatCategoryName(cat) {
+                const map = {
+                    food_quality: 'Համեղ ուտեստներ',
+                    service_speed: 'Արագ սպասարկում',
+                    waiter_politeness: 'Բարեհամբույր մատուցող',
+                    cleanliness: 'Մաքրություն',
+                    ambiance: 'Հաճելի մթնոլորտ',
+                    table_presentation: 'Գեղեցիկ մատուցում'
+                };
+                return map[cat] || (cat.charAt(0).toUpperCase() + cat.slice(1).replace(/_/g, ' '));
+            },
+
+            async submitRatingForm() {
+                if (this.ratingSubmitting) return;
+
+                const isOptional = this.tipsRatingsSettings.is_written_feedback_optional !== false;
+                if (!isOptional && (!this.ratingComment || !this.ratingComment.trim())) {
+                    this.ratingErrorMessage = 'Մեկնաբանությունը պարտադիր է:';
+                    return;
+                }
+
+                this.ratingSubmitting = true;
+                this.ratingErrorMessage = '';
+
+                try {
+                    const ratingUrl = (bootConfig.routes && bootConfig.routes.submitRating) || `/api/m/${this.vendorSlug}/rate`;
+                    const res = await fetch(ratingUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': this.csrfToken
+                        },
+                        body: JSON.stringify({
+                            order_number: this.ratingOrderNumber || null,
+                            table_number: this.tableNumber || (this.activeOrder ? this.activeOrder.table_number : null) || null,
+                            waiter_id: this.ratingWaiterId || null,
+                            rating: this.ratingScore,
+                            categories: this.ratingCategories,
+                            comment: this.ratingComment ? this.ratingComment.trim() : null,
+                            is_anonymous: this.ratingIsAnonymous,
+                            customer_name: this.ratingIsAnonymous ? null : (this.customerName || (this.activeOrder ? this.activeOrder.customer_name : null))
+                        })
+                    });
+
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok && data.success) {
+                        this.ratingSubmitted = true;
+                        this.triggerToast('Շնորհակալություն գնահատականի համար!', 'add', 'fa-solid fa-star');
+                    } else {
+                        this.ratingErrorMessage = data.message || 'Չհաջողվեց գրանցել գնահատականը:';
+                    }
+                } catch (e) {
+                    this.ratingErrorMessage = 'Կապի խնդիր: Խնդրում ենք փորձել կրկին:';
+                } finally {
+                    this.ratingSubmitting = false;
+                }
             },
 
             scrollToTop() {

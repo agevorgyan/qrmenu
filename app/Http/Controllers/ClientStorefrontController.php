@@ -21,8 +21,10 @@ use App\Models\Vendor;
 use App\Models\WaiterCall;
 use App\Services\PaymentGatewayService;
 use App\Services\Payments\PaymentVerificationService;
+use App\Services\SplitBillService;
 use App\Services\TenantCache;
 use App\Services\TimeAwareService;
+use App\Services\TipRatingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -811,5 +813,397 @@ self.addEventListener('fetch', event => {
             cache()->put("order_lookup_lockout:{$ip}", now()->addMinutes(15)->timestamp, now()->addMinutes(15));
             cache()->forget($failKey);
         }
+    }
+
+    /**
+     * Customer submits service rating / waiter review.
+     */
+    public function submitRating(Request $request, string $vendor_slug, TipRatingService $tipRatingService): JsonResponse
+    {
+        $vendor = Vendor::where('slug', $vendor_slug)->where('is_active', true)->firstOrFail();
+
+        if (! $vendor->isRatingsEnabled()) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Rating service is currently disabled for this restaurant.'),
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'rating' => 'required|integer|min:1|max:10',
+            'order_number' => 'nullable|string|max:100',
+            'order_id' => 'nullable|integer',
+            'table_number' => 'nullable|string|max:50',
+            'waiter_id' => 'nullable|integer',
+            'categories' => 'nullable|array',
+            'categories.*' => 'string|max:50',
+            'comment' => 'nullable|string|max:1000',
+            'is_anonymous' => 'nullable|boolean',
+            'customer_name' => 'nullable|string|max:100',
+            'customer_phone' => 'nullable|string|max:50',
+            'idempotency_key' => 'nullable|string|max:64',
+        ]);
+
+        try {
+            $rating = $tipRatingService->submitRating(
+                vendor: $vendor,
+                validated: $validated,
+                ip: $request->ip(),
+                userAgent: $request->userAgent()
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => __('Thank you for your valuable feedback!'),
+                'rating' => [
+                    'id' => $rating->uuid,
+                    'rating' => $rating->rating,
+                    'created_at' => $rating->created_at->diffForHumans(),
+                ],
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => collect($e->errors())->flatten()->first(),
+                'errors' => $e->errors(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Customer submits direct tip (standalone or table-based).
+     */
+    public function submitDirectTip(Request $request, string $vendor_slug, TipRatingService $tipRatingService): JsonResponse
+    {
+        $vendor = Vendor::where('slug', $vendor_slug)->where('is_active', true)->firstOrFail();
+
+        if (! $vendor->isTipsEnabled()) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Tips are currently disabled for this restaurant.'),
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:1',
+            'payment_method' => 'nullable|string|in:cash,pos_terminal,idram,telcell,arca,stripe',
+            'table_number' => 'nullable|string|max:50',
+            'waiter_id' => 'nullable|integer',
+            'location_id' => 'nullable|integer',
+            'order_id' => 'nullable|integer',
+            'notes' => 'nullable|string|max:255',
+            'tip_type' => 'nullable|string|in:percentage,fixed,custom',
+            'idempotency_key' => 'nullable|string|max:64',
+        ]);
+
+        try {
+            $tip = $tipRatingService->recordDirectTip($vendor, $validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => __('Thank you for tipping our staff!'),
+                'tip' => [
+                    'id' => $tip->uuid,
+                    'amount' => (float) $tip->amount,
+                    'currency' => $tip->currency,
+                    'status' => $tip->payment_status,
+                ],
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => collect($e->errors())->flatten()->first(),
+                'errors' => $e->errors(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Show dedicated standalone customer rating and tip screen.
+     */
+    public function showRatingPage(Request $request, string $vendor_slug, ?string $order_number = null)
+    {
+        $vendor = Vendor::where('slug', $vendor_slug)->where('is_active', true)->firstOrFail();
+        $settings = $vendor->getTipRatingSetting();
+
+        $order = null;
+        if ($order_number) {
+            $order = Order::withoutGlobalScopes()
+                ->where('vendor_id', $vendor->id)
+                ->where(function ($q) use ($order_number) {
+                    $q->where('order_number', $order_number)
+                        ->orWhere('tracking_token', $order_number);
+                })
+                ->with(['items.product', 'waiter'])
+                ->first();
+        }
+
+        $table = $request->get('table') ?? ($order?->table_number ?? null);
+        $waiters = User::where('vendor_id', $vendor->id)
+            ->whereIn('role', ['staff', 'manager'])
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        $lang = session('app_locale', $vendor->getDefaultLanguageCode() ?: 'hy');
+        App::setLocale($lang);
+
+        return view('storefront.rating', compact(
+            'vendor',
+            'settings',
+            'order',
+            'table',
+            'waiters',
+            'lang'
+        ));
+    }
+
+    /**
+     * Show customer shared bill view with live split capabilities.
+     */
+    public function showSharedBill(Request $request, string $vendor_slug, string $token, SplitBillService $splitBillService)
+    {
+        $vendor = Vendor::where('slug', $vendor_slug)->where('is_active', true)->firstOrFail();
+
+        if (! $vendor->isSplitBillEnabled()) {
+            return redirect()->route('client.menu', ['vendor_slug' => $vendor->slug])
+                ->with('error', __('Split bill is currently disabled for this restaurant.'));
+        }
+
+        $order = $this->resolveAndAuthorizeOrder($vendor, $token, $request);
+        if (! $order) {
+            abort(404, __('Order not found or invalid tracking token.'));
+        }
+
+        $splitBill = $splitBillService->getOrCreateSplitBill($order);
+        $settings = $vendor->getSplitBillSetting();
+        $items = $splitBillService->getItemizedAvailability($order);
+
+        $lang = session('app_locale', $vendor->getDefaultLanguageCode() ?: 'hy');
+        App::setLocale($lang);
+
+        return view('storefront.split_bill', compact(
+            'vendor',
+            'order',
+            'splitBill',
+            'settings',
+            'items',
+            'lang'
+        ));
+    }
+
+    /**
+     * Get live JSON status of the bill and its split participants.
+     */
+    public function getBillStatus(Request $request, string $vendor_slug, string $token, SplitBillService $splitBillService): JsonResponse
+    {
+        $vendor = Vendor::where('slug', $vendor_slug)->where('is_active', true)->firstOrFail();
+
+        if (! $vendor->isSplitBillEnabled()) {
+            return response()->json([
+                'success' => false,
+                'error' => 'SPLIT_BILL_DISABLED',
+                'message' => __('Split bill is disabled for this restaurant.'),
+            ], 403);
+        }
+
+        $order = $this->resolveAndAuthorizeOrder($vendor, $token, $request);
+        if (! $order) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Order not found.'),
+            ], 404);
+        }
+
+        $splitBill = $splitBillService->getOrCreateSplitBill($order);
+        $settings = $vendor->getSplitBillSetting();
+        $items = $splitBillService->getItemizedAvailability($order);
+
+        $payments = $splitBill->payments()
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'uuid' => $p->uuid,
+                    'participant_name' => $p->participant_name,
+                    'amount' => (float) $p->amount,
+                    'currency' => $p->currency,
+                    'status' => $p->status,
+                    'payment_method' => $p->payment_method,
+                    'is_paid' => $p->isPaid(),
+                    'created_at_time' => $p->created_at->format('H:i'),
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'order' => [
+                'order_number' => $order->order_number,
+                'tracking_token' => $order->tracking_token,
+                'table_number' => $order->table_number,
+                'status' => $order->status,
+                'payment_status' => $order->payment_status,
+                'total_amount' => (float) $order->total_amount,
+                'currency' => $vendor->currency ?? 'AMD',
+            ],
+            'bill' => [
+                'split_token' => $splitBill->split_token,
+                'status' => $splitBill->status,
+                'total_amount' => (float) $splitBill->total_amount,
+                'paid_amount' => (float) $splitBill->paid_amount,
+                'remaining_amount' => (float) $splitBill->remaining_amount,
+                'currency' => $splitBill->currency,
+                'is_fully_paid' => $splitBill->isFullyPaid(),
+            ],
+            'settings' => [
+                'allow_equal_split' => (bool) $settings->allow_equal_split,
+                'allow_item_split' => (bool) $settings->allow_item_split,
+                'allow_custom_amount' => (bool) $settings->allow_custom_amount,
+                'allow_share_link' => (bool) $settings->allow_share_link,
+                'max_participants' => (int) $settings->max_participants,
+                'require_staff_approval' => (bool) $settings->require_staff_approval,
+            ],
+            'payments' => $payments,
+            'items' => $items,
+        ]);
+    }
+
+    /**
+     * Submit a split payment (equal share, item claim, or custom amount).
+     */
+    public function submitSplitPayment(Request $request, string $vendor_slug, string $token, SplitBillService $splitBillService): JsonResponse
+    {
+        $vendor = Vendor::where('slug', $vendor_slug)->where('is_active', true)->firstOrFail();
+
+        if (! $vendor->isSplitBillEnabled()) {
+            return response()->json([
+                'success' => false,
+                'error' => 'SPLIT_BILL_DISABLED',
+                'message' => __('Split bill is disabled for this restaurant.'),
+            ], 403);
+        }
+
+        $order = $this->resolveAndAuthorizeOrder($vendor, $token, $request);
+        if (! $order) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Order not found.'),
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'split_type' => 'required|string|in:equal,by_item,custom',
+            'payment_method' => 'required|string',
+            'participant_name' => 'nullable|string|max:100',
+            'amount' => 'nullable|numeric|min:0.01',
+            'participants_count' => 'nullable|integer|min:2|max:50',
+            'items' => 'nullable|array',
+            'items.*.order_item_id' => 'required_with:items|integer',
+            'items.*.quantity' => 'required_with:items|integer|min:1',
+            'idempotency_key' => 'nullable|string|max:64',
+        ]);
+
+        $splitBill = $splitBillService->getOrCreateSplitBill($order);
+        $settings = $vendor->getSplitBillSetting();
+
+        // Method-specific checks and amount calculation
+        $amountToPay = 0.0;
+        $itemsBreakdown = null;
+
+        try {
+            if ($validated['split_type'] === 'equal') {
+                if (! $settings->allow_equal_split) {
+                    throw new \InvalidArgumentException(__('Equal split is not permitted by restaurant settings.'));
+                }
+                $count = (int) ($validated['participants_count'] ?? 2);
+                $equalCalc = $splitBillService->calculateEqualSplit($splitBill, $count);
+                $amountToPay = (float) $equalCalc['per_person_amount'];
+            } elseif ($validated['split_type'] === 'by_item') {
+                if (! $settings->allow_item_split) {
+                    throw new \InvalidArgumentException(__('Splitting by dish is not permitted by restaurant settings.'));
+                }
+                $itemCalc = $splitBillService->calculateItemSplit($order, $validated['items'] ?? []);
+                $amountToPay = (float) $itemCalc['total_amount'];
+                $itemsBreakdown = $itemCalc['items_breakdown'];
+            } elseif ($validated['split_type'] === 'custom') {
+                if (! $settings->allow_custom_amount) {
+                    throw new \InvalidArgumentException(__('Custom amount partial payment is not permitted by restaurant settings.'));
+                }
+                $amountToPay = (float) ($validated['amount'] ?? 0);
+            }
+
+            $result = $splitBillService->initiateSplitPayment(
+                bill: $splitBill,
+                amount: $amountToPay,
+                paymentMethod: $validated['payment_method'],
+                participantName: $validated['participant_name'] ?? null,
+                itemsBreakdown: $itemsBreakdown,
+                idempotencyKey: $validated['idempotency_key'] ?? null
+            );
+
+            return response()->json(array_merge([
+                'success' => true,
+                'order_number' => $order->order_number,
+                'remaining_amount' => (float) $splitBill->fresh()->remaining_amount,
+            ], $result));
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        } catch (\Throwable $e) {
+            Log::error('Split bill payment initiation failed: '.$e->getMessage(), [
+                'order' => $order->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => __('Unable to process split payment. Please try again or ask your waiter.'),
+            ], 500);
+        }
+    }
+
+    /**
+     * Helper to resolve and authorize order lookup via token or session.
+     */
+    protected function resolveAndAuthorizeOrder(Vendor $vendor, string $token, Request $request): ?Order
+    {
+        $isTokenLookup = str_starts_with($token, 'trk_');
+
+        $order = Order::withoutGlobalScopes()
+            ->where('vendor_id', $vendor->id)
+            ->where(function ($q) use ($token, $isTokenLookup) {
+                if ($isTokenLookup) {
+                    $q->where('tracking_token', $token);
+                } else {
+                    $q->where('order_number', $token)
+                        ->orWhere('tracking_token', $token);
+                }
+            })
+            ->with(['items.product', 'vendor'])
+            ->first();
+
+        if (! $order) {
+            return null;
+        }
+
+        if (! $isTokenLookup) {
+            $providedToken = $request->query('token') ?? $request->header('X-Tracking-Token');
+            $sessionAuthorized = session('placed_order_'.$order->order_number) === $order->tracking_token
+                || in_array($order->tracking_token, (array) session('active_tracking_tokens', []), true);
+
+            $isStaff = $request->user() && (int) $request->user()->vendor_id === (int) $vendor->id;
+
+            $isAuthorized = ($providedToken && hash_equals($order->tracking_token, (string) $providedToken))
+                || $sessionAuthorized
+                || $isStaff;
+
+            if (! $isAuthorized) {
+                return null;
+            }
+        }
+
+        return $order;
     }
 }

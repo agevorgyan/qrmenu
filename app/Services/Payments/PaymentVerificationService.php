@@ -5,10 +5,13 @@ namespace App\Services\Payments;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\PaymentAttempt;
+use App\Models\SplitBillPayment;
 use App\Models\SubscriptionPayment;
+use App\Models\Tip;
 use App\Models\Vendor;
 use App\Services\Payments\DTOs\PaymentVerificationResult;
 use App\Services\SecurityAuditService;
+use App\Services\SplitBillService;
 use App\Services\SubscriptionService;
 use App\Services\TelegramNotificationService;
 use Illuminate\Support\Facades\DB;
@@ -297,36 +300,47 @@ class PaymentVerificationService
                 'response_payload' => $payload,
             ]);
 
-            // Finalize Order
+            // Finalize Order or Split Bill
             if ($attempt->order_id) {
-                $order = Order::where('id', $attempt->order_id)
-                    ->where('vendor_id', $attempt->vendor_id)
-                    ->lockForUpdate()
-                    ->first();
+                $isSplitAttempt = SplitBillPayment::withoutGlobalScopes()
+                    ->where('payment_attempt_id', $attempt->id)
+                    ->exists();
 
-                if ($order && $order->payment_status !== 'paid') {
-                    $oldStatus = $order->payment_status;
-                    $order->update([
-                        'payment_status' => 'paid',
-                        'payment_method' => $attempt->gateway,
-                        'payment_transaction_id' => $attempt->provider_transaction_id,
-                    ]);
+                if ($isSplitAttempt) {
+                    app(SplitBillService::class)->syncSplitPaymentStatus($attempt, 'paid');
+                } else {
+                    $order = Order::where('id', $attempt->order_id)
+                        ->where('vendor_id', $attempt->vendor_id)
+                        ->lockForUpdate()
+                        ->first();
 
-                    app(SecurityAuditService::class)->logPaymentStatusChange(
-                        orderOrPaymentId: $order->id,
-                        oldStatus: (string) $oldStatus,
-                        newStatus: 'paid',
-                        vendor: $order->vendor,
-                        metadata: [
-                            'gateway' => $attempt->gateway,
-                            'reference' => $attempt->provider_transaction_id,
-                        ]
-                    );
+                    if ($order && $order->payment_status !== 'paid') {
+                        $oldStatus = $order->payment_status;
+                        $order->update([
+                            'payment_status' => 'paid',
+                            'payment_method' => $attempt->gateway,
+                            'payment_transaction_id' => $attempt->provider_transaction_id,
+                        ]);
 
-                    try {
-                        app(TelegramNotificationService::class)->sendPaymentNotification($order, $attempt->gateway);
-                    } catch (\Throwable $e) {
-                        Log::warning('Telegram notification failed on payment finalization: '.$e->getMessage());
+                        app(SecurityAuditService::class)->logPaymentStatusChange(
+                            orderOrPaymentId: $order->id,
+                            oldStatus: (string) $oldStatus,
+                            newStatus: 'paid',
+                            vendor: $order->vendor,
+                            metadata: [
+                                'gateway' => $attempt->gateway,
+                                'reference' => $attempt->provider_transaction_id,
+                            ]
+                        );
+
+                        // Also update any associated Tip record
+                        $this->syncTipPaymentStatus($order, 'paid', $attempt->id);
+
+                        try {
+                            app(TelegramNotificationService::class)->sendPaymentNotification($order, $attempt->gateway);
+                        } catch (\Throwable $e) {
+                            Log::warning('Telegram notification failed on payment finalization: '.$e->getMessage());
+                        }
                     }
                 }
             }
@@ -367,7 +381,19 @@ class PaymentVerificationService
             ]);
 
             if ($attempt->order_id) {
-                Order::where('id', $attempt->order_id)->update(['payment_status' => 'failed']);
+                $isSplitAttempt = SplitBillPayment::withoutGlobalScopes()
+                    ->where('payment_attempt_id', $attempt->id)
+                    ->exists();
+
+                if ($isSplitAttempt) {
+                    app(SplitBillService::class)->syncSplitPaymentStatus($attempt, 'failed');
+                } else {
+                    Order::where('id', $attempt->order_id)->update(['payment_status' => 'failed']);
+                    Tip::withoutGlobalScopes()
+                        ->where('order_id', $attempt->order_id)
+                        ->where('vendor_id', $attempt->vendor_id)
+                        ->update(['payment_status' => 'failed']);
+                }
             }
             if ($attempt->subscription_id) {
                 $subPayment = SubscriptionPayment::where('id', $attempt->subscription_id)->first();
@@ -394,6 +420,14 @@ class PaymentVerificationService
 
             if ($attempt->order_id) {
                 Order::where('id', $attempt->order_id)->update(['payment_status' => 'refunded']);
+                Tip::withoutGlobalScopes()
+                    ->where('order_id', $attempt->order_id)
+                    ->where('vendor_id', $attempt->vendor_id)
+                    ->update([
+                        'payment_status' => 'refunded',
+                        'refunded_at' => now(),
+                        'refund_reason' => 'Payment refund',
+                    ]);
             }
             if ($attempt->subscription_id) {
                 $subPayment = SubscriptionPayment::where('id', $attempt->subscription_id)->first();
@@ -413,5 +447,27 @@ class PaymentVerificationService
         }
 
         return $verification;
+    }
+
+    /**
+     * Synchronize tip payment status when order payment state changes.
+     */
+    public function syncTipPaymentStatus(Order $order, string $status, ?int $attemptId = null): void
+    {
+        $update = ['payment_status' => $status];
+        if ($status === 'paid') {
+            $update['settled_at'] = now();
+        } elseif ($status === 'refunded') {
+            $update['refunded_at'] = now();
+        }
+
+        if ($attemptId) {
+            $update['payment_attempt_id'] = $attemptId;
+        }
+
+        Tip::withoutGlobalScopes()
+            ->where('order_id', $order->id)
+            ->where('vendor_id', $order->vendor_id)
+            ->update($update);
     }
 }

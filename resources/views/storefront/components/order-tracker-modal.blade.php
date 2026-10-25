@@ -164,6 +164,17 @@
                     </div>
                 </template>
 
+                <!-- Tip Amount in Tracker Breakdown -->
+                <template x-if="Number(activeOrder?.tip_amount || 0) > 0">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; font-size: 0.85rem;">
+                        <span style="color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
+                            <i class="fa-solid fa-hand-holding-dollar" style="color: #10b981; font-size: 0.8rem;"></i>
+                            <span>{{ __('tips.tip') ?? 'Թեյավճար' }}</span>
+                        </span>
+                        <span style="font-family: 'Outfit'; font-weight: 700; color: #10b981;" x-text="'+' + Number(activeOrder?.tip_amount).toLocaleString() + ' ' + (activeOrder?.currency || '{{ $vendor->currency }}')"></span>
+                    </div>
+                </template>
+
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-color);">
                     <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">Ընդհանուր գումար</span>
                     <span style="font-family: 'Outfit'; font-weight: 800; font-size: 1.2rem; color: var(--primary);" x-text="Number(activeOrder?.total_amount || 0).toLocaleString() + ' ' + (activeOrder?.currency || '{{ $vendor->currency }}')"></span>
@@ -173,6 +184,25 @@
 
         <!-- Actions -->
         <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <!-- Split Bill Button (When split bill is enabled and order is not fully paid) -->
+            <template x-if="splitBillSettings?.is_enabled && activeOrder?.payment_status !== 'paid' && Number(activeOrder?.total_amount || 0) > 0">
+                <a :href="'/m/{{ $vendor->slug }}/bill/' + (activeOrder?.tracking_token || activeOrder?.order_number)" 
+                   style="width: 100%; padding: 0.95rem; background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; border: none; border-radius: 14px; font-weight: 800; font-size: 0.95rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.35);">
+                    <i class="fa-solid fa-divide"></i>
+                    <span>{{ __('Split Bill') }}</span>
+                </a>
+            </template>
+
+            <!-- Rate Service Button (When order completed or served) -->
+            <template x-if="tipsRatingsSettings?.ratings_enabled && ['completed', 'served'].includes(activeOrder?.status)">
+                <button type="button" 
+                        @click="openRatingModal(activeOrder?.order_number, activeOrder?.waiter_id)"
+                        style="width: 100%; padding: 0.95rem; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; border: none; border-radius: 14px; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35);">
+                    <i class="fa-solid fa-star"></i>
+                    <span>{{ __('tips.rate_experience') ?? 'Գնահատել սպասարկումը' }}</span>
+                </button>
+            </template>
+
             @if(!empty($table))
             <!-- Call Waiter from Tracker (Only when at table) -->
             <button type="button" 

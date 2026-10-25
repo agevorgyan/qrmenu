@@ -649,6 +649,106 @@
                     </div>
                 </div>
 
+                <!-- Tips & Gratuity Section -->
+                <template x-if="isTipsApplicable">
+                    <div class="cart-tip-card">
+                        <div class="cart-tip-header">
+                            <div class="cart-tip-header-left">
+                                <div class="cart-tip-icon">
+                                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                                </div>
+                                <div>
+                                    <div class="cart-tip-title">{{ __('tips.add_tip') ?? 'Ավելացնել թեյավճար' }}</div>
+                                    <div class="cart-tip-subtitle">{{ __('tips.tip_description') ?? 'Շնորհակալություն հիանալի սպասարկման համար' }}</div>
+                                </div>
+                            </div>
+                            <template x-if="tipAmount > 0">
+                                <span class="cart-tip-active-badge">
+                                    +<span x-text="Number(tipAmount).toLocaleString()"></span> {{ $vendor->currency }}
+                                </span>
+                            </template>
+                        </div>
+
+                        <!-- Tip Selector Pills -->
+                        <div class="cart-tip-options-grid">
+                            <!-- No Tip Option (Default) -->
+                            <button type="button" 
+                                    @click="setTip('none', 0)"
+                                    class="cart-tip-pill"
+                                    :class="{ 'is-selected': selectedTipType === 'none' }">
+                                <span>{{ __('tips.no_tip') ?? 'Առանց' }}</span>
+                            </button>
+
+                            <!-- Predefined Percentage Options -->
+                            <template x-for="pct in (tipsRatingsSettings.tip_percentages || [5, 10, 15, 20])" :key="'pct-' + pct">
+                                <button type="button" 
+                                        @click="setTip('percentage', pct)"
+                                        class="cart-tip-pill"
+                                        :class="{ 'is-selected': selectedTipType === 'percentage' && selectedTipValue === pct }">
+                                    <span x-text="pct + '%'"></span>
+                                    <span class="cart-tip-pill-amt" x-text="Number(Math.round((cartSubtotal * pct) / 100)).toLocaleString() + ' {{ $vendor->currency }}'"></span>
+                                </button>
+                            </template>
+
+                            <!-- Predefined Fixed Amounts -->
+                            <template x-for="amt in (tipsRatingsSettings.fixed_tip_amounts || [200, 500, 1000])" :key="'amt-' + amt">
+                                <button type="button" 
+                                        @click="setTip('fixed', amt)"
+                                        class="cart-tip-pill"
+                                        :class="{ 'is-selected': selectedTipType === 'fixed' && selectedTipValue === amt }">
+                                    <span x-text="Number(amt).toLocaleString() + ' {{ $vendor->currency }}'"></span>
+                                </button>
+                            </template>
+
+                            <!-- Custom Amount Option -->
+                            <template x-if="tipsRatingsSettings.allow_custom_tip">
+                                <button type="button" 
+                                        @click="setTip('custom', customTipInput || 0)"
+                                        class="cart-tip-pill"
+                                        :class="{ 'is-selected': selectedTipType === 'custom' }">
+                                    <i class="fa-solid fa-pen-to-square" style="font-size: 0.72rem;"></i>
+                                    <span>{{ __('tips.custom_amount') ?? 'Այլ' }}</span>
+                                </button>
+                            </template>
+                        </div>
+
+                        <!-- Custom Tip Input Drawer -->
+                        <template x-if="selectedTipType === 'custom'">
+                            <div class="cart-custom-tip-wrap">
+                                <div class="cart-custom-tip-field">
+                                    <span class="cart-custom-tip-curr">{{ $vendor->currency }}</span>
+                                    <input type="number" 
+                                           x-model.number="customTipInput" 
+                                           @input="setTip('custom', customTipInput)"
+                                           placeholder="0"
+                                           min="0"
+                                           step="100"
+                                           class="cart-custom-tip-input">
+                                </div>
+                                <div class="cart-custom-tip-hint">
+                                    {{ __('tips.enter_tip_amount') ?? 'Մուտքագրեք ցանկալի թեյավճարի գումարը' }}
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Optional Waiter Selection -->
+                        <template x-if="tipsRatingsSettings.allow_waiter_selection && tipsRatingsSettings.waiters && tipsRatingsSettings.waiters.length > 0">
+                            <div class="cart-tip-waiter-wrap">
+                                <label class="cart-tip-waiter-label">
+                                    <i class="fa-solid fa-user-tie"></i>
+                                    <span>{{ __('tips.select_waiter_optional') ?? 'Ում եք ցանկանում թողնել թեյավճարը (ըստ ցանկության)' }}</span>
+                                </label>
+                                <select x-model="selectedWaiterId" class="cart-tip-waiter-select">
+                                    <option :value="null">{{ __('tips.general_staff_pool') ?? 'Ընդհանուր անձնակազմին / Սրահին' }}</option>
+                                    <template x-for="waiter in tipsRatingsSettings.waiters" :key="waiter.id">
+                                        <option :value="waiter.id" x-text="waiter.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
                 <!-- Pricing Breakdown Summary Card -->
                 <div class="cart-summary-card">
                     <div class="cart-summary-row">
@@ -709,6 +809,23 @@
                                         <span class="cart-summary-curr">{{ $vendor->currency }}</span>
                                     </span>
                                 </template>
+                            </span>
+                        </div>
+                    </template>
+
+                    <!-- Tip Row in Summary Card -->
+                    <template x-if="tipAmount > 0">
+                        <div class="cart-summary-row">
+                            <span class="cart-summary-label" style="display: flex; align-items: center; gap: 0.35rem;">
+                                <i class="fa-solid fa-hand-holding-dollar" style="color: #10b981; font-size: 0.8rem;"></i>
+                                <span>{{ __('tips.tip') ?? 'Թեյավճար' }}</span>
+                                <template x-if="selectedTipType === 'percentage'">
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);" x-text="'(' + selectedTipValue + '%)'"></span>
+                                </template>
+                            </span>
+                            <span class="cart-summary-val">
+                                <span style="color: #10b981; font-weight: 700;">+<span x-text="Number(tipAmount).toLocaleString()"></span></span>
+                                <span class="cart-summary-curr">{{ $vendor->currency }}</span>
                             </span>
                         </div>
                     </template>
@@ -865,6 +982,162 @@
 </div>
 
 <style>
+    /* Tip Selection Card & Controls */
+    .cart-tip-card {
+        background: var(--bg-main);
+        border: 1px solid var(--border-color);
+        border-radius: 18px;
+        padding: 1rem;
+        margin-top: 1.15rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    }
+    .cart-tip-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.85rem;
+    }
+    .cart-tip-header-left {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+    }
+    .cart-tip-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+        flex-shrink: 0;
+    }
+    .cart-tip-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: var(--text-main);
+        line-height: 1.2;
+    }
+    .cart-tip-subtitle {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        margin-top: 0.1rem;
+    }
+    .cart-tip-active-badge {
+        font-size: 0.8rem;
+        font-weight: 800;
+        color: #10b981;
+        background: rgba(16, 185, 129, 0.12);
+        padding: 0.25rem 0.6rem;
+        border-radius: 8px;
+        white-space: nowrap;
+    }
+    .cart-tip-options-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+        gap: 0.5rem;
+    }
+    .cart-tip-pill {
+        background: var(--bg-card);
+        border: 1.5px solid var(--border-color);
+        border-radius: 12px;
+        padding: 0.55rem 0.4rem;
+        color: var(--text-main);
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.15rem;
+        transition: all 0.2s ease;
+    }
+    .cart-tip-pill:hover {
+        border-color: #10b981;
+        background: rgba(16, 185, 129, 0.05);
+    }
+    .cart-tip-pill.is-selected {
+        border-color: #10b981;
+        background: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+    }
+    .cart-tip-pill-amt {
+        font-size: 0.68rem;
+        font-weight: 500;
+        color: var(--text-muted);
+    }
+    .cart-tip-pill.is-selected .cart-tip-pill-amt {
+        color: #10b981;
+    }
+    .cart-custom-tip-wrap {
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px dashed var(--border-color);
+    }
+    .cart-custom-tip-field {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    .cart-custom-tip-curr {
+        position: absolute;
+        left: 0.85rem;
+        font-weight: 800;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+    .cart-custom-tip-input {
+        width: 100%;
+        padding: 0.65rem 0.85rem 0.65rem 3.2rem;
+        background: var(--bg-card);
+        border: 1.5px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--text-main);
+        font-size: 0.95rem;
+        font-weight: 700;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    .cart-custom-tip-input:focus {
+        border-color: #10b981;
+    }
+    .cart-custom-tip-hint {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        margin-top: 0.35rem;
+        padding-left: 0.2rem;
+    }
+    .cart-tip-waiter-wrap {
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px dashed var(--border-color);
+    }
+    .cart-tip-waiter-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-bottom: 0.35rem;
+    }
+    .cart-tip-waiter-select {
+        width: 100%;
+        padding: 0.55rem 0.75rem;
+        background: var(--bg-card);
+        border: 1.5px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--text-main);
+        font-size: 0.85rem;
+        font-weight: 600;
+        outline: none;
+    }
+
     /* AI Cart Recommendations */
     .cart-ai-recs-container {
         margin-top: 1.15rem;

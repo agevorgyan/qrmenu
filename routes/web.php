@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\AdminEventInquiryController;
 use App\Http\Controllers\AdminReservationController;
+use App\Http\Controllers\AdminSplitBillController;
 use App\Http\Controllers\AdminTableController;
+use App\Http\Controllers\AdminTipRatingController;
 use App\Http\Controllers\AiMenuController;
 use App\Http\Controllers\AiWaiterController;
 use App\Http\Controllers\AnalyticsController;
@@ -88,6 +90,28 @@ Route::get('/m/{vendor_slug}/events/status/{reference}', [StorefrontEventInquiry
 Route::post('/api/m/{vendor_slug}/events', [StorefrontEventInquiryController::class, 'submitInquiry'])
     ->middleware('throttle:15,1')
     ->name('client.event_inquiry.submit');
+
+// Customer Feedback & Tips Rating Storefront Routes
+Route::get('/m/{vendor_slug}/rate/{order_number?}', [ClientStorefrontController::class, 'showRatingPage'])
+    ->middleware('throttle:60,1')
+    ->name('client.rate');
+Route::post('/api/m/{vendor_slug}/rate', [ClientStorefrontController::class, 'submitRating'])
+    ->middleware('throttle:30,1')
+    ->name('client.rating.submit');
+Route::post('/api/m/{vendor_slug}/tip', [ClientStorefrontController::class, 'submitDirectTip'])
+    ->middleware('throttle:30,1')
+    ->name('client.tip.submit');
+
+// Split Bill Customer Storefront Routes
+Route::get('/m/{vendor_slug}/bill/{token}', [ClientStorefrontController::class, 'showSharedBill'])
+    ->middleware('throttle:60,1')
+    ->name('client.bill.show');
+Route::get('/api/m/{vendor_slug}/bill/{token}', [ClientStorefrontController::class, 'getBillStatus'])
+    ->middleware('throttle:60,1')
+    ->name('client.bill.status');
+Route::post('/api/m/{vendor_slug}/bill/{token}/split', [ClientStorefrontController::class, 'submitSplitPayment'])
+    ->middleware('throttle:30,1')
+    ->name('client.bill.split');
 
 Route::get('/m/{vendor_slug}/{location_slug?}', [ClientStorefrontController::class, 'showMenu'])
     ->middleware('throttle:120,1')
@@ -517,6 +541,24 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cas
 
     // Analytics
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
+
+    // Tips & Waiter Ratings (Pro / Business Plan Feature)
+    Route::middleware([EnsurePlanHasFeature::class.':tips.ratings'])->group(function () {
+        Route::get('/tips-ratings', [AdminTipRatingController::class, 'reportsIndex'])->name('tips_ratings.reports');
+        Route::get('/tips-ratings/export-tips', [AdminTipRatingController::class, 'exportTips'])->name('tips_ratings.export_tips');
+        Route::get('/tips-ratings/export-ratings', [AdminTipRatingController::class, 'exportRatings'])->name('tips_ratings.export_ratings');
+        Route::post('/tips-ratings/ratings/{rating}/moderate', [AdminTipRatingController::class, 'moderateRating'])->name('tips_ratings.moderate');
+        Route::get('/settings/tips-ratings', [AdminTipRatingController::class, 'settingsIndex'])->name('settings.tips_ratings');
+        Route::post('/settings/tips-ratings', [AdminTipRatingController::class, 'updateSettings'])->name('settings.tips_ratings.update');
+    });
+
+    // Split Bill (Pro / Business Plan Feature)
+    Route::middleware([EnsurePlanHasFeature::class.':bills.split'])->group(function () {
+        Route::get('/settings/split-bill', [AdminSplitBillController::class, 'settingsIndex'])->name('settings.split_bill');
+        Route::post('/settings/split-bill', [AdminSplitBillController::class, 'updateSettings'])->name('settings.split_bill.update');
+        Route::get('/orders/{order}/split-bill', [AdminSplitBillController::class, 'showOrderSplit'])->name('orders.split_bill');
+        Route::post('/split-bill-payments/{payment}/approve', [AdminSplitBillController::class, 'approvePayment'])->name('split_bill.approve_payment');
+    });
 
     // User Profile & 2FA Security
     Route::get('/profile', [ProfileSecurityController::class, 'index'])->name('profile');

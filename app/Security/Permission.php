@@ -62,6 +62,22 @@ class Permission
 
     public const REPORTS_EXPORT = 'reports.export';
 
+    // Tips and Ratings permissions
+    public const TIPS_VIEW = 'tips.view';
+
+    public const TIPS_MANAGE = 'tips.manage';
+
+    public const RATINGS_VIEW = 'ratings.view';
+
+    public const RATINGS_MANAGE = 'ratings.manage';
+
+    public const STAFF_METRICS_VIEW = 'staff.metrics';
+
+    // Split Bill permissions
+    public const SPLIT_BILL_VIEW = 'split_bill.view';
+
+    public const SPLIT_BILL_MANAGE = 'split_bill.manage';
+
     // Translation permissions
     public const TRANSLATIONS_VIEW = 'translations.view';
 
@@ -114,6 +130,13 @@ class Permission
             self::STORAGE_MANAGE,
             self::REPORTS_VIEW,
             self::REPORTS_EXPORT,
+            self::TIPS_VIEW,
+            self::TIPS_MANAGE,
+            self::RATINGS_VIEW,
+            self::RATINGS_MANAGE,
+            self::STAFF_METRICS_VIEW,
+            self::SPLIT_BILL_VIEW,
+            self::SPLIT_BILL_MANAGE,
             self::TRANSLATIONS_VIEW,
             self::TRANSLATIONS_MANAGE,
             self::TRANSLATIONS_PUBLISH,
@@ -147,6 +170,13 @@ class Permission
                 self::STORAGE_VIEW,
                 self::REPORTS_VIEW,
                 self::REPORTS_EXPORT,
+                self::TIPS_VIEW,
+                self::TIPS_MANAGE,
+                self::RATINGS_VIEW,
+                self::RATINGS_MANAGE,
+                self::STAFF_METRICS_VIEW,
+                self::SPLIT_BILL_VIEW,
+                self::SPLIT_BILL_MANAGE,
             ],
             'vendor_owner' => [
                 self::MENU_VIEW,
@@ -176,6 +206,13 @@ class Permission
                 self::STORAGE_MANAGE,
                 self::REPORTS_VIEW,
                 self::REPORTS_EXPORT,
+                self::TIPS_VIEW,
+                self::TIPS_MANAGE,
+                self::RATINGS_VIEW,
+                self::RATINGS_MANAGE,
+                self::STAFF_METRICS_VIEW,
+                self::SPLIT_BILL_VIEW,
+                self::SPLIT_BILL_MANAGE,
             ],
             'manager' => [
                 self::MENU_VIEW,
@@ -204,6 +241,12 @@ class Permission
                 self::STORAGE_MANAGE,
                 self::REPORTS_VIEW,
                 self::REPORTS_EXPORT,
+                self::TIPS_VIEW,
+                self::RATINGS_VIEW,
+                self::RATINGS_MANAGE,
+                self::STAFF_METRICS_VIEW,
+                self::SPLIT_BILL_VIEW,
+                self::SPLIT_BILL_MANAGE,
             ],
             'staff' => [
                 self::MENU_VIEW,
@@ -212,6 +255,9 @@ class Permission
                 self::CUSTOMERS_VIEW,
                 self::LOCATIONS_VIEW,
                 self::STORAGE_VIEW,
+                self::TIPS_VIEW,
+                self::RATINGS_VIEW,
+                self::SPLIT_BILL_VIEW,
                 // Staff CANNOT:
                 // modify billing
                 // modify AI credentials
@@ -240,6 +286,7 @@ class Permission
                 self::CUSTOMERS_VIEW,
                 self::LOCATIONS_VIEW,
                 self::REPORTS_VIEW,
+                self::TIPS_VIEW,
                 // Cashier CANNOT:
                 // manage menu items
                 // export customer data

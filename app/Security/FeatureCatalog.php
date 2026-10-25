@@ -35,10 +35,19 @@ class FeatureCatalog
 
     public const API_ACCESS = 'api.access';
 
+    public const TIPS_RATINGS = 'tips.ratings';
+
+    public const BILLS_SPLIT = 'bills.split';
+
     /**
      * Map of legacy or abbreviated aliases to canonical feature keys.
      */
     protected const ALIASES = [
+        // Split Bill aliases
+        'split_bill' => self::BILLS_SPLIT,
+        'split_bills' => self::BILLS_SPLIT,
+        'bills.split' => self::BILLS_SPLIT,
+
         // Orders aliases
         'orders' => self::ORDERS_ONLINE,
         'online_orders' => self::ORDERS_ONLINE,
@@ -91,6 +100,13 @@ class FeatureCatalog
         'custom_domain' => self::BRANDING_CUSTOM_DOMAIN,
         'domain' => self::BRANDING_CUSTOM_DOMAIN,
 
+        // Tips & Ratings aliases
+        'tips' => self::TIPS_RATINGS,
+        'ratings' => self::TIPS_RATINGS,
+        'waiter_rating' => self::TIPS_RATINGS,
+        'tips_ratings' => self::TIPS_RATINGS,
+        'service_ratings' => self::TIPS_RATINGS,
+
         // Menu aliases
         'menu' => self::MENU_BASE,
         'qr' => self::MENU_BASE,
@@ -140,6 +156,8 @@ class FeatureCatalog
             self::AI_WAITER,
             self::BRANDING_CUSTOM_DOMAIN,
             self::API_ACCESS,
+            self::TIPS_RATINGS,
+            self::BILLS_SPLIT,
         ];
     }
 
@@ -173,6 +191,8 @@ class FeatureCatalog
                 self::AI_WAITER,
                 self::BRANDING_CUSTOM_DOMAIN,
                 self::API_ACCESS,
+                self::TIPS_RATINGS,
+                self::BILLS_SPLIT,
             ],
             'pro' => [
                 self::MENU_BASE,
@@ -186,6 +206,8 @@ class FeatureCatalog
                 self::AI_MENU_BUILDER,
                 self::AI_WAITER,
                 self::BRANDING_CUSTOM_DOMAIN,
+                self::TIPS_RATINGS,
+                self::BILLS_SPLIT,
             ],
             default => [
                 self::MENU_BASE,
@@ -220,6 +242,7 @@ class FeatureCatalog
             self::AI_MENU_BUILDER,
             self::AI_WAITER,
             self::BRANDING_CUSTOM_DOMAIN,
+            self::TIPS_RATINGS,
         ], true)) {
             return 'Pro';
         }
@@ -250,6 +273,7 @@ class FeatureCatalog
             self::AI_WAITER => 'AI Մատուցող (խորհրդատու)',
             self::BRANDING_CUSTOM_DOMAIN => 'Սեփական դոմեն (White-label)',
             self::API_ACCESS => 'API Ինտեգրացիաներ',
+            self::TIPS_RATINGS => 'Թեյավճար և Մատուցողի գնահատում',
         ];
 
         $namesEn = [
@@ -268,6 +292,7 @@ class FeatureCatalog
             self::AI_WAITER => 'AI Waiter Advisor',
             self::BRANDING_CUSTOM_DOMAIN => 'Custom Domain Branding',
             self::API_ACCESS => 'API Access',
+            self::TIPS_RATINGS => 'Tips & Waiter Rating',
         ];
 
         if ($locale === 'en') {

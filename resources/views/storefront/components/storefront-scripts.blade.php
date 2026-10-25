@@ -36,6 +36,15 @@
     $initialOrderType = !empty($table) ? 'dine_in' : ($vendor->takeaway_enabled ? 'takeaway' : ($vendor->delivery_enabled ? 'delivery' : 'takeaway'));
     $initialClosingNotice = $channelSchedules[$initialOrderType] ?? null;
 
+    $tipSetting = $vendor->getTipRatingSetting();
+    $splitBillSetting = $vendor->getSplitBillSetting();
+    $activeWaiters = $vendor->users()
+        ->whereIn('role', ['staff', 'manager', 'cashier'])
+        ->get(['id', 'name'])
+        ->map(fn($u) => ['id' => $u->id, 'name' => $u->name])
+        ->values()
+        ->toArray();
+
     $storefrontBootstrap = [
         'vendor' => [
             'slug' => $vendor->slug,
@@ -68,6 +77,8 @@
             'submitOrder' => route('client.order.submit', ['vendor_slug' => $vendor->slug]),
             'orderStatus' => route('client.order.status', ['vendor_slug' => $vendor->slug, 'order_number' => '___NUM___']),
             'callWaiter' => route('client.waiter.call', ['vendor_slug' => $vendor->slug]),
+            'submitRating' => route('client.rating.submit', ['vendor_slug' => $vendor->slug]),
+            'submitTip' => route('client.tip.submit', ['vendor_slug' => $vendor->slug]),
             'setLanguage' => route('client.language.set', ['vendor_slug' => $vendor->slug]),
             'aiSessionStart' => route('client.ai_waiter.session.start', ['vendor_slug' => $vendor->slug]),
             'aiSessionBase' => url('/api/m/' . $vendor->slug . '/ai-waiter/session'),
@@ -89,6 +100,33 @@
             'deliveryFreeFrom' => $vendor->delivery_free_from !== null ? (float) $vendor->delivery_free_from : null,
             'takeawayEnabled' => (bool) $vendor->takeaway_enabled,
             'takeawayMinAmount' => (float) ($vendor->takeaway_min_amount ?? 0),
+            'tipsRatings' => [
+                'is_module_enabled' => (bool) $tipSetting->is_enabled,
+                'tips_enabled' => $vendor->isTipsEnabled(),
+                'ratings_enabled' => $vendor->isRatingsEnabled(),
+                'tip_percentages' => $tipSetting->tip_percentages ?? [5, 10, 15, 20],
+                'fixed_tip_amounts' => $tipSetting->fixed_tip_amounts ?? [200, 500, 1000],
+                'allow_custom_tip' => (bool) $tipSetting->allow_custom_tip,
+                'default_tip_selection' => $tipSetting->default_tip_selection ?? 'none',
+                'calculation_base' => $tipSetting->calculation_base ?? 'subtotal',
+                'applicable_order_types' => $tipSetting->applicable_order_types ?? ['dine_in', 'takeaway', 'delivery'],
+                'min_tip_amount' => (float) ($tipSetting->min_tip_amount ?? 0),
+                'max_tip_amount' => (float) ($tipSetting->max_tip_amount ?? 50000),
+                'allow_cash_tips' => (bool) $tipSetting->allow_cash_tips,
+                'rating_scale' => (int) ($tipSetting->rating_scale ?? 5),
+                'feedback_categories' => $tipSetting->feedback_categories ?? ['food_quality', 'service_speed', 'waiter_politeness', 'cleanliness', 'ambiance'],
+                'is_written_feedback_optional' => (bool) $tipSetting->is_written_feedback_optional,
+                'allow_anonymous_ratings' => (bool) $tipSetting->allow_anonymous_ratings,
+                'allow_waiter_selection' => (bool) $tipSetting->allow_waiter_selection,
+                'waiters' => $activeWaiters,
+            ],
+            'splitBill' => [
+                'is_enabled' => $vendor->isSplitBillEnabled(),
+                'allow_equal_split' => (bool) $splitBillSetting->allow_equal_split,
+                'allow_item_split' => (bool) $splitBillSetting->allow_item_split,
+                'allow_custom_amount' => (bool) $splitBillSetting->allow_custom_amount,
+                'allow_share_link' => (bool) $splitBillSetting->allow_share_link,
+            ],
         ],
         'translations' => [
             'added_to_cart' => __('menu.added_to_cart'),

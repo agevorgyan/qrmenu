@@ -103,6 +103,13 @@ class SubmitOrderRequest extends FormRequest
             'notes' => 'nullable|string',
             'payment_method' => 'nullable|string|in:cash,pos_terminal,idram,telcell,fastshift,arca,stripe',
             'active_order_number' => 'nullable|string|max:50',
+            'tip_amount' => 'nullable|numeric|min:0|max:1000000',
+            'tip_type' => 'nullable|string|in:none,percentage,fixed,custom',
+            'tip_value' => 'nullable|numeric|min:0',
+            'waiter_id' => [
+                'nullable',
+                Rule::exists('users', 'id')->where('vendor_id', $vendorId),
+            ],
             'items' => 'required|array|min:1',
             'items.*.product_id' => [
                 'required',
