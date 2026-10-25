@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Vendor;
 use App\Services\AiQuotaService;
 use App\Services\AiWaiterService;
+use App\Services\TimeAwareService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -65,6 +66,9 @@ class AiWaiterController extends Controller
     public function startSession(Request $request, string $vendor_slug): JsonResponse
     {
         $vendor = Vendor::where('slug', $vendor_slug)->where('is_active', true)->firstOrFail();
+        if (! $vendor->ai_waiter_enabled) {
+            abort(403, 'AI Waiter is disabled for this restaurant.');
+        }
         $this->enforceRateLimits($request, $vendor, null);
 
         $lang = $this->resolveLanguage($request, $vendor);
@@ -72,16 +76,35 @@ class AiWaiterController extends Controller
         if ($locationId && ! $vendor->locations()->where('id', $locationId)->exists()) {
             $locationId = null;
         }
-        $tableNumber = $request->input('table_number');
+
+        $tableNumber = $request->input('table_number') ?: session('storefront_table_'.$vendor->slug);
+        $entryContext = $request->input('entry_context') ?: session('storefront_entry_context_'.$vendor->slug, ! empty($tableNumber) ? 'table_qr' : 'general_menu');
+
+        $timeAwareService = app(TimeAwareService::class);
+        $greeting = $timeAwareService->getGreeting($vendor, $lang, $entryContext, $tableNumber);
+        $activeMealPeriod = $timeAwareService->getActiveMealPeriod($vendor);
 
         $session = AiWaiterSession::create([
             'vendor_id' => $vendor->id,
             'location_id' => $locationId,
             'session_token' => AiWaiterSession::generateSecureToken(),
             'table_number' => $tableNumber,
+            'entry_context' => $entryContext,
             'language' => $lang,
             'status' => 'started',
-            'preferences' => [],
+            'conversation_state' => [
+                'entry_context' => $entryContext,
+                'table_number' => $tableNumber,
+                'language' => $lang,
+                'shown_product_ids' => [],
+                'rejected_product_ids' => [],
+                'current_workflow' => null,
+            ],
+            'preferences' => [
+                'entry_context' => $entryContext,
+                'table_number' => $tableNumber,
+                'active_meal_period' => $activeMealPeriod,
+            ],
             'questions_history' => [],
             'answers_history' => [],
             'recommendations' => [],
@@ -95,6 +118,10 @@ class AiWaiterController extends Controller
             'session_id' => $session->session_token,
             'session_token' => $session->session_token,
             'language' => $lang,
+            'entry_context' => $entryContext,
+            'table_number' => $tableNumber,
+            'greeting' => $greeting,
+            'active_meal_period' => $activeMealPeriod,
             'allowed_languages' => $vendor->getAiWaiterLanguages(),
             'allowed_language_details' => $vendor->getAiWaiterLanguageDetails(),
             'waiter_name' => $vendor->getAiWaiterName(),
@@ -246,16 +273,32 @@ class AiWaiterController extends Controller
         $lang = $session->language ?? $this->resolveLanguage($request, $vendor);
         $locationId = $session->location_id ?: ($request->input('location_id') ? (int) $request->input('location_id') : null);
 
+        $conversationState = (array) ($session->conversation_state ?? []);
+        $shown = array_map('intval', (array) ($conversationState['shown_product_ids'] ?? []));
+        $rejected = array_map('intval', (array) ($conversationState['rejected_product_ids'] ?? []));
+
+        $preferences = (array) ($session->preferences ?? []);
+        $preferences['shown_product_ids'] = $shown;
+        $preferences['rejected_product_ids'] = $rejected;
+
+        $timeAwareService = app(TimeAwareService::class);
+        $preferences['active_meal_period'] = $timeAwareService->getActiveMealPeriod($vendor);
+
         $result = $this->aiWaiterService->recommendDishes(
             $vendor,
-            $session->preferences ?? [],
+            $preferences,
             $session->preferences['free_text'] ?? null,
             $lang,
             $locationId
         );
 
+        $newShownIds = array_column($result['main_recommendations'], 'id');
+        $updatedShown = array_values(array_unique(array_merge($shown, array_map('intval', $newShownIds))));
+        $conversationState['shown_product_ids'] = $updatedShown;
+
         $session->update([
             'status' => 'recommended',
+            'conversation_state' => $conversationState,
             'recommendations' => [
                 'main' => array_column($result['main_recommendations'], 'id'),
                 'secondary' => array_column($result['secondary_recommendations'], 'id'),
@@ -301,14 +344,25 @@ class AiWaiterController extends Controller
         $lang = $session->language ?? $this->resolveLanguage($request, $vendor);
         $locationId = $session->location_id ?: ($request->input('location_id') ? (int) $request->input('location_id') : null);
 
+        $conversationState = (array) ($session->conversation_state ?? []);
+        $sessionData = $session->toArray();
+        $sessionData['conversation_state'] = $conversationState;
+        $sessionData['entry_context'] = $session->entry_context;
+        $sessionData['table_number'] = $session->table_number;
+
         $chatResponse = $this->aiWaiterService->answerChatQuery(
             $vendor,
             $message,
-            $session->toArray(),
+            $sessionData,
             $lang,
             $locationId,
             $history
         );
+
+        if (! empty($chatResponse['updated_conversation_state'])) {
+            $conversationState = array_merge($conversationState, $chatResponse['updated_conversation_state']);
+            $session->conversation_state = $conversationState;
+        }
 
         // Persist conversation history to session for continuity
         $answers = (array) ($session->answers_history ?? []);
@@ -330,6 +384,36 @@ class AiWaiterController extends Controller
             'session_token' => $session->session_token,
             'reply' => $chatResponse['reply'],
             'suggested_products' => $chatResponse['suggested_products'],
+            'quick_replies' => $chatResponse['quick_replies'] ?? [],
+            'action' => $chatResponse['action'] ?? null,
+            'intent' => $chatResponse['intent'] ?? 'general',
+            'conversation_state' => $session->conversation_state,
+        ]);
+    }
+
+    /**
+     * Mark a product as rejected by guest in current session.
+     */
+    public function rejectProduct(Request $request, string $vendor_slug, string $token): JsonResponse
+    {
+        $vendor = Vendor::where('slug', $vendor_slug)->where('is_active', true)->firstOrFail();
+        $this->enforceRateLimits($request, $vendor, $token);
+        $session = $this->resolveSession($vendor, $token, $request);
+
+        $productId = (int) $request->input('product_id');
+        $conversationState = (array) ($session->conversation_state ?? []);
+        $rejected = array_map('intval', (array) ($conversationState['rejected_product_ids'] ?? []));
+
+        if ($productId > 0 && ! in_array($productId, $rejected, true)) {
+            $rejected[] = $productId;
+            $conversationState['rejected_product_ids'] = $rejected;
+            $session->conversation_state = $conversationState;
+            $session->saveQuietly();
+        }
+
+        return response()->json([
+            'success' => true,
+            'rejected_product_ids' => $rejected,
         ]);
     }
 

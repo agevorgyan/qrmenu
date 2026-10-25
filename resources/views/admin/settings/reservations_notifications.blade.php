@@ -258,7 +258,58 @@
                 </div>
             </div>
 
-            <!-- 3. TEMPLATE PREVIEW & DIAGNOSTIC TEST EMAIL CARD -->
+            <!-- 3. RESTAURANT TELEGRAM NOTIFICATIONS CARD -->
+            @php
+                $tgSettings = $vendor->telegram_settings ?? [];
+                $tgChatId = $vendor->getTelegramChatId();
+                $tgNotifyReservations = $vendor->shouldNotifyTelegram('reservations');
+            @endphp
+            <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.9rem;">
+                        <span style="width: 44px; height: 44px; border-radius: 12px; background: rgba(34, 158, 217, 0.15); color: #229ed9; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; flex-shrink: 0;">
+                            <i class="fa-brands fa-telegram"></i>
+                        </span>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">
+                                {{ __('Restaurant Staff Telegram Notifications') }}
+                            </h3>
+                            <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted);">
+                                {{ __('Receive instant Telegram messages with guest details, table assignment, and admin links') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <label class="switch">
+                        <input type="checkbox" name="telegram_notify_reservations" value="1" {{ $tgNotifyReservations ? 'checked' : '' }}>
+                        <span class="slider round" style="background-color: #229ed9;"></span>
+                    </label>
+                </div>
+
+                <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-main); margin-bottom: 0.25rem;">
+                                @if(!empty($tgChatId))
+                                    <span style="color: #10b981;"><i class="fa-solid fa-circle-check"></i> {{ __('Telegram Connected') }}</span>
+                                    <span style="color: var(--text-muted); font-size: 0.85rem; margin-left: 0.5rem; font-family: monospace;">Chat ID: {{ $tgChatId }}</span>
+                                @else
+                                    <span style="color: #f59e0b;"><i class="fa-solid fa-triangle-exclamation"></i> {{ __('Telegram Chat ID Not Set') }}</span>
+                                @endif
+                            </div>
+                            <div style="font-size: 0.82rem; color: var(--text-muted);">
+                                {{ __('Real-time alerts are sent to staff when new reservations are created, modified, or cancelled.') }}
+                            </div>
+                        </div>
+
+                        <a href="{{ route('admin.settings.index', ['tab' => 'notifications']) }}" class="btn btn-secondary" style="border-radius: 10px; font-size: 0.82rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-brands fa-telegram" style="color: #229ed9;"></i> {{ __('Manage Bot & Chat ID') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. TEMPLATE PREVIEW & DIAGNOSTIC TEST EMAIL CARD -->
             <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);" x-data="templatePreview()">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                     <div style="display: flex; align-items: center; gap: 0.9rem;">

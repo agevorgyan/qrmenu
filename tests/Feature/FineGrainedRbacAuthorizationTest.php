@@ -284,10 +284,15 @@ class FineGrainedRbacAuthorizationTest extends TestCase
         // 403 on team index
         $this->actingAs($this->staff)->get(route('admin.team.index'))->assertStatus(403);
 
-        // 403 on settings update
-        $this->actingAs($this->staff)->post(route('admin.settings.update'), [
-            'service_fee_percent' => 10,
-        ])->assertStatus(403);
+        $this->actingAs($this->staff)
+            ->post(route('admin.settings.update'), [
+                'service_fee_percent' => 10,
+                'service_fee_type' => 'percentage',
+                'service_fee_value' => 10,
+                'delivery_fee' => 500,
+                'delivery_min_amount' => 2000,
+            ])
+            ->assertForbidden();
 
         // 403 on AI settings update
         $this->actingAs($this->staff)->post(route('admin.settings.ai.update'), [

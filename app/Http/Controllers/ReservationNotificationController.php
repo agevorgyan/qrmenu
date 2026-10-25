@@ -237,6 +237,12 @@ class ReservationNotificationController extends Controller
             'reservation_notification_settings' => $updatedSettings,
         ]);
 
+        if ($request->has('telegram_notify_reservations')) {
+            $tgSettings = $vendor->telegram_settings ?? [];
+            $tgSettings['notify_reservations'] = $request->boolean('telegram_notify_reservations');
+            $vendor->update(['telegram_settings' => $tgSettings]);
+        }
+
         return back()->with('success', __('Reservation & pre-order notification settings successfully saved.'));
     }
 

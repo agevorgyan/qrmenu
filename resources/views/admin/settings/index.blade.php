@@ -1746,6 +1746,7 @@ if (window.Alpine) {
                 $tgNotifyOrders = !empty($tgSettings['notify_orders']) || !isset($tgSettings['notify_orders']);
                 $tgNotifyWaiters = !empty($tgSettings['notify_waiter_calls']) || !isset($tgSettings['notify_waiter_calls']);
                 $tgNotifyPayments = !empty($tgSettings['notify_payments']) || !isset($tgSettings['notify_payments']);
+                $tgNotifyReservations = !empty($tgSettings['notify_reservations']) || !isset($tgSettings['notify_reservations']);
                 $platformBotConfigured = !empty(\App\Models\SystemSetting::get('telegram_bot_token')) || !empty(config('services.telegram.bot_token'));
             @endphp
             <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
@@ -1888,6 +1889,14 @@ if (window.Alpine) {
                                 <div style="font-size: 0.85rem;">
                                     <strong style="color: var(--text-main); display: block;">✅ {{ __('Online Payments') }}</strong>
                                     <span style="color: var(--text-muted); font-size: 0.78rem;">{{ __('Idram, Telcell, ArCa, Stripe confirmations') }}</span>
+                                </div>
+                            </label>
+
+                            <label style="display: flex; align-items: center; gap: 0.65rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.75rem 1rem; cursor: pointer; transition: border-color 0.2s;">
+                                <input type="checkbox" name="telegram_settings[notify_reservations]" value="1" {{ $tgNotifyReservations ? 'checked' : '' }} style="accent-color: #229ed9; width: 18px; height: 18px;">
+                                <div style="font-size: 0.85rem;">
+                                    <strong style="color: var(--text-main); display: block;">📅 {{ __('Table Reservations') }}</strong>
+                                    <span style="color: var(--text-muted); font-size: 0.78rem;">{{ __('Booking requests, modifications, cancellations') }}</span>
                                 </div>
                             </label>
                         </div>

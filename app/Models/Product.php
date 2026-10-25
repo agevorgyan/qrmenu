@@ -258,9 +258,9 @@ class Product extends Model
         } else {
             $tenant = app(TenantContext::class)->getTenant();
             if ($tenant && $tenant->id === $this->vendor_id) {
-                $tz = $tenant->timezone ?? 'Asia/Yerevan';
+                $tz = $tenant->getTimezone();
             } else {
-                $tz = $this->vendor?->timezone ?? 'Asia/Yerevan';
+                $tz = $this->vendor?->getTimezone() ?? config('app.timezone', 'UTC');
             }
         }
 
@@ -425,8 +425,8 @@ class Product extends Model
             return true;
         }
 
-        $tz = 'Asia/Yerevan';
-        $now = $now ? $now->setTimezone($tz) : Carbon::now($tz);
+        $tz = $this->vendor?->getTimezone() ?? (class_exists(TenantContext::class) ? app(TenantContext::class)->getTenant()?->getTimezone() : null) ?? config('app.timezone', 'UTC');
+        $now = $now ? $now->copy()->setTimezone($tz) : Carbon::now($tz);
 
         // 1. Day of week check
         if (! empty($this->available_days) && is_array($this->available_days) && count($this->available_days) < 7) {

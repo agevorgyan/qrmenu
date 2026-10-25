@@ -258,13 +258,14 @@
             <span class="info-btn-text">{{ __('menu.nav_info') }}</span>
         </button>
 
-        <select @change="changeLanguage($event.target.value)" onchange="const u = new URL(window.location.href); u.searchParams.set('lang', this.value); window.location.href = u.toString();" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; border-radius: 10px; font-size: 0.85rem; font-weight: 700; cursor: pointer; height: 38px;">
-            @foreach($vendor->getSupportedLanguages() as $sLang)
-                <option value="{{ $sLang['code'] }}" {{ $lang == $sLang['code'] ? 'selected' : '' }}>
-                    {{ $sLang['flag'] ?? '🌐' }} {{ strtoupper($sLang['code']) }}
-                </option>
-            @endforeach
-        </select>
+        <button type="button" 
+                @click="showLanguageModal = true" 
+                style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; border-radius: 10px; font-size: 0.85rem; font-weight: 700; cursor: pointer; height: 38px; display: inline-flex; align-items: center; gap: 0.35rem;"
+                title="{{ __('Language') }}"
+                aria-label="{{ __('Language') }}">
+            <i class="fa-solid fa-globe" style="color: var(--primary);"></i>
+            <span x-text="(selectedLang || '{{ $lang }}').toUpperCase()"></span>
+        </button>
     </div>
 
     <!-- Category Chips -->
@@ -495,6 +496,9 @@
 
     <!-- Modern Cart & Checkout Modal -->
     @include('storefront.components.cart-modal')
+
+    <!-- Language Selection Modal (Mandatory entry or switcher) -->
+    @include('storefront.components.language-selection-modal')
 
     <!-- AI Waiter Components -->
     @include('storefront.components.welcome-ai-waiter-modal')

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Order;
+use App\Models\Reservation;
 use App\Models\SystemSetting;
 use App\Models\Vendor;
 use App\Models\WaiterCall;
@@ -436,6 +437,123 @@ class TelegramNotificationService
         }
 
         return $call->vendor?->getTelegramChatId();
+    }
+
+    /**
+     * Send real-time notification for a table reservation event to restaurant staff.
+     */
+    public function sendReservationNotification(Reservation $reservation, string $event): bool
+    {
+        $vendor = $reservation->vendor;
+        if (! $vendor instanceof Vendor || ! $vendor->shouldNotifyTelegram('reservations')) {
+            return false;
+        }
+
+        $chatId = $this->resolveChatIdForReservation($reservation);
+        if (empty($chatId)) {
+            return false;
+        }
+
+        $botToken = $vendor->getTelegramBotToken();
+        $topicId = $vendor->getTelegramTopicId();
+
+        $reservation->loadMissing(['location', 'restaurantTable', 'preOrder']);
+
+        $adminLocale = $vendor->admin_locale ?: 'hy';
+        $prevLocale = app()->getLocale();
+        app()->setLocale($adminLocale);
+
+        try {
+            $vendorName = $this->escapeHtml($vendor->name);
+            $locationName = $reservation->location ? ' ('.$this->escapeHtml($reservation->location->name).')' : '';
+
+            $header = match ($event) {
+                'restaurant_cancelled', 'cancelled', 'cancelled_by_customer' => '❌ <b>'.__('Reservation Cancelled', [], $adminLocale).'</b>',
+                'restaurant_modified', 'modified' => '✏️ <b>'.__('Reservation Details Modified', [], $adminLocale).'</b>',
+                'restaurant_confirmed', 'confirmed' => '✅ <b>'.__('Reservation Confirmed', [], $adminLocale).'</b>',
+                'restaurant_rejected', 'rejected' => '🚫 <b>'.__('Reservation Declined', [], $adminLocale).'</b>',
+                default => '🔔 <b>'.__('New Reservation Received', [], $adminLocale).'</b>',
+            };
+
+            $html = "{$header}\n";
+            $html .= "━━━━━━━━━━━━━━━━━━━━\n";
+            $html .= '🏪 <b>'.__('Restaurant', [], $adminLocale).":</b> {$vendorName}{$locationName}\n";
+            $html .= '🔖 <b>'.__('Reference', [], $adminLocale).":</b> <code>#{$reservation->reference}</code>\n";
+            $html .= '👤 <b>'.__('Customer', [], $adminLocale).":</b> {$this->escapeHtml($reservation->customer_name)}\n";
+
+            if (! empty($reservation->customer_phone)) {
+                $html .= '📞 <b>'.__('Phone', [], $adminLocale).":</b> <code>{$this->escapeHtml($reservation->customer_phone)}</code>\n";
+            }
+            if (! empty($reservation->customer_email)) {
+                $html .= '✉️ <b>'.__('Email', [], $adminLocale).":</b> {$this->escapeHtml($reservation->customer_email)}\n";
+            }
+
+            $dateFormatted = $reservation->getFormattedDate($adminLocale);
+            $timeFormatted = $reservation->getFormattedTime();
+            $html .= '📅 <b>'.__('Date & Time', [], $adminLocale).":</b> {$dateFormatted} {$timeFormatted}\n";
+            $html .= '👥 <b>'.__('Guests', [], $adminLocale).':</b> <b>'.$reservation->guest_count.' '.__('persons', [], $adminLocale)."</b>\n";
+
+            $tableName = $reservation->table_name ?: ($reservation->table_number ? __('Table', [], $adminLocale).' #'.$reservation->table_number : '—');
+            $html .= '🪑 <b>'.__('Table', [], $adminLocale).':</b> <b>'.$this->escapeHtml($tableName)."</b>\n";
+
+            $statusLabel = match ($reservation->status) {
+                Reservation::STATUS_CONFIRMED => '🟢 '.__('Confirmed', [], $adminLocale),
+                Reservation::STATUS_CANCELLED => '🔴 '.__('Cancelled', [], $adminLocale),
+                Reservation::STATUS_REJECTED => '🔴 '.__('Declined', [], $adminLocale),
+                Reservation::STATUS_SEATED => '🔵 '.__('Seated', [], $adminLocale),
+                Reservation::STATUS_COMPLETED => '⚪ '.__('Completed', [], $adminLocale),
+                default => '🟡 '.__('Pending Confirmation', [], $adminLocale),
+            };
+            $html .= '⚡ <b>'.__('Status', [], $adminLocale).":</b> {$statusLabel}\n";
+
+            if (! empty($reservation->special_requests)) {
+                $html .= '📝 <b>'.__('Special Requests', [], $adminLocale).":</b> «{$this->escapeHtml($reservation->special_requests)}»\n";
+            }
+
+            if (! empty($reservation->cancellation_reason)) {
+                $html .= '⚠️ <b>'.__('Cancellation Reason', [], $adminLocale).":</b> «{$this->escapeHtml($reservation->cancellation_reason)}»\n";
+            }
+
+            if ($reservation->preOrder) {
+                $preOrderTotal = number_format((float) $reservation->preOrder->total_amount, 0, '.', ',');
+                $html .= "\n🍲 <b>".__('Pre-Ordered Dishes', [], $adminLocale).":</b> <b>{$preOrderTotal} {$reservation->preOrder->currency}</b>\n";
+                $summary = $reservation->preOrder->getFormattedSummary($adminLocale);
+                if ($summary) {
+                    $html .= "<i>{$this->escapeHtml($summary)}</i>\n";
+                }
+            }
+
+            $adminUrl = route('admin.reservations.index', ['search' => $reservation->reference]);
+
+            $replyMarkup = [
+                'inline_keyboard' => [
+                    [
+                        [
+                            'text' => '📅 '.__('Open Reservations', [], $adminLocale),
+                            'url' => $adminUrl,
+                        ],
+                    ],
+                ],
+            ];
+
+            $result = $this->sendMessage($chatId, $html, $botToken, $topicId, $replyMarkup);
+
+            return (bool) ($result['success'] ?? false);
+        } finally {
+            app()->setLocale($prevLocale);
+        }
+    }
+
+    /**
+     * Resolve target chat ID for a reservation (branch-specific chat ID if set, otherwise vendor chat ID).
+     */
+    public function resolveChatIdForReservation(Reservation $reservation): ?string
+    {
+        if ($reservation->location && ! empty($reservation->location->telegram_chat_id)) {
+            return trim($reservation->location->telegram_chat_id);
+        }
+
+        return $reservation->vendor?->getTelegramChatId();
     }
 
     /**

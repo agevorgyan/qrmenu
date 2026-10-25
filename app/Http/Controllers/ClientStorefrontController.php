@@ -16,11 +16,14 @@ use App\Models\MenuTemplate;
 use App\Models\Order;
 use App\Models\PaymentAttempt;
 use App\Models\Product;
+use App\Models\RestaurantTable;
 use App\Models\Vendor;
 use App\Models\WaiterCall;
 use App\Services\PaymentGatewayService;
 use App\Services\Payments\PaymentVerificationService;
 use App\Services\TenantCache;
+use App\Services\TimeAwareService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
@@ -49,25 +52,116 @@ class ClientStorefrontController extends Controller
 
         $supportedLanguages = $vendor->getSupportedLanguages();
         $allowedCodes = array_map(fn ($l) => strtolower($l['code'] ?? ''), $supportedLanguages);
-        $defaultCode = $allowedCodes[0] ?? 'en';
+        $defaultCode = $vendor->getDefaultLanguageCode() ?: ($allowedCodes[0] ?? 'en');
 
-        $lang = strtolower((string) ($request->get('lang') ?? session('app_locale', $defaultCode)));
-        if (! in_array($lang, $allowedCodes) && ! in_array($lang, ['hy', 'en', 'ru', 'fr', 'de', 'es', 'it', 'ge', 'ar'])) {
-            $lang = $defaultCode;
+        $hasExplicitLangParam = $request->has('lang') || $request->has('locale');
+        $savedSessionLang = session('storefront_lang_'.$vendor->slug);
+
+        if ($hasExplicitLangParam) {
+            $candidateLang = strtolower((string) ($request->get('lang') ?: $request->get('locale')));
+            if (in_array($candidateLang, $allowedCodes, true)) {
+                $lang = $candidateLang;
+                session(['storefront_lang_'.$vendor->slug => $lang]);
+                $needsLanguageSelection = false;
+            } else {
+                $lang = $defaultCode;
+                $needsLanguageSelection = true;
+            }
+        } elseif ($savedSessionLang && in_array($savedSessionLang, $allowedCodes, true)) {
+            $lang = $savedSessionLang;
+            $needsLanguageSelection = false;
+        } else {
+            $lang = session('app_locale', $defaultCode);
+            if (! in_array($lang, $allowedCodes, true)) {
+                $lang = $defaultCode;
+            }
+            $needsLanguageSelection = true;
         }
+
         session(['app_locale' => $lang, 'locale' => $lang]);
         App::setLocale($lang);
+
+        // Server-side validate entry context (Table QR vs General Menu)
         $table = null;
-        if ($request->has('table') && $request->filled('table')) {
-            $table = $request->get('table');
-            session(['storefront_table_'.$vendor->slug => $table]);
-        } elseif ($request->has('table') && ! $request->filled('table')) {
-            session()->forget('storefront_table_'.$vendor->slug);
-            $table = null;
-        } elseif (! $request->has('table')) {
-            session()->forget('storefront_table_'.$vendor->slug);
-            $table = null;
+        $entryContext = 'general_menu';
+
+        if ($request->has('table')) {
+            $rawTable = trim((string) $request->get('table'));
+            if ($rawTable !== '') {
+                $isValidTable = false;
+                $validatedTableNumber = null;
+
+                // Check RestaurantTable table_number or uuid for this vendor
+                $matchedTable = RestaurantTable::where('vendor_id', $vendor->id)
+                    ->where('is_active', true)
+                    ->where(function ($q) use ($rawTable) {
+                        $q->where('table_number', $rawTable);
+                        if (Str::isUuid($rawTable)) {
+                            $q->orWhere('uuid', $rawTable);
+                        }
+                    })
+                    ->when($location, fn ($q) => $q->where(function ($sub) use ($location) {
+                        $sub->whereNull('location_id')->orWhere('location_id', $location->id);
+                    }))
+                    ->first();
+
+                if ($matchedTable) {
+                    $isValidTable = true;
+                    $validatedTableNumber = $matchedTable->table_number;
+                } else {
+                    $hasAnyTables = RestaurantTable::where('vendor_id', $vendor->id)->exists();
+                    if (! $hasAnyTables && is_numeric($rawTable) && (int) $rawTable >= 1 && (int) $rawTable <= ($location?->table_count ?? 50)) {
+                        $isValidTable = true;
+                        $validatedTableNumber = (string) (int) $rawTable;
+                    }
+                }
+
+                if ($isValidTable) {
+                    $table = $validatedTableNumber;
+                    $entryContext = 'table_qr';
+                    session([
+                        'storefront_table_'.$vendor->slug => $table,
+                        'storefront_entry_context_'.$vendor->slug => 'table_qr',
+                    ]);
+                } else {
+                    // Forged or non-existent table: gracefully fallback to general menu
+                    session()->forget('storefront_table_'.$vendor->slug);
+                    session()->forget('storefront_entry_context_'.$vendor->slug);
+                    $table = null;
+                    $entryContext = 'general_menu';
+                }
+            } else {
+                session()->forget('storefront_table_'.$vendor->slug);
+                session()->forget('storefront_entry_context_'.$vendor->slug);
+                $table = null;
+                $entryContext = 'general_menu';
+            }
+        } else {
+            // Preserve table session if customer already entered via QR
+            $savedTable = session('storefront_table_'.$vendor->slug);
+            if ($savedTable) {
+                $table = (string) $savedTable;
+                $entryContext = 'table_qr';
+            } else {
+                $table = null;
+                $entryContext = 'general_menu';
+            }
         }
+
+        $timeAwareService = app(TimeAwareService::class);
+        $timeSlice = $timeAwareService->getTimeSlice($vendor);
+        $activeMealPeriod = $timeAwareService->getActiveMealPeriod($vendor);
+        $isReturning = (bool) session('storefront_visited_'.$vendor->slug);
+        session(['storefront_visited_'.$vendor->slug => true]);
+
+        $greeting = $timeAwareService->getGreeting(
+            $vendor,
+            $lang,
+            $entryContext,
+            $table,
+            $isReturning
+        );
+
         $channel = $request->get('mode', ! empty($table) ? 'dine_in' : ($vendor->delivery_enabled ? 'delivery' : ($vendor->takeaway_enabled ? 'takeaway' : 'dine_in')));
 
         // Deduplicate analytics visit per IP/user-agent per hour to prevent metric inflation
@@ -185,8 +279,46 @@ class ClientStorefrontController extends Controller
             'dailyOffers',
             'lang',
             'table',
-            'channel'
+            'channel',
+            'needsLanguageSelection',
+            'entryContext',
+            'supportedLanguages',
+            'activeMealPeriod',
+            'greeting',
+            'timeSlice'
         ));
+    }
+
+    /**
+     * Customer selects storefront language.
+     */
+    public function setLanguage(Request $request, string $vendor_slug): JsonResponse
+    {
+        $vendor = Vendor::where('slug', $vendor_slug)->where('is_active', true)->firstOrFail();
+        $supportedCodes = $vendor->getSupportedLanguageCodes();
+        $raw = $request->input('language') ?? $request->input('locale');
+        $lang = strtolower(trim((string) $raw));
+
+        if (empty($lang) || ! in_array($lang, $supportedCodes, true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Requested language is not supported or disabled.',
+            ], 422);
+        }
+
+        session([
+            'storefront_lang_'.$vendor->slug => $lang,
+            'app_locale' => $lang,
+            'locale' => $lang,
+        ]);
+        App::setLocale($lang);
+
+        return response()->json([
+            'success' => true,
+            'language' => $lang,
+            'locale' => $lang,
+            'message' => 'Language selected successfully.',
+        ]);
     }
 
     public function manifest(string $vendor_slug)

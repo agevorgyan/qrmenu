@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\SendTelegramReservationNotificationJob;
 use App\Mail\CustomerPreOrderMail;
 use App\Mail\CustomerReservationMail;
 use App\Mail\RestaurantPreOrderMail;
@@ -157,6 +158,15 @@ class ReservationNotificationService
 
         if (! $vendor->isReservationNotificationAllowed($event, 'restaurant')) {
             return [];
+        }
+
+        // 1. Dispatch Telegram notification to restaurant staff if enabled for reservations
+        if ($vendor->shouldNotifyTelegram('reservations')) {
+            try {
+                SendTelegramReservationNotificationJob::dispatch($reservation, $event);
+            } catch (\Throwable $e) {
+                Log::warning("Failed to queue Telegram notification for reservation #{$reservation->reference}: ".$e->getMessage());
+            }
         }
 
         $recipients = $vendor->getNotificationRecipients();

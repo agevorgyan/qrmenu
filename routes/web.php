@@ -93,6 +93,10 @@ Route::get('/m/{vendor_slug}/{location_slug?}', [ClientStorefrontController::cla
     ->middleware('throttle:120,1')
     ->name('client.menu');
 
+Route::post('/api/m/{vendor_slug}/language', [ClientStorefrontController::class, 'setLanguage'])
+    ->middleware('throttle:60,1')
+    ->name('client.language.set');
+
 // Rate-limited public order & waiter endpoints (anti-spam & DDoS protection)
 Route::middleware(['throttle:15,1', EnsurePlanHasFeature::class.':orders.online'])->group(function () {
     Route::post('/api/m/{vendor_slug}/order', [ClientStorefrontController::class, 'submitOrder'])->name('client.order.submit');
@@ -124,6 +128,7 @@ Route::prefix('/api/m/{vendor_slug}/ai-waiter')->middleware('throttle:60,1')->gr
         Route::post('/session/{token}/recommendations', [AiWaiterController::class, 'recommendations'])->name('client.ai_waiter.session.recommendations');
         Route::post('/session/{token}/chat', [AiWaiterController::class, 'chat'])->name('client.ai_waiter.session.chat');
         Route::post('/session/{token}/add-to-cart', [AiWaiterController::class, 'addToCart'])->name('client.ai_waiter.session.add_to_cart');
+        Route::post('/session/{token}/reject', [AiWaiterController::class, 'rejectProduct'])->name('client.ai_waiter.session.reject');
         Route::post('/session/{token}/complete', [AiWaiterController::class, 'complete'])->name('client.ai_waiter.session.complete');
 
         // Legacy endpoints
@@ -445,6 +450,8 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cas
         // Table Reservations
         Route::get('/reservations', [AdminReservationController::class, 'index'])->name('reservations.index');
         Route::get('/reservations/{reservation}', [AdminReservationController::class, 'show'])->name('reservations.show');
+        Route::put('/reservations/{reservation}', [AdminReservationController::class, 'update'])->name('reservations.update');
+        Route::patch('/reservations/{reservation}', [AdminReservationController::class, 'update']);
         Route::patch('/reservations/{reservation}/status', [AdminReservationController::class, 'updateStatus'])->name('reservations.status');
         Route::post('/reservations/{reservation}/status', [AdminReservationController::class, 'updateStatus']);
 

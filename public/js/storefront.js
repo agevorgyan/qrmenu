@@ -143,6 +143,14 @@
             closingNotice: bootConfig.closingNotice || {},
             dismissedWarningBanner: false,
 
+            // Language & Entry Context State
+            needsLanguageSelection: bootConfig.needsLanguageSelection || false,
+            showLanguageModal: bootConfig.needsLanguageSelection || false,
+            entryContext: bootConfig.entryContext || 'general_menu',
+            tableNumber: bootConfig.tableNumber || '',
+            activeMealPeriod: bootConfig.activeMealPeriod || null,
+            timeAwareGreeting: bootConfig.greeting || '',
+
             // AI Waiter State
             showWelcomeModal: false,
             showAiWaiter: false,
@@ -1585,21 +1593,55 @@
                 }
             },
 
-            changeLanguage(locale) {
+            async selectStorefrontLanguage(locale) {
                 this.saveCartToStorage();
                 this.selectedLang = locale;
-                try { localStorage.setItem('qrmenu_locale_' + this.vendorSlug, locale); } catch(e) {}
+                this.showLanguageModal = false;
+                try {
+                    localStorage.setItem('qrmenu_locale_' + this.vendorSlug, locale);
+                } catch(e) {}
+
+                try {
+                    const setLangUrl = routes.setLanguage || `/api/m/${this.vendorSlug}/language`;
+                    await fetch(setLangUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.csrfToken,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ language: locale })
+                    });
+                } catch(e) {}
+
                 const url = new URL(window.location.href);
                 url.searchParams.set('lang', locale);
                 window.location.href = url.toString();
             },
 
+            changeLanguage(locale) {
+                this.selectStorefrontLanguage(locale);
+            },
+
             initAiWaiterWelcome() {
+                if (this.showLanguageModal) {
+                    return; // Wait for customer language selection first
+                }
+
                 if (vendor.ai_waiter_enabled) {
                     try {
-                        const welcomed = localStorage.getItem('ai_waiter_welcomed_' + this.vendorSlug);
+                        const welcomed = sessionStorage.getItem('ai_waiter_welcomed_' + this.vendorSlug);
                         if (!welcomed) {
-                            this.openAiWaiter('intro');
+                            sessionStorage.setItem('ai_waiter_welcomed_' + this.vendorSlug, 'true');
+                            if (this.entryContext === 'table_qr') {
+                                // Table QR: never block the menu with fullscreen questionnaire!
+                                if (this.timeAwareGreeting) {
+                                    this.showToastNotification(this.timeAwareGreeting, 'info');
+                                }
+                            } else {
+                                // General menu: show gentle welcome card
+                                this.showWelcomeModal = true;
+                            }
                         }
                     } catch(e) {}
                 }
@@ -1617,7 +1659,7 @@
 
             closeAiWaiter() {
                 this.showAiWaiter = false;
-                try { localStorage.setItem('ai_waiter_welcomed_' + this.vendorSlug, 'true'); } catch(e) {}
+                try { sessionStorage.setItem('ai_waiter_welcomed_' + this.vendorSlug, 'true'); } catch(e) {}
             },
 
             skipToMenu() {
@@ -1638,7 +1680,8 @@
                         body: JSON.stringify({
                             lang: this.selectedLang,
                             location_id: this.locationId,
-                            table_number: this.tableNumber || null
+                            table_number: this.tableNumber || null,
+                            entry_context: this.entryContext
                         })
                     });
                     const data = await res.json();
@@ -1650,6 +1693,12 @@
                         }
                         if (data.allowed_language_details && data.allowed_language_details.length) {
                             this.aiLanguageDetails = data.allowed_language_details;
+                        }
+                        if (data.greeting) {
+                            this.timeAwareGreeting = data.greeting;
+                        }
+                        if (data.active_meal_period) {
+                            this.activeMealPeriod = data.active_meal_period;
                         }
                         this.aiCurrentQuestion = data.next_question;
                     }
@@ -2116,11 +2165,13 @@
                         })
                     });
                     const data = await res.json();
-                    if (data.success) {
                         this.aiChatMessages.push({
                             sender: 'ai',
                             text: data.reply,
                             products: data.suggested_products || [],
+                            quick_replies: data.quick_replies || [],
+                            action: data.action || null,
+                            intent: data.intent || null,
                             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                         });
                     } else {

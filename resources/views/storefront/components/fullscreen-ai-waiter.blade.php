@@ -902,6 +902,17 @@
                                                 </div>
                                             </template>
                                         </div>
+                                    <!-- Interactive Contextual Quick Replies -->
+                                    <template x-if="msg.quick_replies && msg.quick_replies.length > 0">
+                                        <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.65rem;">
+                                            <template x-for="qr in msg.quick_replies" :key="qr">
+                                                <button type="button" 
+                                                        @click="sendAiChatMessage(qr)"
+                                                        style="padding: 0.35rem 0.75rem; border-radius: 9999px; background: color-mix(in srgb, var(--primary) 10%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent); color: var(--primary); font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s;"
+                                                        x-text="qr">
+                                                </button>
+                                            </template>
+                                        </div>
                                     </template>
                                 </div>
                             </div>

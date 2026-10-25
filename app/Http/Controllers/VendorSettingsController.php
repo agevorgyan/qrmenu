@@ -147,6 +147,7 @@ class VendorSettingsController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $vendor = Auth::user()->vendor;
+        $this->authorize('manageSettings', $vendor);
         if ($request->filled('daily_offers_json')) {
             $decoded = json_decode($request->input('daily_offers_json'), true);
             if (is_array($decoded)) {
@@ -836,6 +837,13 @@ class VendorSettingsController extends Controller
             'group_priorities' => 'nullable|array',
             'tag_priorities' => 'nullable|array',
 
+            // Time-Aware & Meal Periods Configuration
+            'timezone' => 'nullable|string|timezone',
+            'time_aware_recommendations' => 'nullable|boolean',
+            'meal_periods' => 'nullable|array',
+            'greetings' => 'nullable|array',
+            'available_services' => 'nullable|array',
+
             // AI Provider Configuration
             'ai_provider' => 'required|string|in:gemini,openai,claude,deepseek,groq,openrouter,custom',
             'ai_model' => 'nullable|string|max:100',
@@ -918,16 +926,26 @@ class VendorSettingsController extends Controller
             'questions' => ! empty($validated['questions']) ? $validated['questions'] : ($currentConfig['questions'] ?? []),
             'group_priorities' => ! empty($validated['group_priorities']) ? array_map('intval', $validated['group_priorities']) : ($currentConfig['group_priorities'] ?? []),
             'tag_priorities' => ! empty($validated['tag_priorities']) ? array_map('intval', $validated['tag_priorities']) : ($currentConfig['tag_priorities'] ?? []),
+            'time_aware_recommendations' => $request->boolean('time_aware_recommendations', true),
+            'meal_periods' => ! empty($validated['meal_periods']) ? $validated['meal_periods'] : ($currentConfig['meal_periods'] ?? []),
+            'greetings' => ! empty($validated['greetings']) ? $validated['greetings'] : ($currentConfig['greetings'] ?? []),
+            'available_services' => ! empty($validated['available_services']) ? $validated['available_services'] : ($currentConfig['available_services'] ?? []),
         ]);
 
-        $vendor->update([
+        $updateData = [
             'ai_waiter_enabled' => $request->boolean('ai_waiter_enabled'),
             'ai_waiter_name' => ! empty($validated['ai_waiter_name']) ? $validated['ai_waiter_name'] : 'AI Waiter',
             'ai_waiter_priority_ingredients' => $validated['ai_waiter_priority_ingredients'] ?? null,
             'ai_waiter_welcome_text' => $validated['ai_waiter_welcome_text'] ?? null,
             'ai_waiter_config' => $newAiWaiterConfig,
             'ai_settings' => $newAiSettings,
-        ]);
+        ];
+
+        if (! empty($validated['timezone'])) {
+            $updateData['timezone'] = $validated['timezone'];
+        }
+
+        $vendor->update($updateData);
 
         return redirect()->route('admin.settings.ai')->with('success', __('✨ AI settings saved successfully.'));
     }

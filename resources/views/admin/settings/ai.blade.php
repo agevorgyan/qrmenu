@@ -184,6 +184,9 @@
         <button type="button" class="tab-btn" onclick="switchAiTab('tab-questions', this)">
             <i class="fa-solid fa-list-check"></i> {{ __('Question Engine') }}
         </button>
+        <button type="button" class="tab-btn" onclick="switchAiTab('tab-time-aware', this)">
+            <i class="fa-solid fa-clock"></i> {{ __('Time-Aware & Meal Periods') }}
+        </button>
         <button type="button" class="tab-btn" onclick="switchAiTab('tab-provider', this)">
             <i class="fa-solid fa-microchip"></i> {{ __('AI Provider & API Engine') }}
         </button>
@@ -835,6 +838,184 @@
                                 {{ __('Custom API Base URL (Ollama, vLLM or Proxy)') }}
                             </label>
                             <input type="url" name="ai_base_url" id="aiBaseUrlInput" value="{{ old('ai_base_url', $savedBaseUrl) }}" placeholder="http://localhost:11434/v1" class="form-control" style="width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem; font-size: 0.92rem; font-family: monospace;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 5: TIME-AWARE AI WAITER & MEAL PERIODS (Section 13) ================= -->
+        <div id="tab-time-aware" class="ai-tab-pane" style="display: none;">
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-card);">
+                <div style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                    <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-clock" style="color: #3b82f6;"></i>
+                        <span>{{ __('Time-Aware Dining Advisor & Meal Schedules') }}</span>
+                    </h3>
+                    <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);">
+                        {{ __('Configure restaurant timezone, meal periods (breakfast, lunch, dinner), and localized time-of-day greetings') }}
+                    </p>
+                </div>
+
+                <!-- Timezone & Toggle Grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+                    <div class="form-group">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            {{ __('Restaurant Local Timezone') }}
+                        </label>
+                        @php
+                            $vendorTz = $vendor->getTimezone();
+                            $commonTimezones = [
+                                'Asia/Yerevan' => '🇦🇲 Armenia (Asia/Yerevan - GMT+4)',
+                                'Europe/Moscow' => '🇷🇺 Moscow (Europe/Moscow - GMT+3)',
+                                'Europe/Paris' => '🇫🇷 Paris (Europe/Paris - CET)',
+                                'Europe/London' => '🇬🇧 London (Europe/London - GMT)',
+                                'Europe/Berlin' => '🇩🇪 Berlin (Europe/Berlin - CET)',
+                                'America/New_York' => '🇺🇸 New York (America/New_York - EST)',
+                                'America/Los_Angeles' => '🇺🇸 Los Angeles (America/Los_Angeles - PST)',
+                                'Asia/Dubai' => '🇦🇪 Dubai (Asia/Dubai - GST)',
+                                'Asia/Tbilisi' => '🇬🇪 Tbilisi (Asia/Tbilisi - GET)',
+                                'UTC' => '🌐 UTC (Universal Coordinated Time)',
+                            ];
+                        @endphp
+                        <select name="timezone" class="form-control" style="width: 100%;">
+                            @foreach($commonTimezones as $tzCode => $tzLabel)
+                                <option value="{{ $tzCode }}" {{ $vendorTz === $tzCode ? 'selected' : '' }}>
+                                    {{ $tzLabel }}
+                                </option>
+                            @endforeach
+                            @if(!array_key_exists($vendorTz, $commonTimezones))
+                                <option value="{{ $vendorTz }}" selected>{{ $vendorTz }}</option>
+                            @endif
+                        </select>
+                        <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 0.35rem;">
+                            {{ __('Current restaurant local time: ') }} <strong>{{ $vendor->getLocalTime()->format('Y-m-d H:i') }}</strong>
+                        </small>
+                    </div>
+
+                    <div class="form-group" style="display: flex; flex-direction: column; justify-content: center;">
+                        <label style="display: inline-flex; align-items: center; gap: 0.75rem; cursor: pointer; background: var(--bg-body); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 12px;">
+                            <input type="checkbox" name="time_aware_recommendations" value="1" {{ !empty($aiWaiterConfig['time_aware_recommendations'] ?? true) ? 'checked' : '' }} style="width: 18px; height: 18px; accent-color: #3b82f6; cursor: pointer;">
+                            <span style="font-size: 0.92rem; font-weight: 700; color: var(--text-main);">
+                                {{ __('Enable Time-Aware Meal Prioritization') }}
+                            </span>
+                        </label>
+                        <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 0.35rem;">
+                            {{ __('When enabled, breakfast dishes are prioritized in the morning, lunch at midday, and dinner in the evening') }}
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Supported Customer Services (Section 3) -->
+                <div style="margin-bottom: 2rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem;">
+                    <h4 style="font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.4rem;">
+                        <i class="fa-solid fa-bell-concierge" style="color: #8b5cf6;"></i>
+                        <span>{{ __('Supported AI Waiter Customer Services') }}</span>
+                    </h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;">
+                        <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                            <input type="checkbox" name="available_services[reservations]" value="1" {{ !isset($aiWaiterConfig['available_services']['reservations']) || !empty($aiWaiterConfig['available_services']['reservations']) ? 'checked' : '' }} style="accent-color: #8b5cf6;">
+                            <span>{{ __('Table Reservations') }}</span>
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                            <input type="checkbox" name="available_services[delivery]" value="1" {{ !isset($aiWaiterConfig['available_services']['delivery']) || !empty($aiWaiterConfig['available_services']['delivery']) ? 'checked' : '' }} style="accent-color: #8b5cf6;">
+                            <span>{{ __('Delivery Orders') }}</span>
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                            <input type="checkbox" name="available_services[takeaway]" value="1" {{ !isset($aiWaiterConfig['available_services']['takeaway']) || !empty($aiWaiterConfig['available_services']['takeaway']) ? 'checked' : '' }} style="accent-color: #8b5cf6;">
+                            <span>{{ __('Takeaway / Pickup') }}</span>
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                            <input type="checkbox" name="available_services[events]" value="1" {{ !isset($aiWaiterConfig['available_services']['events']) || !empty($aiWaiterConfig['available_services']['events']) ? 'checked' : '' }} style="accent-color: #8b5cf6;">
+                            <span>{{ __('Event Planning Inquiries') }}</span>
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                            <input type="checkbox" name="available_services[waiter_call]" value="1" {{ !isset($aiWaiterConfig['available_services']['waiter_call']) || !empty($aiWaiterConfig['available_services']['waiter_call']) ? 'checked' : '' }} style="accent-color: #8b5cf6;">
+                            <span>{{ __('Waiter Call & Bill Request') }}</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Configured Meal Periods Table -->
+                <div style="margin-bottom: 2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+                        <h4 style="font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-utensils" style="color: #f59e0b;"></i>
+                            <span>{{ __('Meal Periods & Daily Schedules') }}</span>
+                        </h4>
+                    </div>
+                    @php
+                        $timeAwareService = app(\App\Services\TimeAwareService::class);
+                        $mealPeriods = $timeAwareService->getMealPeriods($vendor);
+                    @endphp
+                    <div style="overflow-x: auto; border: 1px solid var(--border-color); border-radius: 14px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                            <thead>
+                                <tr style="background: var(--bg-body); border-bottom: 1px solid var(--border-color); text-align: left;">
+                                    <th style="padding: 0.75rem 1rem;">{{ __('Period') }}</th>
+                                    <th style="padding: 0.75rem 1rem;">{{ __('Start Time') }}</th>
+                                    <th style="padding: 0.75rem 1rem;">{{ __('End Time') }}</th>
+                                    <th style="padding: 0.75rem 1rem;">{{ __('Active') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($mealPeriods as $pKey => $pData)
+                                    <tr style="border-bottom: 1px solid var(--border-color);">
+                                        <td style="padding: 0.75rem 1rem; font-weight: 700; color: var(--text-main);">
+                                            {{ $pData['name'] ?? ucfirst($pKey) }}
+                                            <input type="hidden" name="meal_periods[{{ $pKey }}][name]" value="{{ $pData['name'] ?? $pKey }}">
+                                        </td>
+                                        <td style="padding: 0.75rem 1rem;">
+                                            <input type="time" name="meal_periods[{{ $pKey }}][start_time]" value="{{ $pData['start_time'] ?? '08:00' }}" class="form-control" style="width: 130px; padding: 0.4rem 0.6rem;">
+                                        </td>
+                                        <td style="padding: 0.75rem 1rem;">
+                                            <input type="time" name="meal_periods[{{ $pKey }}][end_time]" value="{{ $pData['end_time'] ?? '12:00' }}" class="form-control" style="width: 130px; padding: 0.4rem 0.6rem;">
+                                        </td>
+                                        <td style="padding: 0.75rem 1rem;">
+                                            <label style="cursor: pointer;">
+                                                <input type="checkbox" name="meal_periods[{{ $pKey }}][is_active]" value="1" {{ !empty($pData['is_active']) ? 'checked' : '' }} style="accent-color: #3b82f6;">
+                                            </label>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Localized Time-Aware Greeting Customizer -->
+                <div>
+                    <h4 style="font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.4rem;">
+                        <i class="fa-solid fa-comments" style="color: #10b981;"></i>
+                        <span>{{ __('Custom Localized Greetings by Time of Day') }}</span>
+                    </h4>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        {{ __('Leave empty to use intelligent built-in defaults. Placeholders: :vendor, :waiter, :table') }}
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+                        <div class="form-group">
+                            <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">
+                                🌅 {{ __('Morning Greeting (HY)') }}
+                            </label>
+                            <input type="text" name="greetings[hy][morning]" value="{{ $aiWaiterConfig['greetings']['hy']['morning'] ?? '' }}" placeholder="Բարի լույս։ Ի՞նչ կցանկանաք այսօր համտեսել։" class="form-control" style="width: 100%;">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">
+                                ☀️ {{ __('Daytime Greeting (HY)') }}
+                            </label>
+                            <input type="text" name="greetings[hy][daytime]" value="{{ $aiWaiterConfig['greetings']['hy']['daytime'] ?? '' }}" placeholder="Բարի օր։ Կարո՞ղ եմ օգնել Ձեզ ընտրել։" class="form-control" style="width: 100%;">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">
+                                🌆 {{ __('Evening Greeting (HY)') }}
+                            </label>
+                            <input type="text" name="greetings[hy][evening]" value="{{ $aiWaiterConfig['greetings']['hy']['evening'] ?? '' }}" placeholder="Բարի երեկո։ Ի՞նչ համեղ բան կառաջարկեմ Ձեզ։" class="form-control" style="width: 100%;">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">
+                                🌙 {{ __('Late Night Greeting (HY)') }}
+                            </label>
+                            <input type="text" name="greetings[hy][late_night]" value="{{ $aiWaiterConfig['greetings']['hy']['late_night'] ?? '' }}" placeholder="Բարի գիշեր։ Ինչո՞վ կարող եմ օգնել այս ուշ ժամին։" class="form-control" style="width: 100%;">
                         </div>
                     </div>
                 </div>

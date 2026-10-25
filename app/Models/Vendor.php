@@ -455,7 +455,7 @@ class Vendor extends Model
             ? $location->closing_warning_message
             : $this->closing_warning_message;
 
-        $tz = ! empty($this->timezone) ? $this->timezone : 'Asia/Yerevan';
+        $tz = $this->getTimezone();
         $now = $now ? $now->copy()->setTimezone($tz) : Carbon::now($tz);
 
         $channelName = match ($channel) {
@@ -1024,6 +1024,29 @@ class Vendor extends Model
         }
 
         return $result;
+    }
+
+    /**
+     * Resolve the vendor's configured timezone safely.
+     */
+    public function getTimezone(): string
+    {
+        $tz = trim((string) $this->timezone);
+        if (! empty($tz) && in_array($tz, \DateTimeZone::listIdentifiers(), true)) {
+            return $tz;
+        }
+
+        return (string) config('app.timezone', 'UTC');
+    }
+
+    /**
+     * Get vendor's current local time.
+     */
+    public function getLocalTime(?Carbon $now = null): Carbon
+    {
+        $tz = $this->getTimezone();
+
+        return $now ? $now->copy()->setTimezone($tz) : Carbon::now($tz);
     }
 
     public function featuredProduct()

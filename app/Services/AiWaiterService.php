@@ -2,19 +2,28 @@
 
 namespace App\Services;
 
+use App\Events\WaiterCalled;
 use App\Models\AiWaiterSession;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Reservation;
 use App\Models\Vendor;
+use App\Models\WaiterCall;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 class AiWaiterService
 {
     public function __construct(
-        protected ?AiGatewayService $aiGateway = null
+        protected ?AiGatewayService $aiGateway = null,
+        protected ?ReservationAvailabilityService $reservationAvailabilityService = null,
+        protected ?EventInquiryNotificationService $eventInquiryNotificationService = null,
+        protected ?TimeAwareService $timeAwareService = null,
     ) {
         $this->aiGateway = $aiGateway ?? app(AiGatewayService::class);
+        $this->reservationAvailabilityService = $reservationAvailabilityService ?? app(ReservationAvailabilityService::class);
+        $this->eventInquiryNotificationService = $eventInquiryNotificationService ?? app(EventInquiryNotificationService::class);
+        $this->timeAwareService = $timeAwareService ?? app(TimeAwareService::class);
     }
 
     /**
@@ -326,7 +335,22 @@ class AiWaiterService
      */
     public function hasSufficientInformation(array $preferences, int $questionsAnswered): bool
     {
-        // Must have answered at least 2 questions unless free text provided rich profile
+        // 1. Direct food request (e.g., chicken, steak, fish, vegetarian): 0 questions needed!
+        if (! empty($preferences['preference']) || ! empty($preferences['protein']) || ! empty($preferences['dish_hint'])) {
+            return true;
+        }
+
+        // 2. Budget and party size or occasion combination (e.g., 2 people under 10,000 AMD): 0 questions needed!
+        if (! empty($preferences['budget']) && (! empty($preferences['occasion']) || ! empty($preferences['party_size']))) {
+            return true;
+        }
+
+        // 3. User gave clear free-text request with intent
+        if (! empty($preferences['free_text']) && (mb_strlen($preferences['free_text']) >= 8 || ! empty($preferences['mood']))) {
+            return true;
+        }
+
+        // 4. Must have answered at least 2 questions unless free text provided rich profile
         if ($questionsAnswered < 2 && empty($preferences['free_text'])) {
             return false;
         }
@@ -335,11 +359,6 @@ class AiWaiterService
         $hasFlavorOrOccasion = ! empty($preferences['spiciness']) || ! empty($preferences['occasion']) || ! empty($preferences['dietary']);
 
         if ($hasCoreFood && $hasFlavorOrOccasion && $questionsAnswered >= 3) {
-            return true;
-        }
-
-        // If user gave comprehensive free text
-        if (! empty($preferences['free_text']) && mb_strlen($preferences['free_text']) >= 20 && $hasCoreFood) {
             return true;
         }
 
@@ -511,7 +530,29 @@ class AiWaiterService
         $candidates = $this->applyHardConstraints($products, $preferences, $lang, $locationId);
 
         if ($candidates->isEmpty()) {
-            // Fallback gracefully to general available products for this location if constraints were overly restrictive
+            $dietary = (array) ($preferences['dietary'] ?? []);
+            $allergies = (array) ($preferences['allergies'] ?? []);
+            $exclusions = (array) ($preferences['exclusions'] ?? []);
+            $pref = $preferences['preference'] ?? null;
+
+            $hasStrictConstraints = ! empty($dietary) || ! empty($allergies) || ! empty($exclusions) || ($pref === 'vegetarian');
+
+            if ($hasStrictConstraints) {
+                return [
+                    'commentary' => match ($lang) {
+                        'hy' => 'Ներողություն, նշված խիստ սահմանափակումներով (ալերգիա կամ բուսական) համապատասխան ուտեստներ չգտնվեցին։ Մեր անձնակազմը սիրով կօգնի Ձեզ տեղում։',
+                        'ru' => 'К сожалению, с учетом указанных строгих ограничений (аллергия или вегетарианство) подходящих блюд не найдено. Наш персонал с радостью поможет вам на месте.',
+                        default => 'Unfortunately, no dishes matched your strict dietary restrictions or allergy exclusions. Our staff will be happy to assist you in person.',
+                    },
+                    'main_recommendations' => [],
+                    'recommendations' => [],
+                    'secondary_recommendations' => [],
+                    'pairing_drink' => null,
+                    'bundle' => null,
+                ];
+            }
+
+            // Fallback gracefully to general available products only if no strict constraints were given
             $candidates = $products->filter(function (Product $prod) use ($locationId) {
                 if (! $prod->is_available) {
                     return false;
@@ -827,6 +868,26 @@ class AiWaiterService
             ) / $totalWeight;
 
             $totalScore += $groupBoost + $tagBoost;
+
+            // Diversity penalty: avoid repeating dishes already shown in this session
+            $shownProductIds = array_map('intval', (array) ($preferences['shown_product_ids'] ?? []));
+            if (in_array((int) $product->id, $shownProductIds, true)) {
+                $totalScore -= 45.0;
+            }
+
+            // Rejection penalty: heavily avoid dishes explicitly rejected by guest
+            $rejectedProductIds = array_map('intval', (array) ($preferences['rejected_product_ids'] ?? []));
+            if (in_array((int) $product->id, $rejectedProductIds, true)) {
+                $totalScore -= 150.0;
+            }
+
+            // Time-aware meal period boost
+            $activeMealPeriod = $preferences['active_meal_period'] ?? null;
+            if ($activeMealPeriod && is_array($activeMealPeriod)) {
+                if ($this->timeAwareService->isProductRelevantToMealPeriod($product, $activeMealPeriod, $lang)) {
+                    $totalScore += 25.0;
+                }
+            }
 
             // Compute human-friendly, genuine Match Percentage (82% - 98%)
             $matchPercentage = (int) round(min(98, max(75, 70 + ($totalScore * 0.28))));
@@ -1157,7 +1218,7 @@ class AiWaiterService
         $apiKey = $vendor->getAiApiKey();
 
         // Try LLM response if credentials exist
-        if (! empty($apiKey) || $vendor->hasCustomAiConfig() || ! empty(config('services.gemini.key')) || ! empty(env('GEMINI_API_KEY')) || ! empty(env('OPENAI_API_KEY'))) {
+        if (! app()->environment('testing') && (! empty($apiKey) || $vendor->hasCustomAiConfig() || ! empty(config('services.gemini.key')) || ! empty(env('GEMINI_API_KEY')) || ! empty(env('OPENAI_API_KEY')))) {
             try {
                 // Full structured menu inventory
                 $inventoryJson = json_encode($menuInventory, JSON_UNESCAPED_UNICODE);
@@ -1234,14 +1295,17 @@ Respond directly to the guest in {$lang}:";
         }
 
         // Rule-based Grounded Intelligent Fallback
-        return $this->generateRuleBasedChatAnswer($message, $allProducts, $vendor, $lang, $locationId, $history);
+        return $this->generateRuleBasedChatAnswer($message, $allProducts, $vendor, $lang, $locationId, $history, $sessionContext);
     }
 
     /**
      * Grounded intelligent rule-based chat query resolution.
+     * Supports full customer service: food recommendations, table reservations,
+     * delivery, takeaway, event inquiries, waiter calls/bills, and restaurant information.
      *
      * @param  Collection<int, Product>  $allProducts
      * @param  array<int, mixed>  $history
+     * @param  array<string, mixed>  $sessionContext
      * @return array<string, mixed>
      */
     protected function generateRuleBasedChatAnswer(
@@ -1250,12 +1314,507 @@ Respond directly to the guest in {$lang}:";
         Vendor $vendor,
         string $lang,
         ?int $locationId = null,
-        array $history = []
+        array $history = [],
+        array $sessionContext = []
     ): array {
         $msg = mb_strtolower(trim($message));
         $waiterName = $vendor->getAiWaiterName();
+        $entryContext = $sessionContext['entry_context'] ?? session('storefront_entry_context_'.$vendor->slug, 'general_menu');
+        $tableNumber = $sessionContext['table_number'] ?? session('storefront_table_'.$vendor->slug);
+        $conversationState = (array) ($sessionContext['conversation_state'] ?? []);
+        $rejectedProductIds = array_map('intval', (array) ($conversationState['rejected_product_ids'] ?? []));
 
-        // 1. Drinks / Wine / Beverages pairing inquiry
+        // 1. Waiter Call or Bill Request
+        if (preg_match('/(մատուցող|հաշիվ|օֆիցիանտ|чек|счет|waiter|bill|check|բերեք հաշիվը)/ui', $msg)) {
+            $isBill = (bool) preg_match('/(հաշիվ|чек|счет|bill|check)/ui', $msg);
+            $type = $isBill ? 'bill_card' : 'call_waiter';
+
+            if (! empty($tableNumber)) {
+                $recentCall = WaiterCall::where('vendor_id', $vendor->id)
+                    ->where('table_number', (string) $tableNumber)
+                    ->where('status', 'pending')
+                    ->where('created_at', '>=', now()->subSeconds(60))
+                    ->first();
+
+                if ($recentCall) {
+                    $reply = match ($lang) {
+                        'ru' => "Ваш запрос уже передан персоналу для столика #{$tableNumber}. Пожалуйста, подождите минутку.",
+                        'en' => "Your request was already submitted for Table #{$tableNumber}. The waiter will be with you shortly.",
+                        default => "Ձեր նախորդ կանչն արդեն փոխանցվել է մատուցողին (Սեղան #{$tableNumber})։ Խնդրում ենք սպասել մի փոքր։",
+                    };
+
+                    return [
+                        'reply' => $reply,
+                        'suggested_products' => [],
+                        'quick_replies' => [
+                            match ($lang) {
+                                'ru' => 'Посмотреть меню', 'en' => 'Browse menu', default => 'Տեսնել մենյուն'
+                            },
+                        ],
+                        'intent' => 'waiter_call',
+                    ];
+                }
+
+                try {
+                    $call = WaiterCall::create([
+                        'vendor_id' => $vendor->id,
+                        'location_id' => $locationId ?? $vendor->locations()->first()?->id,
+                        'table_number' => (string) $tableNumber,
+                        'type' => $type,
+                        'status' => 'pending',
+                        'notes' => 'AI Waiter Assistant',
+                    ]);
+                    event(new WaiterCalled($call));
+                } catch (\Throwable $e) {
+                    Log::warning('AI waiter call dispatch failed: '.$e->getMessage());
+                }
+
+                $reply = $isBill
+                    ? match ($lang) {
+                        'ru' => "Счёт для столика #{$tableNumber} запрошен. Официант скоро подойдёт с терминалом/счётом.",
+                        'en' => "The bill for Table #{$tableNumber} has been requested. The server will bring it to your table shortly.",
+                        default => "Սեղան #{$tableNumber}-ի հաշիվը փոխանցված է մատուցողին։ Շուտով կմոտենան Ձեզ։",
+                    }
+                : match ($lang) {
+                    'ru' => "Официант вызван к столику #{$tableNumber} и уже спешит к вам!",
+                    'en' => "The waiter has been notified and is on the way to Table #{$tableNumber}!",
+                    default => "Մատուցողը տեղեկացված է և շուտով կմոտենա Սեղան #{$tableNumber}-ին։",
+                };
+
+                return [
+                    'reply' => $reply,
+                    'suggested_products' => [],
+                    'quick_replies' => [
+                        match ($lang) {
+                            'ru' => 'Посмотреть десерты', 'en' => 'View desserts', default => 'Տեսնել աղանդերը'
+                        },
+                        match ($lang) {
+                            'ru' => 'Меню напитков', 'en' => 'Drinks menu', default => 'Ըմպելիքներ'
+                        },
+                    ],
+                    'action' => 'call_waiter',
+                    'intent' => 'waiter_call',
+                ];
+            }
+
+            $reply = match ($lang) {
+                'ru' => 'Вызов официанта и запрос счёта доступны только для гостей за столиком в заведении.',
+                'en' => 'Calling a waiter or requesting the bill is available only for seated guests at a table.',
+                default => 'Մատուցողի կանչը կամ հաշվի պահանջը հասանելի է միայն ռեստորանում՝ սեղանի շուրջ գտնվող հյուրերի համար։',
+            };
+
+            return [
+                'reply' => $reply,
+                'suggested_products' => [],
+                'quick_replies' => [
+                    match ($lang) {
+                        'ru' => 'Забронировать столик', 'en' => 'Book a table', default => 'Ամրագրել սեղան'
+                    },
+                    match ($lang) {
+                        'ru' => 'Посмотреть меню', 'en' => 'Browse menu', default => 'Տեսնել մենյուն'
+                    },
+                ],
+                'intent' => 'waiter_call',
+            ];
+        }
+
+        // 2. Table Reservation Inquiry
+        if (preg_match('/(ամրագր|սեղան|резերв|столик|бронь|reserv|table|book)/ui', $msg)) {
+            $isExplicitFutureBooking = (bool) preg_match('/(վաղվա|մյուս|հաջորդ|ամսի|շաբաթ|ամսաթիվ|завтра|следующ|числа|дата|tomorrow|next|date|\d{1,2}[\.\/-]\d{1,2})/ui', $msg);
+
+            // Table QR users are already seated: never proactively suggest reservations
+            if ($entryContext === 'table_qr' && ! empty($tableNumber) && ! $isExplicitFutureBooking) {
+                $reply = match ($lang) {
+                    'ru' => "Вы уже находитесь в ресторане за столиком #{$tableNumber}! Желаете выбрать блюда из меню или забронировать столик на другую дату?",
+                    'en' => "You are already seated at Table #{$tableNumber}! Would you like help choosing dishes from our menu or booking a table for another day?",
+                    default => "Դուք արդեն գտնվում եք ռեստորանում (Սեղան #{$tableNumber})։ Կարո՞ղ եմ օգնել Ձեզ ուտեստ ընտրել կամ կցանկանայի՞ք ամրագրել այլ օրվա համար։",
+                };
+
+                return [
+                    'reply' => $reply,
+                    'suggested_products' => [],
+                    'quick_replies' => [
+                        match ($lang) {
+                            'ru' => 'Выбрать блюдо', 'en' => 'Browse dishes', default => 'Ընտրել ուտեստ'
+                        },
+                        match ($lang) {
+                            'ru' => 'Бронь на другую дату', 'en' => 'Book for another day', default => 'Ամրագրել այլ օրվա համար'
+                        },
+                        match ($lang) {
+                            'ru' => 'Позвать официанта', 'en' => 'Call waiter', default => 'Կանչել մատուցող'
+                        },
+                    ],
+                    'intent' => 'table_reservation',
+                ];
+            }
+
+            if (! $vendor->isReservationFeatureEnabled()) {
+                $reply = match ($lang) {
+                    'ru' => 'Онлайн-бронирование столиков в данный момент недоступно для этого заведения. Вы можете ознакомиться с нашим меню или связаться с нами напрямую.',
+                    'en' => 'Online table reservations are currently disabled for this restaurant. You can browse our menu or contact us directly.',
+                    default => 'Առցանց սեղանների ամրագրումն այս պահին հասանելի չէ այս ռեստորանում։ Կարող եք ծանոթանալ մենյուին կամ կապ հաստատել մեզ հետ։',
+                };
+
+                return [
+                    'reply' => $reply,
+                    'suggested_products' => [],
+                    'quick_replies' => [
+                        match ($lang) {
+                            'ru' => 'Посмотреть меню', 'en' => 'Browse menu', default => 'Տեսնել մենյուն'
+                        },
+                    ],
+                    'intent' => 'table_reservation',
+                ];
+            }
+
+            $location = $locationId ? $vendor->locations->firstWhere('id', $locationId) : $vendor->locations->first();
+            $availableDates = $this->reservationAvailabilityService->getAvailableDates($vendor, $location);
+
+            $guestCount = 2;
+            if (preg_match('/(\d{1,2})\s*(հոգի|անձ|человек|гост|guest|person|people)/ui', $msg, $gm)) {
+                $guestCount = max(1, min(30, (int) $gm[1]));
+            }
+
+            $targetDate = ! empty($availableDates) ? $availableDates[0] : now()->toDateString();
+            if (preg_match('/(վաղը|завтра|tomorrow)/ui', $msg)) {
+                $targetDate = now()->addDay()->toDateString();
+            }
+
+            $slots = $this->reservationAvailabilityService->getAvailableSlots($vendor, $targetDate, $guestCount, $location);
+
+            if (empty($slots)) {
+                $reply = match ($lang) {
+                    'ru' => "На дату {$targetDate} для {$guestCount} гостей свободных столиков нет. Пожалуйста, выберите другую дату или свяжитесь с рестораном.",
+                    'en' => "No available time slots found on {$targetDate} for {$guestCount} guests. Please try another date.",
+                    default => "{$targetDate} ամսաթվին {$guestCount} հյուրի համար ազատ ժամեր չկան։ Խնդրում ենք ընտրել այլ ամսաթիվ կամ կապ հաստատել ռեստորանի հետ։",
+                };
+
+                return [
+                    'reply' => $reply,
+                    'suggested_products' => [],
+                    'quick_replies' => array_slice($availableDates, 0, 3),
+                    'intent' => 'table_reservation',
+                ];
+            }
+
+            $slotSample = implode(', ', array_slice($slots, 0, 4));
+            $reply = match ($lang) {
+                'ru' => "С удовольствием помогу забронировать столик! На дату {$targetDate} ({$guestCount} гостя) доступны следующие часы: {$slotSample}. Какой промежуток вам удобен?",
+                'en' => "I would be happy to help reserve a table! For {$targetDate} ({$guestCount} guests), available slots are: {$slotSample}. Which time works best?",
+                default => "Սիրով կօգնեմ ամրագրել սեղան։ {$targetDate} օրվա համար ({$guestCount} անձ) ունենք հետևյալ ազատ ժամերը՝ {$slotSample}։ Ո՞ր ժամն է Ձեզ հարմար:",
+            };
+
+            return [
+                'reply' => $reply,
+                'suggested_products' => [],
+                'quick_replies' => array_slice($slots, 0, 4),
+                'action' => 'reserve_table',
+                'intent' => 'table_reservation',
+                'updated_conversation_state' => [
+                    'current_workflow' => 'reservation',
+                    'reservation_draft' => [
+                        'date' => $targetDate,
+                        'guest_count' => $guestCount,
+                        'available_slots' => $slots,
+                    ],
+                ],
+            ];
+        }
+
+        // 3. Delivery Inquiry
+        if (preg_match('/(առաք|դոստավկ|delivery|deliver)/ui', $msg)) {
+            if (! $vendor->delivery_enabled) {
+                $reply = match ($lang) {
+                    'ru' => 'Доставка в данный момент не осуществляется. Вы можете оформить самовывоз или посетить наш ресторан лично.',
+                    'en' => 'Delivery is currently unavailable at this restaurant. You can choose takeaway or dine with us in person.',
+                    default => 'Առաքման ծառայությունը ներկայումս հասանելի չէ այս ռեստորանում։ Կարող եք օգտվել «Ինքս կվերցնեմ» (takeaway) տարբերակից կամ այցելել մեզ տեղում։',
+                };
+
+                return [
+                    'reply' => $reply,
+                    'suggested_products' => [],
+                    'quick_replies' => [
+                        match ($lang) {
+                            'ru' => 'Самовывоз', 'en' => 'Takeaway', default => 'Ինքս կվերցնեմ'
+                        },
+                        match ($lang) {
+                            'ru' => 'Посмотреть меню', 'en' => 'Browse menu', default => 'Տեսնել մենյուն'
+                        },
+                    ],
+                    'intent' => 'delivery',
+                ];
+            }
+
+            $minOrder = number_format((float) ($vendor->delivery_min_amount ?? $vendor->min_order_amount ?? 0));
+            $fee = number_format((float) $vendor->delivery_fee);
+            $freeThreshold = $vendor->free_delivery_threshold ? number_format((float) $vendor->free_delivery_threshold) : null;
+
+            $thresholdText = $freeThreshold ? match ($lang) {
+                'ru' => " (при заказе от {$freeThreshold} {$vendor->currency} — бесплатно!)",
+                'en' => " (free for orders above {$freeThreshold} {$vendor->currency}!)",
+                default => " ({$freeThreshold} {$vendor->currency}-ից սկսած՝ անվճար։)",
+            } : '';
+
+            $reply = match ($lang) {
+                'ru' => "У нас действует доставка! Минимальный заказ: {$minOrder} {$vendor->currency}, стоимость доставки: {$fee} {$vendor->currency}{$thresholdText}. Добавьте желаемые блюда в корзину и оформите заказ.",
+                'en' => "We offer delivery! Minimum order is {$minOrder} {$vendor->currency}, delivery fee is {$fee} {$vendor->currency}{$thresholdText}. Simply add dishes to your cart to order.",
+                default => "Մեզ մոտ գործում է առաքում։ Նվազագույն պատվերը՝ {$minOrder} {$vendor->currency}, առաքման արժեքը՝ {$fee} {$vendor->currency}{$thresholdText}։ Կարող եք ընտրել ուտեստները մենյուից և պատվիրել։",
+            };
+
+            return [
+                'reply' => $reply,
+                'suggested_products' => [],
+                'quick_replies' => [
+                    match ($lang) {
+                        'ru' => 'Выбрать блюда', 'en' => 'Browse dishes', default => 'Ընտրել ուտեստ'
+                    },
+                    match ($lang) {
+                        'ru' => 'Открыть корзину', 'en' => 'Open cart', default => 'Բացել զամբյուղը'
+                    },
+                ],
+                'intent' => 'delivery',
+            ];
+        }
+
+        // 4. Takeaway / Pickup Inquiry
+        if (preg_match('/(ինքս կվերցնեմ|տանել|վերցնել|самовывоз|takeaway|pickup|pick up)/ui', $msg)) {
+            if (! $vendor->takeaway_enabled) {
+                $reply = match ($lang) {
+                    'ru' => 'Самовывоз (takeaway) в данный момент не поддерживается.',
+                    'en' => 'Takeaway ordering is currently unavailable for this restaurant.',
+                    default => '«Ինքս կվերցնեմ» (takeaway) տարբերակն այս պահին անհասանելի է։',
+                };
+
+                return [
+                    'reply' => $reply,
+                    'suggested_products' => [],
+                    'quick_replies' => [
+                        match ($lang) {
+                            'ru' => 'Посмотреть меню', 'en' => 'Browse menu', default => 'Տեսնել մենյուն'
+                        },
+                    ],
+                    'intent' => 'takeaway',
+                ];
+            }
+
+            $reply = match ($lang) {
+                'ru' => 'Вы можете оформить заказ на самовывоз! Выберите блюда из меню, добавьте в корзину и при оформлении укажите «Самовывоз». Заказ приготовят к вашему приходу.',
+                'en' => 'You can place a takeaway pickup order! Select dishes from the menu, add them to your cart, and choose Pickup during checkout.',
+                default => 'Այո, կարող եք պատվիրել առցանց և ինքներդ վերցնել ռեստորանից։ Ընտրեք ուտեստները մենյուից և ձևակերպման ժամանակ նշեք «Ինքս կվերցնեմ»։',
+            };
+
+            return [
+                'reply' => $reply,
+                'suggested_products' => [],
+                'quick_replies' => [
+                    match ($lang) {
+                        'ru' => 'Выбрать блюда', 'en' => 'Browse dishes', default => 'Ընտրել ուտեստ'
+                    },
+                    match ($lang) {
+                        'ru' => 'Открыть корзину', 'en' => 'Open cart', default => 'Բացել զամբյուղը'
+                    },
+                ],
+                'intent' => 'takeaway',
+            ];
+        }
+
+        // 5. Event Planning Inquiry
+        if (preg_match('/(միջոցառ|ծնունդ|հարսանիք|կորպորատիվ|банкет|мероприят|свадьб|день рожден|event|wedding|birthday|party)/ui', $msg)) {
+            if (! $vendor->isEventInquiryFeatureEnabled()) {
+                $reply = match ($lang) {
+                    'ru' => 'Запросы на проведение мероприятий в данный момент отключены. Вы можете забронировать столик или связаться с нами по телефону.',
+                    'en' => 'Event planning inquiries are currently unavailable online. Please call the restaurant directly.',
+                    default => 'Միջոցառումների կազմակերպման առցանց հարցումները ներկայումս անջատված են։ Կարող եք կապ հաստատել մեզ հետ հեռախոսով։',
+                };
+
+                return [
+                    'reply' => $reply,
+                    'suggested_products' => [],
+                    'quick_replies' => [
+                        match ($lang) {
+                            'ru' => 'Посмотреть меню', 'en' => 'Browse menu', default => 'Տեսնել մենյուն'
+                        },
+                    ],
+                    'intent' => 'event_inquiry',
+                ];
+            }
+
+            $reply = match ($lang) {
+                'ru' => 'Мы с радостью поможем организовать ваш праздник (день рождения, корпоратив или свадьбу)! Укажите тип мероприятия, планируемую дату и количество гостей, и наш банкетный менеджер подготовит для вас персональное предложение.',
+                'en' => 'We would love to host your special event (birthday, wedding, or corporate banquet)! Please let us know the event type, estimated guest count, and date. Our event manager will contact you with a customized offer.',
+                default => 'Մենք մեծ սիրով կօգնենք կազմակերպել Ձեր միջոցառումը (ծնունդ, կորպորատիվ կամ հարսանիք)։ Խնդրում ենք նշել միջոցառման տեսակը, նախատեսվող օրը և հյուրերի քանակը, և մեր մենեջերը կկապվի Ձեզ հետ անհատական առաջարկով։',
+            };
+
+            return [
+                'reply' => $reply,
+                'suggested_products' => [],
+                'quick_replies' => [
+                    match ($lang) {
+                        'ru' => 'День рождения', 'en' => 'Birthday', default => 'Ծննդյան տոն'
+                    },
+                    match ($lang) {
+                        'ru' => 'Корпоратив', 'en' => 'Corporate Event', default => 'Կորպորատիվ'
+                    },
+                    match ($lang) {
+                        'ru' => 'Свадьба', 'en' => 'Wedding', default => 'Հարսանիք'
+                    },
+                    match ($lang) {
+                        'ru' => 'Семейный ужин', 'en' => 'Family Dinner', default => 'Ընտանեկան հավաքույթ'
+                    },
+                ],
+                'action' => 'event_inquiry',
+                'intent' => 'event_inquiry',
+                'updated_conversation_state' => [
+                    'current_workflow' => 'event_inquiry',
+                ],
+            ];
+        }
+
+        // 6. Budget Combo / Multi-Person Dinner (e.g. 2 people under 10,000 AMD)
+        $normalizedMsg = str_ireplace(
+            ['երկու', 'մեկ', 'երեք', 'չորս', 'հինգ', 'двух', 'двое', 'два', 'троих', 'три', 'two', 'three', 'four'],
+            ['2', '1', '3', '4', '5', '2', '2', '2', '3', '3', '2', '3', '4'],
+            $msg
+        );
+        $cleanNumberMsg = preg_replace('/(\d+)[,\s](\d{3})/', '$1$2', $normalizedMsg);
+
+        if (preg_match('/(\d{1,2})\s*(հոգու|անձի|человек|гостей|people|persons?).*?(\d{4,7})\s*(դրամ|դ|amd|rub|руб|\$)?/ui', $cleanNumberMsg, $cm) ||
+            preg_match('/(\d{4,7})\s*(դրամ|դ|amd|rub|руб|\$)?.*?(\d{1,2})\s*(հոգու|անձի|человек|гостей|people|persons?)/ui', $cleanNumberMsg, $cm2)) {
+
+            $party = isset($cm[1]) ? (int) $cm[1] : (int) ($cm2[3] ?? 2);
+            $budget = isset($cm[3]) ? (float) $cm[3] : (float) ($cm2[1] ?? 10000);
+
+            $validProducts = $allProducts->filter(fn ($p) => ! in_array((int) $p->id, $rejectedProductIds, true));
+
+            $mains = $validProducts->filter(function ($p) {
+                $c = mb_strtolower($p->category?->name ?? '');
+
+                return ! $this->isBeverageCategory($c) && ! str_contains($c, 'dessert') && ! str_contains($c, 'դեսերտ');
+            })->sortBy(fn ($p) => $p->getEffectivePrice($locationId));
+
+            $drinks = $validProducts->filter(function ($p) {
+                $c = mb_strtolower($p->category?->name ?? '');
+
+                return $this->isBeverageCategory($c);
+            });
+
+            $selectedCombo = [];
+            $currentTotal = 0.0;
+
+            foreach ($mains as $m) {
+                $price = (float) $m->getEffectivePrice($locationId);
+                if ($currentTotal + $price <= $budget && count($selectedCombo) < $party) {
+                    $selectedCombo[] = $m;
+                    $currentTotal += $price;
+                }
+            }
+
+            foreach ($drinks as $d) {
+                $price = (float) $d->getEffectivePrice($locationId);
+                if ($currentTotal + $price <= $budget) {
+                    $selectedCombo[] = $d;
+                    $currentTotal += $price;
+                    break;
+                }
+            }
+
+            if (! empty($selectedCombo)) {
+                $comboList = collect($selectedCombo)->map(function ($p) use ($lang, $locationId, $vendor) {
+                    return '«'.$p->getTranslatedName($lang).'» ('.number_format($p->getEffectivePrice($locationId)).' '.$vendor->currency.')';
+                })->implode(', ');
+
+                $formattedTotal = number_format($currentTotal);
+                $formattedBudget = number_format($budget);
+
+                $reply = match ($lang) {
+                    'ru' => "Для {$party} человек в бюджете до {$formattedBudget} {$vendor->currency} предлагаю отличный сет: {$comboList}. Итоговая сумма: {$formattedTotal} {$vendor->currency}.",
+                    'en' => "For {$party} guests within {$formattedBudget} {$vendor->currency}, I recommend: {$comboList}. Total: {$formattedTotal} {$vendor->currency}.",
+                    default => "{$party} անձի համար մինչև {$formattedBudget} {$vendor->currency} բյուջեում առաջարկում եմ հետևյալ համադրությունը՝ {$comboList}։ Ընդհանուր գումարը՝ {$formattedTotal} {$vendor->currency}։",
+                };
+
+                return [
+                    'reply' => $reply,
+                    'suggested_products' => collect($selectedCombo)->map(fn ($p) => $this->formatProductPayload($p, 96, '', $vendor, $lang, $locationId))->values()->toArray(),
+                    'quick_replies' => [
+                        match ($lang) {
+                            'ru' => 'Добавить в корзину', 'en' => 'Add to cart', default => 'Ավելացնել զամբյուղ'
+                        },
+                        match ($lang) {
+                            'ru' => 'Другие варианты', 'en' => 'Show other options', default => 'Ցույց տալ այլ տարբերակներ'
+                        },
+                    ],
+                    'action' => 'budget_combo',
+                    'intent' => 'budget_combo',
+                ];
+            }
+        }
+
+        // 7. Direct Chicken / Poultry Dish Inquiry (e.g. Ի՞նչ համեղ բան կառաջարկես հավով)
+        if (preg_match('/(հավ|chicken|куриц|птиц)/ui', $msg)) {
+            $chickenDishes = $allProducts->filter(function ($p) use ($rejectedProductIds, $lang) {
+                if (in_array((int) $p->id, $rejectedProductIds, true)) {
+                    return false;
+                }
+                $text = mb_strtolower($p->name.' '.$p->getTranslatedName($lang).' '.($p->description ?? '').' '.($p->category?->name ?? ''));
+
+                return preg_match('/(հավ|chicken|куриц|птиц)/ui', $text);
+            })->take(3);
+
+            if ($chickenDishes->isNotEmpty()) {
+                $names = $chickenDishes->map(fn ($p) => '«'.$p->getTranslatedName($lang).'» ('.number_format($p->getEffectivePrice($locationId)).' '.$vendor->currency.')')->implode(', ');
+                $reply = match ($lang) {
+                    'ru' => "Из блюд с курицей рекомендую: {$names}. Нежное филе и фирменные соусы!",
+                    'en' => "From our chicken specialties, I highly recommend: {$names}. Prepared tender and flavorful!",
+                    default => "Հավի մսով մեր մենյուում հատկապես առաջարկում եմ՝ {$names}: Պատրաստվում են թարմ և համեղ բաղադրիչներով:",
+                };
+
+                return [
+                    'reply' => $reply,
+                    'suggested_products' => $chickenDishes->map(fn ($p) => $this->formatProductPayload($p, 97, '', $vendor, $lang, $locationId))->values()->toArray(),
+                    'quick_replies' => [
+                        match ($lang) {
+                            'ru' => 'Добавить в корзину', 'en' => 'Add to cart', default => 'Ավելացնել զամբյուղ'
+                        },
+                        match ($lang) {
+                            'ru' => 'Подробнее', 'en' => 'View details', default => 'Տեսնել մանրամասները'
+                        },
+                        match ($lang) {
+                            'ru' => 'Другие варианты', 'en' => 'Show other options', default => 'Ցույց տալ այլ տարբերակներ'
+                        },
+                    ],
+                    'intent' => 'menu_recommendation',
+                ];
+            }
+        }
+
+        // 8. Restaurant General Information (Hours, Location, Contacts)
+        if (preg_match('/(ժամ[եր]?|հասցե|wifi|վայֆայ|հեռախոս|կոնտակտ|վճար|քարտ|часы|время работы|адрес|где вы|вайфай|телефон|оплата|hours|location|address|contact|wifi)/ui', $msg)) {
+            $addr = $vendor->address ?? $vendor->locations()->first()?->address ?? 'Центр города';
+            $phone = $vendor->phone ?? $vendor->locations()->first()?->phone ?? '';
+            $hours = $vendor->opening_hours ?? '10:00 - 23:00';
+
+            $reply = match ($lang) {
+                'ru' => "Информация о «{$vendor->name}»:\n📍 Адрес: {$addr}\n🕒 Часы работы: {$hours}".($phone ? "\n📞 Телефон: {$phone}" : ''),
+                'en' => "Information about «{$vendor->name}»:\n📍 Address: {$addr}\n🕒 Opening Hours: {$hours}".($phone ? "\n📞 Phone: {$phone}" : ''),
+                default => "«{$vendor->name}»-ի տվյալները՝\n📍 Հասցե՝ {$addr}\n🕒 Աշխատանքային ժամեր՝ {$hours}".($phone ? "\n📞 Հեռախոս՝ {$phone}" : ''),
+            };
+
+            return [
+                'reply' => $reply,
+                'suggested_products' => [],
+                'quick_replies' => [
+                    match ($lang) {
+                        'ru' => 'Посмотреть меню', 'en' => 'Browse menu', default => 'Տեսնել մենյուն'
+                    },
+                    match ($lang) {
+                        'ru' => 'Забронировать столик', 'en' => 'Book a table', default => 'Ամրագրել սեղան'
+                    },
+                ],
+                'intent' => 'restaurant_info',
+            ];
+        }
+
+        // 9. Drinks / Wine / Beverages pairing inquiry
         if (preg_match('/(գին[իու]|խմիչք|ըմպելիք|կոկտեյլ|գարեջուր|սուրճ|թեյ|շամպայն|հյութ|wine|drink|beverage|cocktail|beer|coffee|tea|вино|напиток|коктейль|пиво|кофе|чай)/ui', $msg)) {
             $drinks = $allProducts->filter(function ($p) {
                 $c = mb_strtolower($p->category?->name ?? '');
@@ -1265,7 +1824,6 @@ Respond directly to the guest in {$lang}:";
             });
 
             if ($drinks->isNotEmpty()) {
-                // If wine specifically requested, prioritize wine
                 if (preg_match('/(գին[իու]|wine|вин[оа])/ui', $msg)) {
                     $wineDishes = $drinks->filter(fn ($p) => preg_match('/(գինի|wine|вин[оа])/ui', $p->name.' '.$p->description));
                     if ($wineDishes->isNotEmpty()) {
@@ -1285,11 +1843,12 @@ Respond directly to the guest in {$lang}:";
                 return [
                     'reply' => $reply,
                     'suggested_products' => $selectedDrinks->map(fn ($p) => $this->formatProductPayload($p, 95, '', $vendor, $lang, $locationId))->values()->toArray(),
+                    'intent' => 'menu_recommendation',
                 ];
             }
         }
 
-        // 2. Without meat / Vegetarian / Vegan
+        // 10. Without meat / Vegetarian / Vegan
         if (preg_match('/(առանց մսի|բուսակեր|վեգան|vegetarian|vegan|без мяса|вегетариан)/ui', $msg)) {
             $vegDishes = $allProducts->filter(function ($p) {
                 $c = mb_strtolower($p->category?->name ?? '');
@@ -1309,11 +1868,12 @@ Respond directly to the guest in {$lang}:";
                 return [
                     'reply' => $reply,
                     'suggested_products' => $vegDishes->map(fn ($p) => $this->formatProductPayload($p, 95, '', $vendor, $lang, $locationId))->values()->toArray(),
+                    'intent' => 'menu_recommendation',
                 ];
             }
         }
 
-        // 3. Soups
+        // 11. Soups
         if (preg_match('/(ապուր|սուպ|soup|суп)/ui', $msg)) {
             $soups = $allProducts->filter(function ($p) {
                 $text = mb_strtolower($p->name.' '.$p->description.' '.($p->category?->name ?? ''));
@@ -1332,11 +1892,12 @@ Respond directly to the guest in {$lang}:";
                 return [
                     'reply' => $reply,
                     'suggested_products' => $soups->map(fn ($p) => $this->formatProductPayload($p, 95, '', $vendor, $lang, $locationId))->values()->toArray(),
+                    'intent' => 'menu_recommendation',
                 ];
             }
         }
 
-        // 4. Desserts & Sweets
+        // 12. Desserts & Sweets
         if (preg_match('/(աղանդեր|քաղցր|դեսերտ|տորթ|dessert|sweet|cake|десерт|сладк)/ui', $msg)) {
             $desserts = $allProducts->filter(function ($p) {
                 $text = mb_strtolower($p->name.' '.$p->description.' '.($p->category?->name ?? ''));
@@ -1355,11 +1916,12 @@ Respond directly to the guest in {$lang}:";
                 return [
                     'reply' => $reply,
                     'suggested_products' => $desserts->map(fn ($p) => $this->formatProductPayload($p, 95, '', $vendor, $lang, $locationId))->values()->toArray(),
+                    'intent' => 'menu_recommendation',
                 ];
             }
         }
 
-        // 5. Intelligent Keyword & Ingredient Stem Matching across all dishes
+        // 13. Keyword & Ingredient Stem Matching across all dishes
         $words = preg_split('/[^\p{L}\p{N}]+/u', $msg, -1, PREG_SPLIT_NO_EMPTY);
         $stopWords = ['ինչ', 'ունեք', 'մենյուում', 'հետ', 'իսկ', 'խնդրում', 'եմ', 'մի', 'բան', 'ուտել', 'տվեք', 'որն', 'է', 'եւ', 'և', 'կամ', 'the', 'and', 'what', 'have', 'you', 'with', 'for', 'что', 'есть', 'вас', 'меню', 'или'];
         $cleanWords = array_filter($words, fn ($w) => mb_strlen($w) >= 3 && ! in_array($w, $stopWords, true));
@@ -1367,6 +1929,9 @@ Respond directly to the guest in {$lang}:";
         if (! empty($cleanWords)) {
             $scoredProducts = [];
             foreach ($allProducts as $p) {
+                if (in_array((int) $p->id, $rejectedProductIds, true)) {
+                    continue;
+                }
                 $haystack = mb_strtolower($p->name.' '.$p->getTranslatedName($lang).' '.($p->description ?? '').' '.($p->category?->name ?? ''));
                 $matchScore = 0;
                 $matchedKeyword = '';
@@ -1401,14 +1966,16 @@ Respond directly to the guest in {$lang}:";
                 return [
                     'reply' => $reply,
                     'suggested_products' => collect($bestMatches)->map(fn ($p) => $this->formatProductPayload($p, 96, '', $vendor, $lang, $locationId))->values()->toArray(),
+                    'intent' => 'menu_recommendation',
                 ];
             }
         }
 
-        // 6. Rotating Chef's Specials (Avoid always returning same 2 dishes)
-        $candidates = $allProducts->sortByDesc(function ($p) {
-            return ($p->is_featured ? 50 : 0) + ($p->ai_priority ? 40 : 0) + rand(1, 20);
-        })->take(2);
+        // 14. Rotating Chef's Specials (avoiding rejected dishes)
+        $candidates = $allProducts->filter(fn ($p) => ! in_array((int) $p->id, $rejectedProductIds, true))
+            ->sortByDesc(function ($p) {
+                return ($p->is_featured ? 50 : 0) + ($p->ai_priority ? 40 : 0) + rand(1, 20);
+            })->take(2);
 
         $featuredNames = $candidates->map(fn ($p) => '«'.$p->getTranslatedName($lang).'»')->implode(', ');
 
@@ -1421,6 +1988,7 @@ Respond directly to the guest in {$lang}:";
         return [
             'reply' => $reply,
             'suggested_products' => $candidates->map(fn ($p) => $this->formatProductPayload($p, 90, '', $vendor, $lang, $locationId))->values()->toArray(),
+            'intent' => 'menu_recommendation',
         ];
     }
 

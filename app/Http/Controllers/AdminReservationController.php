@@ -283,11 +283,14 @@ class AdminReservationController extends Controller
         // Dispatch notifications on status change
         try {
             if ($newStatus === Reservation::STATUS_CONFIRMED && $oldStatus !== Reservation::STATUS_CONFIRMED) {
-                $this->notificationService->sendReservationNotification($reservation, 'customer_confirmed');
+                $this->notificationService->sendReservationNotification($reservation, 'reservation_confirmed');
+                $this->notificationService->sendRestaurantReservationNotification($reservation, 'restaurant_reservation_received');
             } elseif ($newStatus === Reservation::STATUS_REJECTED && $oldStatus !== Reservation::STATUS_REJECTED) {
-                $this->notificationService->sendReservationNotification($reservation, 'customer_rejected');
+                $this->notificationService->sendReservationNotification($reservation, 'reservation_rejected');
+                $this->notificationService->sendRestaurantReservationNotification($reservation, 'restaurant_cancelled');
             } elseif ($newStatus === Reservation::STATUS_CANCELLED && $oldStatus !== Reservation::STATUS_CANCELLED) {
-                $this->notificationService->sendReservationNotification($reservation, 'customer_cancelled');
+                $this->notificationService->sendReservationNotification($reservation, 'reservation_cancelled');
+                $this->notificationService->sendRestaurantReservationNotification($reservation, 'restaurant_cancelled');
             }
         } catch (\Throwable $e) {
             report($e);
@@ -302,6 +305,114 @@ class AdminReservationController extends Controller
         }
 
         return redirect()->back()->with('success', __('Reservation status updated successfully.'));
+    }
+
+    /**
+     * Update reservation details (date, time, party size, table, notes) and notify.
+     */
+    public function update(Request $request, Reservation $reservation): JsonResponse|RedirectResponse
+    {
+        $this->authorize('update', $reservation);
+
+        $vendor = Auth::user()->vendor;
+        if ((int) $reservation->vendor_id !== (int) $vendor->id) {
+            abort(403, 'Unauthorized cross-vendor reservation access.');
+        }
+
+        $validated = $request->validate([
+            'customer_name' => 'nullable|string|max:100',
+            'customer_email' => 'nullable|email|max:150',
+            'customer_phone' => 'nullable|string|max:30',
+            'reservation_date' => 'sometimes|required|date_format:Y-m-d',
+            'reservation_time' => 'sometimes|required|string|regex:/^\d{2}:\d{2}$/',
+            'guest_count' => 'sometimes|required|integer|min:1|max:50',
+            'table_id' => 'nullable|integer',
+            'duration_minutes' => 'nullable|integer|min:30|max:360',
+            'notes' => 'nullable|string|max:1000',
+            'special_requests' => 'nullable|string|max:1000',
+            'status' => 'nullable|in:pending,confirmed,seated,completed,cancelled,no_show,rejected',
+        ]);
+
+        $dateChanged = (! empty($validated['reservation_date']) && $reservation->reservation_date !== $validated['reservation_date'])
+            || (! empty($validated['reservation_time']) && $reservation->reservation_time !== $validated['reservation_time']);
+        $guestCountChanged = ! empty($validated['guest_count']) && (int) $reservation->guest_count !== (int) $validated['guest_count'];
+        $detailsModified = $dateChanged || $guestCountChanged;
+
+        if (! empty($validated['customer_name'])) {
+            $reservation->customer_name = trim($validated['customer_name']);
+        }
+        if (! empty($validated['customer_email'])) {
+            $reservation->customer_email = strtolower(trim($validated['customer_email']));
+        }
+        if (array_key_exists('customer_phone', $validated)) {
+            $reservation->customer_phone = ! empty($validated['customer_phone']) ? trim($validated['customer_phone']) : null;
+        }
+
+        if (! empty($validated['reservation_date'])) {
+            $reservation->reservation_date = $validated['reservation_date'];
+        }
+        if (! empty($validated['reservation_time'])) {
+            $reservation->reservation_time = $validated['reservation_time'];
+        }
+        if (! empty($validated['guest_count'])) {
+            $reservation->guest_count = (int) $validated['guest_count'];
+        }
+
+        if (! empty($validated['duration_minutes'])) {
+            $reservation->duration_minutes = (int) $validated['duration_minutes'];
+        }
+
+        if (! empty($validated['table_id']) && (int) $validated['table_id'] !== (int) $reservation->restaurant_table_id) {
+            $newTable = RestaurantTable::where('vendor_id', $vendor->id)->find($validated['table_id']);
+            if ($newTable) {
+                $reservation->restaurant_table_id = $newTable->id;
+                $reservation->table_number = $newTable->table_number;
+                $reservation->table_name = $newTable->display_name;
+            }
+        }
+
+        if (array_key_exists('notes', $validated)) {
+            $reservation->notes = $validated['notes'];
+        }
+        if (array_key_exists('special_requests', $validated)) {
+            $reservation->special_requests = $validated['special_requests'];
+        }
+        if (! empty($validated['status'])) {
+            $reservation->status = $validated['status'];
+        }
+
+        $reservation->save();
+
+        // Sync changes with linked customer if exists
+        if ($reservation->customer_id) {
+            $customer = $reservation->customer;
+            if ($customer && (int) $customer->vendor_id === (int) $vendor->id) {
+                $customer->update([
+                    'name' => $reservation->customer_name ?: $customer->name,
+                    'phone' => $reservation->customer_phone ?: $customer->phone,
+                    'email' => $reservation->customer_email ?: $customer->email,
+                ]);
+            }
+        }
+
+        if ($detailsModified) {
+            try {
+                $this->notificationService->sendReservationNotification($reservation, 'reservation_modified');
+                $this->notificationService->sendRestaurantReservationNotification($reservation, 'restaurant_reservation_modified');
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => __('Reservation updated successfully.'),
+                'reservation' => $reservation,
+            ]);
+        }
+
+        return redirect()->back()->with('success', __('Reservation updated successfully.'));
     }
 
     /**

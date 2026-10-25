@@ -19,8 +19,10 @@ class AiWaiterSession extends Model
         'location_id',
         'session_token',
         'table_number',
+        'entry_context',
         'language',
         'status',
+        'conversation_state',
         'preferences',
         'questions_history',
         'answers_history',
@@ -32,6 +34,7 @@ class AiWaiterSession extends Model
     ];
 
     protected $casts = [
+        'conversation_state' => 'array',
         'preferences' => 'array',
         'questions_history' => 'array',
         'answers_history' => 'array',

@@ -71,6 +71,7 @@ class Reservation extends Model
         'reference',
         'vendor_id',
         'location_id',
+        'customer_id',
         'customer_name',
         'customer_email',
         'customer_phone',
@@ -85,6 +86,7 @@ class Reservation extends Model
         'reservation_datetime',
         'duration_minutes',
         'status',
+        'source',
         'notes',
         'special_requests',
         'cancellation_reason',
@@ -96,6 +98,7 @@ class Reservation extends Model
     protected function casts(): array
     {
         return [
+            'customer_id' => 'integer',
             'guest_count' => 'integer',
             'duration_minutes' => 'integer',
             'restaurant_table_id' => 'integer',
@@ -107,6 +110,15 @@ class Reservation extends Model
 
     protected static function booted(): void
     {
+        static::saving(function (Reservation $reservation) {
+            if ($reservation->customer_id && $reservation->vendor_id) {
+                $customer = Customer::withoutGlobalScopes()->find($reservation->customer_id);
+                if ($customer && (int) $customer->vendor_id !== (int) $reservation->vendor_id) {
+                    throw new \InvalidArgumentException('Cross-vendor customer assigned to reservation.');
+                }
+            }
+        });
+
         static::creating(function (Reservation $reservation) {
             if (empty($reservation->uuid)) {
                 $reservation->uuid = (string) Str::uuid();
@@ -137,6 +149,11 @@ class Reservation extends Model
                 $reservation->resetFutureReminders();
             }
         });
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class, 'customer_id');
     }
 
     public function location(): BelongsTo

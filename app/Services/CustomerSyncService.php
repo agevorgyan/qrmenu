@@ -78,6 +78,79 @@ class CustomerSyncService
     }
 
     /**
+     * Find an existing customer by phone or email for the given vendor,
+     * or create a new customer record from a table reservation.
+     * Enforces strict vendor tenant isolation.
+     *
+     * @param  array{name?: ?string, phone?: ?string, email?: ?string}  $data
+     */
+    public function syncCustomerFromReservation(
+        Vendor $vendor,
+        array $data,
+        ?int $locationId = null
+    ): ?Customer {
+        $phone = ! empty($data['phone']) ? trim($data['phone']) : null;
+        $email = ! empty($data['email']) ? strtolower(trim($data['email'])) : null;
+        $name = ! empty($data['name']) ? trim($data['name']) : null;
+
+        $customer = null;
+
+        if ($phone || $email) {
+            $customer = Customer::where('vendor_id', $vendor->id)
+                ->where(function ($q) use ($phone, $email) {
+                    if ($phone) {
+                        $q->where('phone', $phone);
+                    }
+                    if ($email) {
+                        $q->orWhere('email', $email);
+                    }
+                })->first();
+        }
+
+        if ($customer) {
+            $updateData = [];
+
+            // Update name if current name is 'Guest' or empty and new name is provided
+            if ($name && ($customer->name === 'Guest' || empty($customer->name))) {
+                $updateData['name'] = $name;
+            }
+
+            // Fill missing phone or email
+            if (! $customer->phone && $phone) {
+                $updateData['phone'] = $phone;
+            }
+            if (! $customer->email && $email) {
+                $updateData['email'] = $email;
+            }
+
+            // Fill missing location
+            if (! $customer->location_id && $locationId) {
+                $updateData['location_id'] = $locationId;
+            }
+
+            if (! empty($updateData)) {
+                $customer->update($updateData);
+            }
+
+            return $customer;
+        }
+
+        // Create new customer if there is identifying information
+        if ($phone || $email || ($name && $name !== 'Guest')) {
+            return Customer::create([
+                'vendor_id' => $vendor->id,
+                'location_id' => $locationId,
+                'name' => $name ?: 'Guest',
+                'phone' => $phone,
+                'email' => $email,
+                'marketing_opt_in' => true,
+            ]);
+        }
+
+        return null;
+    }
+
+    /**
      * Create a customer directly from admin.
      */
     public function createCustomer(Vendor $vendor, array $data, bool $marketingOptIn = false): Customer

@@ -402,6 +402,192 @@
             font-weight: 500;
         }
 
+        /* Phone Input Component matching Cart Modal */
+        .cart-phone-field-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .cart-phone-input-box {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            background: var(--input-bg);
+            border: 1.5px solid var(--input-border);
+            border-radius: var(--radius-md);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+        }
+
+        .cart-phone-input-box:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+        }
+
+        .cart-phone-input-box.has-error {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+        }
+
+        .cart-phone-input-box.is-valid {
+            border-color: #10b981;
+        }
+
+        .cart-phone-country-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.72rem 0.65rem 0.72rem 0.85rem;
+            background: color-mix(in srgb, var(--text-main) 6%, transparent);
+            border: none;
+            border-right: 1px solid var(--input-border);
+            border-top-left-radius: 11px;
+            border-bottom-left-radius: 11px;
+            color: var(--text-main);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+            transition: background 0.15s;
+            flex-shrink: 0;
+        }
+
+        .cart-phone-country-btn:hover {
+            background: color-mix(in srgb, var(--text-main) 12%, transparent);
+        }
+
+        .cart-flag-icon {
+            font-size: 1.15rem;
+            line-height: 1;
+        }
+
+        .cart-dial-code {
+            font-family: inherit;
+            font-size: 0.88rem;
+            letter-spacing: -0.2px;
+        }
+
+        .cart-country-caret {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            transition: transform 0.2s ease;
+        }
+
+        .cart-country-caret.is-open {
+            transform: rotate(180deg);
+        }
+
+        .cart-phone-native-input {
+            flex: 1;
+            min-width: 0;
+            padding: 0.72rem 0.65rem;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .cart-phone-native-input::placeholder {
+            color: var(--text-muted);
+            font-weight: 400;
+            font-size: 0.88rem;
+        }
+
+        .cart-phone-status-indicator {
+            padding-right: 0.75rem;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .cart-status-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.18rem 0.45rem;
+            border-radius: 6px;
+            line-height: 1.2;
+        }
+
+        .cart-status-badge.is-incomplete {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .cart-status-badge.is-valid {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            font-size: 0.95rem;
+            padding: 0.1rem 0.25rem;
+        }
+
+        /* Country Dropdown Popup */
+        .cart-country-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            width: 100%;
+            max-width: 320px;
+            max-height: 240px;
+            overflow-y: auto;
+            background: var(--card-bg, #1c1c1e);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            padding: 0.35rem;
+            backdrop-filter: blur(12px);
+        }
+
+        .cart-country-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            width: 100%;
+            padding: 0.6rem 0.75rem;
+            border: none;
+            background: transparent;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.15s;
+            box-sizing: border-box;
+        }
+
+        .cart-country-item:hover, .cart-country-item.is-selected {
+            background: color-mix(in srgb, var(--primary) 18%, transparent);
+            color: var(--text-main);
+        }
+
+        .cart-item-flag {
+            font-size: 1.15rem;
+            line-height: 1;
+        }
+
+        .cart-item-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .cart-item-dial {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 0.82rem;
+        }
+
+        .cart-item-digits {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
         /* Pre-Order Integration */
         .preorder-count-badge {
             background: var(--primary);
@@ -880,7 +1066,74 @@
 
         <div class="form-group">
             <label class="form-label">{{ __('Phone Number') }}</label>
-            <input type="tel" class="form-input" x-model="customerPhone" placeholder="{{ __('+374 91 000000') }}">
+            <div class="cart-phone-field-wrapper">
+                <div class="cart-phone-input-box" :class="{ 'has-error': phoneErrorMsg, 'is-valid': isPhoneValid() && phoneCleanDigits.length > 0 }">
+                    <!-- Country Selector Pill -->
+                    <button type="button" 
+                            @click="showPhoneCountryDropdown = !showPhoneCountryDropdown" 
+                            class="cart-phone-country-btn"
+                            title="{{ __('Country') }}">
+                        <span class="cart-flag-icon" x-text="selectedPhoneCountry.flag"></span>
+                        <span class="cart-dial-code" x-text="selectedPhoneCountry.dial"></span>
+                        <i class="fa-solid fa-chevron-down cart-country-caret" :class="{ 'is-open': showPhoneCountryDropdown }"></i>
+                    </button>
+
+                    <!-- National Number Input -->
+                    <input type="tel" 
+                           id="reserveCustomerPhoneInput"
+                           x-model="phoneNationalNumber" 
+                           @input="onPhoneInput($event)"
+                           @blur="validatePhoneOnBlur()"
+                           class="cart-phone-native-input" 
+                           :placeholder="selectedPhoneCountry.placeholder">
+
+                    <!-- Live Digit Counter / Checkmark Status -->
+                    <div class="cart-phone-status-indicator">
+                        <template x-if="isPhoneValid() && phoneCleanDigits.length > 0">
+                            <span class="cart-status-badge is-valid" title="Valid">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </span>
+                        </template>
+                        <template x-if="phoneCleanDigits.length > 0 && !isPhoneValid()">
+                            <span class="cart-status-badge is-incomplete" :title="'Required ' + (selectedPhoneCountry.digits || '7-15') + ' digits'">
+                                <span x-text="phoneCleanDigits.length + '/' + (selectedPhoneCountry.digits || '10')"></span>
+                            </span>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Country Selection Dropdown Popup -->
+                <div x-show="showPhoneCountryDropdown" 
+                     @click.outside="showPhoneCountryDropdown = false"
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 transform scale-95 -translate-y-1"
+                     x-transition:enter-end="opacity-100 transform scale-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-100"
+                     x-transition:leave-start="opacity-100 transform scale-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 transform scale-95 -translate-y-1"
+                     class="cart-country-dropdown"
+                     style="display: none;">
+                    <template x-for="item in phoneCountries" :key="item.code">
+                        <button type="button" 
+                                @click="selectPhoneCountry(item.code)" 
+                                class="cart-country-item"
+                                :class="{ 'is-selected': phoneCountryCode === item.code }">
+                            <span class="cart-item-flag" x-text="item.flag"></span>
+                            <span class="cart-item-name" x-text="item.name"></span>
+                            <span class="cart-item-dial" x-text="item.dial"></span>
+                            <span class="cart-item-digits" x-show="item.digits" x-text="'(' + item.digits + ' {{ __('digits') }})'"></span>
+                        </button>
+                    </template>
+                </div>
+
+                <!-- Phone Error Message -->
+                <template x-if="phoneErrorMsg">
+                    <div class="cart-input-feedback-msg is-error" style="color: #ef4444; font-size: 0.8rem; margin-top: 0.35rem; display: flex; align-items: center; gap: 0.35rem;">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        <span x-text="phoneErrorMsg"></span>
+                    </div>
+                </template>
+            </div>
         </div>
 
         <div class="form-group">
@@ -1023,6 +1276,163 @@ function reservationBookingApp() {
         customerName: '',
         customerEmail: '',
         customerPhone: '',
+        phoneCountryCode: 'AM',
+        phoneNationalNumber: '',
+        showPhoneCountryDropdown: false,
+        phoneErrorMsg: '',
+        phoneCountries: [
+            { code: 'AM', flag: '🇦🇲', dial: '+374', digits: 8, name: '{{ __('Armenia') }}', placeholder: '94 123456' },
+            { code: 'RU', flag: '🇷🇺', dial: '+7', digits: 10, name: '{{ __('Russia') }}', placeholder: '999 123-45-67' },
+            { code: 'GE', flag: '🇬🇪', dial: '+995', digits: 9, name: '{{ __('Georgia') }}', placeholder: '599 12-34-56' },
+            { code: 'US', flag: '🇺🇸', dial: '+1', digits: 10, name: '{{ __('USA / Canada') }}', placeholder: '555 123-4567' },
+            { code: 'FR', flag: '🇫🇷', dial: '+33', digits: 9, name: '{{ __('France') }}', placeholder: '6 12 34 56 78' },
+            { code: 'DE', flag: '🇩🇪', dial: '+49', digits: 10, minDigits: 10, maxDigits: 11, name: '{{ __('Germany') }}', placeholder: '170 1234567' },
+            { code: 'AE', flag: '🇦🇪', dial: '+971', digits: 9, name: '{{ __('UAE') }}', placeholder: '50 123 4567' },
+            { code: 'IR', flag: '🇮🇷', dial: '+98', digits: 10, name: '{{ __('Iran') }}', placeholder: '912 123 4567' },
+            { code: 'OTHER', flag: '🌐', dial: '+', digits: null, minDigits: 7, maxDigits: 15, name: '{{ __('Other Country') }}', placeholder: '123456789' }
+        ],
+        get selectedPhoneCountry() {
+            return this.phoneCountries.find(c => c.code === this.phoneCountryCode) || this.phoneCountries[0];
+        },
+        get phoneCleanDigits() {
+            return (this.phoneNationalNumber || '').replace(/\D/g, '');
+        },
+        isPhoneValid() {
+            const digits = this.phoneCleanDigits;
+            if (!digits) return true;
+            const country = this.selectedPhoneCountry;
+            if (country.digits) {
+                return digits.length === country.digits;
+            }
+            const min = country.minDigits || 7;
+            const max = country.maxDigits || 15;
+            return digits.length >= min && digits.length <= max;
+        },
+        selectPhoneCountry(code) {
+            this.phoneCountryCode = code;
+            this.showPhoneCountryDropdown = false;
+            this.phoneErrorMsg = '';
+            this.onPhoneInput();
+        },
+        onPhoneInput(event) {
+            let raw = this.phoneNationalNumber || '';
+            if (raw.trim().startsWith('+')) {
+                const cleanPlus = raw.trim().replace(/[^\d+]/g, '');
+                if (cleanPlus.startsWith('+374')) {
+                    this.phoneCountryCode = 'AM';
+                    raw = cleanPlus.slice(4);
+                } else if (cleanPlus.startsWith('+7')) {
+                    this.phoneCountryCode = 'RU';
+                    raw = cleanPlus.slice(2);
+                } else if (cleanPlus.startsWith('+995')) {
+                    this.phoneCountryCode = 'GE';
+                    raw = cleanPlus.slice(4);
+                } else if (cleanPlus.startsWith('+1')) {
+                    this.phoneCountryCode = 'US';
+                    raw = cleanPlus.slice(2);
+                } else if (cleanPlus.startsWith('+33')) {
+                    this.phoneCountryCode = 'FR';
+                    raw = cleanPlus.slice(3);
+                } else if (cleanPlus.startsWith('+49')) {
+                    this.phoneCountryCode = 'DE';
+                    raw = cleanPlus.slice(3);
+                } else if (cleanPlus.startsWith('+971')) {
+                    this.phoneCountryCode = 'AE';
+                    raw = cleanPlus.slice(4);
+                } else if (cleanPlus.startsWith('+98')) {
+                    this.phoneCountryCode = 'IR';
+                    raw = cleanPlus.slice(3);
+                }
+            }
+
+            let digits = raw.replace(/\D/g, '');
+            const country = this.selectedPhoneCountry;
+
+            if (country.code === 'AM') {
+                if (digits.startsWith('0')) digits = digits.slice(1);
+                if (digits.length > 8) digits = digits.slice(0, 8);
+            } else if (country.code === 'RU') {
+                if (digits.startsWith('8') && digits.length > 10) digits = digits.slice(1);
+                if (digits.length > 10) digits = digits.slice(0, 10);
+            } else if (country.code === 'GE') {
+                if (digits.length > 9) digits = digits.slice(0, 9);
+            } else if (country.code === 'US') {
+                if (digits.length > 10) digits = digits.slice(0, 10);
+            } else if (country.code === 'FR') {
+                if (digits.startsWith('0')) digits = digits.slice(1);
+                if (digits.length > 9) digits = digits.slice(0, 9);
+            } else if (country.code === 'DE') {
+                if (digits.startsWith('0')) digits = digits.slice(1);
+                if (digits.length > 11) digits = digits.slice(0, 11);
+            } else if (country.code === 'AE') {
+                if (digits.startsWith('0')) digits = digits.slice(1);
+                if (digits.length > 9) digits = digits.slice(0, 9);
+            } else if (country.code === 'IR') {
+                if (digits.startsWith('0')) digits = digits.slice(1);
+                if (digits.length > 10) digits = digits.slice(0, 10);
+            } else {
+                if (digits.length > 15) digits = digits.slice(0, 15);
+            }
+
+            let formatted = digits;
+            if (country.code === 'AM') {
+                if (digits.length > 4) {
+                    formatted = digits.slice(0, 2) + ' ' + digits.slice(2, 5) + (digits.length > 5 ? ' ' + digits.slice(5) : '');
+                } else if (digits.length > 2) {
+                    formatted = digits.slice(0, 2) + ' ' + digits.slice(2);
+                }
+            } else if (country.code === 'RU') {
+                if (digits.length > 7) {
+                    formatted = '(' + digits.slice(0, 3) + ') ' + digits.slice(3, 6) + '-' + digits.slice(6, 8) + '-' + digits.slice(8);
+                } else if (digits.length > 4) {
+                    formatted = '(' + digits.slice(0, 3) + ') ' + digits.slice(3, 6) + '-' + digits.slice(6);
+                } else if (digits.length > 3) {
+                    formatted = '(' + digits.slice(0, 3) + ') ' + digits.slice(3);
+                } else if (digits.length > 0) {
+                    formatted = '(' + digits;
+                }
+            } else if (country.code === 'US') {
+                if (digits.length > 6) {
+                    formatted = '(' + digits.slice(0, 3) + ') ' + digits.slice(3, 6) + '-' + digits.slice(6);
+                } else if (digits.length > 3) {
+                    formatted = '(' + digits.slice(0, 3) + ') ' + digits.slice(3);
+                } else if (digits.length > 0) {
+                    formatted = '(' + digits;
+                }
+            } else if (country.code === 'GE') {
+                if (digits.length > 5) {
+                    formatted = digits.slice(0, 3) + ' ' + digits.slice(3, 5) + '-' + digits.slice(5, 7) + (digits.length > 7 ? '-' + digits.slice(7) : '');
+                } else if (digits.length > 3) {
+                    formatted = digits.slice(0, 3) + ' ' + digits.slice(3);
+                }
+            }
+
+            this.phoneNationalNumber = formatted;
+            this.customerPhone = digits.length > 0 ? (country.dial + digits) : '';
+
+            if (this.isPhoneValid()) {
+                this.phoneErrorMsg = '';
+            }
+        },
+        validatePhoneOnBlur() {
+            const digits = this.phoneCleanDigits;
+            if (!digits) {
+                this.phoneErrorMsg = '';
+                return;
+            }
+            const country = this.selectedPhoneCountry;
+            if (country.digits && digits.length !== country.digits) {
+                if (digits.length < country.digits) {
+                    this.phoneErrorMsg = `{{ __('Missing :count digits', ['count' => '']) }}`.trim() + ` (${digits.length}/${country.digits})`;
+                } else {
+                    this.phoneErrorMsg = `{{ __('Phone number must have exactly :digits digits', ['digits' => '']) }}`.trim() + ` ${country.digits}`;
+                }
+            } else if (!country.digits && (digits.length < (country.minDigits || 7) || digits.length > (country.maxDigits || 15))) {
+                this.phoneErrorMsg = '{{ __('Invalid phone format') }}';
+            } else {
+                this.phoneErrorMsg = '';
+            }
+        },
         specialRequests: '',
         preOrderItems: [],
         preOrderNotes: '',
@@ -1050,6 +1460,8 @@ function reservationBookingApp() {
                     customerName: this.customerName,
                     customerEmail: this.customerEmail,
                     customerPhone: this.customerPhone,
+                    phoneCountryCode: this.phoneCountryCode,
+                    phoneNationalNumber: this.phoneNationalNumber,
                     specialRequests: this.specialRequests,
                     savedAt: Date.now()
                 };
@@ -1073,7 +1485,14 @@ function reservationBookingApp() {
                 if (draft.selectedTableId) this.selectedTableId = draft.selectedTableId;
                 if (draft.customerName) this.customerName = draft.customerName;
                 if (draft.customerEmail) this.customerEmail = draft.customerEmail;
-                if (draft.customerPhone) this.customerPhone = draft.customerPhone;
+                if (draft.phoneCountryCode) this.phoneCountryCode = draft.phoneCountryCode;
+                if (draft.phoneNationalNumber) {
+                    this.phoneNationalNumber = draft.phoneNationalNumber;
+                    this.onPhoneInput();
+                } else if (draft.customerPhone) {
+                    this.phoneNationalNumber = draft.customerPhone;
+                    this.onPhoneInput();
+                }
                 if (draft.specialRequests) this.specialRequests = draft.specialRequests;
             } catch(e) {}
         },
@@ -1240,6 +1659,11 @@ function reservationBookingApp() {
             }
             if (!this.customerEmail.trim()) {
                 this.errorMessage = '{{ __('Please enter your email address.') }}';
+                return;
+            }
+            if (this.phoneCleanDigits.length > 0 && !this.isPhoneValid()) {
+                this.validatePhoneOnBlur();
+                this.errorMessage = this.phoneErrorMsg || '{{ __('Please enter a valid phone number.') }}';
                 return;
             }
 

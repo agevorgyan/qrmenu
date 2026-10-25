@@ -7,6 +7,7 @@ use App\Models\Reservation;
 use App\Models\ReservationPreOrder;
 use App\Models\Vendor;
 use App\Security\QuotaCatalog;
+use App\Services\CustomerSyncService;
 use App\Services\PreOrderService;
 use App\Services\QuotaService;
 use App\Services\ReservationAvailabilityService;
@@ -24,6 +25,7 @@ class StorefrontReservationController extends Controller
         protected ReservationAvailabilityService $availabilityService,
         protected PreOrderService $preOrderService,
         protected ReservationNotificationService $notificationService,
+        protected CustomerSyncService $customerSyncService,
     ) {}
 
     /**
@@ -138,8 +140,48 @@ class StorefrontReservationController extends Controller
 
         $validated = $request->validate([
             'customer_name' => 'required|string|max:100',
-            'customer_email' => 'required|email|max:150',
-            'customer_phone' => 'nullable|string|max:30',
+            'customer_email' => 'nullable|string|max:150|email:rfc,filter',
+            'customer_phone' => [
+                'nullable',
+                'string',
+                'max:50',
+                function ($attribute, $value, $fail) {
+                    if (empty($value)) {
+                        return;
+                    }
+
+                    $clean = preg_replace('/[\s\-\(\)\.]/', '', (string) $value);
+                    if (! preg_match('/^\+?[0-9]{8,15}$/', $clean)) {
+                        $fail(__('menu.invalid_phone_format'));
+
+                        return;
+                    }
+
+                    if (str_starts_with($clean, '+374')) {
+                        $digits = substr($clean, 4);
+                        if (strlen($digits) !== 8) {
+                            $fail('Հայկական հեռախոսահամարը պետք է ունենա ճիշտ 8 նիշ (+374-ից հետո)։');
+                        }
+                    } elseif (str_starts_with($clean, '0') && strlen($clean) !== 9) {
+                        $fail('Հայկական տեղական հեռախոսահամարը պետք է ունենա 9 նիշ (օր.՝ 091234567)։');
+                    } elseif (str_starts_with($clean, '+7')) {
+                        $digits = substr($clean, 2);
+                        if (strlen($digits) !== 10) {
+                            $fail('Ռուսական հեռախոսահամարը պետք է ունենա ճիշտ 10 նիշ (+7-ից հետո)։');
+                        }
+                    } elseif (str_starts_with($clean, '+995')) {
+                        $digits = substr($clean, 4);
+                        if (strlen($digits) !== 9) {
+                            $fail('Վրացական հեռախոսահամարը պետք է ունենա ճիշտ 9 նիշ (+995-ից հետո)։');
+                        }
+                    } elseif (str_starts_with($clean, '+1')) {
+                        $digits = substr($clean, 2);
+                        if (strlen($digits) !== 10) {
+                            $fail('ԱՄՆ/Կանադայի հեռախոսահամարը պետք է ունենա ճիշտ 10 նիշ (+1-ից հետո)։');
+                        }
+                    }
+                },
+            ],
             'locale' => 'nullable|string|max:10',
             'guest_count' => 'required|integer|min:1|max:50',
             'reservation_date' => 'required|date_format:Y-m-d',
@@ -185,13 +227,71 @@ class StorefrontReservationController extends Controller
         $autoConfirm = (bool) ($settings['auto_confirm'] ?? false);
         $initialStatus = $autoConfirm ? Reservation::STATUS_CONFIRMED : Reservation::STATUS_PENDING;
 
+        $normalizedPhone = null;
+        if (! empty($validated['customer_phone'])) {
+            $clean = preg_replace('/[\s\-\(\)\.]/', '', (string) $validated['customer_phone']);
+            if (str_starts_with($clean, '0') && strlen($clean) === 9) {
+                $normalizedPhone = '+374'.substr($clean, 1);
+            } elseif (! str_starts_with($clean, '+') && preg_match('/^[0-9]+$/', $clean)) {
+                $normalizedPhone = '+'.$clean;
+            } else {
+                $normalizedPhone = $clean;
+            }
+        }
+        $normalizedEmail = ! empty($validated['customer_email']) ? strtolower(trim($validated['customer_email'])) : null;
+
+        // Check for recent identical reservation to prevent duplicate submissions
+        $recentDuplicate = Reservation::where('vendor_id', $vendor->id)
+            ->where('reservation_date', $validated['reservation_date'])
+            ->where('reservation_time', $validated['reservation_time'])
+            ->where(function ($q) use ($normalizedEmail, $normalizedPhone) {
+                if ($normalizedEmail && $normalizedPhone) {
+                    $q->where('customer_email', $normalizedEmail)
+                        ->orWhere('customer_phone', $normalizedPhone);
+                } elseif ($normalizedEmail) {
+                    $q->where('customer_email', $normalizedEmail);
+                } elseif ($normalizedPhone) {
+                    $q->where('customer_phone', $normalizedPhone);
+                }
+            })
+            ->whereIn('status', [Reservation::STATUS_PENDING, Reservation::STATUS_CONFIRMED])
+            ->where('created_at', '>=', now()->subSeconds(60))
+            ->first();
+
+        if ($recentDuplicate) {
+            return response()->json([
+                'status' => 'success',
+                'success' => true,
+                'reference' => $recentDuplicate->reference,
+                'token' => $recentDuplicate->uuid,
+                'details_url' => $recentDuplicate->getPublicDetailsUrl(),
+                'message' => $recentDuplicate->status === Reservation::STATUS_CONFIRMED
+                    ? __('Your reservation is confirmed! We look forward to seeing you.')
+                    : __('Your reservation request has been received and is pending confirmation.'),
+            ], 200);
+        }
+
+        // Automatically create or link CRM customer
+        $crmCustomer = $this->customerSyncService->syncCustomerFromReservation(
+            vendor: $vendor,
+            data: [
+                'name' => trim($validated['customer_name']),
+                'email' => $normalizedEmail,
+                'phone' => $normalizedPhone,
+            ],
+            locationId: $location?->id
+        );
+
         $reservation = null;
         $preOrder = null;
 
         DB::transaction(function () use (
             $vendor,
             $location,
+            $crmCustomer,
             $validated,
+            $normalizedPhone,
+            $normalizedEmail,
             $rawItems,
             $customerLocale,
             $durationMinutes,
@@ -225,9 +325,10 @@ class StorefrontReservationController extends Controller
             $reservation = new Reservation([
                 'vendor_id' => $vendor->id,
                 'location_id' => $location?->id,
+                'customer_id' => $crmCustomer?->id,
                 'customer_name' => trim($validated['customer_name']),
-                'customer_email' => strtolower(trim($validated['customer_email'])),
-                'customer_phone' => ! empty($validated['customer_phone']) ? trim($validated['customer_phone']) : null,
+                'customer_email' => $normalizedEmail,
+                'customer_phone' => $normalizedPhone,
                 'locale' => $customerLocale,
                 'guest_count' => (int) $validated['guest_count'],
                 'restaurant_table_id' => $allocatedTable->id,
@@ -237,6 +338,7 @@ class StorefrontReservationController extends Controller
                 'reservation_time' => $validated['reservation_time'],
                 'duration_minutes' => $durationMinutes,
                 'status' => $initialStatus,
+                'source' => 'online',
                 'special_requests' => ! empty($validated['special_requests']) ? trim($validated['special_requests']) : null,
                 'cancellation_policy' => $vendor->reservation_settings['cancellation_policy'] ?? null,
             ]);
@@ -254,11 +356,11 @@ class StorefrontReservationController extends Controller
         // 4. Asynchronously queue customer & restaurant notifications
         try {
             $customerEvent = $initialStatus === Reservation::STATUS_CONFIRMED
-                ? 'customer_confirmed'
-                : 'customer_request_received';
+                ? 'reservation_confirmed'
+                : 'reservation_request_received';
 
             $this->notificationService->sendReservationNotification($reservation, $customerEvent);
-            $this->notificationService->sendRestaurantReservationNotification($reservation, 'restaurant_new_request');
+            $this->notificationService->sendRestaurantReservationNotification($reservation, 'restaurant_reservation_received');
 
             if ($preOrder) {
                 $this->notificationService->sendCustomerPreOrderNotification($preOrder, 'preorder_received');
