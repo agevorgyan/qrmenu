@@ -277,7 +277,7 @@
 
     <!-- Vendor Hero -->
     <div class="vendor-hero" style="display: flex; align-items: flex-end; gap: 1.25rem;">
-        <img src="{{ $vendor->logo ?? 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=300&q=80' }}" class="vendor-logo" style="flex-shrink: 0;">
+        <img src="{{ $vendor->logo ?? 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=300&q=80' }}" alt="{{ $vendor->name }}" width="80" height="80" fetchpriority="high" decoding="async" class="vendor-logo" style="flex-shrink: 0;">
         <div class="vendor-meta" style="min-width: 0; flex: 1;">
             <h1 style="word-break: break-word;">{{ $vendor->name }}</h1>
             <div @click="showInfoModal = true" style="font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; cursor: pointer; flex-wrap: wrap;" title="{{ __('menu.restaurant_info') }}">
@@ -335,7 +335,8 @@
                 <button id="chip-cat-{{ $cat->id }}" class="cat-chip" 
                         :class="{ 'active': activeCat === 'cat-{{ $cat->id }}' }" 
                         x-show="isCategoryVisible('cat-{{ $cat->id }}', {{ json_encode($catDishesMeta, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})"
-                        @click="scrollToCat('cat-{{ $cat->id }}')">
+                        @click="scrollToCat('cat-{{ $cat->id }}')"
+                        data-cat-name-id="{{ $cat->id }}">
                     {{ $cat->getTranslatedName($lang) }}
                 </button>
             @endif
@@ -359,7 +360,7 @@
                 @endphp
                 <div id="cat-{{ $cat->id }}" class="category-section" 
                      x-show="isCategoryVisible('cat-{{ $cat->id }}', {{ json_encode($catDishesMeta, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})">
-                    <h2 style="font-family: 'Outfit'; font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-main);">
+                    <h2 data-cat-name-id="{{ $cat->id }}" style="font-family: 'Outfit'; font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-main);">
                         {{ $cat->getTranslatedName($lang) }}
                     </h2>
 
@@ -401,11 +402,11 @@
                             <div class="dish-card" style="{{ (!$isLocAvailable || !$isTimeAvailable) ? 'opacity: 0.68;' : '' }}" 
                                  x-show='matchesSearch({!! json_encode(mb_strtolower($prod->getTranslatedName($lang))) !!}) && isProductAvailableForCurrentOrderType({{ $isDineIn ? 'true' : 'false' }}, {{ $isTakeaway ? 'true' : 'false' }}, {{ $isDelivery ? 'true' : 'false' }})' 
                                  @click='selectDish({{ json_encode($prodPayload, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'>
-                                <img src="{{ $prod->image }}" onerror="this.onerror=null;this.src='{{ asset('images/default-dish.png') }}';" loading="lazy" decoding="async" class="dish-img" alt="{{ $prod->getTranslatedName($lang) }}">
+                                <img src="{{ $prod->image }}" onerror="this.onerror=null;this.src='{{ asset('images/default-dish.png') }}';" loading="lazy" decoding="async" width="105" height="105" class="dish-img" alt="{{ $prod->getTranslatedName($lang) }}">
                                 <div class="dish-content">
                                     <div>
                                         <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 0.25rem;">
-                                            <div class="dish-title">{{ $prod->getTranslatedName($lang) }}</div>
+                                            <div class="dish-title" data-dish-name-id="{{ $prod->id }}">{{ $prod->getTranslatedName($lang) }}</div>
 
                                             @if(!$isLocAvailable)
                                                 <span style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); padding: 0.1rem 0.45rem; border-radius: 6px; font-size: 0.65rem; font-weight: 800;">
@@ -448,7 +449,7 @@
                                             @endforeach
                                         @endif
                                     </div>
-                                    <div class="dish-desc">{{ $prod->getTranslatedDescription($lang) }}</div>
+                                    <div class="dish-desc" data-dish-desc-id="{{ $prod->id }}">{{ $prod->getTranslatedDescription($lang) }}</div>
                                     @if($prod->calories || $prod->preparation_time_min || ($prod->allergens && $prod->allergens->count() > 0))
                                         <div style="display: flex; gap: 0.75rem; align-items: center; margin-top: 0.35rem; font-size: 0.72rem; color: var(--text-muted); flex-wrap: wrap;">
                                             @if($prod->calories)
@@ -490,7 +491,7 @@
                                                 $secFormatted = $vendor->formatSecondaryPrice($secPriceVal, $lang);
                                             @endphp
                                             @if($secFormatted)
-                                                <div class="secondary-price" style="font-size: 0.76rem; font-weight: 600; color: var(--text-muted); opacity: 0.85; margin-top: 0.15rem; line-height: 1.1;">
+                                                <div class="secondary-price" data-dish-sec-price-id="{{ $prod->id }}" style="font-size: 0.76rem; font-weight: 600; color: var(--text-muted); opacity: 0.85; margin-top: 0.15rem; line-height: 1.1;">
                                                     {{ $secFormatted }}
                                                 </div>
                                             @endif
