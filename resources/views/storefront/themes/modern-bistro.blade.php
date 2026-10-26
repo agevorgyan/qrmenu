@@ -55,11 +55,13 @@
             display: flex;
             gap: 0.5rem;
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
         }
         .category-scroll::-webkit-scrollbar { display: none; }
 
         .cat-chip {
+            flex-shrink: 0;
             padding: 0.45rem 0.9rem;
             border-radius: 9999px;
             background: transparent;

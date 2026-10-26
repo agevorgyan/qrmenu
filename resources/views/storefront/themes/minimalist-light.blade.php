@@ -209,9 +209,11 @@
         }
 
         .category-scroll {
+            position: relative;
             display: flex;
             gap: 0.45rem;
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
             padding: 0 1.25rem;
             scrollbar-width: none;
         }
@@ -221,6 +223,7 @@
         }
 
         .cat-chip {
+            flex-shrink: 0;
             padding: 0.45rem 0.95rem;
             border-radius: 10px;
             font-size: 0.83rem;
@@ -542,7 +545,7 @@
                     'delivery' => (bool)($p->available_for_delivery ?? true),
                 ])->values()->all();
             @endphp
-            <div id="cat-{{ $cat->id }}" class="category-anchor" x-show="isCategoryVisible('cat-{{ $cat->id }}', {{ json_encode($catDishesMeta, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})">
+            <div id="cat-{{ $cat->id }}" class="category-anchor category-section" x-show="isCategoryVisible('cat-{{ $cat->id }}', {{ json_encode($catDishesMeta, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})">
                 <div class="category-title">
                     <span>{{ $cat->getTranslatedName($lang) }}</span>
                     <span style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">{{ $cat->products->count() }}</span>

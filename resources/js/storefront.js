@@ -57,6 +57,11 @@
             preOrderSummaryText: '',
             catalogProducts: catalogProducts,
             activeCat: customConfig.activeCat || bootConfig.activeCat || 'cat-1',
+            _scrollSpyInitialized: false,
+            _isProgrammaticScroll: false,
+            _programmaticScrollStart: 0,
+            _programmaticScrollTimer: null,
+            _scrollSpyRaf: null,
             search: '',
             cart: [],
             cartBump: false,
@@ -140,8 +145,27 @@
             csrfToken: bootConfig.csrfToken || '',
             locationId: bootConfig.locationId || 1,
             schedules: bootConfig.schedules || {},
-            closingNotice: bootConfig.closingNotice || {},
             dismissedWarningBanner: false,
+
+            // Tips & Ratings State
+            tipsRatingsSettings: settings.tipsRatings || {},
+            splitBillSettings: settings.splitBill || {},
+            selectedTipType: (settings.tipsRatings && settings.tipsRatings.default_tip_selection) || 'none',
+            selectedTipValue: 0,
+            customTipInput: '',
+            selectedWaiterId: null,
+
+            // Service & Waiter Rating Modal State
+            showRatingModal: false,
+            ratingOrderNumber: null,
+            ratingWaiterId: null,
+            ratingScore: 5,
+            ratingCategories: [],
+            ratingComment: '',
+            ratingIsAnonymous: false,
+            ratingSubmitting: false,
+            ratingSubmitted: false,
+            ratingErrorMessage: '',
 
             // Language & Entry Context State
             needsLanguageSelection: bootConfig.needsLanguageSelection || false,
@@ -362,6 +386,7 @@
                     const firstVisible = Array.from(document.querySelectorAll('.cat-chip')).find(el => el.offsetParent !== null);
                     if (firstVisible && firstVisible.id) {
                         this.activeCat = firstVisible.id.replace('chip-', '');
+                        this.centerActiveCategoryChip(this.activeCat, true);
                     }
                 }
             },
@@ -380,13 +405,76 @@
                 }, 2500);
             },
 
+            initApp() {
+                this.initScrollSpy();
+            },
+
+            getStickyCategoryHeaderOffset() {
+                const stickyNav = document.querySelector('.category-nav-wrap, .category-nav-wrapper, .category-scroll, .category-nav');
+                const preorderBanner = document.querySelector('.storefront-preorder-top-banner');
+                let offset = 64;
+                if (stickyNav) {
+                    const rect = stickyNav.getBoundingClientRect();
+                    offset = Math.max(offset, rect.height + Math.max(0, rect.top));
+                } else if (preorderBanner && preorderBanner.offsetParent !== null) {
+                    offset += preorderBanner.offsetHeight;
+                }
+                return offset;
+            },
+
+            centerActiveCategoryChip(catId, smooth = true) {
+                const targetId = catId || this.activeCat;
+                if (!targetId) return;
+                const activeChip = document.getElementById('chip-' + targetId);
+                if (!activeChip || activeChip.offsetParent === null) return;
+
+                const scroller = activeChip.closest('.category-scroll, .category-nav, .category-nav-wrapper') || activeChip.parentElement;
+                if (!scroller) return;
+
+                const scrollerRect = scroller.getBoundingClientRect();
+                const chipRect = activeChip.getBoundingClientRect();
+                if (!scrollerRect.width) return;
+
+                const chipCenter = (chipRect.left - scrollerRect.left) + scroller.scrollLeft + (chipRect.width / 2);
+                const maxScroll = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+                const targetScrollLeft = Math.max(0, Math.min(maxScroll, chipCenter - (scrollerRect.width / 2)));
+
+                if (Math.abs(scroller.scrollLeft - targetScrollLeft) < 2) return;
+
+                try {
+                    scroller.scrollTo({
+                        left: targetScrollLeft,
+                        behavior: smooth ? 'smooth' : 'auto'
+                    });
+                } catch (e) {
+                    scroller.scrollLeft = targetScrollLeft;
+                }
+            },
+
             scrollToCat(catId) {
                 this.activeCat = catId;
+                this.centerActiveCategoryChip(catId, true);
+
                 const el = document.getElementById(catId);
                 if (el) {
-                    const headerOffset = 75;
+                    this._isProgrammaticScroll = true;
+                    this._programmaticScrollStart = Date.now();
+                    if (this._programmaticScrollTimer) {
+                        clearTimeout(this._programmaticScrollTimer);
+                    }
+                    this._programmaticScrollTimer = setTimeout(() => {
+                        this._isProgrammaticScroll = false;
+                        this._programmaticScrollTimer = null;
+                    }, 750);
+
+                    const stickyNav = document.querySelector('.category-nav-wrap, .category-nav-wrapper, .category-scroll, .category-nav');
+                    const preorderBanner = document.querySelector('.storefront-preorder-top-banner');
+                    const navHeight = stickyNav ? stickyNav.offsetHeight : 58;
+                    const bannerHeight = (preorderBanner && preorderBanner.offsetParent !== null) ? preorderBanner.offsetHeight : 0;
+                    const headerOffset = navHeight + bannerHeight + 12;
+
                     const elementPosition = el.getBoundingClientRect().top;
-                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                    const offsetPosition = Math.max(0, elementPosition + window.pageYOffset - headerOffset);
                     window.scrollTo({
                         top: offsetPosition,
                         behavior: 'smooth'
@@ -394,26 +482,92 @@
                 }
             },
 
-            initScrollSpy() {
-                const sections = document.querySelectorAll('.category-section');
+            updateActiveCategoryOnScroll() {
+                if (this._isProgrammaticScroll) return;
+
+                const sections = Array.from(document.querySelectorAll('.category-section, .category-anchor, [id^="cat-"]'))
+                    .filter(sec => sec.id && /^cat-\d+$/.test(sec.id) && sec.offsetParent !== null && sec.getClientRects().length > 0);
+
                 if (!sections.length) return;
 
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            this.activeCat = entry.target.id;
-                            const activeChip = document.getElementById('chip-' + entry.target.id);
-                            if (activeChip) {
-                                activeChip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                            }
-                        }
-                    });
-                }, {
-                    rootMargin: '-75px 0px -55% 0px',
-                    threshold: 0.1
-                });
+                const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+                const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 800;
+                const docHeight = Math.max(
+                    document.body ? document.body.scrollHeight : 0,
+                    document.documentElement ? document.documentElement.scrollHeight : 0
+                );
 
-                sections.forEach(sec => observer.observe(sec));
+                if (scrollY <= 20) {
+                    const firstId = sections[0].id;
+                    if (this.activeCat !== firstId) {
+                        this.activeCat = firstId;
+                        this.centerActiveCategoryChip(firstId, true);
+                    }
+                    return;
+                }
+
+                if (scrollY + viewportHeight >= docHeight - 24) {
+                    const lastSection = sections[sections.length - 1];
+                    if (lastSection && lastSection.getBoundingClientRect().top < viewportHeight * 0.75) {
+                        if (this.activeCat !== lastSection.id) {
+                            this.activeCat = lastSection.id;
+                            this.centerActiveCategoryChip(lastSection.id, true);
+                        }
+                        return;
+                    }
+                }
+
+                const stickyBottom = this.getStickyCategoryHeaderOffset();
+                const activationLine = Math.max(stickyBottom + 24, Math.min(220, Math.round(viewportHeight * 0.28)));
+
+                let candidateId = sections[0].id;
+                for (let i = 0; i < sections.length; i++) {
+                    const rect = sections[i].getBoundingClientRect();
+                    if (rect.top <= activationLine) {
+                        candidateId = sections[i].id;
+                    } else {
+                        break;
+                    }
+                }
+
+                if (candidateId && this.activeCat !== candidateId) {
+                    this.activeCat = candidateId;
+                    this.centerActiveCategoryChip(candidateId, true);
+                }
+            },
+
+            initScrollSpy() {
+                if (this._scrollSpyInitialized) return;
+                this._scrollSpyInitialized = true;
+
+                const onScroll = () => {
+                    if (this._scrollSpyRaf) return;
+                    this._scrollSpyRaf = window.requestAnimationFrame(() => {
+                        this._scrollSpyRaf = null;
+                        this.updateActiveCategoryOnScroll();
+                    });
+                };
+
+                const releaseProgrammaticLockOnUserInput = () => {
+                    if (this._isProgrammaticScroll && (Date.now() - this._programmaticScrollStart > 120)) {
+                        this._isProgrammaticScroll = false;
+                        if (this._programmaticScrollTimer) {
+                            clearTimeout(this._programmaticScrollTimer);
+                            this._programmaticScrollTimer = null;
+                        }
+                    }
+                };
+
+                window.addEventListener('scroll', onScroll, { passive: true });
+                window.addEventListener('resize', onScroll, { passive: true });
+                window.addEventListener('touchstart', releaseProgrammaticLockOnUserInput, { passive: true });
+                window.addEventListener('wheel', releaseProgrammaticLockOnUserInput, { passive: true });
+                if ('onscrollend' in window) {
+                    window.addEventListener('scrollend', releaseProgrammaticLockOnUserInput, { passive: true });
+                }
+
+                this.updateActiveCategoryOnScroll();
+                this.centerActiveCategoryChip(this.activeCat, false);
             },
 
             matchesSearch(title) {
@@ -681,8 +835,50 @@
                 return Math.round((this.cartSubtotal * this.birthdayDiscountPercent) / 100);
             },
 
+            get isTipsApplicable() {
+                if (!this.tipsRatingsSettings || !this.tipsRatingsSettings.tips_enabled) return false;
+                const types = this.tipsRatingsSettings.applicable_order_types || ['dine_in'];
+                if (!types.includes(this.orderType)) return false;
+                if (this.paymentMethod === 'cash' && !this.tipsRatingsSettings.allow_cash_tips) return false;
+                return true;
+            },
+
+            get tipPercentage() {
+                return this.selectedTipType === 'percentage' ? Number(this.selectedTipValue || 0) : 0;
+            },
+
+            get tipAmount() {
+                if (!this.isTipsApplicable || this.selectedTipType === 'none') {
+                    return 0;
+                }
+                let base = this.cartSubtotal;
+                if (this.tipsRatingsSettings.calculation_base === 'after_discount') {
+                    base = Math.max(0, this.cartSubtotal - this.birthdayDiscountAmount);
+                } else if (this.tipsRatingsSettings.calculation_base === 'total_with_fees') {
+                    base = Math.max(0, this.cartSubtotal - this.birthdayDiscountAmount + this.calculatedServiceFee + this.calculatedDeliveryFee);
+                }
+
+                let amount = 0;
+                if (this.selectedTipType === 'percentage') {
+                    amount = Math.round((base * Number(this.selectedTipValue || 0)) / 100);
+                } else if (this.selectedTipType === 'fixed') {
+                    amount = Number(this.selectedTipValue || 0);
+                } else if (this.selectedTipType === 'custom') {
+                    amount = Math.max(0, Number(this.customTipInput || 0));
+                }
+
+                if (amount > 0) {
+                    const min = Number(this.tipsRatingsSettings.min_tip_amount || 0);
+                    const max = Number(this.tipsRatingsSettings.max_tip_amount || 50000);
+                    if (min > 0 && amount < min) amount = min;
+                    if (max > 0 && amount > max) amount = max;
+                }
+
+                return Math.round(amount);
+            },
+
             get cartFinalTotal() {
-                const rawTotal = this.cartSubtotal + this.calculatedServiceFee + this.calculatedDeliveryFee - this.birthdayDiscountAmount;
+                const rawTotal = this.cartSubtotal + this.calculatedServiceFee + this.calculatedDeliveryFee - this.birthdayDiscountAmount + this.tipAmount;
                 return Math.max(0, rawTotal);
             },
 
@@ -897,6 +1093,10 @@
                             payment_method: this.paymentMethod || 'cash',
                             marketing_opt_in: this.marketingOptIn,
                             notes: this.orderNotes,
+                            tip_amount: this.tipAmount,
+                            tip_type: this.selectedTipType,
+                            tip_value: this.selectedTipValue,
+                            waiter_id: this.selectedWaiterId || null,
                             active_order_number: (this.activeOrder && !['completed', 'cancelled'].includes(this.activeOrder.status)) ? this.activeOrder.order_number : null,
                             items: this.cart.map(c => ({
                                 product_id: c.id || c.product_id,
@@ -1003,7 +1203,96 @@
                 this.showCartModal = false;
                 this.showInfoModal = false;
                 this.showOrderTracker = false;
+                this.showRatingModal = false;
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+            },
+
+            setTip(type, value) {
+                this.selectedTipType = type;
+                this.selectedTipValue = value;
+                if (type === 'custom') {
+                    this.customTipInput = value;
+                }
+            },
+
+            openRatingModal(orderNumber = null, waiterId = null) {
+                this.ratingOrderNumber = orderNumber || (this.activeOrder ? this.activeOrder.order_number : null);
+                this.ratingWaiterId = waiterId || (this.activeOrder ? this.activeOrder.waiter_id : null) || this.selectedWaiterId || null;
+                this.ratingScore = Number(this.tipsRatingsSettings.rating_scale || 5);
+                this.ratingCategories = [];
+                this.ratingComment = '';
+                this.ratingIsAnonymous = false;
+                this.ratingSubmitting = false;
+                this.ratingSubmitted = false;
+                this.ratingErrorMessage = '';
+                this.showRatingModal = true;
+            },
+
+            toggleRatingCategory(cat) {
+                if (this.ratingCategories.includes(cat)) {
+                    this.ratingCategories = this.ratingCategories.filter(c => c !== cat);
+                } else {
+                    this.ratingCategories.push(cat);
+                }
+            },
+
+            formatCategoryName(cat) {
+                const map = {
+                    food_quality: 'Համեղ ուտեստներ',
+                    service_speed: 'Արագ սպասարկում',
+                    waiter_politeness: 'Բարեհամբույր մատուցող',
+                    cleanliness: 'Մաքրություն',
+                    ambiance: 'Հաճելի մթնոլորտ',
+                    table_presentation: 'Գեղեցիկ մատուցում'
+                };
+                return map[cat] || (cat.charAt(0).toUpperCase() + cat.slice(1).replace(/_/g, ' '));
+            },
+
+            async submitRatingForm() {
+                if (this.ratingSubmitting) return;
+
+                const isOptional = this.tipsRatingsSettings.is_written_feedback_optional !== false;
+                if (!isOptional && (!this.ratingComment || !this.ratingComment.trim())) {
+                    this.ratingErrorMessage = 'Մեկնաբանությունը պարտադիր է:';
+                    return;
+                }
+
+                this.ratingSubmitting = true;
+                this.ratingErrorMessage = '';
+
+                try {
+                    const ratingUrl = (bootConfig.routes && bootConfig.routes.submitRating) || `/api/m/${this.vendorSlug}/rate`;
+                    const res = await fetch(ratingUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': this.csrfToken
+                        },
+                        body: JSON.stringify({
+                            order_number: this.ratingOrderNumber || null,
+                            table_number: this.tableNumber || (this.activeOrder ? this.activeOrder.table_number : null) || null,
+                            waiter_id: this.ratingWaiterId || null,
+                            rating: this.ratingScore,
+                            categories: this.ratingCategories,
+                            comment: this.ratingComment ? this.ratingComment.trim() : null,
+                            is_anonymous: this.ratingIsAnonymous,
+                            customer_name: this.ratingIsAnonymous ? null : (this.customerName || (this.activeOrder ? this.activeOrder.customer_name : null))
+                        })
+                    });
+
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok && data.success) {
+                        this.ratingSubmitted = true;
+                        this.triggerToast('Շնորհակալություն գնահատականի համար!', 'add', 'fa-solid fa-star');
+                    } else {
+                        this.ratingErrorMessage = data.message || 'Չհաջողվեց գրանցել գնահատականը:';
+                    }
+                } catch (e) {
+                    this.ratingErrorMessage = 'Կապի խնդիր: Խնդրում ենք փորձել կրկին:';
+                } finally {
+                    this.ratingSubmitting = false;
+                }
             },
 
             scrollToTop() {
@@ -1595,21 +1884,55 @@
                 }
             },
 
-            changeLanguage(locale) {
+            async selectStorefrontLanguage(locale) {
                 this.saveCartToStorage();
                 this.selectedLang = locale;
-                try { localStorage.setItem('qrmenu_locale_' + this.vendorSlug, locale); } catch(e) {}
+                this.showLanguageModal = false;
+                try {
+                    localStorage.setItem('qrmenu_locale_' + this.vendorSlug, locale);
+                } catch(e) {}
+
+                try {
+                    const setLangUrl = routes.setLanguage || `/api/m/${this.vendorSlug}/language`;
+                    await fetch(setLangUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.csrfToken,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ language: locale })
+                    });
+                } catch(e) {}
+
                 const url = new URL(window.location.href);
                 url.searchParams.set('lang', locale);
                 window.location.href = url.toString();
             },
 
+            changeLanguage(locale) {
+                this.selectStorefrontLanguage(locale);
+            },
+
             initAiWaiterWelcome() {
+                if (this.showLanguageModal) {
+                    return; // Wait for customer language selection first
+                }
+
                 if (vendor.ai_waiter_enabled) {
                     try {
-                        const welcomed = localStorage.getItem('ai_waiter_welcomed_' + this.vendorSlug);
+                        const welcomed = sessionStorage.getItem('ai_waiter_welcomed_' + this.vendorSlug);
                         if (!welcomed) {
-                            this.openAiWaiter('intro');
+                            sessionStorage.setItem('ai_waiter_welcomed_' + this.vendorSlug, 'true');
+                            if (this.entryContext === 'table_qr') {
+                                // Table QR: never block the menu with fullscreen questionnaire!
+                                if (this.timeAwareGreeting) {
+                                    this.showToastNotification(this.timeAwareGreeting, 'info');
+                                }
+                            } else {
+                                // General menu: show gentle welcome card
+                                this.showWelcomeModal = true;
+                            }
                         }
                     } catch(e) {}
                 }
@@ -1627,7 +1950,7 @@
 
             closeAiWaiter() {
                 this.showAiWaiter = false;
-                try { localStorage.setItem('ai_waiter_welcomed_' + this.vendorSlug, 'true'); } catch(e) {}
+                try { sessionStorage.setItem('ai_waiter_welcomed_' + this.vendorSlug, 'true'); } catch(e) {}
             },
 
             skipToMenu() {
@@ -1648,7 +1971,8 @@
                         body: JSON.stringify({
                             lang: this.selectedLang,
                             location_id: this.locationId,
-                            table_number: this.tableNumber || null
+                            table_number: this.tableNumber || null,
+                            entry_context: this.entryContext
                         })
                     });
                     const data = await res.json();
@@ -1660,6 +1984,12 @@
                         }
                         if (data.allowed_language_details && data.allowed_language_details.length) {
                             this.aiLanguageDetails = data.allowed_language_details;
+                        }
+                        if (data.greeting) {
+                            this.timeAwareGreeting = data.greeting;
+                        }
+                        if (data.active_meal_period) {
+                            this.activeMealPeriod = data.active_meal_period;
                         }
                         this.aiCurrentQuestion = data.next_question;
                     }

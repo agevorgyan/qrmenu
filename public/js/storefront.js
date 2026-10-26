@@ -57,6 +57,11 @@
             preOrderSummaryText: '',
             catalogProducts: catalogProducts,
             activeCat: customConfig.activeCat || bootConfig.activeCat || 'cat-1',
+            _scrollSpyInitialized: false,
+            _isProgrammaticScroll: false,
+            _programmaticScrollStart: 0,
+            _programmaticScrollTimer: null,
+            _scrollSpyRaf: null,
             search: '',
             cart: [],
             cartBump: false,
@@ -381,6 +386,7 @@
                     const firstVisible = Array.from(document.querySelectorAll('.cat-chip')).find(el => el.offsetParent !== null);
                     if (firstVisible && firstVisible.id) {
                         this.activeCat = firstVisible.id.replace('chip-', '');
+                        this.centerActiveCategoryChip(this.activeCat, true);
                     }
                 }
             },
@@ -399,13 +405,76 @@
                 }, 2500);
             },
 
+            initApp() {
+                this.initScrollSpy();
+            },
+
+            getStickyCategoryHeaderOffset() {
+                const stickyNav = document.querySelector('.category-nav-wrap, .category-nav-wrapper, .category-scroll, .category-nav');
+                const preorderBanner = document.querySelector('.storefront-preorder-top-banner');
+                let offset = 64;
+                if (stickyNav) {
+                    const rect = stickyNav.getBoundingClientRect();
+                    offset = Math.max(offset, rect.height + Math.max(0, rect.top));
+                } else if (preorderBanner && preorderBanner.offsetParent !== null) {
+                    offset += preorderBanner.offsetHeight;
+                }
+                return offset;
+            },
+
+            centerActiveCategoryChip(catId, smooth = true) {
+                const targetId = catId || this.activeCat;
+                if (!targetId) return;
+                const activeChip = document.getElementById('chip-' + targetId);
+                if (!activeChip || activeChip.offsetParent === null) return;
+
+                const scroller = activeChip.closest('.category-scroll, .category-nav, .category-nav-wrapper') || activeChip.parentElement;
+                if (!scroller) return;
+
+                const scrollerRect = scroller.getBoundingClientRect();
+                const chipRect = activeChip.getBoundingClientRect();
+                if (!scrollerRect.width) return;
+
+                const chipCenter = (chipRect.left - scrollerRect.left) + scroller.scrollLeft + (chipRect.width / 2);
+                const maxScroll = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+                const targetScrollLeft = Math.max(0, Math.min(maxScroll, chipCenter - (scrollerRect.width / 2)));
+
+                if (Math.abs(scroller.scrollLeft - targetScrollLeft) < 2) return;
+
+                try {
+                    scroller.scrollTo({
+                        left: targetScrollLeft,
+                        behavior: smooth ? 'smooth' : 'auto'
+                    });
+                } catch (e) {
+                    scroller.scrollLeft = targetScrollLeft;
+                }
+            },
+
             scrollToCat(catId) {
                 this.activeCat = catId;
+                this.centerActiveCategoryChip(catId, true);
+
                 const el = document.getElementById(catId);
                 if (el) {
-                    const headerOffset = 75;
+                    this._isProgrammaticScroll = true;
+                    this._programmaticScrollStart = Date.now();
+                    if (this._programmaticScrollTimer) {
+                        clearTimeout(this._programmaticScrollTimer);
+                    }
+                    this._programmaticScrollTimer = setTimeout(() => {
+                        this._isProgrammaticScroll = false;
+                        this._programmaticScrollTimer = null;
+                    }, 750);
+
+                    const stickyNav = document.querySelector('.category-nav-wrap, .category-nav-wrapper, .category-scroll, .category-nav');
+                    const preorderBanner = document.querySelector('.storefront-preorder-top-banner');
+                    const navHeight = stickyNav ? stickyNav.offsetHeight : 58;
+                    const bannerHeight = (preorderBanner && preorderBanner.offsetParent !== null) ? preorderBanner.offsetHeight : 0;
+                    const headerOffset = navHeight + bannerHeight + 12;
+
                     const elementPosition = el.getBoundingClientRect().top;
-                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                    const offsetPosition = Math.max(0, elementPosition + window.pageYOffset - headerOffset);
                     window.scrollTo({
                         top: offsetPosition,
                         behavior: 'smooth'
@@ -413,26 +482,92 @@
                 }
             },
 
-            initScrollSpy() {
-                const sections = document.querySelectorAll('.category-section');
+            updateActiveCategoryOnScroll() {
+                if (this._isProgrammaticScroll) return;
+
+                const sections = Array.from(document.querySelectorAll('.category-section, .category-anchor, [id^="cat-"]'))
+                    .filter(sec => sec.id && /^cat-\d+$/.test(sec.id) && sec.offsetParent !== null && sec.getClientRects().length > 0);
+
                 if (!sections.length) return;
 
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            this.activeCat = entry.target.id;
-                            const activeChip = document.getElementById('chip-' + entry.target.id);
-                            if (activeChip) {
-                                activeChip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                            }
-                        }
-                    });
-                }, {
-                    rootMargin: '-75px 0px -55% 0px',
-                    threshold: 0.1
-                });
+                const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+                const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 800;
+                const docHeight = Math.max(
+                    document.body ? document.body.scrollHeight : 0,
+                    document.documentElement ? document.documentElement.scrollHeight : 0
+                );
 
-                sections.forEach(sec => observer.observe(sec));
+                if (scrollY <= 20) {
+                    const firstId = sections[0].id;
+                    if (this.activeCat !== firstId) {
+                        this.activeCat = firstId;
+                        this.centerActiveCategoryChip(firstId, true);
+                    }
+                    return;
+                }
+
+                if (scrollY + viewportHeight >= docHeight - 24) {
+                    const lastSection = sections[sections.length - 1];
+                    if (lastSection && lastSection.getBoundingClientRect().top < viewportHeight * 0.75) {
+                        if (this.activeCat !== lastSection.id) {
+                            this.activeCat = lastSection.id;
+                            this.centerActiveCategoryChip(lastSection.id, true);
+                        }
+                        return;
+                    }
+                }
+
+                const stickyBottom = this.getStickyCategoryHeaderOffset();
+                const activationLine = Math.max(stickyBottom + 24, Math.min(220, Math.round(viewportHeight * 0.28)));
+
+                let candidateId = sections[0].id;
+                for (let i = 0; i < sections.length; i++) {
+                    const rect = sections[i].getBoundingClientRect();
+                    if (rect.top <= activationLine) {
+                        candidateId = sections[i].id;
+                    } else {
+                        break;
+                    }
+                }
+
+                if (candidateId && this.activeCat !== candidateId) {
+                    this.activeCat = candidateId;
+                    this.centerActiveCategoryChip(candidateId, true);
+                }
+            },
+
+            initScrollSpy() {
+                if (this._scrollSpyInitialized) return;
+                this._scrollSpyInitialized = true;
+
+                const onScroll = () => {
+                    if (this._scrollSpyRaf) return;
+                    this._scrollSpyRaf = window.requestAnimationFrame(() => {
+                        this._scrollSpyRaf = null;
+                        this.updateActiveCategoryOnScroll();
+                    });
+                };
+
+                const releaseProgrammaticLockOnUserInput = () => {
+                    if (this._isProgrammaticScroll && (Date.now() - this._programmaticScrollStart > 120)) {
+                        this._isProgrammaticScroll = false;
+                        if (this._programmaticScrollTimer) {
+                            clearTimeout(this._programmaticScrollTimer);
+                            this._programmaticScrollTimer = null;
+                        }
+                    }
+                };
+
+                window.addEventListener('scroll', onScroll, { passive: true });
+                window.addEventListener('resize', onScroll, { passive: true });
+                window.addEventListener('touchstart', releaseProgrammaticLockOnUserInput, { passive: true });
+                window.addEventListener('wheel', releaseProgrammaticLockOnUserInput, { passive: true });
+                if ('onscrollend' in window) {
+                    window.addEventListener('scrollend', releaseProgrammaticLockOnUserInput, { passive: true });
+                }
+
+                this.updateActiveCategoryOnScroll();
+                this.centerActiveCategoryChip(this.activeCat, false);
             },
 
             matchesSearch(title) {
