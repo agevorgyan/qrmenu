@@ -270,4 +270,11 @@ return [
     'phone_digits' => 'digits',
     'chat' => 'Chat',
     'every_day' => 'Daily',
+    'reserve' => 'Reserve',
+    'reserve_a_table' => 'Reserve a Table',
+    'todays_special' => "⭐ TODAY'S SPECIAL",
+    'offline_notice' => 'You are currently offline. Viewing cached menu.',
+    'retrying_request' => 'Slow connection, retrying...',
+    'submitting_order' => 'Submitting order...',
+    'retry_btn' => 'Retry',
 ];

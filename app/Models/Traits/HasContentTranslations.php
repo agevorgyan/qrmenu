@@ -153,5 +153,9 @@ trait HasContentTranslations
         $this->updateQuietly([
             $jsonColumn => $published,
         ]);
+
+        if (! empty($this->vendor_id)) {
+            \App\Services\TenantCache::invalidateMenu((int) $this->vendor_id);
+        }
     }
 }

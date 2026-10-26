@@ -99,7 +99,17 @@ class IdentifyTenant
         // 2. Default: Check for storefront vendor_slug in route parameters
         $slug = $request->route('vendor_slug');
         if ($slug) {
-            $vendor = Vendor::where('slug', $slug)->first();
+            $cached = $request->attributes->get('resolved_vendor');
+            if ($cached instanceof Vendor && $cached->slug === $slug) {
+                $vendor = $cached;
+            } else {
+                $vendor = Vendor::where('slug', $slug)
+                    ->with(['menuTemplate', 'locations', 'vendorLanguages.language'])
+                    ->first();
+                if ($vendor) {
+                    $request->attributes->set('resolved_vendor', $vendor);
+                }
+            }
             if ($vendor) {
                 $this->tenantContext->setTenant($vendor);
             }

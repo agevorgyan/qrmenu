@@ -740,7 +740,7 @@ class VendorSettingsController extends Controller
             }
         }
 
-        TenantCache::increment($vendor, 'menu_version');
+        TenantCache::invalidateMenu($vendor);
 
         return back()->with('success', __('Settings updated successfully.'));
     }

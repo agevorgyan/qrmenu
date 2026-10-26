@@ -446,7 +446,7 @@
     <!-- Top Header -->
     <header class="header-wrap">
         @if(!empty($vendor->cover_image))
-            <img src="{{ $vendor->cover_image }}" alt="Cover" class="cover-photo">
+            <img src="{{ $vendor->cover_image }}" alt="Cover" class="cover-photo" fetchpriority="high" decoding="async">
         @else
             <div class="cover-placeholder"></div>
         @endif
@@ -454,7 +454,7 @@
         <div class="vendor-profile" style="display: flex; align-items: center; justify-content: space-between; gap: 0.85rem;">
             <div style="display: flex; align-items: center; gap: 0.85rem; min-width: 0;">
                 @if(!empty($vendor->logo))
-                    <img src="{{ $vendor->logo }}" alt="{{ $vendor->name }}" class="vendor-logo" style="flex-shrink: 0;">
+                    <img src="{{ $vendor->logo }}" alt="{{ $vendor->name }}" class="vendor-logo" style="flex-shrink: 0;" width="76" height="76" decoding="async">
                 @else
                     <div class="vendor-logo" style="display: flex; align-items: center; justify-content: center; font-size: 1.75rem; color: var(--text-muted); background: #f8fafc; flex-shrink: 0;">
                         <i class="fa-solid fa-utensils"></i>
@@ -527,7 +527,8 @@
                         class="cat-chip" 
                         :class="{ 'active': activeCat === 'cat-{{ $cat->id }}' }" 
                         x-show="isCategoryVisible('cat-{{ $cat->id }}', {{ json_encode($catDishesMeta, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})"
-                        @click="scrollToCat('cat-{{ $cat->id }}')">
+                        @click="scrollToCat('cat-{{ $cat->id }}')"
+                        data-cat-name-id="{{ $cat->id }}">
                     {{ $cat->getTranslatedName($lang) }}
                 </button>
             @endforeach
@@ -550,7 +551,7 @@
             @endphp
             <div id="cat-{{ $cat->id }}" class="category-anchor category-section" x-show="isCategoryVisible('cat-{{ $cat->id }}', {{ json_encode($catDishesMeta, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})">
                 <div class="category-title">
-                    <span>{{ $cat->getTranslatedName($lang) }}</span>
+                    <span data-cat-name-id="{{ $cat->id }}">{{ $cat->getTranslatedName($lang) }}</span>
                     <span style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">{{ $cat->products->count() }}</span>
                 </div>
 
@@ -583,7 +584,7 @@
                                 'allergens' => $prod->allergens->map(fn($a) => ['icon' => $a->icon, 'name' => $a->name])->toArray(),
                                 'variations' => $prod->variations->map(fn($v) => [
                                     'id' => $v->id,
-                                    'name' => $v->name,
+                                    'name' => $v->getTranslatedName($lang),
                                     'price' => (float)$v->price,
                                     'secondary_price' => $vendor->formatSecondaryPrice($v->getEffectivePrice(), $lang),
                                 ])->toArray()
@@ -599,7 +600,7 @@
 
                             @if(!empty($prod->image))
                                 <div class="dish-img-wrap">
-                                    <img src="{{ $prod->image }}" alt="{{ $prod->getTranslatedName($lang) }}" class="dish-img" loading="lazy" decoding="async">
+                                    <img src="{{ $prod->image }}" alt="{{ $prod->getTranslatedName($lang) }}" class="dish-img" width="105" height="105" loading="lazy" decoding="async">
                                     @if($prod->isDiscountActive())
                                         <span style="position: absolute; top: 6px; left: 6px; background: #ef4444; color: #ffffff; font-size: 0.65rem; font-weight: 800; padding: 2px 6px; border-radius: 4px;">
                                             SALE
@@ -611,7 +612,7 @@
                             <div class="dish-content">
                                 <div>
                                     <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 0.25rem;">
-                                        <h3 class="dish-title" style="margin-bottom: 0;">{{ $prod->getTranslatedName($lang) }}</h3>
+                                        <h3 class="dish-title" style="margin-bottom: 0;" data-dish-name-id="{{ $prod->id }}">{{ $prod->getTranslatedName($lang) }}</h3>
 
                                         @if(!$isLocAvailable)
                                             <span style="background: rgba(239, 68, 68, 0.15); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.1rem 0.45rem; border-radius: 4px; font-size: 0.65rem; font-weight: 800;">
@@ -640,7 +641,7 @@
                                         @endif
                                     </div>
                                     @if(!empty($prod->getTranslatedDescription($lang)))
-                                        <p class="dish-desc">{{ $prod->getTranslatedDescription($lang) }}</p>
+                                        <p class="dish-desc" data-dish-desc-id="{{ $prod->id }}">{{ $prod->getTranslatedDescription($lang) }}</p>
                                     @endif
 
                                     <div class="dish-meta-pills">
@@ -683,7 +684,7 @@
                                                 $secFormatted = $vendor->formatSecondaryPrice($secPriceVal, $lang);
                                             @endphp
                                             @if($secFormatted)
-                                                <div class="secondary-price" style="font-size: 0.76rem; font-weight: 600; color: var(--text-muted); opacity: 0.85; margin-top: 0.15rem; line-height: 1.1;">
+                                                <div class="secondary-price" data-dish-sec-price-id="{{ $prod->id }}" style="font-size: 0.76rem; font-weight: 600; color: var(--text-muted); opacity: 0.85; margin-top: 0.15rem; line-height: 1.1;">
                                                     {{ $secFormatted }}
                                                 </div>
                                             @endif

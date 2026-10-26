@@ -36,12 +36,263 @@ use Illuminate\Validation\ValidationException;
 
 class ClientStorefrontController extends Controller
 {
+    /**
+     * Resolve active vendor reusing request/tenant context to avoid duplicate queries.
+     */
+    protected function resolveActiveVendor(Request $request, string $vendorSlug, bool $requireActive = true): Vendor
+    {
+        $relations = [
+            'menuTemplate',
+            'locations',
+            'vendorLanguages.language',
+            'plan',
+            'subscription',
+            'tipRatingSetting',
+            'splitBillSetting',
+            'credentials',
+        ];
+
+        $tenant = app(\App\Services\TenantContext::class)->getTenant();
+        if ($tenant instanceof Vendor && $tenant->slug === $vendorSlug && (! $requireActive || $tenant->is_active)) {
+            $tenant->loadMissing($relations);
+
+            return $tenant;
+        }
+
+        $cached = $request->attributes->get('resolved_vendor');
+        if ($cached instanceof Vendor && $cached->slug === $vendorSlug && (! $requireActive || $cached->is_active)) {
+            $cached->loadMissing($relations);
+
+            return $cached;
+        }
+
+        $query = Vendor::where('slug', $vendorSlug)->with($relations);
+        if ($requireActive) {
+            $query->where('is_active', true);
+        }
+
+        $vendor = $query->firstOrFail();
+        $request->attributes->set('resolved_vendor', $vendor);
+
+        return $vendor;
+    }
+
+    /**
+     * Ensure eager-loaded or cached product variations have their parent product relation linked
+     * to prevent N+1 queries in ProductVariation::getEffectivePrice().
+     */
+    protected function linkProductRelationsOnCategories(Collection $categories): void
+    {
+        foreach ($categories as $category) {
+            if (! $category->relationLoaded('products')) {
+                continue;
+            }
+            foreach ($category->products as $product) {
+                if ($product->relationLoaded('variations')) {
+                    foreach ($product->variations as $variation) {
+                        $variation->setRelation('product', $product);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Build complete translation and catalog bundle for a specific locale.
+     *
+     * @return array<string, mixed>
+     */
+    public function buildStorefrontLocaleBundle(
+        Vendor $vendor,
+        ?Location $location,
+        Collection $categories,
+        Collection $dailyOffers,
+        string $lang,
+        string $entryContext = 'general_menu',
+        ?string $table = null,
+        bool $isReturning = false
+    ): array {
+        $lang = strtolower(trim($lang ?: 'hy'));
+        $menuVersion = (int) TenantCache::get($vendor, 'menu_version', 1);
+        $locationKey = $location?->id ?? 'all';
+        $bundleCacheKey = "storefront_locale_bundle:v{$menuVersion}:{$locationKey}:{$lang}";
+
+        $cachedBundle = TenantCache::get($vendor, $bundleCacheKey);
+        if (is_array($cachedBundle) && isset($cachedBundle['i18n'], $cachedBundle['catalog'])) {
+            $cachedBundle['greeting'] = app(TimeAwareService::class)->getGreeting(
+                $vendor,
+                $lang,
+                $entryContext,
+                $table,
+                $isReturning
+            );
+
+            return $cachedBundle;
+        }
+
+        $previousLocale = App::getLocale();
+        App::setLocale($lang);
+
+        try {
+            $menuTranslations = trans('menu', [], $lang);
+            if (! is_array($menuTranslations)) {
+                $menuTranslations = [];
+            }
+
+            $tipsTranslations = trans('tips', [], $lang);
+            if (! is_array($tipsTranslations)) {
+                $tipsTranslations = [];
+            }
+
+            $i18n = array_merge($menuTranslations, [
+                'only_available_hours_notice' => __('menu.only_available_hours_notice', ['time' => ':time'], $lang),
+                'product_time_restriction_toast' => __('menu.product_time_restriction_toast', ['time' => ':time'], $lang),
+                'orders_closed_toast' => __('menu.orders_closed_toast', ['channel' => ':channel'], $lang),
+                'item_added_to_cart_toast' => __('menu.item_added_to_cart_toast', ['name' => ':name'], $lang),
+                'attention_item_unavailable' => __('menu.attention_item_unavailable', ['items' => ':items'], $lang),
+                'country_armenia' => __('Armenia', [], $lang),
+                'country_russia' => __('Russia', [], $lang),
+                'country_georgia' => __('Georgia', [], $lang),
+                'country_usa_canada' => __('USA / Canada', [], $lang),
+                'country_france' => __('France', [], $lang),
+                'country_germany' => __('Germany', [], $lang),
+                'country_uae' => __('UAE', [], $lang),
+                'country_iran' => __('Iran', [], $lang),
+                'country_other' => __('Other Country', [], $lang),
+                'phone_missing_digits' => __('Missing :count digits', [], $lang),
+                'phone_exact_digits' => __('Phone number must have exactly :digits digits', [], $lang),
+                'rating_cat_food_quality' => __('tips.cat_food_quality', [], $lang),
+                'rating_cat_service_speed' => __('tips.cat_service_speed', [], $lang),
+                'rating_cat_waiter_politeness' => __('tips.cat_waiter_politeness', [], $lang),
+                'rating_cat_cleanliness' => __('tips.cat_cleanliness', [], $lang),
+                'rating_cat_ambiance' => __('tips.cat_ambiance', [], $lang),
+                'rating_cat_table_presentation' => __('tips.cat_table_presentation', [], $lang),
+                'rating_comment_required' => __('tips.comment_required', [], $lang),
+                'rating_thank_you_toast' => __('tips.thank_you_title', [], $lang),
+                'rating_submit_failed' => __('tips.submit_failed', [], $lang),
+                'tips_leave_a_tip' => __('tips.leave_a_tip', [], $lang),
+                'tips_support_staff_desc' => __('tips.support_staff_desc', [], $lang),
+                'tips_no_tip' => __('tips.no_tip', [], $lang),
+                'tips_custom_tip' => __('tips.custom_tip', [], $lang),
+                'tips_enter_custom_tip' => __('tips.enter_custom_tip', [], $lang),
+                'tips_select_waiter_optional' => __('tips.select_waiter_optional', [], $lang),
+                'tips_any_waiter_team' => __('tips.any_waiter_team', [], $lang),
+                'tips_tip_amount_label' => __('tips.tip_amount_label', [], $lang),
+                'tips_rate_service' => __('tips.rate_service', [], $lang),
+                'tips_rate_experience_title' => __('tips.rate_experience_title', [], $lang),
+                'tips_rate_experience_subtitle' => __('tips.rate_experience_subtitle', [], $lang),
+                'tips_what_went_well' => __('tips.what_went_well', [], $lang),
+                'tips_select_waiter_rated' => __('tips.select_waiter_rated', [], $lang),
+                'tips_leave_comment_label' => __('tips.leave_comment_label', [], $lang),
+                'tips_leave_comment_placeholder' => __('tips.leave_comment_placeholder', [], $lang),
+                'tips_submit_anonymously' => __('tips.submit_anonymously', [], $lang),
+                'tips_submit_rating_btn' => __('tips.submit_rating_btn', [], $lang),
+                'tips_submitting' => __('tips.submitting', [], $lang),
+                'tips_thank_you_title' => __('tips.thank_you_title', [], $lang),
+                'tips_thank_you_message' => __('tips.thank_you_message', [], $lang),
+                'tips_rating_poor' => __('tips.rating_poor', [], $lang),
+                'tips_rating_fair' => __('tips.rating_fair', [], $lang),
+                'tips_rating_good' => __('tips.rating_good', [], $lang),
+                'tips_rating_very_good' => __('tips.rating_very_good', [], $lang),
+                'tips_rating_excellent' => __('tips.rating_excellent', [], $lang),
+            ]);
+
+            $categoriesMap = [];
+            $productsMap = [];
+
+            foreach ($categories as $cat) {
+                $catName = $cat->getTranslatedName($lang);
+                $categoriesMap[(string) $cat->id] = [
+                    'id' => $cat->id,
+                    'name' => $catName,
+                ];
+
+                foreach ($cat->products as $prod) {
+                    $scheduleSummary = $prod->getAvailabilityScheduleSummary($lang);
+                    $effectivePrice = (float) $prod->getEffectivePrice($location?->id);
+                    $variationsMap = [];
+
+                    foreach ($prod->variations as $v) {
+                        $variationsMap[(string) $v->id] = [
+                            'id' => $v->id,
+                            'name' => $v->getTranslatedName($lang),
+                            'price' => (float) $v->price,
+                            'secondary_price' => $vendor->formatSecondaryPrice($v->getEffectivePrice(), $lang),
+                        ];
+                    }
+
+                    $productsMap[(string) $prod->id] = [
+                        'id' => $prod->id,
+                        'category_id' => $cat->id,
+                        'category_name' => mb_strtolower($catName),
+                        'name' => $prod->getTranslatedName($lang),
+                        'description' => $prod->getTranslatedDescription($lang),
+                        'schedule_summary' => $scheduleSummary,
+                        'only_available_hours_text' => $scheduleSummary
+                            ? __('menu.only_available_hours_notice', ['time' => $scheduleSummary], $lang)
+                            : '',
+                        'secondary_price' => $vendor->formatSecondaryPrice($effectivePrice, $lang),
+                        'variations' => $variationsMap,
+                    ];
+                }
+            }
+
+            $dailyOffersMap = [];
+            foreach ($dailyOffers as $offer) {
+                $offerProd = $offer->product ?? null;
+                if (! $offerProd) {
+                    continue;
+                }
+                $key = (string) ($offer->id ?: ('prod_'.$offerProd->id));
+                $dailyOffersMap[$key] = [
+                    'id' => $offer->id,
+                    'product_id' => $offerProd->id,
+                    'name' => $offerProd->getTranslatedName($lang),
+                    'description' => $offerProd->getTranslatedDescription($lang),
+                    'badge' => $offer->badge ?: ($vendor->featured_dish_badge ?: __('menu.todays_special', [], $lang)),
+                    'subtitle' => $offer->subtitle ?: ($vendor->featured_dish_subtitle ?: $offerProd->getTranslatedDescription($lang)),
+                    'secondary_price' => $vendor->formatSecondaryPrice($offer->effective_price ?? $offerProd->getEffectivePrice($location?->id), $lang),
+                ];
+            }
+
+            $schedules = [
+                'dine_in' => $vendor->resolveOperatingSchedule('dine_in', $location, null, $lang),
+                'delivery' => $vendor->resolveOperatingSchedule('delivery', $location, null, $lang),
+                'takeaway' => $vendor->resolveOperatingSchedule('takeaway', $location, null, $lang),
+            ];
+
+            $bundle = [
+                'locale' => $lang,
+                'dir' => in_array($lang, ['ar', 'fa', 'he', 'ur'], true) ? 'rtl' : 'ltr',
+                'i18n' => $i18n,
+                'schedules' => $schedules,
+                'secondary_currency' => $vendor->getPublicSecondaryCurrencyData($lang),
+                'catalog' => [
+                    'categories' => $categoriesMap,
+                    'products' => $productsMap,
+                    'daily_offers' => $dailyOffersMap,
+                ],
+            ];
+
+            TenantCache::put($vendor, $bundleCacheKey, $bundle, now()->addHours(12));
+
+            $bundle['greeting'] = app(TimeAwareService::class)->getGreeting(
+                $vendor,
+                $lang,
+                $entryContext,
+                $table,
+                $isReturning
+            );
+
+            return $bundle;
+        } finally {
+            App::setLocale($previousLocale);
+        }
+    }
+
     public function showMenu(Request $request, string $vendor_slug, ?string $location_slug = null)
     {
-        $vendor = Vendor::where('slug', $vendor_slug)
-            ->where('is_active', true)
-            ->with(['menuTemplate', 'locations'])
-            ->firstOrFail();
+        $vendor = $this->resolveActiveVendor($request, $vendor_slug, true);
 
         $location = null;
         if ($location_slug) {
@@ -210,8 +461,10 @@ class ClientStorefrontController extends Controller
         if ($cachedCategories instanceof Collection
             && ($cachedCategories->isEmpty() || $cachedCategories->first() instanceof Category)) {
             $categories = $cachedCategories;
+            $this->linkProductRelationsOnCategories($categories);
         } else {
             $categories = $fetchFreshCategories();
+            $this->linkProductRelationsOnCategories($categories);
             TenantCache::put($vendor, $menuCacheKey, $categories, now()->addDay());
         }
 
@@ -269,9 +522,40 @@ class ClientStorefrontController extends Controller
             }
         }
 
-        // Featured Dishes / Daily Offers Carousel
-        $dailyOffers = $vendor->getActiveDailyOffers($location);
+        // Featured Dishes / Daily Offers Carousel (cached per tenant + menu_version + location)
+        $dailyOffersCacheKey = "storefront_daily_offers:v{$menuVersion}:{$locationKey}";
+        $cachedOffers = TenantCache::get($vendor, $dailyOffersCacheKey);
+        if ($cachedOffers instanceof Collection) {
+            $dailyOffers = $cachedOffers;
+        } else {
+            $dailyOffers = $vendor->getActiveDailyOffers($location);
+            TenantCache::put($vendor, $dailyOffersCacheKey, $dailyOffers, now()->addHours(6));
+        }
+        foreach ($dailyOffers as $offer) {
+            if (isset($offer->product) && $offer->product instanceof Product && $offer->product->relationLoaded('variations')) {
+                foreach ($offer->product->variations as $v) {
+                    $v->setRelation('product', $offer->product);
+                }
+            }
+        }
         $featuredDish = $dailyOffers->first()?->product ?? null;
+
+        // Prebuild localized storefront bundles for supported languages for zero-latency switching
+        $localeBundles = [];
+        foreach ($allowedCodes as $supportedCode) {
+            if ($supportedCode !== '') {
+                $localeBundles[$supportedCode] = $this->buildStorefrontLocaleBundle(
+                    $vendor,
+                    $location,
+                    $categories,
+                    $dailyOffers,
+                    $supportedCode,
+                    $entryContext,
+                    $table,
+                    $isReturning
+                );
+            }
+        }
 
         return view("storefront.themes.{$themeSlug}", compact(
             'vendor',
@@ -287,18 +571,19 @@ class ClientStorefrontController extends Controller
             'supportedLanguages',
             'activeMealPeriod',
             'greeting',
-            'timeSlice'
+            'timeSlice',
+            'localeBundles'
         ));
     }
 
     /**
-     * Customer selects storefront language.
+     * Customer selects storefront language (returns localized bundle for client-side switching without reload).
      */
     public function setLanguage(Request $request, string $vendor_slug): JsonResponse
     {
-        $vendor = Vendor::where('slug', $vendor_slug)->where('is_active', true)->firstOrFail();
+        $vendor = $this->resolveActiveVendor($request, $vendor_slug, true);
         $supportedCodes = $vendor->getSupportedLanguageCodes();
-        $raw = $request->input('language') ?? $request->input('locale');
+        $raw = $request->input('language') ?? $request->input('locale') ?? $request->query('lang');
         $lang = strtolower(trim((string) $raw));
 
         if (empty($lang) || ! in_array($lang, $supportedCodes, true)) {
@@ -314,12 +599,61 @@ class ClientStorefrontController extends Controller
             'locale' => $lang,
         ]);
         App::setLocale($lang);
+        cookie()->queue('app_locale', $lang, 525600);
+        cookie()->queue('locale', $lang, 525600);
+
+        $locationId = $request->input('location_id') ?? $request->query('location_id');
+        $location = $locationId
+            ? ($vendor->locations->firstWhere('id', (int) $locationId) ?? $vendor->locations->first())
+            : $vendor->locations->first();
+
+        $menuVersion = (int) TenantCache::get($vendor, 'menu_version', 1);
+        $locationKey = $location?->id ?? 'all';
+        $menuCacheKey = "storefront_menu:v{$menuVersion}:{$locationKey}";
+        $categories = TenantCache::get($vendor, $menuCacheKey);
+        if (! ($categories instanceof Collection)) {
+            $categories = Category::where('vendor_id', $vendor->id)
+                ->where('is_active', true)
+                ->with(['products' => function ($q) {
+                    $q->where('is_available', true)
+                        ->with(['variations', 'allergens', 'overrides'])
+                        ->orderBy('sort_order', 'asc');
+                }])
+                ->orderBy('sort_order', 'asc')
+                ->get();
+            TenantCache::put($vendor, $menuCacheKey, $categories, now()->addDay());
+        }
+        $this->linkProductRelationsOnCategories($categories);
+
+        $dailyOffersCacheKey = "storefront_daily_offers:v{$menuVersion}:{$locationKey}";
+        $dailyOffers = TenantCache::get($vendor, $dailyOffersCacheKey);
+        if (! ($dailyOffers instanceof Collection)) {
+            $dailyOffers = $vendor->getActiveDailyOffers($location);
+            TenantCache::put($vendor, $dailyOffersCacheKey, $dailyOffers, now()->addHours(6));
+        }
+
+        $table = session('storefront_table_'.$vendor->slug);
+        $entryContext = $table ? 'table_qr' : 'general_menu';
+        $isReturning = (bool) session('storefront_visited_'.$vendor->slug);
+
+        $bundle = $this->buildStorefrontLocaleBundle(
+            $vendor,
+            $location,
+            $categories,
+            $dailyOffers,
+            $lang,
+            $entryContext,
+            $table ? (string) $table : null,
+            $isReturning
+        );
 
         return response()->json([
             'success' => true,
             'language' => $lang,
             'locale' => $lang,
+            'dir' => $bundle['dir'],
             'message' => 'Language selected successfully.',
+            'bundle' => $bundle,
         ]);
     }
 
@@ -352,32 +686,72 @@ class ClientStorefrontController extends Controller
 
     public function serviceWorker(string $vendor_slug)
     {
+        $safeSlug = preg_replace('/[^a-zA-Z0-9_-]/', '', $vendor_slug);
         $content = "
-const CACHE_NAME = 'qrmenu-".$vendor_slug."-v1';
+const CACHE_NAME = 'qrmenu-{$safeSlug}-v2';
+const STATIC_PATH_PREFIXES = ['/js/', '/css/', '/images/', '/build/', '/fonts/'];
 
 self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(clients.claim());
+  event.waitUntil(
+    caches.keys().then(keys => Promise.all(
+      keys.filter(k => k.startsWith('qrmenu-{$safeSlug}-') && k !== CACHE_NAME).map(k => caches.delete(k))
+    )).then(() => clients.claim())
+  );
 });
 
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
-      .catch(() => fetch(event.request))
-  );
+  if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith('/api/') || url.pathname.includes('/payment/') || url.pathname.startsWith('/admin') || url.pathname.startsWith('/superadmin')) {
+    return;
+  }
+
+  const isStaticAsset = STATIC_PATH_PREFIXES.some(prefix => url.pathname.startsWith(prefix));
+  if (isStaticAsset) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(cache =>
+        cache.match(event.request).then(cached => {
+          const networkFetch = fetch(event.request).then(res => {
+            if (res && res.status === 200) cache.put(event.request, res.clone());
+            return res;
+          }).catch(() => cached);
+          return cached || networkFetch;
+        })
+      )
+    );
+    return;
+  }
+
+  // Network-first with offline cache fallback for storefront menu document
+  if (url.pathname.startsWith('/m/{$safeSlug}')) {
+    event.respondWith(
+      fetch(event.request)
+        .then(res => {
+          if (res && res.status === 200) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          }
+          return res;
+        })
+        .catch(() => caches.match(event.request))
+    );
+  }
 });
         ";
 
-        return response($content, 200)->header('Content-Type', 'application/javascript');
+        return response($content, 200)
+            ->header('Content-Type', 'application/javascript')
+            ->header('Cache-Control', 'public, max-age=3600');
     }
 
     public function submitOrder(SubmitOrderRequest $request, string $vendor_slug, CreateOrderAction $createOrderAction, PaymentGatewayService $paymentService)
     {
-        $vendor = Vendor::where('slug', $vendor_slug)->where('is_active', true)->firstOrFail();
+        $vendor = $this->resolveActiveVendor($request, $vendor_slug, true);
 
         if (! $vendor->hasFeature('orders.online')) {
             return response()->json([
@@ -389,6 +763,28 @@ self.addEventListener('fetch', event => {
         }
 
         $validated = $request->validated();
+
+        $idempotencyKey = trim((string) ($validated['idempotency_key'] ?? $request->header('X-Idempotency-Key') ?? ''));
+        $idempotencyCacheKey = $idempotencyKey !== ''
+            ? 'order_idempotency:'.hash('sha256', $idempotencyKey)
+            : null;
+
+        if ($idempotencyCacheKey) {
+            $cachedOrderResponse = TenantCache::get($vendor, $idempotencyCacheKey);
+            if (is_array($cachedOrderResponse) && ! empty($cachedOrderResponse['order_number'])) {
+                session([
+                    'placed_order_'.$cachedOrderResponse['order_number'] => $cachedOrderResponse['tracking_token'] ?? '',
+                    'active_tracking_tokens' => array_unique(array_merge(
+                        (array) session('active_tracking_tokens', []),
+                        array_filter([$cachedOrderResponse['tracking_token'] ?? null])
+                    )),
+                ]);
+
+                return response()->json(array_merge($cachedOrderResponse, [
+                    'idempotent_replay' => true,
+                ]));
+            }
+        }
 
         // Ensure all sent product_ids belong to this vendor
         $productIds = collect($validated['items'])->pluck('product_id')->unique();
@@ -444,7 +840,7 @@ self.addEventListener('fetch', event => {
             )),
         ]);
 
-        return response()->json([
+        $responsePayload = [
             'success' => true,
             'is_appended' => $result['is_appended'] ?? false,
             'order_number' => $result['order']->order_number,
@@ -475,8 +871,14 @@ self.addEventListener('fetch', event => {
                     'price' => $unitPrice,
                     'subtotal' => $subtotal,
                 ];
-            }),
-        ]);
+            })->values()->all(),
+        ];
+
+        if ($idempotencyCacheKey) {
+            TenantCache::put($vendor, $idempotencyCacheKey, $responsePayload, now()->addHours(2));
+        }
+
+        return response()->json($responsePayload);
     }
 
     /**

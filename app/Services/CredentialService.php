@@ -67,6 +67,7 @@ class CredentialService
         });
 
         if ($result) {
+            $vendor->unsetRelation('credentials');
             app(SecurityAuditService::class)->logCredentialChange(
                 vendor: $vendor,
                 provider: $provider,
@@ -77,6 +78,25 @@ class CredentialService
         }
 
         return $result;
+    }
+
+    /**
+     * Resolve credential record using eager-loaded or memoized vendor credentials collection.
+     */
+    protected function findCredentialRecord(Vendor $vendor, string $provider, string $credentialType): ?VendorCredential
+    {
+        if (! $vendor->relationLoaded('credentials')) {
+            $vendor->setRelation(
+                'credentials',
+                VendorCredential::withoutGlobalScopes()
+                    ->where('vendor_id', $vendor->id)
+                    ->get()
+            );
+        }
+
+        return $vendor->credentials->first(function (VendorCredential $cred) use ($provider, $credentialType) {
+            return $cred->provider === $provider && $cred->credential_type === $credentialType;
+        });
     }
 
     /**
@@ -92,12 +112,7 @@ class CredentialService
         $provider = strtolower(trim($provider));
         $credentialType = strtolower(trim($credentialType));
 
-        /** @var VendorCredential|null $record */
-        $record = VendorCredential::withoutGlobalScopes()
-            ->where('vendor_id', $vendor->id)
-            ->where('provider', $provider)
-            ->where('credential_type', $credentialType)
-            ->first();
+        $record = $this->findCredentialRecord($vendor, $provider, $credentialType);
 
         if ($record && ! empty($record->encrypted_value)) {
             return $record->encrypted_value;
@@ -126,12 +141,7 @@ class CredentialService
         $provider = strtolower(trim($provider));
         $credentialType = strtolower(trim($credentialType));
 
-        /** @var VendorCredential|null $record */
-        $record = VendorCredential::withoutGlobalScopes()
-            ->where('vendor_id', $vendor->id)
-            ->where('provider', $provider)
-            ->where('credential_type', $credentialType)
-            ->first();
+        $record = $this->findCredentialRecord($vendor, $provider, $credentialType);
 
         if ($record) {
             return $record->maskedValue();
@@ -181,10 +191,12 @@ class CredentialService
                     'rotated_at' => now(),
                 ]);
 
+                $vendor->unsetRelation('credentials');
+
                 return $existing->fresh();
             }
 
-            return VendorCredential::create([
+            $created = VendorCredential::create([
                 'vendor_id' => $vendor->id,
                 'provider' => $provider,
                 'credential_type' => $credentialType,
@@ -192,6 +204,10 @@ class CredentialService
                 'metadata' => $metadata,
                 'rotated_at' => now(),
             ]);
+
+            $vendor->unsetRelation('credentials');
+
+            return $created;
         });
     }
 
@@ -213,6 +229,8 @@ class CredentialService
             // Also scrub from legacy vendor JSON columns if present
             $this->scrubLegacyCredential($vendor, $provider, $credentialType);
         });
+
+        $vendor->unsetRelation('credentials');
 
         app(SecurityAuditService::class)->logCredentialChange(
             vendor: $vendor,
@@ -238,6 +256,8 @@ class CredentialService
             ->where('provider', $provider)
             ->where('credential_type', $credentialType)
             ->update(['last_verified_at' => now()]);
+
+        $vendor->unsetRelation('credentials');
     }
 
     /**
@@ -250,12 +270,7 @@ class CredentialService
         $provider = strtolower(trim($provider));
         $credentialType = strtolower(trim($credentialType));
 
-        /** @var VendorCredential|null $record */
-        $record = VendorCredential::withoutGlobalScopes()
-            ->where('vendor_id', $vendor->id)
-            ->where('provider', $provider)
-            ->where('credential_type', $credentialType)
-            ->first();
+        $record = $this->findCredentialRecord($vendor, $provider, $credentialType);
 
         $isConfigured = $record !== null || $this->hasLegacyFallback($vendor, $provider, $credentialType);
         $masked = $record ? $record->maskedValue() : $this->mask($vendor, $provider, $credentialType);

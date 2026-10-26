@@ -89,9 +89,21 @@ class SetAppLocale
             return $tenant;
         }
 
+        $cached = $request->attributes->get('resolved_vendor');
+        if ($cached instanceof Vendor) {
+            return $cached;
+        }
+
         $slug = $request->route('vendor_slug') ?? $request->segment(2);
         if ($slug && is_string($slug)) {
-            return Vendor::where('slug', $slug)->first();
+            $vendor = Vendor::where('slug', $slug)
+                ->with(['menuTemplate', 'locations', 'vendorLanguages.language'])
+                ->first();
+            if ($vendor) {
+                $request->attributes->set('resolved_vendor', $vendor);
+            }
+
+            return $vendor;
         }
 
         return null;

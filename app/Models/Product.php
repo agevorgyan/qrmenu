@@ -33,8 +33,20 @@ class Product extends Model
             }
         });
 
+        static::saved(function (Product $product) {
+            if ($product->vendor_id) {
+                \App\Services\TenantCache::invalidateMenu((int) $product->vendor_id);
+            }
+        });
+
         static::deleting(function (Product $product) {
             $product->deleteImageFile();
+        });
+
+        static::deleted(function (Product $product) {
+            if ($product->vendor_id) {
+                \App\Services\TenantCache::invalidateMenu((int) $product->vendor_id);
+            }
         });
     }
 
@@ -198,7 +210,7 @@ class Product extends Model
 
     public function variations()
     {
-        return $this->hasMany(ProductVariation::class);
+        return $this->hasMany(ProductVariation::class)->chaperone();
     }
 
     public function allergens()
@@ -379,13 +391,19 @@ class Product extends Model
             'en' => ['mon' => 'Mon', 'tue' => 'Tue', 'wed' => 'Wed', 'thu' => 'Thu', 'fri' => 'Fri', 'sat' => 'Sat', 'sun' => 'Sun'],
             'hy' => ['mon' => 'Երկ', 'tue' => 'Երք', 'wed' => 'Չոր', 'thu' => 'Հնգ', 'fri' => 'Ուրբ', 'sat' => 'Շաբ', 'sun' => 'Կիր'],
             'ru' => ['mon' => 'Пн', 'tue' => 'Вт', 'wed' => 'Ср', 'thu' => 'Чт', 'fri' => 'Пт', 'sat' => 'Сб', 'sun' => 'Вс'],
+            'ar' => ['mon' => 'الإثنين', 'tue' => 'الثلاثاء', 'wed' => 'الأربعاء', 'thu' => 'الخميس', 'fri' => 'الجمعة', 'sat' => 'السبت', 'sun' => 'الأحد'],
         ];
 
         $labels = $dayMap[$locale] ?? $dayMap['en'];
 
         $daysText = '';
         if (empty($this->discount_days) || count($this->discount_days) >= 7) {
-            $daysText = $locale === 'hy' ? 'Ամեն օր' : ($locale === 'ru' ? 'Каждый день' : 'Every day');
+            $daysText = match ($locale) {
+                'hy' => 'Ամեն օր',
+                'ru' => 'Каждый день',
+                'ar' => 'كل يوم',
+                default => 'Every day',
+            };
         } else {
             $prefixes = array_values(array_unique(array_map(fn ($d) => substr(strtolower($d), 0, 3), $this->discount_days)));
             sort($prefixes);
@@ -394,9 +412,19 @@ class Product extends Model
             $weekends = ['sat', 'sun'];
 
             if ($prefixes === $weekdays) {
-                $daysText = $locale === 'en' ? 'Mon-Fri' : ($locale === 'ru' ? 'Пн-Пт' : 'Երկ-Ուրբ');
+                $daysText = match ($locale) {
+                    'en' => 'Mon-Fri',
+                    'ru' => 'Пн-Пт',
+                    'ar' => 'الإثنين-الجمعة',
+                    default => 'Երկ-Ուրբ',
+                };
             } elseif ($prefixes === $weekends) {
-                $daysText = $locale === 'en' ? 'Weekends' : ($locale === 'ru' ? 'Выходные' : 'Հանգստյան օրեր');
+                $daysText = match ($locale) {
+                    'en' => 'Weekends',
+                    'ru' => 'Выходные',
+                    'ar' => 'عطلة نهاية الأسبوع',
+                    default => 'Հանգստյան օրեր',
+                };
             } else {
                 $daysText = implode(', ', array_map(fn ($p) => $labels[$p] ?? $p, $prefixes));
             }
@@ -409,7 +437,12 @@ class Product extends Model
             $timeText = "{$s} - {$e}";
         } elseif ($this->discount_start_time) {
             $s = substr($this->discount_start_time, 0, 5);
-            $timeText = $locale === 'hy' ? "սկսած {$s}-ից" : ($locale === 'ru' ? "С {$s}" : "From {$s}");
+            $timeText = match ($locale) {
+                'hy' => "սկսած {$s}-ից",
+                'ru' => "С {$s}",
+                'ar' => "من {$s}",
+                default => "From {$s}",
+            };
         }
 
         if ($timeText) {
@@ -425,7 +458,14 @@ class Product extends Model
             return true;
         }
 
-        $tz = $this->vendor?->getTimezone() ?? (class_exists(TenantContext::class) ? app(TenantContext::class)->getTenant()?->getTimezone() : null) ?? config('app.timezone', 'UTC');
+        $tenant = class_exists(TenantContext::class) ? app(TenantContext::class)->getTenant() : null;
+        if ($tenant && (int) $tenant->id === (int) $this->vendor_id) {
+            $tz = $tenant->getTimezone();
+        } elseif ($this->relationLoaded('vendor') && $this->vendor) {
+            $tz = $this->vendor->getTimezone();
+        } else {
+            $tz = $this->vendor?->getTimezone() ?? config('app.timezone', 'UTC');
+        }
         $now = $now ? $now->copy()->setTimezone($tz) : Carbon::now($tz);
 
         // 1. Day of week check
@@ -482,16 +522,27 @@ class Product extends Model
             $timeText = "{$s} - {$e}";
         } elseif ($this->available_start_time) {
             $s = substr($this->available_start_time, 0, 5);
-            $timeText = $locale === 'hy' ? "սկսած {$s}-ից" : ($locale === 'ru' ? "С {$s}" : "From {$s}");
+            $timeText = match ($locale) {
+                'hy' => "սկսած {$s}-ից",
+                'ru' => "С {$s}",
+                'ar' => "من {$s}",
+                default => "From {$s}",
+            };
         } elseif ($this->available_end_time) {
             $e = substr($this->available_end_time, 0, 5);
-            $timeText = $locale === 'hy' ? "մինչև {$e}" : ($locale === 'ru' ? "До {$e}" : "Until {$e}");
+            $timeText = match ($locale) {
+                'hy' => "մինչև {$e}",
+                'ru' => "До {$e}",
+                'ar' => "حتى {$e}",
+                default => "Until {$e}",
+            };
         }
 
         $dayMap = [
             'en' => ['mon' => 'Mon', 'tue' => 'Tue', 'wed' => 'Wed', 'thu' => 'Thu', 'fri' => 'Fri', 'sat' => 'Sat', 'sun' => 'Sun'],
             'hy' => ['mon' => 'Երկ', 'tue' => 'Երք', 'wed' => 'Չոր', 'thu' => 'Հնգ', 'fri' => 'Ուրբ', 'sat' => 'Շաբ', 'sun' => 'Կիր'],
             'ru' => ['mon' => 'Пн', 'tue' => 'Вт', 'wed' => 'Ср', 'thu' => 'Чт', 'fri' => 'Пт', 'sat' => 'Сб', 'sun' => 'Вс'],
+            'ar' => ['mon' => 'الإثنين', 'tue' => 'الثلاثاء', 'wed' => 'الأربعاء', 'thu' => 'الخميس', 'fri' => 'الجمعة', 'sat' => 'السبت', 'sun' => 'الأحد'],
         ];
         $labels = $dayMap[$locale] ?? $dayMap['en'];
 
@@ -504,9 +555,19 @@ class Product extends Model
             $weekends = ['sat', 'sun'];
 
             if ($prefixes === $weekdays) {
-                $daysText = $locale === 'en' ? 'Mon-Fri' : ($locale === 'ru' ? 'Пн-Пт' : 'Երկ-Ուրբ');
+                $daysText = match ($locale) {
+                    'en' => 'Mon-Fri',
+                    'ru' => 'Пн-Пт',
+                    'ar' => 'الإثنين-الجمعة',
+                    default => 'Երկ-Ուրբ',
+                };
             } elseif ($prefixes === $weekends) {
-                $daysText = $locale === 'en' ? 'Weekends' : ($locale === 'ru' ? 'Выходные' : 'Հանգստյան օրեր');
+                $daysText = match ($locale) {
+                    'en' => 'Weekends',
+                    'ru' => 'Выходные',
+                    'ar' => 'عطلة نهاية الأسبوع',
+                    default => 'Հանգստյան օրեր',
+                };
             } else {
                 $daysText = implode(', ', array_map(fn ($p) => $labels[$p] ?? $p, $prefixes));
             }

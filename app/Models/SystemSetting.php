@@ -20,6 +20,9 @@ class SystemSetting extends Model
 
     public const CACHE_TTL = 86400; // 24 hours
 
+    /** @var array<string, string|null>|null */
+    protected static ?array $memoizedAll = null;
+
     protected static function booted(): void
     {
         static::saved(function () {
@@ -33,6 +36,7 @@ class SystemSetting extends Model
 
     public static function clearCache(): void
     {
+        static::$memoizedAll = null;
         Cache::forget(self::CACHE_KEY);
     }
 
@@ -43,9 +47,15 @@ class SystemSetting extends Model
      */
     public static function getAll(): array
     {
-        return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
+        if (static::$memoizedAll !== null) {
+            return static::$memoizedAll;
+        }
+
+        static::$memoizedAll = Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
             return static::pluck('value', 'key')->toArray();
         });
+
+        return static::$memoizedAll;
     }
 
     /**

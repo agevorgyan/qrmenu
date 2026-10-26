@@ -43,7 +43,10 @@ class SubmitOrderRequest extends FormRequest
     public function rules(): array
     {
         $vendorSlug = $this->route('vendor_slug');
-        $vendor = $vendorSlug ? Vendor::where('slug', $vendorSlug)->first() : null;
+        $cachedVendor = $this->attributes->get('resolved_vendor');
+        $vendor = ($cachedVendor instanceof Vendor && $cachedVendor->slug === $vendorSlug)
+            ? $cachedVendor
+            : ($vendorSlug ? Vendor::where('slug', $vendorSlug)->first() : null);
         $vendorId = $vendor?->id;
 
         return [
@@ -103,6 +106,7 @@ class SubmitOrderRequest extends FormRequest
             'notes' => 'nullable|string',
             'payment_method' => 'nullable|string|in:cash,pos_terminal,idram,telcell,fastshift,arca,stripe',
             'active_order_number' => 'nullable|string|max:50',
+            'idempotency_key' => 'nullable|string|max:100',
             'tip_amount' => 'nullable|numeric|min:0|max:1000000',
             'tip_type' => 'nullable|string|in:none,percentage,fixed,custom',
             'tip_value' => 'nullable|numeric|min:0',

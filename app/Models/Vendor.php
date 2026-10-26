@@ -2266,6 +2266,7 @@ class Vendor extends Model
             }
         } else {
             $relational = $this->vendorLanguages()->with('language')->where('is_active', true)->get();
+            $this->setRelation('vendorLanguages', $relational);
             if ($relational->isNotEmpty()) {
                 return $relational->map(fn ($vl) => [
                     'code' => $vl->language?->code ?? 'en',
@@ -2545,6 +2546,8 @@ class Vendor extends Model
         ])->values()->all();
 
         $this->updateQuietly(['supported_languages' => $formatted]);
+
+        TenantCache::invalidateMenu($this);
 
         if (class_exists(LocaleManager::class)) {
             try {
@@ -2838,7 +2841,14 @@ class Vendor extends Model
 
     public function getTipRatingSetting(): TipRatingSetting
     {
-        return TipRatingSetting::forVendor($this);
+        if ($this->relationLoaded('tipRatingSetting') && $this->tipRatingSetting instanceof TipRatingSetting) {
+            return $this->tipRatingSetting;
+        }
+
+        $setting = TipRatingSetting::forVendor($this);
+        $this->setRelation('tipRatingSetting', $setting);
+
+        return $setting;
     }
 
     public function tips(): HasMany
@@ -2876,7 +2886,14 @@ class Vendor extends Model
 
     public function getSplitBillSetting(): SplitBillSetting
     {
-        return SplitBillSetting::forVendor($this);
+        if ($this->relationLoaded('splitBillSetting') && $this->splitBillSetting instanceof SplitBillSetting) {
+            return $this->splitBillSetting;
+        }
+
+        $setting = SplitBillSetting::forVendor($this);
+        $this->setRelation('splitBillSetting', $setting);
+
+        return $setting;
     }
 
     public function splitBills(): HasMany

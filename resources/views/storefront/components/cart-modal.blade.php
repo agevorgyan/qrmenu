@@ -919,17 +919,20 @@
                         <button type="button" 
                                 @click="submitOrder(orderType)" 
                                 class="cart-submit-btn"
-                                :disabled="!isCurrentChannelOpen || (orderType === 'delivery' && isBelowDeliveryMin) || (orderType === 'takeaway' && isBelowTakeawayMin)"
-                                :style="(!isCurrentChannelOpen || (orderType === 'delivery' && isBelowDeliveryMin) || (orderType === 'takeaway' && isBelowTakeawayMin)) ? 'opacity: 0.55; cursor: not-allowed;' : ''"
+                                :disabled="isSubmittingOrder || !isCurrentChannelOpen || (orderType === 'delivery' && isBelowDeliveryMin) || (orderType === 'takeaway' && isBelowTakeawayMin)"
+                                :style="(isSubmittingOrder || !isCurrentChannelOpen || (orderType === 'delivery' && isBelowDeliveryMin) || (orderType === 'takeaway' && isBelowTakeawayMin)) ? 'opacity: 0.55; cursor: not-allowed;' : ''"
                                 :class="{ 'is-delivery': orderType === 'delivery', 'is-takeaway': orderType === 'takeaway', 'is-closed': !isCurrentChannelOpen }">
                             <div class="cart-submit-left">
-                                <template x-if="!isCurrentChannelOpen">
+                                <template x-if="isSubmittingOrder">
+                                    <i class="fa-solid fa-spinner fa-spin"></i>
+                                </template>
+                                <template x-if="!isSubmittingOrder && !isCurrentChannelOpen">
                                     <i class="fa-solid fa-clock" style="color: #ef4444;"></i>
                                 </template>
-                                <template x-if="isCurrentChannelOpen && activeOrder && !['completed', 'cancelled'].includes(activeOrder.status)">
+                                <template x-if="!isSubmittingOrder && isCurrentChannelOpen && activeOrder && !['completed', 'cancelled'].includes(activeOrder.status)">
                                     <i class="fa-solid fa-circle-plus" style="color: #10b981;"></i>
                                 </template>
-                                <template x-if="isCurrentChannelOpen && (!activeOrder || ['completed', 'cancelled'].includes(activeOrder.status))">
+                                <template x-if="!isSubmittingOrder && isCurrentChannelOpen && (!activeOrder || ['completed', 'cancelled'].includes(activeOrder.status))">
                                     <span>
                                         <template x-if="orderType === 'delivery'">
                                             <i class="fa-solid fa-motorcycle"></i>
@@ -942,11 +945,13 @@
                                         </template>
                                     </span>
                                 </template>
-                                <span x-text="!isCurrentChannelOpen
-                                    ? (orderType === 'delivery' ? '{{ __('menu.delivery_closed') }}' : (orderType === 'takeaway' ? '{{ __('menu.takeaway_closed') }}' : '{{ __('menu.kitchen_closed') }}'))
-                                    : ((activeOrder && !['completed', 'cancelled'].includes(activeOrder.status))
-                                        ? ('{{ __('menu.append_to_active_order') }} (' + activeOrder.order_number + ')')
-                                        : (orderType === 'delivery' ? '{{ __('menu.order_delivery') }}' : (orderType === 'takeaway' ? '{{ __('menu.order_takeaway') }}' : '{{ __('menu.checkout') }}')))"></span>
+                                <span x-text="isSubmittingOrder
+                                    ? t('submitting_order', {}, '{{ __('menu.submitting_order') }}')
+                                    : (!isCurrentChannelOpen
+                                        ? (orderType === 'delivery' ? t('delivery_closed', {}, '{{ __('menu.delivery_closed') }}') : (orderType === 'takeaway' ? t('takeaway_closed', {}, '{{ __('menu.takeaway_closed') }}') : t('kitchen_closed', {}, '{{ __('menu.kitchen_closed') }}')))
+                                        : ((activeOrder && !['completed', 'cancelled'].includes(activeOrder.status))
+                                            ? (t('append_to_active_order', {}, '{{ __('menu.append_to_active_order') }}') + ' (' + activeOrder.order_number + ')')
+                                            : (orderType === 'delivery' ? t('order_delivery', {}, '{{ __('menu.order_delivery') }}') : (orderType === 'takeaway' ? t('order_takeaway', {}, '{{ __('menu.order_takeaway') }}') : t('checkout', {}, '{{ __('menu.checkout') }}')))))"></span>
                             </div>
                             <div class="cart-submit-price-pill">
                                 <span x-text="Number(cartFinalTotal).toLocaleString()"></span>
@@ -958,15 +963,17 @@
                         @if($vendor->hasWhatsAppOrdersEnabled($location ?? null))
                         <button type="button" 
                                 @click="submitOrder('whatsapp')" 
-                                :disabled="!isCurrentChannelOpen || (orderType === 'delivery' && isBelowDeliveryMin) || (orderType === 'takeaway' && isBelowTakeawayMin)"
-                                :style="(!isCurrentChannelOpen || (orderType === 'delivery' && isBelowDeliveryMin) || (orderType === 'takeaway' && isBelowTakeawayMin)) ? 'opacity: 0.55; cursor: not-allowed;' : ''"
+                                :disabled="isSubmittingOrder || !isCurrentChannelOpen || (orderType === 'delivery' && isBelowDeliveryMin) || (orderType === 'takeaway' && isBelowTakeawayMin)"
+                                :style="(isSubmittingOrder || !isCurrentChannelOpen || (orderType === 'delivery' && isBelowDeliveryMin) || (orderType === 'takeaway' && isBelowTakeawayMin)) ? 'opacity: 0.55; cursor: not-allowed;' : ''"
                                 class="cart-whatsapp-btn cart-whatsapp-order-btn">
-                            <i class="fa-brands fa-whatsapp cart-wa-icon"></i>
-                            <span x-text="!isCurrentChannelOpen
-                                ? '{{ __('menu.orders_closed') }}'
-                                : ((activeOrder && !['completed', 'cancelled'].includes(activeOrder.status))
-                                    ? '{{ __('menu.append_to_active_order_wa') }}'
-                                    : (orderType === 'delivery' ? '{{ __('menu.order_delivery_via_whatsapp') }}' : (orderType === 'takeaway' ? '{{ __('menu.order_takeaway_via_whatsapp') }}' : '{{ __('menu.order_via_whatsapp') }}')))"></span>
+                            <i :class="isSubmittingOrder ? 'fa-solid fa-spinner fa-spin' : 'fa-brands fa-whatsapp cart-wa-icon'"></i>
+                            <span x-text="isSubmittingOrder
+                                ? t('submitting_order', {}, '{{ __('menu.submitting_order') }}')
+                                : (!isCurrentChannelOpen
+                                    ? t('orders_closed', {}, '{{ __('menu.orders_closed') }}')
+                                    : ((activeOrder && !['completed', 'cancelled'].includes(activeOrder.status))
+                                        ? t('append_to_active_order_wa', {}, '{{ __('menu.append_to_active_order_wa') }}')
+                                        : (orderType === 'delivery' ? t('order_delivery_via_whatsapp', {}, '{{ __('menu.order_delivery_via_whatsapp') }}') : (orderType === 'takeaway' ? t('order_takeaway_via_whatsapp', {}, '{{ __('menu.order_takeaway_via_whatsapp') }}') : t('order_via_whatsapp', {}, '{{ __('menu.order_via_whatsapp') }}')))))"></span>
                         </button>
                         @endif
 

@@ -38,12 +38,23 @@
 
     $tipSetting = $vendor->getTipRatingSetting();
     $splitBillSetting = $vendor->getSplitBillSetting();
-    $activeWaiters = $vendor->users()
-        ->whereIn('role', ['staff', 'manager', 'cashier'])
-        ->get(['id', 'name'])
-        ->map(fn($u) => ['id' => $u->id, 'name' => $u->name])
-        ->values()
-        ->toArray();
+    $tipsEnabled = $vendor->isTipsEnabled();
+    $ratingsEnabled = $vendor->isRatingsEnabled();
+    $activeWaiters = ($tipSetting->allow_waiter_selection && ($tipsEnabled || $ratingsEnabled))
+        ? $vendor->users()
+            ->whereIn('role', ['staff', 'manager', 'cashier'])
+            ->get(['id', 'name'])
+            ->map(fn($u) => ['id' => $u->id, 'name' => $u->name])
+            ->values()
+            ->toArray()
+        : [];
+
+    $rawPaymentSettings = is_array($vendor->payment_settings) ? $vendor->payment_settings : [];
+    $cashEnabled = (bool) ($rawPaymentSettings['cash_enabled'] ?? true);
+    $posEnabled = (bool) ($rawPaymentSettings['pos_terminal_enabled'] ?? true);
+    $rawCrmSettings = is_array($vendor->crm_settings) ? $vendor->crm_settings : [];
+
+    $allMenuTranslations = is_array(trans('menu')) ? trans('menu') : [];
 
     $storefrontBootstrap = [
         'vendor' => [
@@ -63,6 +74,9 @@
         'tableNumber' => $tableNumber ?? ($table ?? null),
         'isTableFixed' => !empty($table),
         'lang' => $lang ?? 'hy',
+        'dir' => in_array($lang ?? 'hy', ['ar', 'fa', 'he', 'ur'], true) ? 'rtl' : 'ltr',
+        'menuVersion' => (int) \App\Services\TenantCache::get($vendor, 'menu_version', 1),
+        'localeBundles' => $localeBundles ?? [],
         'needsLanguageSelection' => (bool) ($needsLanguageSelection ?? false),
         'entryContext' => $entryContext ?? 'general_menu',
         'supportedLanguages' => $supportedLanguages ?? [],
@@ -85,10 +99,10 @@
             'reserve' => route('client.reserve', ['vendor_slug' => $vendor->slug, 'location_slug' => $location?->slug, 'lang' => $lang ?? app()->getLocale()]),
         ],
         'settings' => [
-            'paymentMethod' => !empty($vendor->getPaymentSettings()['cash_enabled']) ? 'cash' : (!empty($vendor->getPaymentSettings()['pos_terminal_enabled']) ? 'pos_terminal' : 'cash'),
-            'birthdayDiscountPercent' => (float) ($vendor->getCrmSettings()['birthday_discount_percent'] ?? 15),
-            'birthdayDiscountEnabled' => !empty($vendor->getCrmSettings()['birthday_discount_enabled']),
-            'birthdayValidityDays' => (int) ($vendor->getCrmSettings()['birthday_validity_days'] ?? 3),
+            'paymentMethod' => $cashEnabled ? 'cash' : ($posEnabled ? 'pos_terminal' : 'cash'),
+            'birthdayDiscountPercent' => (float) ($rawCrmSettings['birthday_discount_percent'] ?? 15),
+            'birthdayDiscountEnabled' => (bool) ($rawCrmSettings['birthday_discount_enabled'] ?? true),
+            'birthdayValidityDays' => (int) ($rawCrmSettings['birthday_validity_days'] ?? 3),
             'orderType' => $initialOrderType,
             'serviceFeeEnabled' => (bool) $vendor->service_fee_enabled,
             'serviceFeeType' => $vendor->service_fee_type ?? 'percent',
@@ -102,8 +116,8 @@
             'takeawayMinAmount' => (float) ($vendor->takeaway_min_amount ?? 0),
             'tipsRatings' => [
                 'is_module_enabled' => (bool) $tipSetting->is_enabled,
-                'tips_enabled' => $vendor->isTipsEnabled(),
-                'ratings_enabled' => $vendor->isRatingsEnabled(),
+                'tips_enabled' => $tipsEnabled,
+                'ratings_enabled' => $ratingsEnabled,
                 'tip_percentages' => $tipSetting->tip_percentages ?? [5, 10, 15, 20],
                 'fixed_tip_amounts' => $tipSetting->fixed_tip_amounts ?? [200, 500, 1000],
                 'allow_custom_tip' => (bool) $tipSetting->allow_custom_tip,
@@ -128,7 +142,7 @@
                 'allow_share_link' => (bool) $splitBillSetting->allow_share_link,
             ],
         ],
-        'translations' => [
+        'translations' => array_merge($allMenuTranslations, [
             'added_to_cart' => __('menu.added_to_cart'),
             'removed_from_cart' => __('menu.removed_from_cart'),
             'dine_in_requires_table_qr' => __('menu.dine_in_requires_table_qr'),
@@ -220,7 +234,7 @@
             'rating_thank_you_toast' => __('tips.thank_you_title'),
             'rating_submit_failed' => __('tips.submit_failed'),
             'ai_chat_default_greeting' => __('menu.ai_chat_default_greeting'),
-        ],
+        ]),
     ];
 @endphp
 

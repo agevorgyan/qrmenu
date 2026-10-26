@@ -169,6 +169,8 @@ class MenuBuilderController extends Controller
             $isOffer = true;
         }
 
+        $this->menuService->invalidateVendorMenuCache($vendor);
+
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,

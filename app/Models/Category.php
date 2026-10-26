@@ -38,6 +38,18 @@ class Category extends Model
                 }
             }
         });
+
+        static::saved(function (Category $category) {
+            if ($category->vendor_id) {
+                \App\Services\TenantCache::invalidateMenu((int) $category->vendor_id);
+            }
+        });
+
+        static::deleted(function (Category $category) {
+            if ($category->vendor_id) {
+                \App\Services\TenantCache::invalidateMenu((int) $category->vendor_id);
+            }
+        });
     }
 
     public function vendor()

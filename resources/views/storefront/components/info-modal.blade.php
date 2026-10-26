@@ -210,15 +210,16 @@
                             <i class="fa-solid fa-champagne-glasses"></i>
                         </div>
                         <div class="info-item-content">
-                            <div class="info-item-label">{{ __('Private Events') }}</div>
-                            <div class="info-item-value">{{ __('Event Planning Inquiry') }}</div>
+                            <div class="info-item-label" data-i18n="private_events">{{ __('menu.private_events') }}</div>
+                            <div class="info-item-value" data-i18n="event_planning_inquiry">{{ __('menu.event_planning_inquiry') }}</div>
                         </div>
                         <a href="{{ route('client.event_inquiry', ['vendor_slug' => $vendor->slug, 'location_slug' => $location?->slug]) }}" 
                            class="info-action-pill"
                            style="background: #a855f7; color: #ffffff; border-color: #a855f7;"
-                           title="{{ __('Event Planning Inquiry') }}">
+                           data-i18n-title="event_planning_inquiry"
+                           title="{{ __('menu.event_planning_inquiry') }}">
                             <i class="fa-solid fa-arrow-right"></i>
-                            <span>{{ __('Inquiry') }}</span>
+                            <span data-i18n="inquiry">{{ __('menu.inquiry') }}</span>
                         </a>
                     </div>
                 @endif

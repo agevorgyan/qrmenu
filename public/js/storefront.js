@@ -140,6 +140,16 @@
             marketingOptIn: true,
             orderNotes: '',
             selectedLang: bootConfig.lang || 'hy',
+            langDirection: bootConfig.dir || document.documentElement.dir || (['ar', 'fa', 'he', 'ur'].includes(bootConfig.lang || 'hy') ? 'rtl' : 'ltr'),
+            i18n: { ...translations },
+            localeBundles: bootConfig.localeBundles || {},
+            catalogTranslations: (bootConfig.localeBundles && bootConfig.localeBundles[bootConfig.lang || 'hy'] && bootConfig.localeBundles[bootConfig.lang || 'hy'].catalog) || { categories: {}, products: {}, daily_offers: {} },
+            isSwitchingLanguage: false,
+            _langSwitchSeq: 0,
+            _langAbortController: null,
+            isSubmittingOrder: false,
+            currentOrderIdempotencyKey: null,
+            isOffline: typeof navigator !== 'undefined' ? !navigator.onLine : false,
             currency: (!vendor.currency || vendor.currency === 'AMD') ? '֏' : vendor.currency,
             vendorSlug: vendor.slug || '',
             csrfToken: bootConfig.csrfToken || '',
@@ -297,6 +307,23 @@
                 window.addEventListener('scroll', () => {
                     this.showScrollTop = (window.pageYOffset > 280);
                 }, { passive: true });
+                window.addEventListener('online', () => {
+                    this.isOffline = false;
+                    this.triggerToast(this.t('connection_restored', {}, 'Կապը վերականգնված է'), 'success', 'fa-solid fa-wifi');
+                });
+                window.addEventListener('offline', () => {
+                    this.isOffline = true;
+                    this.triggerToast(this.t('offline_notice', {}, 'Դուք անցանց ռեժիմում եք: Մենյուն հասանելի է քեշից:'), 'info', 'fa-solid fa-plane');
+                });
+                window.addEventListener('popstate', () => {
+                    try {
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const langInUrl = urlParams.get('lang');
+                        if (langInUrl && langInUrl !== this.selectedLang) {
+                            this.selectStorefrontLanguage(langInUrl);
+                        }
+                    } catch (err) {}
+                });
             },
 
             setOrderType(type) {
@@ -570,12 +597,21 @@
                 this.centerActiveCategoryChip(this.activeCat, false);
             },
 
-            matchesSearch(title) {
+            matchesSearch(title, dishId = null) {
                 if (!this.search || !this.search.trim()) return true;
-                return (title || '').toLowerCase().includes(this.search.trim().toLowerCase());
+                const query = this.search.trim().toLowerCase();
+                if ((title || '').toLowerCase().includes(query)) return true;
+                if (dishId) {
+                    const localizedTitle = this.dishName(dishId);
+                    if (localizedTitle && localizedTitle.toLowerCase().includes(query)) return true;
+                    const catProd = this.catalogProducts ? this.catalogProducts.find(p => String(p.id) === String(dishId)) : null;
+                    if (catProd && (catProd.name_lower || '').includes(query)) return true;
+                }
+                return false;
             },
 
-            selectDish(dish) {
+            selectDish(rawDish) {
+                const dish = this.getLocalizedDish(rawDish);
                 if (dish.is_available === false) {
                     this.triggerToast(translations.out_of_stock || 'Ուտեստը ժամանակավորապես սպառված է այս մասնաճյուղում', 'remove', 'fa-solid fa-ban');
                     return;
@@ -646,6 +682,10 @@
             },
 
             addToCart(id, name, price, variationName = 'Standard', variationId = null, qty = 1, dishObj = null) {
+                name = this.dishName(id, name);
+                if (variationId && variationName !== 'Standard' && variationName !== 'Standard Portion') {
+                    variationName = this.variationName(id, variationId, variationName);
+                }
                 const targetObj = dishObj || (this.catalogProducts ? this.catalogProducts.find(p => p.id === id) : null);
                 if (targetObj) {
                     if (targetObj.is_available === false) {
@@ -969,6 +1009,7 @@
             },
 
             async submitOrder(channel) {
+                if (this.isSubmittingOrder) return;
                 if (this.cart.length === 0) return;
 
                 if (!this.isCurrentChannelOpen) {
@@ -1072,6 +1113,12 @@
                     }
                 }
 
+                if (!this.currentOrderIdempotencyKey) {
+                    this.currentOrderIdempotencyKey = 'ord_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
+                }
+                const idempotencyKey = this.currentOrderIdempotencyKey;
+                this.isSubmittingOrder = true;
+
                 try {
                     const submitUrl = routes.submitOrder || `/api/m/${this.vendorSlug}/order`;
                     const res = await fetch(submitUrl, {
@@ -1079,9 +1126,11 @@
                         headers: {
                             'Content-Type': 'application/json',
                             'Accept': 'application/json',
-                            'X-CSRF-TOKEN': this.csrfToken
+                            'X-CSRF-TOKEN': this.csrfToken,
+                            'X-Idempotency-Key': idempotencyKey
                         },
                         body: JSON.stringify({
+                            idempotency_key: idempotencyKey,
                             location_id: this.locationId,
                             table_number: (this.orderType === 'delivery' || this.orderType === 'takeaway') ? null : (this.tableNumber || null),
                             delivery_address: this.orderType === 'delivery' ? this.deliveryAddress.trim() : null,
@@ -1169,6 +1218,7 @@
                             };
                         }
 
+                        this.currentOrderIdempotencyKey = null;
                         this.hideTrackerPill = false;
                         this.saveActiveOrderToStorage();
                         this.cart = [];
@@ -1195,6 +1245,8 @@
                 } catch (e) {
                     console.error('Order submit error:', e);
                     this.triggerToast(translations.network_error || 'Ցանցային սխալ', 'remove', 'fa-solid fa-triangle-exclamation');
+                } finally {
+                    this.isSubmittingOrder = false;
                 }
             },
 
@@ -1872,42 +1924,339 @@
                 }
             },
 
-            // AI Waiter Advisor Methods
-            selectLanguage(locale) {
-                this.saveCartToStorage();
-                this.selectedLang = locale;
-                try { localStorage.setItem('qrmenu_locale_' + this.vendorSlug, locale); } catch(e) {}
-                const url = new URL(window.location.href);
-                if (url.searchParams.get('lang') !== locale) {
-                    url.searchParams.set('lang', locale);
-                    window.location.href = url.toString();
+            // AI Waiter Advisor & Storefront Language Methods
+            t(key, replacements = {}, fallback = '') {
+                let text = (this.i18n && this.i18n[key] !== undefined)
+                    ? this.i18n[key]
+                    : (translations && translations[key] !== undefined ? translations[key] : (fallback || key));
+                if (text && typeof text === 'string' && replacements && typeof replacements === 'object') {
+                    for (const [rKey, rVal] of Object.entries(replacements)) {
+                        text = text.replace(new RegExp(':' + rKey, 'g'), rVal);
+                    }
                 }
+                return text;
+            },
+
+            catName(catId, fallback = '') {
+                const idStr = String(catId).replace('cat-', '');
+                return this.catalogTranslations?.categories?.[idStr]?.name
+                    || this.catalogTranslations?.categories?.[catId]?.name
+                    || fallback;
+            },
+
+            dishName(productId, fallback = '') {
+                const idStr = String(productId);
+                return this.catalogTranslations?.products?.[idStr]?.name
+                    || (this.catalogProducts?.find(p => String(p.id) === idStr)?.name)
+                    || fallback;
+            },
+
+            dishDesc(productId, fallback = '') {
+                const idStr = String(productId);
+                return this.catalogTranslations?.products?.[idStr]?.description
+                    || (this.catalogProducts?.find(p => String(p.id) === idStr)?.description)
+                    || fallback;
+            },
+
+            dishScheduleText(productId, fallback = '') {
+                const idStr = String(productId);
+                return this.catalogTranslations?.products?.[idStr]?.schedule_summary
+                    || fallback;
+            },
+
+            dishSecondaryPrice(productId, fallback = '') {
+                const idStr = String(productId);
+                return this.catalogTranslations?.products?.[idStr]?.secondary_price
+                    || fallback;
+            },
+
+            variationName(productId, variationId, fallback = '') {
+                const pId = String(productId);
+                const vId = String(variationId);
+                return this.catalogTranslations?.products?.[pId]?.variations?.[vId]?.name
+                    || fallback;
+            },
+
+            getLocalizedDish(dish) {
+                if (!dish || !dish.id) return dish;
+                const pId = String(dish.id);
+                const trans = this.catalogTranslations?.products?.[pId];
+                if (!trans) return dish;
+                const localized = { ...dish };
+                if (trans.name) localized.name = trans.name;
+                if (trans.description !== undefined) localized.description = trans.description;
+                if (trans.schedule_summary !== undefined) localized.schedule_summary = trans.schedule_summary;
+                if (trans.secondary_price !== undefined) localized.secondary_price = trans.secondary_price;
+                if (Array.isArray(localized.variations) && trans.variations) {
+                    localized.variations = localized.variations.map(v => {
+                        const vTrans = trans.variations[String(v.id)];
+                        return vTrans ? { ...v, name: vTrans.name, secondary_price: vTrans.secondary_price || v.secondary_price } : v;
+                    });
+                }
+                return localized;
+            },
+
+            patchDomTranslations() {
+                // Patch data-i18n elements
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (!key) return;
+                    const translated = this.t(key);
+                    if (translated) {
+                        const icon = el.querySelector('i, svg');
+                        if (icon) {
+                            const innerSpan = el.querySelector('span');
+                            if (innerSpan) {
+                                innerSpan.textContent = translated;
+                            } else {
+                                let textNodeFound = false;
+                                for (let i = 0; i < el.childNodes.length; i++) {
+                                    if (el.childNodes[i].nodeType === Node.TEXT_NODE && el.childNodes[i].textContent.trim() !== '') {
+                                        el.childNodes[i].textContent = ' ' + translated.trim();
+                                        textNodeFound = true;
+                                        break;
+                                    }
+                                }
+                                if (!textNodeFound) {
+                                    el.appendChild(document.createTextNode(' ' + translated.trim()));
+                                }
+                            }
+                        } else {
+                            el.textContent = translated;
+                        }
+                    }
+                });
+
+                // Patch placeholders
+                document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-placeholder');
+                    const trans = this.t(key);
+                    if (trans) el.setAttribute('placeholder', trans);
+                });
+
+                // Patch titles
+                document.querySelectorAll('[data-i18n-title]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-title');
+                    const trans = this.t(key);
+                    if (trans) el.setAttribute('title', trans);
+                });
+
+                // Patch aria-labels
+                document.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-aria-label');
+                    const trans = this.t(key);
+                    if (trans) el.setAttribute('aria-label', trans);
+                });
+
+                // Patch category names
+                document.querySelectorAll('[data-cat-name-id]').forEach(el => {
+                    const catId = el.getAttribute('data-cat-name-id');
+                    const name = this.catName(catId);
+                    if (name) el.textContent = name;
+                });
+
+                // Patch dish titles
+                document.querySelectorAll('[data-dish-name-id]').forEach(el => {
+                    const dishId = el.getAttribute('data-dish-name-id');
+                    const name = this.dishName(dishId);
+                    if (name) el.textContent = name;
+                });
+
+                // Patch dish descriptions
+                document.querySelectorAll('[data-dish-desc-id]').forEach(el => {
+                    const dishId = el.getAttribute('data-dish-desc-id');
+                    const desc = this.dishDesc(dishId);
+                    if (desc !== undefined) el.textContent = desc;
+                });
+
+                // Patch dish schedule warnings
+                document.querySelectorAll('[data-dish-schedule-id]').forEach(el => {
+                    const dishId = el.getAttribute('data-dish-schedule-id');
+                    const sched = this.dishScheduleText(dishId);
+                    if (sched) {
+                        el.textContent = this.t('only_available_hours_notice', { time: sched }, sched);
+                    }
+                });
+
+                // Patch dish secondary prices
+                document.querySelectorAll('[data-dish-sec-price-id]').forEach(el => {
+                    const dishId = el.getAttribute('data-dish-sec-price-id');
+                    const secPrice = this.dishSecondaryPrice(dishId);
+                    if (secPrice) {
+                        el.textContent = secPrice;
+                        el.style.display = '';
+                    } else {
+                        el.textContent = '';
+                        el.style.display = 'none';
+                    }
+                });
+            },
+
+            applyLocaleBundle(locale, bundle) {
+                if (!locale || !bundle) return;
+                this.selectedLang = locale;
+                this.langDirection = bundle.dir || (['ar', 'fa', 'he', 'ur'].includes(locale) ? 'rtl' : 'ltr');
+
+                document.documentElement.lang = locale;
+                document.documentElement.dir = this.langDirection;
+
+                if (bundle.i18n && typeof bundle.i18n === 'object') {
+                    Object.assign(translations, bundle.i18n);
+                    this.i18n = { ...translations };
+                }
+
+                if (bundle.catalog) {
+                    this.catalogTranslations = bundle.catalog;
+                }
+
+                if (bundle.schedules) {
+                    this.schedules = bundle.schedules;
+                }
+
+                if (bundle.secondary_currency !== undefined) {
+                    this.secondaryCurrency = bundle.secondary_currency;
+                }
+
+                if (bundle.greeting) {
+                    this.timeAwareGreeting = bundle.greeting;
+                    this.aiGreetingText = bundle.greeting;
+                }
+
+                const menuTitle = this.t('digital_menu', {}, 'Digital Menu');
+                const vendorName = vendor.name || '';
+                document.title = vendorName ? `${vendorName} - ${menuTitle}` : menuTitle;
+
+                if (Array.isArray(this.catalogProducts) && this.catalogTranslations?.products) {
+                    this.catalogProducts = this.catalogProducts.map(prod => {
+                        const pId = String(prod.id);
+                        const pTrans = this.catalogTranslations.products[pId];
+                        if (!pTrans) return prod;
+                        return {
+                            ...prod,
+                            name: pTrans.name || prod.name,
+                            name_lower: (pTrans.name || prod.name).toLowerCase(),
+                            description: pTrans.description !== undefined ? pTrans.description : prod.description,
+                            schedule_summary: pTrans.schedule_summary || '',
+                            secondary_price: pTrans.secondary_price || '',
+                            variations: Array.isArray(prod.variations) && pTrans.variations ? prod.variations.map(v => {
+                                const vTrans = pTrans.variations[String(v.id)];
+                                return vTrans ? { ...v, name: vTrans.name, secondary_price: vTrans.secondary_price || v.secondary_price } : v;
+                            }) : prod.variations
+                        };
+                    });
+                }
+
+                if (Array.isArray(this.cart) && this.cart.length > 0) {
+                    this.cart = this.cart.map(item => {
+                        const pId = String(item.id || item.product_id);
+                        const pTrans = this.catalogTranslations?.products?.[pId];
+                        const newName = pTrans?.name || item.name;
+                        let newVarName = item.variation_name;
+                        if (item.variation_id && pTrans?.variations?.[String(item.variation_id)]) {
+                            newVarName = pTrans.variations[String(item.variation_id)].name;
+                        }
+                        return {
+                            ...item,
+                            name: newName,
+                            variation_name: newVarName
+                        };
+                    });
+                    this.saveCartToStorage();
+                }
+
+                if (this.selectedDish) {
+                    this.selectedDish = this.getLocalizedDish(this.selectedDish);
+                    if (this.selectedVariation && this.selectedDish.variations) {
+                        const matchingVar = this.selectedDish.variations.find(v => v.id === this.selectedVariation.id);
+                        if (matchingVar) {
+                            this.selectedVariation = matchingVar;
+                        }
+                    }
+                }
+
+                this.patchDomTranslations();
+
+                try {
+                    const url = new URL(window.location.href);
+                    if (url.searchParams.get('lang') !== locale) {
+                        url.searchParams.set('lang', locale);
+                        window.history.replaceState({ lang: locale }, '', url.toString());
+                    }
+                } catch(e) {}
+            },
+
+            selectLanguage(locale) {
+                this.selectStorefrontLanguage(locale);
             },
 
             async selectStorefrontLanguage(locale) {
-                this.saveCartToStorage();
-                this.selectedLang = locale;
+                if (!locale) return;
+                const seq = ++this._langSwitchSeq;
                 this.showLanguageModal = false;
-                try {
-                    localStorage.setItem('qrmenu_locale_' + this.vendorSlug, locale);
-                } catch(e) {}
 
                 try {
+                    localStorage.setItem('qrmenu_locale_' + this.vendorSlug, locale);
+                    document.cookie = 'app_locale=' + encodeURIComponent(locale) + ';path=/;max-age=31536000;SameSite=Lax';
+                    document.cookie = 'locale=' + encodeURIComponent(locale) + ';path=/;max-age=31536000;SameSite=Lax';
+                } catch(e) {}
+
+                let bundle = this.localeBundles ? this.localeBundles[locale] : null;
+                if (!bundle) {
+                    try {
+                        const cachedRaw = localStorage.getItem(`qrmenu_bundle_${this.vendorSlug}_${locale}`);
+                        if (cachedRaw) bundle = JSON.parse(cachedRaw);
+                    } catch(e) {}
+                }
+
+                if (bundle) {
+                    this.applyLocaleBundle(locale, bundle);
+                }
+
+                if (this._langAbortController) {
+                    try { this._langAbortController.abort(); } catch(e) {}
+                }
+                this._langAbortController = typeof AbortController !== 'undefined' ? new AbortController() : null;
+
+                try {
+                    this.isSwitchingLanguage = true;
                     const setLangUrl = routes.setLanguage || `/api/m/${this.vendorSlug}/language`;
-                    await fetch(setLangUrl, {
+                    const response = await fetch(setLangUrl, {
                         method: 'POST',
+                        signal: this._langAbortController ? this._langAbortController.signal : undefined,
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': this.csrfToken,
                             'Accept': 'application/json'
                         },
-                        body: JSON.stringify({ language: locale })
+                        body: JSON.stringify({
+                            language: locale,
+                            location_id: this.locationId
+                        })
                     });
-                } catch(e) {}
 
-                const url = new URL(window.location.href);
-                url.searchParams.set('lang', locale);
-                window.location.href = url.toString();
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (seq === this._langSwitchSeq && data.bundle) {
+                            if (!this.localeBundles) this.localeBundles = {};
+                            this.localeBundles[locale] = data.bundle;
+                            try {
+                                localStorage.setItem(`qrmenu_bundle_${this.vendorSlug}_${locale}`, JSON.stringify(data.bundle));
+                            } catch(e) {}
+                            if (!bundle) {
+                                this.applyLocaleBundle(locale, data.bundle);
+                            }
+                        }
+                    }
+                } catch (err) {
+                    if (err && err.name === 'AbortError') {
+                        return;
+                    }
+                    console.debug('Language background sync notice:', err);
+                } finally {
+                    if (seq === this._langSwitchSeq) {
+                        this.isSwitchingLanguage = false;
+                    }
+                }
             },
 
             changeLanguage(locale) {

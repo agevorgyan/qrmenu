@@ -206,13 +206,15 @@
                 class="bottom-nav-item bottom-nav-reserve" 
                 :class="{ 'active': isPreOrderMode }"
                 @click="goToReservationPage()"
-                title="{{ __('Reserve a Table') }}"
-                aria-label="{{ __('Reserve a Table') }}">
+                data-i18n-title="reserve_a_table"
+                data-i18n-aria-label="reserve_a_table"
+                title="{{ __('menu.reserve_a_table') }}"
+                aria-label="{{ __('menu.reserve_a_table') }}">
             <div class="nav-icon-wrapper">
                 <i class="fa-solid fa-calendar-days"></i>
                 <span class="nav-badge" x-show="isPreOrderMode && cartTotalCount > 0" x-text="cartTotalCount" x-transition.scale></span>
             </div>
-            <span class="nav-label">{{ __('Reserve') }}</span>
+            <span class="nav-label" data-i18n="reserve">{{ __('menu.reserve') }}</span>
         </button>
         @endif
     </nav>
