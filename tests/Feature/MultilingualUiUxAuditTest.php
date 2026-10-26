@@ -53,6 +53,8 @@ class MultilingualUiUxAuditTest extends TestCase
             'email' => 'i18n@bistro.am',
             'password' => bcrypt('password'),
             'currency' => 'AMD',
+            'phone' => '+37498333301',
+            'operating_address' => 'Yerevan, Armenia',
             'theme' => 'modern-bistro',
             'supported_languages' => ['hy', 'en', 'ru'],
             'reservation_settings' => [
@@ -375,6 +377,67 @@ class MultilingualUiUxAuditTest extends TestCase
                 $this->assertStringNotContainsString("'birthday': '🎂 Birthday'", $content);
                 $this->assertStringContainsString('Армянская кухня', $content);
                 $this->assertStringNotContainsString('Հայկական խոհանոց', $content);
+            }
+        }
+    }
+
+    public function test_restaurant_info_modal_has_zero_bottom_gap_pinned_bottom_sheet_and_complete_translations(): void
+    {
+        foreach (['hy', 'en', 'ru'] as $locale) {
+            $response = $this->get(route('client.menu', [
+                'vendor_slug' => $this->vendor->slug,
+                'lang' => $locale,
+            ]));
+
+            $response->assertStatus(200);
+            $content = $response->getContent();
+
+            // Mobile-first bottom sheet pinning: zero bottom gap rules
+            $this->assertStringContainsString('.info-modal-backdrop', $content);
+            $this->assertStringContainsString('.info-sheet-container', $content);
+            $this->assertStringContainsString('margin-bottom: 0 !important;', $content);
+            $this->assertStringContainsString('border-bottom: none !important;', $content);
+            $this->assertStringContainsString('env(safe-area-inset-bottom', $content);
+
+            // Accessibility attributes
+            $this->assertStringContainsString('role="dialog"', $content);
+            $this->assertStringContainsString('aria-modal="true"', $content);
+            $this->assertStringContainsString('aria-label="'.__('menu.restaurant_info', [], $locale).'"', $content);
+
+            // Localized button & action labels
+            $this->assertStringContainsString(__('menu.restaurant_info', [], $locale), $content);
+            $this->assertStringContainsString(__('menu.wifi_network', [], $locale), $content);
+            $this->assertStringContainsString(__('menu.free_guest_wifi', [], $locale), $content);
+            $this->assertStringContainsString(__('menu.fast_wifi', [], $locale), $content);
+            $this->assertStringContainsString(__('menu.wifi_ssid_label', [], $locale), $content);
+            $this->assertStringContainsString(__('menu.wifi_password', [], $locale), $content);
+            $this->assertStringContainsString(__('menu.view_map', [], $locale), $content);
+            $this->assertStringContainsString(__('menu.call_phone', [], $locale), $content);
+            $this->assertStringContainsString(__('menu.chat', [], $locale), $content);
+            $this->assertStringContainsString(__('menu.open_now', [], $locale), $content);
+            $this->assertStringContainsString(__('menu.close', [], $locale), $content);
+
+            // Hardcoded language leakage prevention
+            if ($locale === 'ru') {
+                $this->assertStringNotContainsString('Անվճար ինտերնետ հյուրերի համար', $content);
+                $this->assertStringNotContainsString('SSID (ՑԱՆՑ)', $content);
+                $this->assertStringNotContainsString('<span>Chat</span>', $content);
+                $this->assertStringContainsString('Бесплатный интернет для гостей', $content);
+                $this->assertStringContainsString('SSID (Сеть)', $content);
+                $this->assertStringContainsString('<span>Чат</span>', $content);
+                $this->assertStringContainsString('Ежедневно', $content);
+            } elseif ($locale === 'en') {
+                $this->assertStringNotContainsString('Անվճար ինտերնետ հյուրերի համար', $content);
+                $this->assertStringNotContainsString('SSID (ՑԱՆՑ)', $content);
+                $this->assertStringContainsString('Free internet for guests', $content);
+                $this->assertStringContainsString('SSID (Network)', $content);
+                $this->assertStringContainsString('<span>Chat</span>', $content);
+                $this->assertStringContainsString('Daily', $content);
+            } elseif ($locale === 'hy') {
+                $this->assertStringContainsString('Անվճար ինտերնետ հյուրերի համար', $content);
+                $this->assertStringContainsString('SSID (Ցանց)', $content);
+                $this->assertStringContainsString('<span>Զրույց</span>', $content);
+                $this->assertStringContainsString('Ամեն օր', $content);
             }
         }
     }

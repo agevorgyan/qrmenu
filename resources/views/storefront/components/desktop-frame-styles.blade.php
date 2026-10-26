@@ -119,7 +119,8 @@
         }
 
         /* Modals & Bottom Sheets */
-        .cart-modal-sheet {
+        .cart-modal-sheet,
+        .info-sheet-container {
             max-width: var(--desktop-max-width) !important;
             margin: 0 auto !important;
             border-left: 1px solid var(--border-color);
@@ -147,15 +148,19 @@
             max-width: min(1180px, 94vw) !important;
         }
 
-        .cart-modal-sheet {
+        .cart-modal-overlay {
+            justify-content: center !important;
+            padding: 1.5rem !important;
+        }
+
+        .cart-modal-sheet,
+        .info-sheet-container {
             max-width: 620px !important;
             border-radius: 24px !important;
-            bottom: auto !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
+            border: 1px solid var(--border-color) !important;
             box-shadow: 0 25px 70px rgba(0, 0, 0, 0.45) !important;
             max-height: 88vh !important;
+            margin: auto !important;
         }
 
         .ai-waiter-floating-bubble,

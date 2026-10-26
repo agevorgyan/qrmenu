@@ -7,7 +7,7 @@
     $rawPhone = preg_replace('/[^0-9+]/', '', $contactPhone);
     $whatsappSource = $location?->whatsapp_number ?: ($vendor->phone ?: '');
     $whatsappNum = preg_replace('/[^0-9]/', '', $whatsappSource);
-    $displayHours = $location?->working_hours ?: ($vendor->working_hours ?: '10:00 - 23:00 (Ամեն օր / Daily)');
+    $displayHours = $location?->working_hours ?: ($vendor->working_hours ?: ('10:00 - 23:00 (' . __('menu.every_day') . ')'));
 @endphp
 
 <!-- Restaurant Info & WiFi Modal (Modern Glass Bottom Sheet) -->
@@ -15,7 +15,7 @@
      role="dialog"
      aria-modal="true"
      aria-label="{{ __('menu.restaurant_info') }}"
-     style="position: fixed; inset: 0; z-index: 250; background: rgba(0, 0, 0, 0.78); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: flex; flex-direction: column; justify-content: flex-end; align-items: center;" 
+     class="info-modal-backdrop"
      x-cloak
      @click.self="showInfoModal = false"
      x-transition:enter="transition ease-out duration-250"
@@ -27,12 +27,12 @@
      
     <div class="info-sheet-container"
          x-show="showInfoModal"
-         x-transition:enter="transition ease-out duration-300 transform"
-         x-transition:enter-start="translate-y-full sm:translate-y-6 sm:scale-95 opacity-0"
-         x-transition:enter-end="translate-y-0 sm:scale-100 opacity-100"
-         x-transition:leave="transition ease-in duration-200 transform"
-         x-transition:leave-start="translate-y-0 sm:scale-100 opacity-100"
-         x-transition:leave-end="translate-y-full sm:translate-y-6 sm:scale-95 opacity-0">
+         x-transition:enter="transition cubic-bezier(0.16, 1, 0.3, 1) duration-300 transform"
+         x-transition:enter-start="translate-y-full md:translate-y-6 md:scale-95 opacity-0"
+         x-transition:enter-end="translate-y-0 md:scale-100 opacity-100"
+         x-transition:leave="transition cubic-bezier(0.16, 1, 0.3, 1) duration-200 transform"
+         x-transition:leave-start="translate-y-0 md:scale-100 opacity-100"
+         x-transition:leave-end="translate-y-full md:translate-y-6 md:scale-95 opacity-0">
          
         <!-- Mobile Top Pull Bar -->
         <div class="info-drag-handle" @click="showInfoModal = false"></div>
@@ -93,7 +93,7 @@
                         <div class="info-detail-label">{{ __('menu.wifi_ssid_label') }}</div>
                         <div class="info-detail-value">{{ $wifiSsid }}</div>
                     </div>
-                    <div class="info-wifi-signal-icon" title="High Speed WiFi">
+                    <div class="info-wifi-signal-icon" title="{{ __('menu.fast_wifi') }}">
                         <i class="fa-solid fa-signal"></i>
                     </div>
                 </div>
@@ -167,9 +167,9 @@
                            target="_blank" 
                            rel="noopener noreferrer"
                            class="info-action-pill info-action-whatsapp"
-                           title="WhatsApp Chat">
+                           title="{{ __('menu.contact_whatsapp') }}">
                             <i class="fa-brands fa-whatsapp"></i>
-                            <span>Chat</span>
+                            <span>{{ __('menu.chat') }}</span>
                         </a>
                     </div>
                 @endif
@@ -197,9 +197,9 @@
                         </div>
                         <div class="info-item-content">
                             <div class="info-item-label">{{ __('menu.table') }}</div>
-                            <div class="info-item-value" x-text="tableNumber || 'Table {{ $table ?? '' }}'"></div>
+                            <div class="info-item-value" x-text="tableNumber || '{{ __('menu.table') }} {{ $table ?? '' }}'"></div>
                         </div>
-                        <span class="info-table-badge" x-text="tableNumber || 'Table {{ $table ?? '' }}'"></span>
+                        <span class="info-table-badge" x-text="tableNumber || '{{ __('menu.table') }} {{ $table ?? '' }}'"></span>
                     </div>
                 </template>
 
@@ -238,28 +238,54 @@
 </div>
 
 <style>
-    /* Info Sheet Container */
+    /* Backdrop */
+    .info-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 250;
+        background: rgba(0, 0, 0, 0.78);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        box-sizing: border-box;
+    }
+
+    /* Info Sheet Container: anchored at bottom on mobile with zero bottom gap */
     .info-sheet-container {
         background: var(--bg-card);
         width: 100%;
-        max-width: 520px;
+        max-width: var(--desktop-max-width, 560px);
         margin: 0 auto;
+        margin-top: auto;
+        margin-bottom: 0 !important;
         max-height: 92vh;
         max-height: 92dvh;
         display: flex;
         flex-direction: column;
         border-radius: 26px 26px 0 0;
         border: 1px solid var(--border-color);
+        border-bottom: none !important;
         box-shadow: 0 -16px 48px -8px rgba(0, 0, 0, 0.5);
         box-sizing: border-box;
         overflow: hidden;
+        position: relative;
     }
 
-    @media (min-width: 640px) {
+    @media (min-width: 769px) {
+        .info-modal-backdrop {
+            padding: 1.5rem;
+            justify-content: center;
+        }
+
         .info-sheet-container {
-            margin: auto;
+            margin: auto !important;
             border-radius: 22px;
+            border-bottom: 1px solid var(--border-color) !important;
             max-height: 85vh;
+            max-height: 85dvh;
             box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.65);
         }
     }
@@ -346,7 +372,7 @@
         flex: 1;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-        padding: 0.9rem 1.15rem calc(1.5rem + env(safe-area-inset-bottom)) 1.15rem;
+        padding: 0.9rem 1.15rem calc(1.75rem + env(safe-area-inset-bottom, 0.75rem)) 1.15rem;
         display: flex;
         flex-direction: column;
         gap: 0.85rem;

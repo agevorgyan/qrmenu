@@ -268,4 +268,6 @@ return [
     'phone_required' => 'Phone number is required',
     'phone_invalid_length' => 'Please enter a valid phone number length',
     'phone_digits' => 'digits',
+    'chat' => 'Chat',
+    'every_day' => 'Daily',
 ];
