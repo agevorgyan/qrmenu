@@ -70,6 +70,12 @@ class MultilingualUiUxAuditTest extends TestCase
                 'operating_days' => [0, 1, 2, 3, 4, 5, 6],
                 'pre_orders_mode' => 'optional',
             ],
+            'event_inquiry_settings' => [
+                'enabled' => true,
+                'min_guests' => 5,
+                'max_guests' => 300,
+                'contact_methods' => ['phone', 'whatsapp', 'email'],
+            ],
             'subscription_plan_id' => $plan?->id,
             'subscription_plan' => 'business',
             'subscription_status' => 'active',
@@ -341,6 +347,35 @@ class MultilingualUiUxAuditTest extends TestCase
             ]));
             $rtlResponse->assertStatus(200);
             $this->assertStringContainsString('dir="rtl"', $rtlResponse->getContent());
+        }
+    }
+
+    public function test_event_inquiry_page_fixes_mobile_grid_overflow_venue_cards_sticky_summary_and_russian_localization(): void
+    {
+        foreach (['hy', 'en', 'ru'] as $locale) {
+            $response = $this->get(route('client.event_inquiry', [
+                'vendor_slug' => $this->vendor->slug,
+                'lang' => $locale,
+            ]));
+
+            $response->assertStatus(200);
+            $content = $response->getContent();
+
+            // Responsive CSS Grid classes that prevent iOS date/time & venue card overflow
+            $this->assertStringContainsString('class="date-guests-grid"', $content);
+            $this->assertStringContainsString('class="time-options-grid"', $content);
+            $this->assertStringContainsString('repeat(2, minmax(0, 1fr))', $content);
+            $this->assertStringContainsString('.sticky-summary-pill-item', $content);
+            $this->assertStringContainsString('<span class="budget-currency-badge">֏</span>', $content);
+            $this->assertStringNotContainsString('user-scalable=no', $content);
+
+            if ($locale === 'ru') {
+                // Russian sticky summary bar must localize event types (not fallback to English 'Birthday')
+                $this->assertStringContainsString("'birthday': '🎂 День рождения'", $content);
+                $this->assertStringNotContainsString("'birthday': '🎂 Birthday'", $content);
+                $this->assertStringContainsString('Армянская кухня', $content);
+                $this->assertStringNotContainsString('Հայկական խոհանոց', $content);
+            }
         }
     }
 }

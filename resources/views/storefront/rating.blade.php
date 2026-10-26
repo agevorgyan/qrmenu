@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="{{ $lang ?? 'hy' }}" dir="ltr">
+<html lang="{{ $lang ?? 'hy' }}" dir="{{ in_array($lang ?? 'hy', ['ar', 'fa', 'he', 'ur'], true) ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ __('tips.rate_service_title') ?? 'Գնահատել սպասարկումը' }} — {{ $vendor->name }}</title>
 
@@ -263,7 +263,7 @@
                                     @click="toggleCategory('{{ $cat }}')"
                                     class="cat-chip"
                                     :class="{ 'is-active': selectedCategories.includes('{{ $cat }}') }">
-                                {{ ucfirst(str_replace('_', ' ', $cat)) }}
+                                {{ __('tips.cat_' . $cat) !== 'tips.cat_' . $cat ? __('tips.cat_' . $cat) : __(ucfirst(str_replace('_', ' ', $cat))) }}
                             </button>
                         @endforeach
                     </div>
@@ -457,7 +457,7 @@
 
                         this.submitted = true;
                     } catch (e) {
-                        this.errorMessage = 'Կապի խնդիր: Խնդրում ենք փորձել կրկին:';
+                        this.errorMessage = '{{ __('menu.network_error_try_again') }}';
                     } finally {
                         this.isSubmitting = false;
                     }

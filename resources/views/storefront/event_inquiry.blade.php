@@ -47,6 +47,7 @@
         $minGuests = isset($settings['min_guests']) && $settings['min_guests'] > 0 ? (int)$settings['min_guests'] : 1;
         $maxGuests = !empty($settings['max_guests']) ? (int)$settings['max_guests'] : 500;
         $contactMethods = $settings['contact_methods'] ?? ['phone', 'whatsapp', 'email'];
+        $currencySymbol = (!$vendor->currency || strtoupper($vendor->currency) === 'AMD') ? '֏' : $vendor->currency;
     @endphp
 
     <style>
@@ -248,12 +249,21 @@
             margin-bottom: 1.25rem;
             box-shadow: var(--shadow-card);
             transition: border-color 0.2s;
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+        }
+        @media (max-width: 420px) {
+            .step-card {
+                padding: 1.1rem 0.95rem;
+            }
         }
         .step-header {
             display: flex;
             align-items: center;
             gap: 0.75rem;
             margin-bottom: 1.2rem;
+            min-width: 0;
         }
         .step-badge {
             width: 32px;
@@ -270,6 +280,7 @@
         }
         .step-title-wrap {
             flex: 1;
+            min-width: 0;
         }
         .step-title {
             font-size: 1.05rem;
@@ -279,29 +290,37 @@
             display: flex;
             align-items: center;
             gap: 0.35rem;
+            flex-wrap: wrap;
+            overflow-wrap: break-word;
         }
         .step-subtitle {
             font-size: 0.8rem;
             color: var(--text-muted);
             margin-top: 0.15rem;
+            overflow-wrap: break-word;
         }
 
         /* Event Type Grid */
         .event-types-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 0.75rem;
         }
         @media (min-width: 580px) {
             .event-types-grid {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+        @media (max-width: 340px) {
+            .event-types-grid {
+                grid-template-columns: minmax(0, 1fr);
             }
         }
         .event-type-card {
             background: var(--chip-bg);
             border: 1.5px solid var(--chip-border);
             border-radius: var(--radius-lg);
-            padding: 0.9rem 0.75rem;
+            padding: 0.9rem 0.65rem;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -311,6 +330,7 @@
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             user-select: none;
             position: relative;
+            min-width: 0;
         }
         .event-type-card:hover {
             border-color: var(--primary);
@@ -333,6 +353,7 @@
             justify-content: center;
             font-size: 1.25rem;
             transition: transform 0.2s;
+            flex-shrink: 0;
         }
         .event-type-card.active .event-icon-box {
             background: var(--primary);
@@ -340,10 +361,14 @@
             transform: scale(1.08);
         }
         .event-type-name {
-            font-size: 0.88rem;
+            font-size: 0.86rem;
             font-weight: 700;
             color: var(--text-main);
             line-height: 1.25;
+            min-width: 0;
+            max-width: 100%;
+            overflow-wrap: break-word;
+            word-break: break-word;
         }
         .event-type-card.active .event-type-name {
             color: var(--primary);
@@ -364,9 +389,39 @@
             font-size: 0.65rem;
         }
 
-        /* Form Controls */
+        /* Form Controls & Responsive Grids */
+        .date-guests-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.15rem;
+        }
+        @media (max-width: 540px) {
+            .date-guests-grid {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 0.9rem;
+            }
+        }
+
+        .time-options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.85rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--card-border);
+        }
+        @media (max-width: 420px) {
+            .time-options-grid {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 0.75rem;
+            }
+        }
+
         .field-group {
             margin-bottom: 1.15rem;
+            min-width: 0;
+            max-width: 100%;
         }
         .field-group:last-child {
             margin-bottom: 0;
@@ -375,10 +430,13 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 0.5rem;
+            flex-wrap: wrap;
             font-size: 0.86rem;
             font-weight: 700;
             color: var(--text-subtle);
             margin-bottom: 0.45rem;
+            min-width: 0;
         }
         .field-label .required {
             color: #ef4444;
@@ -388,6 +446,7 @@
             font-size: 0.78rem;
             color: var(--text-muted);
             margin-top: 0.35rem;
+            overflow-wrap: break-word;
         }
         .field-error {
             font-size: 0.8rem;
@@ -400,6 +459,10 @@
 
         .input-control {
             width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            display: block;
+            box-sizing: border-box;
             background: var(--input-bg);
             border: 1.5px solid var(--input-border);
             color: var(--text-main);
@@ -409,6 +472,12 @@
             outline: none;
             transition: all 0.2s;
             font-family: inherit;
+        }
+        input[type="date"].input-control,
+        input[type="time"].input-control {
+            -webkit-appearance: none;
+            appearance: none;
+            min-height: 48px;
         }
         .input-control:focus {
             border-color: var(--primary);
@@ -425,10 +494,14 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 0.5rem;
             background: var(--input-bg);
             border: 1.5px solid var(--input-border);
             padding: 0.45rem 0.65rem;
             border-radius: var(--radius-md);
+            min-width: 0;
+            width: 100%;
+            box-sizing: border-box;
         }
         .stepper-btn {
             width: 44px;
@@ -443,6 +516,7 @@
             font-size: 1.15rem;
             cursor: pointer;
             transition: all 0.15s;
+            flex-shrink: 0;
         }
         .stepper-btn:disabled {
             opacity: 0.35;
@@ -455,19 +529,24 @@
         }
         .stepper-val-wrap {
             text-align: center;
+            min-width: 0;
+            flex: 1;
+            padding: 0 0.25rem;
         }
         .stepper-val {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.6rem;
+            font-size: 1.55rem;
             font-weight: 800;
             color: var(--text-main);
-            line-height: 1;
+            line-height: 1.05;
+            white-space: nowrap;
         }
         .stepper-unit {
             font-size: 0.76rem;
             font-weight: 700;
             color: var(--text-muted);
-            margin-top: 0.15rem;
+            margin-top: 0.1rem;
+            white-space: nowrap;
         }
 
         .quick-pills-row {
@@ -477,6 +556,8 @@
             overflow-x: auto;
             padding-bottom: 0.25rem;
             scrollbar-width: none;
+            max-width: 100%;
+            -webkit-overflow-scrolling: touch;
         }
         .quick-pills-row::-webkit-scrollbar {
             display: none;
@@ -491,6 +572,7 @@
             font-weight: 700;
             cursor: pointer;
             white-space: nowrap;
+            flex-shrink: 0;
             transition: all 0.15s;
         }
         .quick-pill:hover {
@@ -506,20 +588,26 @@
         /* Venue Area Cards */
         .venue-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 0.75rem;
+        }
+        @media (max-width: 350px) {
+            .venue-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
         }
         .venue-card {
             background: var(--chip-bg);
             border: 1.5px solid var(--chip-border);
             border-radius: var(--radius-lg);
-            padding: 0.95rem 0.85rem;
+            padding: 0.9rem 0.8rem;
             cursor: pointer;
             transition: all 0.2s;
             position: relative;
             display: flex;
             flex-direction: column;
             gap: 0.4rem;
+            min-width: 0;
         }
         .venue-card:hover {
             border-color: var(--primary);
@@ -534,6 +622,14 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            min-width: 0;
+        }
+        @media (max-width: 500px) {
+            .venue-card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.4rem;
+            }
         }
         .venue-card-icon {
             width: 32px;
@@ -555,6 +651,11 @@
             font-size: 0.88rem;
             font-weight: 700;
             color: var(--text-main);
+            line-height: 1.25;
+            min-width: 0;
+            max-width: 100%;
+            overflow-wrap: break-word;
+            word-break: break-word;
         }
         .venue-card.active .venue-card-title {
             color: var(--primary);
@@ -563,6 +664,8 @@
             font-size: 0.76rem;
             color: var(--text-muted);
             line-height: 1.35;
+            overflow-wrap: break-word;
+            word-break: break-word;
         }
 
         /* Budget Input with Currency Badge */
@@ -570,6 +673,9 @@
             position: relative;
             display: flex;
             align-items: center;
+        }
+        .budget-input-wrap .input-control {
+            padding-right: 3.25rem;
         }
         .budget-currency-badge {
             position: absolute;
@@ -582,30 +688,37 @@
             padding: 0.25rem 0.6rem;
             border-radius: 6px;
             pointer-events: none;
+            white-space: nowrap;
         }
 
         /* Additional Services */
         .services-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 0.65rem;
         }
         @media (min-width: 540px) {
             .services-grid {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+        @media (max-width: 350px) {
+            .services-grid {
+                grid-template-columns: minmax(0, 1fr);
             }
         }
         .service-card {
             background: var(--chip-bg);
             border: 1.5px solid var(--chip-border);
             border-radius: var(--radius-md);
-            padding: 0.75rem 0.85rem;
+            padding: 0.75rem 0.75rem;
             display: flex;
             align-items: center;
-            gap: 0.65rem;
+            gap: 0.55rem;
             cursor: pointer;
             transition: all 0.2s;
             user-select: none;
+            min-width: 0;
         }
         .service-card:hover {
             border-color: var(--accent);
@@ -626,6 +739,9 @@
             font-size: 0.82rem;
             line-height: 1.25;
             color: var(--text-main);
+            min-width: 0;
+            overflow-wrap: break-word;
+            word-break: break-word;
         }
         .service-card.active span {
             color: var(--accent);
@@ -666,8 +782,13 @@
         /* Contact Methods Buttons */
         .contact-methods-row {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 0.65rem;
+        }
+        @media (max-width: 360px) {
+            .contact-methods-row {
+                grid-template-columns: minmax(0, 1fr);
+            }
         }
         .contact-method-card {
             background: var(--chip-bg);
@@ -682,6 +803,7 @@
             cursor: pointer;
             transition: all 0.2s;
             text-align: center;
+            min-width: 0;
         }
         .contact-method-card:hover {
             border-color: var(--primary);
@@ -699,6 +821,9 @@
             font-size: 0.82rem;
             font-weight: 700;
             color: var(--text-main);
+            min-width: 0;
+            max-width: 100%;
+            overflow-wrap: break-word;
         }
         .contact-method-card.active span {
             color: var(--primary);
@@ -887,7 +1012,7 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-top: 1px solid var(--sticky-bar-border);
-            padding: 0.85rem 1rem;
+            padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
             z-index: 100;
             box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
         }
@@ -897,7 +1022,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 1rem;
+            gap: 0.75rem;
         }
         .sticky-summary-info {
             min-width: 0;
@@ -906,11 +1031,18 @@
         .sticky-summary-pills {
             display: flex;
             align-items: center;
-            gap: 0.45rem;
+            gap: 0.35rem 0.5rem;
             flex-wrap: wrap;
             font-size: 0.84rem;
             font-weight: 700;
             color: var(--text-main);
+            line-height: 1.3;
+        }
+        .sticky-summary-pill-item {
+            white-space: nowrap;
+        }
+        .sticky-summary-dot {
+            opacity: 0.55;
         }
         .sticky-summary-sub {
             font-size: 0.76rem;
@@ -925,18 +1057,39 @@
             background: var(--primary);
             color: var(--primary-contrast);
             border: none;
-            padding: 0.85rem 1.45rem;
+            padding: 0.8rem 1.25rem;
             border-radius: var(--radius-md);
-            font-size: 0.98rem;
+            font-size: 0.92rem;
             font-weight: 800;
             cursor: pointer;
             box-shadow: 0 4px 16px var(--primary-glow);
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            justify-content: center;
+            gap: 0.45rem;
             white-space: nowrap;
             flex-shrink: 0;
+            max-width: 100%;
+        }
+        @media (max-width: 480px) {
+            .sticky-summary-bar {
+                padding: 0.65rem 0.75rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
+            }
+            .sticky-summary-inner {
+                gap: 0.5rem;
+            }
+            .sticky-summary-pills {
+                font-size: 0.78rem;
+                gap: 0.15rem 0.45rem;
+            }
+            .sticky-summary-dot {
+                display: none;
+            }
+            .cta-submit-btn {
+                padding: 0.75rem 0.95rem;
+                font-size: 0.84rem;
+            }
         }
         .cta-submit-btn:disabled {
             opacity: 0.65;
@@ -1149,7 +1302,7 @@
             </div>
 
             <!-- Date & Guest Count Split -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.15rem;">
+            <div class="date-guests-grid">
                 
                 <!-- Date Input -->
                 <div class="field-group" style="margin-bottom: 0;">
@@ -1181,7 +1334,7 @@
                                 class="stepper-btn" 
                                 @click="decrementGuests" 
                                 :disabled="form.guest_count <= {{ $minGuests }}"
-                                title="Նվազեցնել">
+                                title="{{ $isHy ? 'Նվազեցնել' : ($isRu ? 'Уменьшить' : __('Decrease')) }}">
                             <i class="fa-solid fa-minus"></i>
                         </button>
                         <div class="stepper-val-wrap">
@@ -1192,7 +1345,7 @@
                                 class="stepper-btn" 
                                 @click="incrementGuests" 
                                 :disabled="form.guest_count >= {{ $maxGuests }}"
-                                title="Ավելացնել">
+                                title="{{ $isHy ? 'Ավելացնել' : ($isRu ? 'Увеличить' : __('Increase')) }}">
                             <i class="fa-solid fa-plus"></i>
                         </button>
                     </div>
@@ -1220,7 +1373,7 @@
 
             <!-- Time Options -->
             @if(!empty($opt['start_time']) || !empty($opt['end_time']))
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--card-border);">
+                <div class="time-options-grid">
                     @if(!empty($opt['start_time']))
                         <div class="field-group" style="margin-bottom: 0;">
                             <label class="field-label">{{ $isHy ? 'Սկիզբ (ժամ)' : ($isRu ? 'Время начала' : __('Preferred Start Time')) }}</label>
@@ -1304,8 +1457,8 @@
                                    min="0" 
                                    class="input-control" 
                                    x-model="form.budget" 
-                                   placeholder="{{ $isHy ? 'օր.՝ 250,000' : 'e.g. 250000' }}">
-                            <span class="budget-currency-badge">{{ $vendor->currency ?: '֏' }}</span>
+                                   placeholder="{{ $isHy ? 'օր.՝ 250,000' : ($isRu ? 'напр. 250000' : 'e.g. 250000') }}">
+                            <span class="budget-currency-badge">{{ $currencySymbol }}</span>
                         </div>
                         <div class="field-hint">{{ $isHy ? 'Օգնում է մեր թիմին կազմել համահունչ ճաշացանկ Ձեր ակնկալիքների սահմաններում։' : ($isRu ? 'Поможет составить оптимальное меню под ваш бюджет.' : __('Optional: helps our team customize the menu within your expectations.')) }}</div>
                     </div>
@@ -1360,15 +1513,15 @@
                         <textarea class="input-control" 
                                   rows="2" 
                                   x-model="form.food_beverage_preferences" 
-                                  placeholder="{{ $isHy ? 'օր.՝ Հայկական ավանդական ուտեստներ, խորովածի տեսականի, գինու ընտրանի...' : 'e.g. Armenian traditional, barbecue, vegetarian options, specific wines...' }}"></textarea>
+                                  placeholder="{{ $isHy ? 'օր.՝ Հայկական ավանդական ուտեստներ, խորովածի տեսականի, գինու ընտրանի...' : ($isRu ? 'напр. Армянская кухня, ассорти шашлыка, вегетарианские блюда, винная карта...' : 'e.g. Armenian traditional, barbecue, vegetarian options, specific wines...') }}"></textarea>
                         
                         <!-- Quick Click Chips -->
                         <div class="food-suggestion-chips">
-                            <span class="food-chip" @click="appendFoodPref('{{ $isHy ? 'Հայկական խոհանոց' : 'Armenian Cuisine' }}')">+ 🇦🇲 {{ $isHy ? 'Հայկական խոհանոց' : 'Armenian' }}</span>
-                            <span class="food-chip" @click="appendFoodPref('{{ $isHy ? 'Խորովածի տեսականի' : 'Barbecue assortment' }}')">+ 🥩 {{ $isHy ? 'Խորովածի տեսականի' : 'Barbecue' }}</span>
-                            <span class="food-chip" @click="appendFoodPref('{{ $isHy ? 'Բուսակերական ընտրանի' : 'Vegetarian options' }}')">+ 🥗 {{ $isHy ? 'Բուսակերական' : 'Vegetarian' }}</span>
-                            <span class="food-chip" @click="appendFoodPref('{{ $isHy ? 'Պրեմիում գինիներ' : 'Wine selection' }}')">+ 🍷 {{ $isHy ? 'Գինիների ընտրանի' : 'Wines' }}</span>
-                            <span class="food-chip" @click="appendFoodPref('{{ $isHy ? 'Հատուկ դեսերտներ' : 'Dessert table' }}')">+ 🍰 {{ $isHy ? 'Դեսերտներ' : 'Desserts' }}</span>
+                            <span class="food-chip" @click="appendFoodPref('{{ $isHy ? 'Հայկական խոհանոց' : ($isRu ? 'Армянская кухня' : 'Armenian Cuisine') }}')">+ 🇦🇲 {{ $isHy ? 'Հայկական խոհանոց' : ($isRu ? 'Армянская кухня' : 'Armenian') }}</span>
+                            <span class="food-chip" @click="appendFoodPref('{{ $isHy ? 'Խորովածի տեսականի' : ($isRu ? 'Ассорти шашлыка' : 'Barbecue assortment') }}')">+ 🥩 {{ $isHy ? 'Խորովածի տեսականի' : ($isRu ? 'Шашлык' : 'Barbecue') }}</span>
+                            <span class="food-chip" @click="appendFoodPref('{{ $isHy ? 'Բուսակերական ընտրանի' : ($isRu ? 'Вегетарианские блюда' : 'Vegetarian options') }}')">+ 🥗 {{ $isHy ? 'Բուսակերական' : ($isRu ? 'Вегетарианское' : 'Vegetarian') }}</span>
+                            <span class="food-chip" @click="appendFoodPref('{{ $isHy ? 'Պրեմիում գինիներ' : ($isRu ? 'Винная карта' : 'Wine selection') }}')">+ 🍷 {{ $isHy ? 'Գինիների ընտրանի' : ($isRu ? 'Вина' : 'Wines') }}</span>
+                            <span class="food-chip" @click="appendFoodPref('{{ $isHy ? 'Հատուկ դեսերտներ' : ($isRu ? 'Десертный стол' : 'Dessert table') }}')">+ 🍰 {{ $isHy ? 'Դեսերտներ' : ($isRu ? 'Десерты' : 'Desserts') }}</span>
                         </div>
                     </div>
                 @endif
@@ -1407,7 +1560,7 @@
             </div>
 
             <!-- Phone & Email Grid -->
-            <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.15rem;">
+            <div style="display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; margin-bottom: 1.15rem;">
                 
                 <!-- VALIDATED PHONE FIELD (Exact Order / Checkout Component) -->
                 <div class="field-group" style="margin-bottom: 0;">
@@ -1424,7 +1577,7 @@
                             <button type="button" 
                                     @click="showPhoneCountryDropdown = !showPhoneCountryDropdown" 
                                     class="cart-phone-country-btn"
-                                    title="Երկրի կոդ">
+                                    title="{{ __('Country Code') }}">
                                 <span class="cart-flag-icon" x-text="selectedPhoneCountry.flag"></span>
                                 <span class="cart-dial-code" x-text="selectedPhoneCountry.dial"></span>
                                 <i class="fa-solid fa-chevron-down cart-country-caret" :class="{ 'is-open': showPhoneCountryDropdown }"></i>
@@ -1443,12 +1596,12 @@
                             <!-- Live Digit Status Counter -->
                             <div class="cart-phone-status-indicator">
                                 <template x-if="isPhoneValid() && phoneCleanDigits.length > 0">
-                                    <span class="cart-status-badge is-valid" title="Համարը վավեր է">
+                                    <span class="cart-status-badge is-valid" title="{{ __('Valid phone number') }}">
                                         <i class="fa-solid fa-circle-check"></i>
                                     </span>
                                 </template>
                                 <template x-if="phoneCleanDigits.length > 0 && !isPhoneValid()">
-                                    <span class="cart-status-badge is-incomplete" :title="'Պահանջվում է ' + (selectedPhoneCountry.digits || '7-15') + ' նիշ'">
+                                    <span class="cart-status-badge is-incomplete" :title="(selectedPhoneCountry.digits || '7-15') + ' {{ __('menu.phone_digits') }}'">
                                         <span x-text="phoneCleanDigits.length + '/' + (selectedPhoneCountry.digits || '10')"></span>
                                     </span>
                                 </template>
@@ -1474,7 +1627,7 @@
                                     <span class="cart-item-flag" x-text="item.flag"></span>
                                     <span class="cart-item-name" x-text="item.name"></span>
                                     <span class="cart-item-dial" x-text="item.dial"></span>
-                                    <span class="cart-item-digits" x-show="item.digits" x-text="'(' + item.digits + ' նիշ)'"></span>
+                                    <span class="cart-item-digits" x-show="item.digits" x-text="'(' + item.digits + ' {{ __('menu.phone_digits') }})'"></span>
                                 </button>
                             </template>
                         </div>
@@ -1545,7 +1698,7 @@
                     <textarea class="input-control" 
                               rows="3" 
                               x-model="form.comments" 
-                              placeholder="{{ $isHy ? 'Նշեք անակնկալի մանրամասները, հատուկ հյուրերին կամ ցանկացած այլ հարց...' : 'Any specific requests, surprise elements, timing preferences or questions...' }}"></textarea>
+                              placeholder="{{ $isHy ? 'Նշեք անակնկալի մանրամասները, հատուկ հյուրերին կամ ցանկացած այլ հարց...' : ($isRu ? 'Укажите детали сюрприза, особые пожелания или любые вопросы...' : 'Any specific requests, surprise elements, timing preferences or questions...') }}"></textarea>
                 </div>
             @endif
         </div>
@@ -1557,9 +1710,9 @@
             <div class="sticky-summary-inner">
                 <div class="sticky-summary-info">
                     <div class="sticky-summary-pills">
-                        <span x-text="getEventTypePreview()"></span>
-                        <span>•</span>
-                        <span x-text="'👥 ' + form.guest_count + ' {{ $isHy ? 'հյուր' : ($isRu ? 'гостей' : 'guests') }}'"></span>
+                        <span class="sticky-summary-pill-item" x-text="getEventTypePreview()"></span>
+                        <span class="sticky-summary-dot" aria-hidden="true">•</span>
+                        <span class="sticky-summary-pill-item" x-text="'👥 ' + form.guest_count + ' {{ $isHy ? 'հյուր' : ($isRu ? 'гостей' : 'guests') }}'"></span>
                     </div>
                     <div class="sticky-summary-sub">
                         <span x-text="getFormattedDatePreview(form.event_date)"></span>
@@ -1611,7 +1764,7 @@
                     </div>
                     <button type="button" class="copy-btn" @click="copyReference">
                         <i class="fa-regular fa-copy"></i>
-                        <span x-text="copied ? '{{ $isHy ? 'Պատճենվեց' : 'Copied' }}' : '{{ $isHy ? 'Պատճենել' : 'Copy' }}'"></span>
+                        <span x-text="copied ? '{{ $isHy ? 'Պատճենվեց' : ($isRu ? 'Скопировано' : 'Copied') }}' : '{{ $isHy ? 'Պատճենել' : ($isRu ? 'Копировать' : 'Copy') }}'"></span>
                     </button>
                 </div>
 
@@ -1842,15 +1995,15 @@ function eventInquiryApp() {
 
         getEventTypePreview() {
             const map = {
-                'birthday': '🎂 {{ $isHy ? 'Ծննդյան օր' : 'Birthday' }}',
-                'wedding': '💍 {{ $isHy ? 'Հարսանիք' : 'Wedding' }}',
-                'corporate': '💼 {{ $isHy ? 'Կորպորատիվ' : 'Corporate' }}',
-                'family_celebration': '👨‍👩‍👧‍👦 {{ $isHy ? 'Ընտանեկան' : 'Family' }}',
-                'anniversary': '🥂 {{ $isHy ? 'Հոբելյան' : 'Anniversary' }}',
-                'kids_party': '🎈 {{ $isHy ? 'Մանկական' : 'Kids Party' }}',
-                'other': '✨ {{ $isHy ? 'Միջոցառում' : 'Event' }}',
+                'birthday': '🎂 {{ $isHy ? 'Ծննդյան օր' : ($isRu ? 'День рождения' : 'Birthday') }}',
+                'wedding': '💍 {{ $isHy ? 'Հարսանիք' : ($isRu ? 'Свадьба' : 'Wedding') }}',
+                'corporate': '💼 {{ $isHy ? 'Կորպորատիվ' : ($isRu ? 'Корпоратив' : 'Corporate') }}',
+                'family_celebration': '👨‍👩‍👧‍👦 {{ $isHy ? 'Ընտանեկան' : ($isRu ? 'Семейный' : 'Family') }}',
+                'anniversary': '🥂 {{ $isHy ? 'Հոբելյան' : ($isRu ? 'Юбилей' : 'Anniversary') }}',
+                'kids_party': '🎈 {{ $isHy ? 'Մանկական' : ($isRu ? 'Детский' : 'Kids Party') }}',
+                'other': '✨ {{ $isHy ? 'Միջոցառում' : ($isRu ? 'Мероприятие' : 'Event') }}',
             };
-            return map[this.form.event_type] || '✨ {{ $isHy ? 'Միջոցառում' : 'Event' }}';
+            return map[this.form.event_type] || '✨ {{ $isHy ? 'Միջոցառում' : ($isRu ? 'Мероприятие' : 'Event') }}';
         },
 
         getFormattedDatePreview(dateStr) {

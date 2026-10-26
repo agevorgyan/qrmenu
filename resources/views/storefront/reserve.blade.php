@@ -529,11 +529,14 @@
 
         .slots-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 0.65rem;
         }
         @media(max-width: 480px) {
-            .slots-grid { grid-template-columns: repeat(3, 1fr); }
+            .slots-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        @media(max-width: 340px) {
+            .slots-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
 
         .slot-btn {
@@ -549,6 +552,7 @@
             align-items: center;
             gap: 0.25rem;
             font-family: inherit;
+            min-width: 0;
         }
 
         .slot-btn:hover:not(.disabled):not(.active) {
@@ -595,12 +599,12 @@
         /* Step 3: Visual Seating Preference Cards */
         .tables-cards-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 0.65rem;
             margin-top: 0.75rem;
         }
         @media(max-width: 360px) {
-            .tables-cards-grid { grid-template-columns: 1fr; }
+            .tables-cards-grid { grid-template-columns: minmax(0, 1fr); }
         }
 
         .table-select-card {
@@ -702,6 +706,9 @@
 
         .form-input {
             width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
             padding: 0.85rem 1.05rem;
             border-radius: var(--radius-md);
             background: var(--input-bg);
