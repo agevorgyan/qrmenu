@@ -911,21 +911,6 @@ async function sendReceiptEmail() {
         btn.innerHTML = originalHtml;
     }
 }
-        ].join(''));
-        doc.close();
-
-        setTimeout(() => {
-            try {
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
-            } catch (e) {
-                console.error('Print dialog error:', e);
-            }
-        }, 300);
-    } catch (e) {
-        console.error('Failed to prepare print iframe:', e);
-    }
-}
 
 async function printViaBluetooth() {
     if (!navigator.bluetooth) {

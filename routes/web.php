@@ -177,6 +177,9 @@ Route::get('/lang/{locale}', function (Request $request, string $locale, LocaleM
             if ($user) {
                 $user->locale = $targetLocale;
                 $user->saveQuietly();
+                if ($user->vendor) {
+                    session(['storefront_lang_'.$user->vendor->slug => $targetLocale]);
+                }
             }
         }
 
@@ -184,14 +187,15 @@ Route::get('/lang/{locale}', function (Request $request, string $locale, LocaleM
         cookie()->queue('admin_locale', $targetLocale, 525600);
         cookie()->queue('locale', $targetLocale, 525600);
 
-        // Sanitize previous URL so existing ?lang= or ?locale= params don't override the new selection
+        // Sanitize previous URL so existing ?lang= or ?locale= params reflect the new selection
         $previousUrl = url()->previous();
         if ($previousUrl) {
             $parsed = parse_url($previousUrl);
             if (isset($parsed['query'])) {
                 parse_str($parsed['query'], $query);
                 if (isset($query['lang']) || isset($query['locale'])) {
-                    unset($query['lang'], $query['locale']);
+                    $query['lang'] = $targetLocale;
+                    unset($query['locale']);
                     $queryString = http_build_query($query);
                     $cleanUrl = ($parsed['scheme'] ?? 'http').'://'.($parsed['host'] ?? 'localhost')
                         .(isset($parsed['port']) ? ':'.$parsed['port'] : '')

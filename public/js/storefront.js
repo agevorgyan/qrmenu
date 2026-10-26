@@ -2191,72 +2191,61 @@
 
             async selectStorefrontLanguage(locale) {
                 if (!locale) return;
-                const seq = ++this._langSwitchSeq;
+                const normalized = String(locale).toLowerCase().trim();
+
+                if (normalized === this.selectedLang && !this.needsLanguageSelection) {
+                    this.showLanguageModal = false;
+                    return;
+                }
+
                 this.showLanguageModal = false;
+                this.selectedLang = normalized;
 
                 try {
-                    localStorage.setItem('qrmenu_locale_' + this.vendorSlug, locale);
-                    document.cookie = 'app_locale=' + encodeURIComponent(locale) + ';path=/;max-age=31536000;SameSite=Lax';
-                    document.cookie = 'locale=' + encodeURIComponent(locale) + ';path=/;max-age=31536000;SameSite=Lax';
+                    localStorage.setItem('qrmenu_locale_' + this.vendorSlug, normalized);
+                    document.cookie = 'app_locale=' + encodeURIComponent(normalized) + ';path=/;max-age=31536000;SameSite=Lax';
+                    document.cookie = 'locale=' + encodeURIComponent(normalized) + ';path=/;max-age=31536000;SameSite=Lax';
                 } catch(e) {}
 
-                let bundle = this.localeBundles ? this.localeBundles[locale] : null;
-                if (!bundle) {
-                    try {
-                        const cachedRaw = localStorage.getItem(`qrmenu_bundle_${this.vendorSlug}_${locale}`);
-                        if (cachedRaw) bundle = JSON.parse(cachedRaw);
-                    } catch(e) {}
+                this.saveCartToStorage();
+
+                // If currently offline, apply offline cached bundle if possible
+                if (this.isOffline) {
+                    let bundle = this.localeBundles ? this.localeBundles[normalized] : null;
+                    if (!bundle) {
+                        try {
+                            const cachedRaw = localStorage.getItem(`qrmenu_bundle_${this.vendorSlug}_${normalized}`);
+                            if (cachedRaw) bundle = JSON.parse(cachedRaw);
+                        } catch(e) {}
+                    }
+                    if (bundle) {
+                        this.applyLocaleBundle(normalized, bundle);
+                    }
+                    return;
                 }
 
-                if (bundle) {
-                    this.applyLocaleBundle(locale, bundle);
-                }
-
-                if (this._langAbortController) {
-                    try { this._langAbortController.abort(); } catch(e) {}
-                }
-                this._langAbortController = typeof AbortController !== 'undefined' ? new AbortController() : null;
+                const targetUrl = new URL(window.location.href);
+                targetUrl.searchParams.set('lang', normalized);
 
                 try {
-                    this.isSwitchingLanguage = true;
                     const setLangUrl = routes.setLanguage || `/api/m/${this.vendorSlug}/language`;
-                    const response = await fetch(setLangUrl, {
+                    fetch(setLangUrl, {
                         method: 'POST',
-                        signal: this._langAbortController ? this._langAbortController.signal : undefined,
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': this.csrfToken,
                             'Accept': 'application/json'
                         },
                         body: JSON.stringify({
-                            language: locale,
+                            language: normalized,
                             location_id: this.locationId
-                        })
-                    });
+                        }),
+                        keepalive: true
+                    }).catch(() => {});
+                } catch (e) {}
 
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (seq === this._langSwitchSeq && data.bundle) {
-                            if (!this.localeBundles) this.localeBundles = {};
-                            this.localeBundles[locale] = data.bundle;
-                            try {
-                                localStorage.setItem(`qrmenu_bundle_${this.vendorSlug}_${locale}`, JSON.stringify(data.bundle));
-                            } catch(e) {}
-                            if (!bundle) {
-                                this.applyLocaleBundle(locale, data.bundle);
-                            }
-                        }
-                    }
-                } catch (err) {
-                    if (err && err.name === 'AbortError') {
-                        return;
-                    }
-                    console.debug('Language background sync notice:', err);
-                } finally {
-                    if (seq === this._langSwitchSeq) {
-                        this.isSwitchingLanguage = false;
-                    }
-                }
+                // Immediately navigate so 100% of Blade templates, modals, categories, and dishes reload cleanly
+                window.location.href = targetUrl.toString();
             },
 
             changeLanguage(locale) {

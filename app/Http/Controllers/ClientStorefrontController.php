@@ -23,6 +23,7 @@ use App\Services\PaymentGatewayService;
 use App\Services\Payments\PaymentVerificationService;
 use App\Services\SplitBillService;
 use App\Services\TenantCache;
+use App\Services\TenantContext;
 use App\Services\TimeAwareService;
 use App\Services\TipRatingService;
 use Illuminate\Http\JsonResponse;
@@ -52,7 +53,7 @@ class ClientStorefrontController extends Controller
             'credentials',
         ];
 
-        $tenant = app(\App\Services\TenantContext::class)->getTenant();
+        $tenant = app(TenantContext::class)->getTenant();
         if ($tenant instanceof Vendor && $tenant->slug === $vendorSlug && (! $requireActive || $tenant->is_active)) {
             $tenant->loadMissing($relations);
 
@@ -323,16 +324,27 @@ class ClientStorefrontController extends Controller
         } elseif ($savedSessionLang && in_array($savedSessionLang, $allowedCodes, true)) {
             $lang = $savedSessionLang;
             $needsLanguageSelection = false;
+        } elseif (($cookieLocale = strtolower((string) ($request->cookie('app_locale') ?? $request->cookie('locale')))) && in_array($cookieLocale, $allowedCodes, true)) {
+            $lang = $cookieLocale;
+            session(['storefront_lang_'.$vendor->slug => $lang]);
+            $needsLanguageSelection = false;
+        } elseif (($sessionLocale = strtolower((string) (session('app_locale') ?? session('locale')))) && in_array($sessionLocale, $allowedCodes, true)) {
+            $lang = $sessionLocale;
+            session(['storefront_lang_'.$vendor->slug => $lang]);
+            $needsLanguageSelection = false;
         } else {
-            $lang = session('app_locale', $defaultCode);
-            if (! in_array($lang, $allowedCodes, true)) {
-                $lang = $defaultCode;
-            }
+            $lang = $defaultCode;
             $needsLanguageSelection = true;
         }
 
-        session(['app_locale' => $lang, 'locale' => $lang]);
+        session([
+            'storefront_lang_'.$vendor->slug => $lang,
+            'app_locale' => $lang,
+            'locale' => $lang,
+        ]);
         App::setLocale($lang);
+        cookie()->queue('app_locale', $lang, 525600);
+        cookie()->queue('locale', $lang, 525600);
 
         // Server-side validate entry context (Table QR vs General Menu)
         $table = null;
@@ -540,22 +552,19 @@ class ClientStorefrontController extends Controller
         }
         $featuredDish = $dailyOffers->first()?->product ?? null;
 
-        // Prebuild localized storefront bundles for supported languages for zero-latency switching
-        $localeBundles = [];
-        foreach ($allowedCodes as $supportedCode) {
-            if ($supportedCode !== '') {
-                $localeBundles[$supportedCode] = $this->buildStorefrontLocaleBundle(
-                    $vendor,
-                    $location,
-                    $categories,
-                    $dailyOffers,
-                    $supportedCode,
-                    $entryContext,
-                    $table,
-                    $isReturning
-                );
-            }
-        }
+        // Prebuild localized storefront bundle for current language
+        $localeBundles = [
+            $lang => $this->buildStorefrontLocaleBundle(
+                $vendor,
+                $location,
+                $categories,
+                $dailyOffers,
+                $lang,
+                $entryContext,
+                $table,
+                $isReturning
+            ),
+        ];
 
         return view("storefront.themes.{$themeSlug}", compact(
             'vendor',
