@@ -243,7 +243,7 @@
 
         <!-- Cafe Header -->
         <div class="cafe-header">
-            <img src="{{ $vendor->logo ?? 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&q=80' }}" class="cafe-logo">
+            <img src="{{ $vendor->logo ?? 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&q=80' }}" alt="{{ $vendor->name }}" width="80" height="80" fetchpriority="high" decoding="async" class="cafe-logo">
             <h1 style="font-size: 1.65rem; font-weight: 800; margin-top: 0.5rem; color: var(--text-main); word-break: break-word;">{{ $vendor->name }}</h1>
             <p @click="showInfoModal = true" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.15rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;" title="{{ __('menu.restaurant_info') }}">
                 <i class="fa-solid fa-mug-hot" style="color: var(--primary);"></i> 
