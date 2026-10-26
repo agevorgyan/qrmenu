@@ -242,6 +242,13 @@
     .info-modal-backdrop {
         position: fixed;
         inset: 0;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        height: 100dvh;
         z-index: 250;
         background: rgba(0, 0, 0, 0.78);
         backdrop-filter: blur(14px);
@@ -251,6 +258,7 @@
         justify-content: flex-end;
         align-items: center;
         box-sizing: border-box;
+        overflow: hidden;
     }
 
     /* Info Sheet Container: anchored at bottom on mobile with zero bottom gap */
@@ -259,19 +267,39 @@
         width: 100%;
         max-width: var(--desktop-max-width, 560px);
         margin: 0 auto;
-        margin-top: auto;
+        margin-top: auto !important;
         margin-bottom: 0 !important;
         max-height: 92vh;
         max-height: 92dvh;
         display: flex;
         flex-direction: column;
-        border-radius: 26px 26px 0 0;
+        border-radius: 26px 26px 0 0 !important;
         border: 1px solid var(--border-color);
         border-bottom: none !important;
         box-shadow: 0 -16px 48px -8px rgba(0, 0, 0, 0.5);
         box-sizing: border-box;
         overflow: hidden;
         position: relative;
+    }
+
+    @media (max-width: 768px) {
+        .info-modal-backdrop {
+            justify-content: flex-end !important;
+            padding: 0 !important;
+        }
+
+        .info-sheet-container {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin-top: auto !important;
+            margin-bottom: 0 !important;
+            border-bottom-left-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+            border-bottom: none !important;
+            border-left: none !important;
+            border-right: none !important;
+            padding-bottom: env(safe-area-inset-bottom, 0) !important;
+        }
     }
 
     @media (min-width: 769px) {
@@ -282,8 +310,8 @@
 
         .info-sheet-container {
             margin: auto !important;
-            border-radius: 22px;
-            border-bottom: 1px solid var(--border-color) !important;
+            border-radius: 22px !important;
+            border: 1px solid var(--border-color) !important;
             max-height: 85vh;
             max-height: 85dvh;
             box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.65);
