@@ -7,6 +7,9 @@
      x-transition:leave-start="opacity-100"
      x-transition:leave-end="opacity-0"
      class="language-selection-modal-backdrop"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="langModalTitle"
      style="position: fixed; inset: 0; z-index: 99998; display: flex; align-items: center; justify-content: center; padding: 1.25rem; background: rgba(15, 23, 42, 0.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); overflow-y: auto; -webkit-overflow-scrolling: touch;"
      x-cloak>
 
@@ -30,7 +33,8 @@
                 @click="showLanguageModal = false"
                 class="ai-header-btn"
                 style="position: absolute; top: 1rem; right: 1rem; z-index: 10;"
-                title="{{ __('menu.close') ?: 'Փակել' }}">
+                title="{{ __('menu.close') }}"
+                aria-label="{{ __('menu.close') }}">
             <i class="fa-solid fa-xmark"></i>
         </button>
 
@@ -50,7 +54,7 @@
             </div>
 
             <!-- Restaurant Title -->
-            <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.45rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.35rem 0; line-height: 1.25;">
+            <h2 id="langModalTitle" style="font-family: 'Outfit', sans-serif; font-size: 1.45rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.35rem 0; line-height: 1.25; overflow-wrap: break-word;">
                 {{ $vendor->name }}
             </h2>
 
@@ -63,15 +67,15 @@
             @else
                 <div style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.75rem; border-radius: 9999px; background: rgba(148, 163, 184, 0.12); color: var(--text-muted); font-size: 0.75rem; font-weight: 700; margin-bottom: 1.25rem;">
                     <i class="fa-solid fa-book-open"></i>
-                    <span>{{ __('Digital Menu') }}</span>
+                    <span>{{ __('menu.digital_menu') }}</span>
                 </div>
             @endif
 
             <!-- Language Header Prompt -->
             <p style="font-size: 0.88rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 1rem 0;">
-                <span x-show="selectedLang === 'hy'">Ընտրեք Ձեր լեզուն</span>
-                <span x-show="selectedLang === 'ru'">Выберите ваш язык</span>
-                <span x-show="selectedLang !== 'hy' && selectedLang !== 'ru'">Select Your Language</span>
+                <span x-show="selectedLang === 'hy'">{{ __('menu.select_your_language', [], 'hy') }}</span>
+                <span x-show="selectedLang === 'ru'">{{ __('menu.select_your_language', [], 'ru') }}</span>
+                <span x-show="selectedLang !== 'hy' && selectedLang !== 'ru'">{{ __('menu.select_your_language', [], 'en') }}</span>
             </p>
 
             <!-- Language Cards Grid (Strictly only enabled vendor languages) -->
@@ -81,29 +85,27 @@
                         $code = strtolower($slang['code'] ?? 'en');
                         $nativeName = $slang['native_name'] ?? ($slang['name'] ?? strtoupper($code));
                         $englishName = $slang['name'] ?? strtoupper($code);
+                        $subtitleText = ($nativeName !== $englishName) ? $englishName : strtoupper($code);
                         $flag = $slang['flag'] ?? '🌐';
                     @endphp
                     <button type="button"
                             @click="selectStorefrontLanguage('{{ $code }}')"
                             :class="{ 'active-lang-choice': selectedLang === '{{ $code }}' }"
-                            class="lang-choice-card"
-                            style="display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1.15rem; border-radius: 16px; border: 1.5px solid var(--border-color); background: var(--bg-card); cursor: pointer; transition: all 0.2s ease; text-align: left; width: 100%;">
-                        <div style="display: flex; align-items: center; gap: 0.85rem;">
+                            :aria-pressed="selectedLang === '{{ $code }}'"
+                            class="lang-choice-card">
+                        <div style="display: flex; align-items: center; gap: 0.85rem; min-width: 0;">
                             <span style="font-size: 1.5rem; line-height: 1; flex-shrink: 0;">{{ $flag }}</span>
-                            <div>
-                                <div style="font-weight: 800; font-size: 1.02rem; color: var(--text-main); font-family: 'Outfit', sans-serif;">
+                            <div style="min-width: 0;">
+                                <div style="font-weight: 800; font-size: 1.02rem; color: var(--text-main); font-family: 'Outfit', sans-serif; line-height: 1.25;">
                                     {{ $nativeName }}
                                 </div>
-                                @if($nativeName !== $englishName)
-                                    <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">
-                                        {{ $englishName }}
-                                    </div>
-                                @endif
+                                <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500; line-height: 1.25; margin-top: 0.1rem;">
+                                    {{ $subtitleText }}
+                                </div>
                             </div>
                         </div>
 
-                        <div style="width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border-color); display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
-                             :style="selectedLang === '{{ $code }}' ? 'border-color: var(--primary); background: var(--primary); color: #fff;' : 'color: transparent;'">
+                        <div class="lang-choice-radio" aria-hidden="true">
                             <i class="fa-solid fa-check" style="font-size: 0.72rem;"></i>
                         </div>
                     </button>
@@ -111,23 +113,63 @@
             </div>
 
             <div style="font-size: 0.75rem; color: var(--text-muted); opacity: 0.8;">
-                <span x-show="selectedLang === 'hy'">Դուք կարող եք փոխել լեզուն ցանկացած պահի</span>
-                <span x-show="selectedLang === 'ru'">Вы можете сменить язык в любой момент</span>
-                <span x-show="selectedLang !== 'hy' && selectedLang !== 'ru'">You can change language anytime from the menu</span>
+                <span x-show="selectedLang === 'hy'">{{ __('menu.change_language_anytime', [], 'hy') }}</span>
+                <span x-show="selectedLang === 'ru'">{{ __('menu.change_language_anytime', [], 'ru') }}</span>
+                <span x-show="selectedLang !== 'hy' && selectedLang !== 'ru'">{{ __('menu.change_language_anytime', [], 'en') }}</span>
             </div>
         </div>
     </div>
 </div>
 
 <style>
+.lang-choice-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 64px;
+    padding: 0.85rem 1.15rem;
+    border-radius: 16px;
+    border: 1.5px solid var(--border-color);
+    background: var(--bg-card);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    width: 100%;
+    box-sizing: border-box;
+}
 .lang-choice-card:hover {
     border-color: var(--primary) !important;
     background: color-mix(in srgb, var(--primary) 4%, var(--bg-card)) !important;
     transform: translateY(-1px);
 }
+.lang-choice-card:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
 .lang-choice-card.active-lang-choice {
     border-color: var(--primary) !important;
     background: color-mix(in srgb, var(--primary) 8%, var(--bg-card)) !important;
     box-shadow: 0 4px 16px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+.lang-choice-radio {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: transparent;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+.lang-choice-card.active-lang-choice .lang-choice-radio {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: #ffffff;
 }
 </style>

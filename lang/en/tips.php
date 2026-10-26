@@ -39,4 +39,13 @@ return [
     'rating_2_stars' => 'Fair',
     'rating_1_star' => 'Poor',
     'error_submitting_rating' => 'Unable to submit rating. Please check your submission.',
+    'cat_food_quality' => '🍽️ Food Quality',
+    'cat_service_speed' => '⚡ Service Speed',
+    'cat_waiter_politeness' => '😊 Staff Politeness',
+    'cat_cleanliness' => '✨ Cleanliness',
+    'cat_ambiance' => '🎶 Ambiance',
+    'cat_table_presentation' => '🥗 Presentation',
+    'comment_required' => 'Please share a brief comment so we can improve.',
+    'thank_you_title' => 'Thank you for your feedback!',
+    'submit_failed' => 'Unable to submit rating. Please try again.',
 ];

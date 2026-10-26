@@ -54,7 +54,8 @@
                 <!-- Reset Button -->
                 <button type="button" 
                         @click="resetAiQuiz()"
-                        title="Սկսել նորից"
+                        :title="selectedLang === 'hy' ? 'Սկսել նորից' : (selectedLang === 'ru' ? 'Начать заново' : 'Start over')"
+                        :aria-label="selectedLang === 'hy' ? 'Սկսել նորից' : (selectedLang === 'ru' ? 'Начать заново' : 'Start over')"
                         class="ai-header-btn">
                     <i class="fa-solid fa-rotate-left"></i>
                 </button>
@@ -62,7 +63,8 @@
                 <!-- Close Button -->
                 <button type="button" 
                         @click="closeAiWaiter()" 
-                        title="{{ __('menu.close') ?: 'Փակել' }}"
+                        title="{{ __('menu.close') }}"
+                        aria-label="{{ __('menu.close') }}"
                         class="ai-header-btn">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
@@ -186,7 +188,9 @@
                             @click="aiStep = 'intro'" 
                             style="background: none; border: none; color: var(--text-muted); font-size: 0.85rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.35rem;">
                         <i class="fa-solid fa-arrow-left"></i>
-                        <span>Հետ</span>
+                        <span x-show="selectedLang === 'hy'">Հետ</span>
+                        <span x-show="selectedLang === 'en' || !['hy', 'ru'].includes(selectedLang)">Back</span>
+                        <span x-show="selectedLang === 'ru'">Назад</span>
                     </button>
                     <span style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">Step 1 of 2</span>
                 </div>
@@ -194,10 +198,10 @@
                 <div style="text-align: center; margin-bottom: 2rem;">
                     <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">🌍</div>
                     <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.45rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.4rem 0;">
-                        Ո՞ր լեզվով ցանկանաք շարունակել։
+                        {{ __('menu.select_your_language') }}
                     </h2>
                     <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">
-                        Which language do you prefer? / Выберите удобный язык
+                        {{ __('menu.change_language_anytime') }}
                     </p>
                 </div>
 
@@ -288,7 +292,7 @@
 
                     <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; font-weight: 800; color: var(--primary);">
                         <i class="fa-solid fa-circle-dot"></i>
-                        <span x-text="'Հարց ' + (aiQuestionHistory.length + 1) + ' / 4'"></span>
+                        <span x-text="(selectedLang === 'hy' ? 'Հարց ' : (selectedLang === 'ru' ? 'Вопрос ' : 'Question ')) + (aiQuestionHistory.length + 1) + ' / 4'"></span>
                     </div>
 
                     <button type="button" 
@@ -665,7 +669,7 @@
 
                                         <button type="button" 
                                                 @click="addAiDishToCart(alt)"
-                                                :title="getCartItemQty(alt.id) > 0 ? 'Զամբյուղում է (' + getCartItemQty(alt.id) + ')' : 'Ավելացնել'"
+                                                :title="getCartItemQty(alt.id) > 0 ? '{{ __('menu.added') }} (' + getCartItemQty(alt.id) + ')' : '{{ __('menu.add') }}'"
                                                 class="ai-card-btn-add"
                                                 :class="{ 'in-cart': getCartItemQty(alt.id) > 0 }">
                                             <i :class="getCartItemQty(alt.id) > 0 ? 'fa-solid fa-check' : 'fa-solid fa-plus'"></i>
@@ -700,7 +704,7 @@
 
                                 <button type="button" 
                                         @click="addAiDishToCart(aiPairingDrink)"
-                                        :title="getCartItemQty(aiPairingDrink.id) > 0 ? 'Զամբյուղում է (' + getCartItemQty(aiPairingDrink.id) + ')' : 'Ավելացնել'"
+                                        :title="getCartItemQty(aiPairingDrink.id) > 0 ? '{{ __('menu.added') }} (' + getCartItemQty(aiPairingDrink.id) + ')' : '{{ __('menu.add') }}'"
                                         class="ai-card-btn-add"
                                         :class="{ 'in-cart': getCartItemQty(aiPairingDrink.id) > 0 }">
                                     <i :class="getCartItemQty(aiPairingDrink.id) > 0 ? 'fa-solid fa-check' : 'fa-solid fa-plus'"></i>
@@ -820,17 +824,17 @@
 
             <!-- Preset Quick Prompt Pills -->
             <div style="padding: 0.65rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; gap: 0.45rem; overflow-x: auto; scrollbar-width: none;">
-                <button type="button" @click="sendAiChatMessage('Ի՞նչ ունեք առանց մսի։')" class="prompt-preset-chip">
-                    🥗 Առանց մսի
+                <button type="button" @click="sendAiChatMessage(selectedLang === 'hy' ? 'Ի՞նչ ունեք առանց մսի։' : (selectedLang === 'ru' ? 'Что есть без мяса?' : 'What meatless options do you have?'))" class="prompt-preset-chip">
+                    <span x-text="selectedLang === 'hy' ? '🥗 Առանց մսի' : (selectedLang === 'ru' ? '🥗 Без мяса' : '🥗 Meatless')"></span>
                 </button>
-                <button type="button" @click="sendAiChatMessage('Ի՞նչ խորհուրդ կտաս գարեջրի հետ։')" class="prompt-preset-chip">
-                    🍺 Գարեջրի հետ
+                <button type="button" @click="sendAiChatMessage(selectedLang === 'hy' ? 'Ի՞նչ խորհուրդ կտաս գարեջրի հետ։' : (selectedLang === 'ru' ? 'Что посоветуете к пиву?' : 'What goes well with beer?'))" class="prompt-preset-chip">
+                    <span x-text="selectedLang === 'hy' ? '🍺 Գարեջրի հետ' : (selectedLang === 'ru' ? '🍺 К пиву' : '🍺 With beer')"></span>
                 </button>
-                <button type="button" @click="sendAiChatMessage('Ի՞նչն է ամենաքիչ կծուն։')" class="prompt-preset-chip">
-                    🌶️ Ոչ կծու
+                <button type="button" @click="sendAiChatMessage(selectedLang === 'hy' ? 'Ի՞նչն է ամենաքիչ կծուն։' : (selectedLang === 'ru' ? 'Что самое не острое?' : 'What is the least spicy dish?'))" class="prompt-preset-chip">
+                    <span x-text="selectedLang === 'hy' ? '🌶️ Ոչ կծու' : (selectedLang === 'ru' ? '🌶️ Не острое' : '🌶️ Not spicy')"></span>
                 </button>
-                <button type="button" @click="sendAiChatMessage('Ի՞նչն է հարմար երեխաների համար։')" class="prompt-preset-chip">
-                    👶 Երեխաների համար
+                <button type="button" @click="sendAiChatMessage(selectedLang === 'hy' ? 'Ի՞նչն է հարմար երեխաների համար։' : (selectedLang === 'ru' ? 'Что подойдет для детей?' : 'What is good for kids?'))" class="prompt-preset-chip">
+                    <span x-text="selectedLang === 'hy' ? '👶 Երեխաների համար' : (selectedLang === 'ru' ? '👶 Для детей' : '👶 For kids')"></span>
                 </button>
             </div>
 
@@ -886,7 +890,7 @@
 
                                                     <button type="button" 
                                                             @click="addAiDishToCart(p)"
-                                                            :title="getCartItemQty(p.id) > 0 ? 'Զամբյուղում է (' + getCartItemQty(p.id) + ')' : 'Ավելացնել զամբյուղ'"
+                                                            :title="getCartItemQty(p.id) > 0 ? '{{ __('menu.added') }} (' + getCartItemQty(p.id) + ')' : '{{ __('menu.add_to_cart') }}'"
                                                             class="ai-card-btn-add"
                                                             :class="{ 'in-cart': getCartItemQty(p.id) > 0 }">
                                                         <template x-if="getCartItemQty(p.id) === 0">

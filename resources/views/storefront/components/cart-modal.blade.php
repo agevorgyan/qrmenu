@@ -1,7 +1,13 @@
 <!-- Modern Cart & Checkout Modal Component -->
+@php
+    $currencySymbol = (!$vendor->currency || strtoupper($vendor->currency) === 'AMD') ? '֏' : $vendor->currency;
+@endphp
 <div x-show="showCartModal" 
      x-cloak
      @click.self="showCartModal = false"
+     role="dialog"
+     aria-modal="true"
+     aria-label="{{ __('menu.order_summary') }}"
      x-transition:enter="cart-modal-fade-enter"
      x-transition:enter-start="cart-modal-fade-enter-start"
      x-transition:enter-end="cart-modal-fade-enter-end"
@@ -106,7 +112,7 @@
                                     </template>
                                     <div class="cart-item-price-unit">
                                         <span x-text="Number(item.price).toLocaleString()"></span>
-                                        <span class="cart-curr">{{ $vendor->currency }}</span>
+                                        <span class="cart-curr">{{ $currencySymbol }}</span>
                                     </div>
                                     <template x-if="(orderType === 'dine_in' && item.available_for_dine_in === false) || (orderType === 'takeaway' && item.available_for_takeaway === false) || (orderType === 'delivery' && item.available_for_delivery === false)">
                                         <div style="background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.72rem; font-weight: 700; margin-top: 0.35rem; display: inline-flex; align-items: center; gap: 0.35rem;">
@@ -146,7 +152,7 @@
                                     <!-- Item Subtotal -->
                                     <div class="cart-item-subtotal">
                                         <span x-text="Number(item.price * item.qty).toLocaleString()"></span>
-                                        <span class="cart-subtotal-curr">{{ $vendor->currency }}</span>
+                                        <span class="cart-subtotal-curr">{{ $currencySymbol }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -160,41 +166,42 @@
                         <div class="cart-ai-recs-header">
                             <div class="cart-ai-recs-title-wrap">
                                 <span class="cart-ai-recs-badge">
-                                    <i class="fa-solid fa-wand-magic-sparkles"></i> AI Pairings
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> {{ __('menu.ai_pairings_badge') }}
                                 </span>
-                                <span class="cart-ai-recs-title">{{ __('Հաճախ պատվիրում են միասին') }}</span>
+                                <span class="cart-ai-recs-title">{{ __('menu.frequently_ordered_together') }}</span>
                             </div>
-                            <span class="cart-ai-recs-subtitle">{{ __('Կատարյալ համադրություններ Ձեր զամբյուղի հետ') }}</span>
+                            <span class="cart-ai-recs-subtitle">{{ __('menu.perfect_pairings_subtitle') }}</span>
                         </div>
 
                         <div class="cart-ai-recs-scroll">
                             <template x-for="rec in cartRecommendations" :key="rec.id">
-                                <div class="cart-ai-rec-card">
-                                    <template x-if="rec.image">
-                                        <img :src="rec.image" :alt="rec.name" class="cart-ai-rec-img" loading="lazy">
-                                    </template>
-                                    <template x-if="!rec.image">
-                                        <div class="cart-ai-rec-img-placeholder">
-                                            <i class="fa-solid fa-utensils"></i>
-                                        </div>
-                                    </template>
+                                <div class="cart-ai-rec-card" x-data="{ imgError: false }">
+                                    <img x-show="rec.image && !imgError"
+                                         :src="rec.image"
+                                         alt=""
+                                         x-on:error="imgError = true"
+                                         class="cart-ai-rec-img"
+                                         loading="lazy">
+                                    <div x-show="!rec.image || imgError" class="cart-ai-rec-img-placeholder">
+                                        <i class="fa-solid fa-utensils"></i>
+                                    </div>
 
                                     <div class="cart-ai-rec-body">
-                                        <div class="cart-ai-rec-name" x-text="rec.name"></div>
-                                        <div class="cart-ai-rec-reason" x-text="rec.reason"></div>
+                                        <div class="cart-ai-rec-name" x-text="rec.name" :title="rec.name"></div>
+                                        <div class="cart-ai-rec-reason" x-text="rec.reason" :title="rec.reason"></div>
 
                                         <div class="cart-ai-rec-foot">
                                             <div class="cart-ai-rec-price">
                                                 <span x-text="Number(rec.price).toLocaleString()"></span>
-                                                <small style="font-size: 0.72rem; font-weight: 600;">{{ $vendor->currency }}</small>
+                                                <small style="font-size: 0.72rem; font-weight: 600;">{{ $currencySymbol }}</small>
                                             </div>
 
                                             <button type="button" 
                                                     @click="quickAddRec(rec)" 
                                                     class="cart-ai-rec-add-btn" 
-                                                    title="{{ __('Ավելացնել') }}">
+                                                    title="{{ __('menu.add') }}">
                                                 <i class="fa-solid fa-plus"></i>
-                                                <span>{{ __('Ավելացնել') }}</span>
+                                                <span>{{ __('menu.add') }}</span>
                                             </button>
                                         </div>
                                     </div>
@@ -293,10 +300,10 @@
                                 <i class="fa-solid fa-circle-exclamation" style="font-size: 1.1rem; flex-shrink: 0;"></i>
                                 <div style="flex: 1;">
                                     <div style="font-weight: 700;">
-                                        {{ __('menu.min_takeaway_order_warning') }} <span x-text="Number(takeawayMinAmount).toLocaleString() + ' {{ $vendor->currency }}'"></span>
+                                        {{ __('menu.min_takeaway_order_warning') }} <span x-text="Number(takeawayMinAmount).toLocaleString() + ' {{ $currencySymbol }}'"></span>
                                     </div>
                                     <div style="font-size: 0.78rem; opacity: 0.9; margin-top: 0.15rem;">
-                                        {{ __('menu.add_more_for_free_delivery') }} <strong x-text="Number(takeawayMinRemaining).toLocaleString() + ' {{ $vendor->currency }}'"></strong>
+                                        {{ __('menu.add_more_for_free_delivery') }} <strong x-text="Number(takeawayMinRemaining).toLocaleString() + ' {{ $currencySymbol }}'"></strong>
                                     </div>
                                 </div>
                             </div>
@@ -321,10 +328,10 @@
                                 <i class="fa-solid fa-circle-exclamation" style="font-size: 1.1rem; flex-shrink: 0;"></i>
                                 <div style="flex: 1;">
                                     <div style="font-weight: 700;">
-                                        {{ __('menu.min_delivery_order_warning') }} <span x-text="Number(deliveryMinAmount).toLocaleString() + ' {{ $vendor->currency }}'"></span>
+                                        {{ __('menu.min_delivery_order_warning') }} <span x-text="Number(deliveryMinAmount).toLocaleString() + ' {{ $currencySymbol }}'"></span>
                                     </div>
                                     <div style="font-size: 0.78rem; opacity: 0.9; margin-top: 0.15rem;">
-                                        {{ __('menu.add_more_for_free_delivery') }} <strong x-text="Number(deliveryMinRemaining).toLocaleString() + ' {{ $vendor->currency }}'"></strong>
+                                        {{ __('menu.add_more_for_free_delivery') }} <strong x-text="Number(deliveryMinRemaining).toLocaleString() + ' {{ $currencySymbol }}'"></strong>
                                     </div>
                                 </div>
                             </div>
@@ -342,7 +349,7 @@
                                     <template x-if="!isDeliveryFree">
                                         <span style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem;">
                                             <i class="fa-solid fa-truck-fast" style="color: #3b82f6;"></i>
-                                            <span>{{ __('menu.add_more_for_free_delivery') }} <strong style="color: var(--text-main);" x-text="Number(freeDeliveryRemaining).toLocaleString() + ' {{ $vendor->currency }}'"></strong> {{ __('menu.for_free_delivery') }}</span>
+                                            <span>{{ __('menu.add_more_for_free_delivery') }} <strong style="color: var(--text-main);" x-text="Number(freeDeliveryRemaining).toLocaleString() + ' {{ $currencySymbol }}'"></strong> {{ __('menu.for_free_delivery') }}</span>
                                         </span>
                                     </template>
                                     <span style="font-weight: 800; font-size: 0.75rem; color: var(--primary);" x-text="freeDeliveryProgress + '%'"></span>
@@ -412,12 +419,12 @@
                                 <!-- Live Digit Counter / Checkmark Status -->
                                 <div class="cart-phone-status-indicator">
                                     <template x-if="isPhoneValid() && phoneCleanDigits.length > 0">
-                                        <span class="cart-status-badge is-valid" title="Համարը վավեր է">
+                                        <span class="cart-status-badge is-valid" title="{{ __('menu.phone_valid_title') }}">
                                             <i class="fa-solid fa-circle-check"></i>
                                         </span>
                                     </template>
                                     <template x-if="phoneCleanDigits.length > 0 && !isPhoneValid()">
-                                        <span class="cart-status-badge is-incomplete" :title="'Պահանջվում է ' + (selectedPhoneCountry.digits || '7-15') + ' նիշ'">
+                                        <span class="cart-status-badge is-incomplete" :title="'{{ __('menu.phone_required_digits') }} ' + (selectedPhoneCountry.digits || '7-15')">
                                             <span x-text="phoneCleanDigits.length + '/' + (selectedPhoneCountry.digits || '10')"></span>
                                         </span>
                                     </template>
@@ -443,7 +450,7 @@
                                         <span class="cart-item-flag" x-text="item.flag"></span>
                                         <span class="cart-item-name" x-text="item.name"></span>
                                         <span class="cart-item-dial" x-text="item.dial"></span>
-                                        <span class="cart-item-digits" x-show="item.digits" x-text="'(' + item.digits + ' նիշ)'"></span>
+                                        <span class="cart-item-digits" x-show="item.digits" x-text="'(' + item.digits + ' {{ __('menu.digits_unit') }})'"></span>
                                     </button>
                                 </template>
                             </div>
@@ -557,7 +564,7 @@
                 <div class="cart-card-group">
                     <label class="cart-group-label">
                         <i class="fa-solid fa-credit-card cart-label-icon"></i>
-                        <span>{{ __('menu.payment_method') ?? 'Վճարման Եղանակ' }}</span>
+                        <span>{{ __('menu.payment_method') }}</span>
                     </label>
 
                     <div class="cart-payment-grid">
@@ -566,7 +573,7 @@
                             <span class="payment-tile-icon-wrap" style="color: #10b981; background: rgba(16, 185, 129, 0.12);">
                                 <i class="fa-solid fa-money-bill-wave"></i>
                             </span>
-                            <span class="payment-tile-label">{{ __('Կանխիկ տեղում') }}</span>
+                            <span class="payment-tile-label">{{ __('menu.pay_cash_on_site') }}</span>
                             <template x-if="paymentMethod === 'cash'">
                                 <span class="payment-tile-check"><i class="fa-solid fa-check"></i></span>
                             </template>
@@ -578,7 +585,7 @@
                             <span class="payment-tile-icon-wrap" style="color: #3b82f6; background: rgba(59, 130, 246, 0.12);">
                                 <i class="fa-solid fa-credit-card"></i>
                             </span>
-                            <span class="payment-tile-label">{{ __('POS Տերմինալ') }}</span>
+                            <span class="payment-tile-label">{{ __('menu.pay_pos_terminal') }}</span>
                             <template x-if="paymentMethod === 'pos_terminal'">
                                 <span class="payment-tile-check"><i class="fa-solid fa-check"></i></span>
                             </template>
@@ -664,7 +671,7 @@
                             </div>
                             <template x-if="tipAmount > 0">
                                 <span class="cart-tip-active-badge">
-                                    +<span x-text="Number(tipAmount).toLocaleString()"></span> {{ $vendor->currency }}
+                                    +<span x-text="Number(tipAmount).toLocaleString()"></span> {{ $currencySymbol }}
                                 </span>
                             </template>
                         </div>
@@ -686,7 +693,7 @@
                                         class="cart-tip-pill"
                                         :class="{ 'is-selected': selectedTipType === 'percentage' && selectedTipValue === pct }">
                                     <span x-text="pct + '%'"></span>
-                                    <span class="cart-tip-pill-amt" x-text="Number(Math.round((cartSubtotal * pct) / 100)).toLocaleString() + ' {{ $vendor->currency }}'"></span>
+                                    <span class="cart-tip-pill-amt" x-text="Number(Math.round((cartSubtotal * pct) / 100)).toLocaleString() + ' {{ $currencySymbol }}'"></span>
                                 </button>
                             </template>
 
@@ -696,7 +703,7 @@
                                         @click="setTip('fixed', amt)"
                                         class="cart-tip-pill"
                                         :class="{ 'is-selected': selectedTipType === 'fixed' && selectedTipValue === amt }">
-                                    <span x-text="Number(amt).toLocaleString() + ' {{ $vendor->currency }}'"></span>
+                                    <span x-text="Number(amt).toLocaleString() + ' {{ $currencySymbol }}'"></span>
                                 </button>
                             </template>
 
@@ -716,7 +723,7 @@
                         <template x-if="selectedTipType === 'custom'">
                             <div class="cart-custom-tip-wrap">
                                 <div class="cart-custom-tip-field">
-                                    <span class="cart-custom-tip-curr">{{ $vendor->currency }}</span>
+                                    <span class="cart-custom-tip-curr">{{ $currencySymbol }}</span>
                                     <input type="number" 
                                            x-model.number="customTipInput" 
                                            @input="setTip('custom', customTipInput)"
@@ -755,7 +762,7 @@
                         <span class="cart-summary-label">{{ __('menu.subtotal') }}</span>
                         <span class="cart-summary-val">
                             <strong x-text="Number(cartSubtotal).toLocaleString()"></strong>
-                            <span class="cart-summary-curr">{{ $vendor->currency }}</span>
+                            <span class="cart-summary-curr">{{ $currencySymbol }}</span>
                         </span>
                     </div>
 
@@ -768,7 +775,7 @@
                             </span>
                             <span class="cart-summary-val" style="color: #ec4899; font-weight: 800;">
                                 -<span x-text="Number(birthdayDiscountAmount).toLocaleString()"></span>
-                                <span class="cart-summary-curr">{{ $vendor->currency }}</span>
+                                <span class="cart-summary-curr">{{ $currencySymbol }}</span>
                             </span>
                         </div>
                     </template>
@@ -785,7 +792,7 @@
                             </span>
                             <span class="cart-summary-val">
                                 <span style="color: #10b981; font-weight: 700;">+<span x-text="Number(calculatedServiceFee).toLocaleString()"></span></span>
-                                <span class="cart-summary-curr">{{ $vendor->currency }}</span>
+                                <span class="cart-summary-curr">{{ $currencySymbol }}</span>
                             </span>
                         </div>
                     </template>
@@ -806,7 +813,7 @@
                                 <template x-if="calculatedDeliveryFee > 0">
                                     <span>
                                         <span style="color: var(--text-main); font-weight: 700;">+<span x-text="Number(calculatedDeliveryFee).toLocaleString()"></span></span>
-                                        <span class="cart-summary-curr">{{ $vendor->currency }}</span>
+                                        <span class="cart-summary-curr">{{ $currencySymbol }}</span>
                                     </span>
                                 </template>
                             </span>
@@ -825,7 +832,7 @@
                             </span>
                             <span class="cart-summary-val">
                                 <span style="color: #10b981; font-weight: 700;">+<span x-text="Number(tipAmount).toLocaleString()"></span></span>
-                                <span class="cart-summary-curr">{{ $vendor->currency }}</span>
+                                <span class="cart-summary-curr">{{ $currencySymbol }}</span>
                             </span>
                         </div>
                     </template>
@@ -871,7 +878,7 @@
                         <span class="cart-total-label">{{ __('menu.total_to_pay') }}</span>
                         <div class="cart-total-price-wrap">
                             <span class="cart-total-number" x-text="Number(cartFinalTotal).toLocaleString()"></span>
-                            <span class="cart-total-curr">{{ $vendor->currency }}</span>
+                            <span class="cart-total-curr">{{ $currencySymbol }}</span>
                         </div>
                     </div>
                 </div>
@@ -900,7 +907,7 @@
                             </div>
                             <div class="cart-submit-price-pill">
                                 <span x-text="Number(cartSubtotal).toLocaleString()"></span>
-                                <span class="cart-submit-curr">{{ $vendor->currency }}</span>
+                                <span class="cart-submit-curr">{{ $currencySymbol }}</span>
                             </div>
                         </button>
                     </div>
@@ -943,7 +950,7 @@
                             </div>
                             <div class="cart-submit-price-pill">
                                 <span x-text="Number(cartFinalTotal).toLocaleString()"></span>
-                                <span class="cart-submit-curr">{{ $vendor->currency }}</span>
+                                <span class="cart-submit-curr">{{ $currencySymbol }}</span>
                             </div>
                         </button>
 
@@ -1257,17 +1264,19 @@
         color: #d97706;
         font-weight: 600;
         margin: 0.2rem 0 0.5rem;
-        line-height: 1.25;
+        line-height: 1.3;
         display: -webkit-box;
-        -webkit-line-clamp: 1;
+        -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
+        min-height: 1.85rem;
     }
 
     .cart-ai-rec-foot {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: 0.35rem;
         margin-top: auto;
     }
 
@@ -1275,6 +1284,7 @@
         font-weight: 800;
         font-size: 0.92rem;
         color: var(--text-main);
+        white-space: nowrap;
     }
 
     .cart-ai-rec-add-btn {
@@ -1289,6 +1299,8 @@
         font-size: 0.76rem;
         font-weight: 700;
         cursor: pointer;
+        white-space: nowrap;
+        flex-shrink: 0;
         transition: opacity 0.15s, transform 0.15s;
     }
 
@@ -1624,6 +1636,7 @@
         color: var(--text-muted);
         margin-top: 0.25rem;
         font-family: 'Outfit', sans-serif;
+        white-space: nowrap;
     }
 
     .cart-curr {
@@ -1707,6 +1720,7 @@
         font-size: 0.92rem;
         font-weight: 800;
         color: var(--accent);
+        white-space: nowrap;
     }
     .cart-subtotal-curr {
         font-size: 0.72rem;
@@ -2253,6 +2267,7 @@
     .cart-summary-val {
         color: var(--text-main);
         font-family: 'Outfit', sans-serif;
+        white-space: nowrap;
     }
     .cart-summary-curr {
         font-size: 0.76rem;
@@ -2280,6 +2295,7 @@
         display: flex;
         align-items: baseline;
         gap: 0.35rem;
+        white-space: nowrap;
     }
 
     .cart-total-number {
@@ -2387,6 +2403,8 @@
         font-family: 'Outfit', sans-serif;
         font-size: 1.15rem;
         font-weight: 800;
+        white-space: nowrap;
+        flex-shrink: 0;
     }
 
     .cart-submit-curr {

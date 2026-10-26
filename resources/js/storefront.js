@@ -90,15 +90,15 @@
             customerEmail: customConfig.customerEmail || '',
             customerBirthdate: '',
             phoneCountries: [
-                { code: 'AM', flag: '🇦🇲', dial: '+374', digits: 8, name: 'Հայաստան', placeholder: '94 123456' },
-                { code: 'RU', flag: '🇷🇺', dial: '+7', digits: 10, name: 'Россия', placeholder: '999 123-45-67' },
-                { code: 'GE', flag: '🇬🇪', dial: '+995', digits: 9, name: 'საქართველո', placeholder: '599 12-34-56' },
-                { code: 'US', flag: '🇺🇸', dial: '+1', digits: 10, name: 'USA / Canada', placeholder: '555 123-4567' },
-                { code: 'FR', flag: '🇫🇷', dial: '+33', digits: 9, name: 'France', placeholder: '6 12 34 56 78' },
-                { code: 'DE', flag: '🇩🇪', dial: '+49', digits: 10, minDigits: 10, maxDigits: 11, name: 'Deutschland', placeholder: '170 1234567' },
-                { code: 'AE', flag: '🇦🇪', dial: '+971', digits: 9, name: 'UAE', placeholder: '50 123 4567' },
-                { code: 'IR', flag: '🇮🇷', dial: '+98', digits: 10, name: 'Iran', placeholder: '912 123 4567' },
-                { code: 'OTHER', flag: '🌐', dial: '+', digits: null, minDigits: 7, maxDigits: 15, name: 'Այլ երկիր', placeholder: '123456789' }
+                { code: 'AM', flag: '🇦🇲', dial: '+374', digits: 8, name: translations.country_armenia || 'Armenia', placeholder: '94 123456' },
+                { code: 'RU', flag: '🇷🇺', dial: '+7', digits: 10, name: translations.country_russia || 'Russia', placeholder: '999 123-45-67' },
+                { code: 'GE', flag: '🇬🇪', dial: '+995', digits: 9, name: translations.country_georgia || 'Georgia', placeholder: '599 12-34-56' },
+                { code: 'US', flag: '🇺🇸', dial: '+1', digits: 10, name: translations.country_usa_canada || 'USA / Canada', placeholder: '555 123-4567' },
+                { code: 'FR', flag: '🇫🇷', dial: '+33', digits: 9, name: translations.country_france || 'France', placeholder: '6 12 34 56 78' },
+                { code: 'DE', flag: '🇩🇪', dial: '+49', digits: 10, minDigits: 10, maxDigits: 11, name: translations.country_germany || 'Germany', placeholder: '170 1234567' },
+                { code: 'AE', flag: '🇦🇪', dial: '+971', digits: 9, name: translations.country_uae || 'UAE', placeholder: '50 123 4567' },
+                { code: 'IR', flag: '🇮🇷', dial: '+98', digits: 10, name: translations.country_iran || 'Iran', placeholder: '912 123 4567' },
+                { code: 'OTHER', flag: '🌐', dial: '+', digits: null, minDigits: 7, maxDigits: 15, name: translations.country_other || 'Other Country', placeholder: '123456789' }
             ],
             get selectedPhoneCountry() {
                 return this.phoneCountries.find(c => c.code === this.phoneCountryCode) || this.phoneCountries[0];
@@ -205,7 +205,7 @@
             aiChatMessages: [
                 {
                     sender: 'ai',
-                    text: (vendor.ai_waiter_name || 'AI Waiter') + ': Ողջույն! Ես պատրաստ եմ պատասխանել մեր մենյուի վերաբերյալ ցանկացած հարցի:'
+                    text: (vendor.ai_waiter_name || 'AI Waiter') + ': ' + (translations.ai_chat_default_greeting || 'Hello! I am ready to answer any question about our menu.')
                 }
             ],
             aiChatInput: '',
@@ -918,29 +918,29 @@
                 };
 
                 if (hasFriesOrPotato && !hasSauce) {
-                    findCandidates(/ketchup|կետչուպ|кетчуп|sauce|սոուս|соус|mayo|մայոնեզ|bbq|barbecue|cheese|պանրային|սխտոր|garlic/i, '🍟 Կատարյալ սոուս ֆրիի հետ', 2);
+                    findCandidates(/ketchup|կետչուպ|кетчуп|sauce|սոուս|соус|mayo|մայոնեզ|bbq|barbecue|cheese|պանրային|սխտոր|garlic/i, translations.rec_reason_sauce || '🍟 Կատարյալ սոուս ֆրիի հետ', 2);
                 }
                 if ((hasFriesOrPotato || hasBurgerOrPizza || hasMeatOrSteak) && !hasDrinks) {
-                    findCandidates(/cola|կոլա|pepsi|լիմոնադ|lemonade|beer|գարեջուր|пиво|drink|ըմպելիք|juice|հյութ/i, '🥤 Համեղ զովացուցիչ ըմպելիք', 2);
+                    findCandidates(/cola|կոլա|pepsi|լիմոնադ|lemonade|beer|գարեջուր|пиво|drink|ըմպելիք|juice|հյութ/i, translations.rec_reason_refreshing_drink || '🥤 Համեղ զովացուցիչ ըմպելիք', 2);
                 }
                 if (hasBurgerOrPizza && !hasFriesOrPotato) {
-                    findCandidates(/fri|fries|ֆրի|картоф|potato|rings|օղակներ|snack/i, '🍟 Հաճախ պատվիրում են բուրգերի հետ', 2);
+                    findCandidates(/fri|fries|ֆրի|картоф|potato|rings|օղակներ|snack/i, translations.rec_reason_burger_side || '🍟 Հաճախ պատվիրում են բուրգերի հետ', 2);
                 }
                 if (hasCoffeeOrTea) {
-                    findCandidates(/croissant|կրուասան|cookie|թխվածք|cake|տորթ|cheesecake|չիզքեյք|dessert|աղանդեր|բրաունի|brownie/i, '☕ Քաղցր համադրություն սուրճի հետ', 2);
+                    findCandidates(/croissant|կրուասան|cookie|թխվածք|cake|տորթ|cheesecake|չիզքեյք|dessert|աղանդեր|բրաունի|brownie/i, translations.rec_reason_coffee_sweet || '☕ Քաղցր համադրություն սուրճի հետ', 2);
                 }
                 if (hasMeatOrSteak) {
-                    findCandidates(/sauce|սոուս|соус|vegetable|բանջարեղեն|wine|գինի|гриль|grill/i, '🥩 Հիանալի լրացում մսային ուտեստին', 2);
+                    findCandidates(/sauce|սոուս|соус|vegetable|բանջարեղեն|wine|գինի|гриль|grill/i, translations.rec_reason_meat_side || '🥩 Հիանալի լրացում մսային ուտեստին', 2);
                 }
                 if (recommendations.length < 3) {
-                    findCandidates(/sauce|սոուս|соус|կետչուպ|ketchup|լիմոնադ|lemonade|juice|հյութ|cola|կոլա|dessert|աղանդեր/i, '✨ Հաճախորդների սիրելի ընտրություն', 4 - recommendations.length);
+                    findCandidates(/sauce|սոուս|соус|կետչուպ|ketchup|լիմոնադ|lemonade|juice|հյութ|cola|կոլա|dessert|աղանդեր/i, translations.rec_reason_popular_choice || '✨ Հաճախորդների սիրելի ընտրություն', 4 - recommendations.length);
                 }
                 if (recommendations.length < 2) {
                     for (const prod of this.catalogProducts) {
                         if (inCartIds.has(Number(prod.id)) || addedRecIds.has(Number(prod.id))) continue;
                         recommendations.push({
                             ...prod,
-                            reason: '✨ Առաջարկվող համեղ հավելում'
+                            reason: translations.rec_reason_chef_addon || '✨ Առաջարկվող համեղ հավելում'
                         });
                         addedRecIds.add(Number(prod.id));
                         if (recommendations.length >= 4) break;
@@ -1035,9 +1035,9 @@
                     const country = this.selectedPhoneCountry;
                     let msg = translations.invalid_phone_format || 'Խնդրում ենք մուտքագրել ճիշտ հեռախոսահամար';
                     if (country.digits && phoneDigits.length < country.digits) {
-                        msg = `Հեռախոսահամարը թերի է։ Պակասում է ${country.digits - phoneDigits.length} նիշ (${phoneDigits.length}/${country.digits})`;
+                        msg = (translations.phone_missing_digits || 'Պակասում է :count նիշ').replace(':count', country.digits - phoneDigits.length) + ` (${phoneDigits.length}/${country.digits})`;
                     } else if (country.digits && phoneDigits.length > country.digits) {
-                        msg = `Հեռախոսահամարը պետք է ունենա ճիշտ ${country.digits} նիշ`;
+                        msg = (translations.phone_exact_digits || 'Հեռախոսահամարը պետք է ունենա ճիշտ :digits նիշ').replace(':digits', country.digits);
                     }
                     this.phoneErrorMsg = msg;
                     this.triggerToast(msg, 'remove', 'fa-solid fa-phone-slash');
@@ -1164,7 +1164,7 @@
                                 table_number: this.orderType === 'delivery' ? (translations.delivery || 'Առաքում') : (this.orderType === 'takeaway' ? (translations.takeaway || 'Առհանում') : (this.tableNumber || 'Սեղան')),
                                 currency: this.currency,
                                 created_at_time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                                created_at_human: 'հենց նոր',
+                                created_at_human: translations.just_now || 'հենց նոր',
                                 items: orderItems
                             };
                         }
@@ -1238,12 +1238,12 @@
 
             formatCategoryName(cat) {
                 const map = {
-                    food_quality: 'Համեղ ուտեստներ',
-                    service_speed: 'Արագ սպասարկում',
-                    waiter_politeness: 'Բարեհամբույր մատուցող',
-                    cleanliness: 'Մաքրություն',
-                    ambiance: 'Հաճելի մթնոլորտ',
-                    table_presentation: 'Գեղեցիկ մատուցում'
+                    food_quality: translations.rating_cat_food_quality || 'Համեղ ուտեստներ',
+                    service_speed: translations.rating_cat_service_speed || 'Արագ սպասարկում',
+                    waiter_politeness: translations.rating_cat_waiter_politeness || 'Բարեհամբույր մատուցող',
+                    cleanliness: translations.rating_cat_cleanliness || 'Մաքրություն',
+                    ambiance: translations.rating_cat_ambiance || 'Հաճելի մթնոլորտ',
+                    table_presentation: translations.rating_cat_table_presentation || 'Գեղեցիկ մատուցում'
                 };
                 return map[cat] || (cat.charAt(0).toUpperCase() + cat.slice(1).replace(/_/g, ' '));
             },
@@ -1253,7 +1253,7 @@
 
                 const isOptional = this.tipsRatingsSettings.is_written_feedback_optional !== false;
                 if (!isOptional && (!this.ratingComment || !this.ratingComment.trim())) {
-                    this.ratingErrorMessage = 'Մեկնաբանությունը պարտադիր է:';
+                    this.ratingErrorMessage = translations.rating_comment_required || 'Մեկնաբանությունը պարտադիր է:';
                     return;
                 }
 
@@ -1284,12 +1284,12 @@
                     const data = await res.json().catch(() => ({}));
                     if (res.ok && data.success) {
                         this.ratingSubmitted = true;
-                        this.triggerToast('Շնորհակալություն գնահատականի համար!', 'add', 'fa-solid fa-star');
+                        this.triggerToast(translations.rating_thank_you_toast || 'Շնորհակալություն գնահատականի համար!', 'add', 'fa-solid fa-star');
                     } else {
-                        this.ratingErrorMessage = data.message || 'Չհաջողվեց գրանցել գնահատականը:';
+                        this.ratingErrorMessage = data.message || translations.rating_submit_failed || 'Չհաջողվեց գրանցել գնահատականը:';
                     }
                 } catch (e) {
-                    this.ratingErrorMessage = 'Կապի խնդիր: Խնդրում ենք փորձել կրկին:';
+                    this.ratingErrorMessage = translations.connection_error_retry || 'Կապի խնդիր: Խնդրում ենք փորձել կրկին:';
                 } finally {
                     this.ratingSubmitting = false;
                 }
@@ -2652,9 +2652,9 @@
                 const country = this.selectedPhoneCountry;
                 if (country.digits && digits.length !== country.digits) {
                     if (digits.length < country.digits) {
-                        this.phoneErrorMsg = `Պակասում է ${country.digits - digits.length} նիշ (${digits.length}/${country.digits})`;
+                        this.phoneErrorMsg = (translations.phone_missing_digits || 'Պակասում է :count նիշ').replace(':count', country.digits - digits.length) + ` (${digits.length}/${country.digits})`;
                     } else {
-                        this.phoneErrorMsg = `Հեռախոսահամարը պետք է ունենա ճիշտ ${country.digits} նիշ`;
+                        this.phoneErrorMsg = (translations.phone_exact_digits || 'Հեռախոսահամարը պետք է ունենա ճիշտ :digits նիշ').replace(':digits', country.digits);
                     }
                 } else if (!country.digits && (digits.length < (country.minDigits || 7) || digits.length > (country.maxDigits || 15))) {
                     this.phoneErrorMsg = translations.invalid_phone_format || 'Անվավեր հեռախոսահամար';

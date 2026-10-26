@@ -39,4 +39,13 @@ return [
     'rating_2_stars' => 'Удовлетворительно',
     'rating_1_star' => 'Плохо',
     'error_submitting_rating' => 'Не удалось отправить отзыв. Пожалуйста, проверьте данные.',
+    'cat_food_quality' => '🍽️ Качество еды',
+    'cat_service_speed' => '⚡ Быстрое обслуживание',
+    'cat_waiter_politeness' => '😊 Вежливость персонала',
+    'cat_cleanliness' => '✨ Чистота',
+    'cat_ambiance' => '🎶 Атмосфера',
+    'cat_table_presentation' => '🥗 Подача блюд',
+    'comment_required' => 'Пожалуйста, оставьте комментарий, чтобы мы могли стать лучше.',
+    'thank_you_title' => 'Спасибо за ваш отзыв!',
+    'submit_failed' => 'Не удалось отправить оценку. Попробуйте снова.',
 ];

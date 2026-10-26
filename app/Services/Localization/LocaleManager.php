@@ -164,7 +164,10 @@ class LocaleManager
     {
         $languages = $this->getVendorLanguages($vendor);
 
-        return array_map(fn ($l) => strtolower($l['code']), $languages);
+        return array_values(array_filter(array_map(
+            fn ($l) => is_array($l) ? strtolower((string) ($l['code'] ?? '')) : strtolower((string) $l),
+            $languages
+        )));
     }
 
     /**

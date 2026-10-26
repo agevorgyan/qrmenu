@@ -12,6 +12,9 @@
 
 <!-- Restaurant Info & WiFi Modal (Modern Glass Bottom Sheet) -->
 <div x-show="showInfoModal" 
+     role="dialog"
+     aria-modal="true"
+     aria-label="{{ __('menu.restaurant_info') }}"
      style="position: fixed; inset: 0; z-index: 250; background: rgba(0, 0, 0, 0.78); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: flex; flex-direction: column; justify-content: flex-end; align-items: center;" 
      x-cloak
      @click.self="showInfoModal = false"
@@ -75,7 +78,7 @@
                         </div>
                         <div>
                             <div class="info-wifi-title">{{ __('menu.wifi_network') }}</div>
-                            <div class="info-wifi-subtitle">Անվճար ինտերնետ հյուրերի համար</div>
+                            <div class="info-wifi-subtitle">{{ __('menu.free_guest_wifi') }}</div>
                         </div>
                     </div>
                     <span class="info-wifi-status-tag">
@@ -87,7 +90,7 @@
                 <!-- SSID Row -->
                 <div class="info-wifi-detail-row">
                     <div>
-                        <div class="info-detail-label">SSID (Ցանց)</div>
+                        <div class="info-detail-label">{{ __('menu.wifi_ssid_label') }}</div>
                         <div class="info-detail-value">{{ $wifiSsid }}</div>
                     </div>
                     <div class="info-wifi-signal-icon" title="High Speed WiFi">

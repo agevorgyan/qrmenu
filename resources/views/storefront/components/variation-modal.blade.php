@@ -1,5 +1,11 @@
 <!-- Modern Variation & Option Selection Modal Component -->
+@php
+    $currencySymbol = (!$vendor->currency || strtoupper($vendor->currency) === 'AMD') ? '֏' : $vendor->currency;
+@endphp
 <div x-show="showVariationModal" 
+     role="dialog"
+     aria-modal="true"
+     aria-label="{{ __('menu.choose_portion') }}"
      x-cloak
      @click.self="showVariationModal = false"
      x-transition:enter="variation-modal-enter"
@@ -67,13 +73,13 @@
                         </div>
                         <span class="variation-name-text" x-text="v.name"></span>
                     </div>
-                    <div class="variation-price-display" style="display: flex; flex-direction: column; align-items: flex-end;">
+                    <div class="variation-price-display" style="display: flex; flex-direction: column; align-items: flex-end; white-space: nowrap;">
                         <div>
                             <template x-if="v.regular_price && v.regular_price > v.price">
                                 <span style="font-size: 0.8rem; text-decoration: line-through; color: var(--text-muted); margin-right: 0.35rem; font-weight: 500;" x-text="Number(v.regular_price).toLocaleString()"></span>
                             </template>
                             <span class="variation-price-num" :style="v.regular_price && v.regular_price > v.price ? 'color: #ef4444;' : ''" x-text="Number(v.price).toLocaleString()"></span>
-                            <span class="variation-price-currency" :style="v.regular_price && v.regular_price > v.price ? 'color: #ef4444;' : ''">{{ $vendor->currency }}</span>
+                            <span class="variation-price-currency" :style="v.regular_price && v.regular_price > v.price ? 'color: #ef4444;' : ''">{{ $currencySymbol }}</span>
                         </div>
                         @if($vendor->isSecondaryCurrencyActive())
                             <template x-if="v.secondary_price">
@@ -126,9 +132,9 @@
                     <span>{{ __('menu.add_to_cart') }}</span>
                 </div>
             </template>
-            <div class="variation-cta-price" x-show="selectedDish?.is_time_available !== false">
+            <div class="variation-cta-price" x-show="selectedDish?.is_time_available !== false" style="white-space: nowrap;">
                 <span x-text="Number((selectedVariation?.price || selectedDish?.base_price || 0) * variationQty).toLocaleString()"></span>
-                <span class="variation-cta-curr">{{ $vendor->currency }}</span>
+                <span class="variation-cta-curr">{{ $currencySymbol }}</span>
             </div>
         </button>
     </div>

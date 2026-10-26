@@ -1,5 +1,11 @@
 <!-- Initial Order Type Selection Modal (Direct visits without table QR) -->
+@php
+    $currencySymbol = (!$vendor->currency || strtoupper($vendor->currency) === 'AMD') ? '֏' : $vendor->currency;
+@endphp
 <div id="order-type-modal"
+     role="dialog"
+     aria-modal="true"
+     aria-label="{{ __('menu.choose_order_type') }}"
      x-show="showOrderTypeModal" 
      x-cloak
      @click.self="showOrderTypeModal = false"
@@ -59,9 +65,9 @@
                         
                         <div class="order-type-card-meta">
                             @if(($vendor->delivery_fee ?? 0) > 0)
-                                <span class="order-type-fee-tag">
+                                <span class="order-type-fee-tag" style="white-space: nowrap;">
                                     <i class="fa-solid fa-receipt"></i>
-                                    {{ number_format($vendor->delivery_fee) }} {{ $vendor->currency }}
+                                    {{ number_format($vendor->delivery_fee) }} {{ $currencySymbol }}
                                 </span>
                             @else
                                 <span class="order-type-fee-tag is-free">
@@ -71,8 +77,8 @@
                             @endif
 
                             @if($vendor->delivery_free_from)
-                                <span class="order-type-meta-hint">
-                                    {{ __('menu.free_delivery') }} > {{ number_format($vendor->delivery_free_from) }} {{ $vendor->currency }}
+                                <span class="order-type-meta-hint" style="white-space: nowrap;">
+                                    {{ __('menu.free_delivery') }} > {{ number_format($vendor->delivery_free_from) }} {{ $currencySymbol }}
                                 </span>
                             @endif
                         </div>

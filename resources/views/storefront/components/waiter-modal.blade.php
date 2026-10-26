@@ -1,6 +1,9 @@
 <!-- Waiter Call & Bill Request Service Modal (Full Screen) -->
 <div x-show="showWaiterModal" 
      x-cloak
+     role="dialog"
+     aria-modal="true"
+     aria-label="{{ __('menu.service_modal_title') }}"
      x-transition:enter="transition ease-out duration-250"
      x-transition:enter-start="opacity-0 transform translate-y-4"
      x-transition:enter-end="opacity-100 transform translate-y-0"
@@ -26,7 +29,7 @@
                     </p>
                 </div>
             </div>
-            <button type="button" @click="showWaiterModal = false" style="background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; flex-shrink: 0;">
+            <button type="button" @click="showWaiterModal = false" aria-label="{{ __('menu.close') }}" title="{{ __('menu.close') }}" style="background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; flex-shrink: 0;">
                 ✕
             </button>
         </div>
@@ -37,10 +40,10 @@
             <!-- Service Choice Section Heading -->
             <div style="margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
                 <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">
-                    Ընտրեք ծառայության տեսակը
+                    {{ __('menu.choose_service_type') }}
                 </span>
                 <span style="font-size: 0.75rem; color: var(--primary); font-weight: 600;">
-                    3 տարբերակ
+                    {{ __('menu.three_options') }}
                 </span>
             </div>
 
@@ -59,11 +62,11 @@
                             <div class="service-title-row">
                                 <span class="service-title">{{ __('menu.call_waiter') }}</span>
                                 <span class="service-mini-tag tag-amber">
-                                    <i class="fa-solid fa-bolt"></i> Արագ
+                                    <i class="fa-solid fa-bolt"></i> {{ __('menu.fast_tag') }}
                                 </span>
                             </div>
                             <div class="service-desc">
-                                Մատուցողը կմոտենա Ձեր սեղանին
+                                {{ __('menu.waiter_will_approach_table') }}
                             </div>
                         </div>
                     </div>
@@ -84,11 +87,11 @@
                             <div class="service-title-row">
                                 <span class="service-title">{{ __('menu.request_bill_cash') }}</span>
                                 <span class="service-mini-tag tag-emerald">
-                                    <i class="fa-solid fa-coins"></i> Կանխիկ
+                                    <i class="fa-solid fa-coins"></i> {{ __('menu.cash_tag') }}
                                 </span>
                             </div>
                             <div class="service-desc">
-                                Վճարում կանխիկ դրամով
+                                {{ __('menu.pay_with_cash_desc') }}
                             </div>
                         </div>
                     </div>
@@ -109,11 +112,11 @@
                             <div class="service-title-row">
                                 <span class="service-title">{{ __('menu.request_bill_card') }}</span>
                                 <span class="service-mini-tag tag-blue">
-                                    <i class="fa-solid fa-wifi"></i> POS Տերմինալ
+                                    <i class="fa-solid fa-wifi"></i> {{ __('menu.pay_pos_terminal') }}
                                 </span>
                             </div>
                             <div class="service-desc">
-                                Վճարում POS տերմինալով (Քարտ / NFC / Idram)
+                                {{ __('menu.pay_with_pos_desc') }}
                             </div>
                         </div>
                     </div>
@@ -125,13 +128,13 @@
 
             <!-- Table Number Card Section (Locked to Scanned QR Table) -->
             <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 18px; padding: 1.15rem; margin: 1.25rem 0 1.5rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 0.35rem;">
                     <label style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.45rem;">
                         <i class="fa-solid fa-chair" style="color: var(--primary);"></i>
                         <span>{{ __('menu.specify_table') }}</span>
                     </label>
                     <span style="font-size: 0.72rem; color: #10b981; font-weight: 700; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.2rem 0.6rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
-                        <i class="fa-solid fa-lock"></i> Ֆիքսված է (Սեղանի QR)
+                        <i class="fa-solid fa-lock"></i> {{ __('menu.fixed_qr') }}
                     </span>
                 </div>
                 
@@ -145,13 +148,13 @@
                     <div style="position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.95rem; pointer-events: none;">
                         #
                     </div>
-                    <div style="position: absolute; right: 0.9rem; top: 50%; transform: translateY(-50%); color: #10b981; font-size: 0.95rem; pointer-events: none;" title="Ֆիքսված է QR-ով">
+                    <div style="position: absolute; right: 0.9rem; top: 50%; transform: translateY(-50%); color: #10b981; font-size: 0.95rem; pointer-events: none;" title="{{ __('menu.fixed_qr') }}">
                         <i class="fa-solid fa-lock"></i>
                     </div>
                 </div>
                 <div style="font-size: 0.75rem; color: #10b981; margin-top: 0.45rem; line-height: 1.35; display: flex; align-items: center; gap: 0.35rem;">
                     <i class="fa-solid fa-qrcode"></i>
-                    <span>Սեղանի համարն ավտոմատ ամրագրված է Ձեր սկանավորած QR կոդով և ենթակա չէ փոփոխման։</span>
+                    <span>{{ __('menu.fixed_qr_notice') }}</span>
                 </div>
             </div>
 
@@ -178,7 +181,7 @@
                 <button type="button" 
                         @click="showWaiterModal = false" 
                         style="width: 100%; padding: 0.85rem; border-radius: 14px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-muted); font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s;">
-                    {{ __('menu.cancel') }} (Վերադառնալ մենյու)
+                    {{ __('menu.cancel') }} ({{ __('menu.continue_browsing_menu') }})
                 </button>
             </div>
         </div>

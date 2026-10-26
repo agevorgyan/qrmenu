@@ -269,7 +269,10 @@ class Vendor extends Model
         $primary = self::normalizeCurrencyCode($this->getRawOriginal('currency') ?: $this->currency);
 
         if ($this->secondary_currency_rate_mode === 'auto_by_language') {
-            $effectiveLang = strtolower(trim((string) ($lang ?: app()->getLocale() ?: 'en')));
+            $explicitQueryLang = strtolower(trim((string) (request()->query('lang') ?: request()->query('locale') ?: '')));
+            $effectiveLang = ($explicitQueryLang !== '' && $lang !== null && array_key_exists($explicitQueryLang, CurrencyExchangeService::LANGUAGE_TO_CURRENCY_MAP))
+                ? $explicitQueryLang
+                : strtolower(trim((string) ($lang ?: app()->getLocale() ?: 'en')));
             $mapped = app(CurrencyExchangeService::class)->getCurrencyForLanguage($effectiveLang, $this->secondary_currency ?: 'USD');
 
             if ($mapped === $primary) {
@@ -2276,7 +2279,49 @@ class Vendor extends Model
         }
 
         if (! empty($this->supported_languages) && is_array($this->supported_languages)) {
-            return $this->supported_languages;
+            $defaultsMap = [
+                'en' => ['code' => 'en', 'name' => 'English', 'native_name' => 'English', 'flag' => '🇬🇧', 'direction' => 'ltr'],
+                'hy' => ['code' => 'hy', 'name' => 'Armenian', 'native_name' => 'Հայերեն', 'flag' => '🇦🇲', 'direction' => 'ltr'],
+                'ru' => ['code' => 'ru', 'name' => 'Russian', 'native_name' => 'Русский', 'flag' => '🇷🇺', 'direction' => 'ltr'],
+                'ar' => ['code' => 'ar', 'name' => 'Arabic', 'native_name' => 'العربية', 'flag' => '🇦🇪', 'direction' => 'rtl'],
+                'fa' => ['code' => 'fa', 'name' => 'Persian', 'native_name' => 'فارسی', 'flag' => '🇮🇷', 'direction' => 'rtl'],
+                'fr' => ['code' => 'fr', 'name' => 'French', 'native_name' => 'Français', 'flag' => '🇫🇷', 'direction' => 'ltr'],
+                'de' => ['code' => 'de', 'name' => 'German', 'native_name' => 'Deutsch', 'flag' => '🇩🇪', 'direction' => 'ltr'],
+                'es' => ['code' => 'es', 'name' => 'Spanish', 'native_name' => 'Español', 'flag' => '🇪🇸', 'direction' => 'ltr'],
+                'it' => ['code' => 'it', 'name' => 'Italian', 'native_name' => 'Italiano', 'flag' => '🇮🇹', 'direction' => 'ltr'],
+                'ge' => ['code' => 'ge', 'name' => 'Georgian', 'native_name' => 'ქართული', 'flag' => '🇬🇪', 'direction' => 'ltr'],
+                'ka' => ['code' => 'ka', 'name' => 'Georgian', 'native_name' => 'ქართული', 'flag' => '🇬🇪', 'direction' => 'ltr'],
+            ];
+
+            $normalized = [];
+            foreach (array_values($this->supported_languages) as $idx => $item) {
+                if (is_array($item)) {
+                    $code = strtolower(trim((string) ($item['code'] ?? 'en')));
+                    $fallback = $defaultsMap[$code] ?? [
+                        'code' => $code,
+                        'name' => strtoupper($code),
+                        'native_name' => strtoupper($code),
+                        'flag' => '🌐',
+                        'direction' => in_array($code, ['ar', 'fa', 'he', 'ur'], true) ? 'rtl' : 'ltr',
+                    ];
+                    $normalized[] = array_merge($fallback, $item, ['code' => $code]);
+                } elseif (is_string($item) && trim($item) !== '') {
+                    $code = strtolower(trim($item));
+                    $fallback = $defaultsMap[$code] ?? [
+                        'code' => $code,
+                        'name' => strtoupper($code),
+                        'native_name' => strtoupper($code),
+                        'flag' => '🌐',
+                        'direction' => in_array($code, ['ar', 'fa', 'he', 'ur'], true) ? 'rtl' : 'ltr',
+                    ];
+                    $fallback['is_default'] = ($idx === 0);
+                    $normalized[] = $fallback;
+                }
+            }
+
+            if (! empty($normalized)) {
+                return $normalized;
+            }
         }
 
         return [

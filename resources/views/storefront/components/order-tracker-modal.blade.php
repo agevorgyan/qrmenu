@@ -1,5 +1,11 @@
 <!-- Order Real-Time Tracker Screen Modal (Full Screen) -->
+@php
+    $currencySymbol = (!$vendor->currency || strtoupper($vendor->currency) === 'AMD') ? '֏' : $vendor->currency;
+@endphp
 <div x-show="showOrderTracker" 
+     role="dialog"
+     aria-modal="true"
+     aria-label="{{ __('menu.live_status_badge') }}"
      style="position: fixed; inset: 0; width: 100%; height: 100%; height: 100dvh; background: var(--bg-card); z-index: 200; display: flex; flex-direction: column; overflow: hidden;" 
      x-cloak
      x-transition:enter="transition ease-out duration-250"
@@ -27,7 +33,7 @@
                     {{ __('menu.order_number_label') }}<span x-text="activeOrder?.order_number"></span>
                 </h2>
             </div>
-            <button type="button" @click="closeOrderTracker(false)" style="background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; flex-shrink: 0;">
+            <button type="button" @click="closeOrderTracker(false)" aria-label="{{ __('menu.close') }}" title="{{ __('menu.close') }}" style="background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; flex-shrink: 0;">
                 ✕
             </button>
         </div>
@@ -111,22 +117,22 @@
                         <i class="fa-solid fa-receipt" style="color: var(--primary);"></i>
                         <span>{{ __('menu.order_summary') }}</span>
                     </div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted);" x-text="activeOrder.items.length + ' ուտեստ'"></div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;" x-text="activeOrder.items.length + ' {{ __('menu.items_count') }}'"></div>
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 0.6rem;">
                     <template x-for="item in activeOrder.items" :key="item.id">
-                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <span style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.1rem 0.4rem; font-weight: 700; font-size: 0.75rem; color: var(--primary);" x-text="item.quantity + 'x'"></span>
-                                <div>
-                                    <span style="font-weight: 600; color: var(--text-main);" x-text="item.name"></span>
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; min-width: 0;">
+                                <span style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.1rem 0.4rem; font-weight: 700; font-size: 0.75rem; color: var(--primary); flex-shrink: 0;" x-text="item.quantity + 'x'"></span>
+                                <div style="min-width: 0;">
+                                    <span style="font-weight: 600; color: var(--text-main); overflow-wrap: break-word;" x-text="item.name"></span>
                                     <template x-if="item.variation_name && item.variation_name !== 'Standard'">
                                         <span style="font-size: 0.75rem; color: var(--text-muted);" x-text="' (' + item.variation_name + ')'"></span>
                                     </template>
                                 </div>
                             </div>
-                            <span style="font-family: 'Outfit'; font-weight: 700; color: var(--accent);" x-text="Number(item.subtotal || (item.price * item.quantity)).toLocaleString() + ' ' + (activeOrder.currency || '{{ $vendor->currency }}')"></span>
+                            <span style="font-family: 'Outfit'; font-weight: 700; color: var(--accent); white-space: nowrap; flex-shrink: 0;" x-text="Number(item.subtotal || (item.price * item.quantity)).toLocaleString() + ' ' + (activeOrder.currency || '{{ $currencySymbol }}')"></span>
                         </div>
                     </template>
                 </div>
@@ -136,7 +142,7 @@
                     <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-color); font-size: 0.85rem;">
                         <div style="display: flex; justify-content: space-between; align-items: center; color: var(--text-muted);">
                             <span>{{ __('menu.subtotal') }}</span>
-                            <span style="font-family: 'Outfit'; font-weight: 600;" x-text="Number(getActiveOrderSubtotal()).toLocaleString() + ' ' + (activeOrder?.currency || '{{ $vendor->currency }}')"></span>
+                            <span style="font-family: 'Outfit'; font-weight: 600; white-space: nowrap;" x-text="Number(getActiveOrderSubtotal()).toLocaleString() + ' ' + (activeOrder?.currency || '{{ $currencySymbol }}')"></span>
                         </div>
                         <template x-if="getActiveOrderServiceFee() > 0">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -144,7 +150,7 @@
                                     <i class="fa-solid fa-bell-concierge" style="color: var(--primary); font-size: 0.8rem;"></i>
                                     <span>{{ __('menu.service_fee') }}</span>
                                 </span>
-                                <span style="font-family: 'Outfit'; font-weight: 700; color: #10b981;" x-text="'+' + Number(getActiveOrderServiceFee()).toLocaleString() + ' ' + (activeOrder?.currency || '{{ $vendor->currency }}')"></span>
+                                <span style="font-family: 'Outfit'; font-weight: 700; color: #10b981; white-space: nowrap;" x-text="'+' + Number(getActiveOrderServiceFee()).toLocaleString() + ' ' + (activeOrder?.currency || '{{ $currencySymbol }}')"></span>
                             </div>
                         </template>
                         <template x-if="(activeOrder?.type || activeOrder?.order_type) === 'delivery' || getActiveOrderDeliveryFee() > 0">
@@ -157,7 +163,7 @@
                                     <span style="font-size: 0.75rem; font-weight: 800; color: #10b981; background: rgba(16, 185, 129, 0.15); padding: 0.15rem 0.5rem; border-radius: 6px;">{{ __('menu.free_delivery') }}</span>
                                 </template>
                                 <template x-if="getActiveOrderDeliveryFee() > 0">
-                                    <span style="font-family: 'Outfit'; font-weight: 700; color: var(--text-main);" x-text="'+' + Number(getActiveOrderDeliveryFee()).toLocaleString() + ' ' + (activeOrder?.currency || '{{ $vendor->currency }}')"></span>
+                                    <span style="font-family: 'Outfit'; font-weight: 700; color: var(--text-main); white-space: nowrap;" x-text="'+' + Number(getActiveOrderDeliveryFee()).toLocaleString() + ' ' + (activeOrder?.currency || '{{ $currencySymbol }}')"></span>
                                 </template>
                             </div>
                         </template>
@@ -171,13 +177,13 @@
                             <i class="fa-solid fa-hand-holding-dollar" style="color: #10b981; font-size: 0.8rem;"></i>
                             <span>{{ __('tips.tip') ?? 'Թեյավճար' }}</span>
                         </span>
-                        <span style="font-family: 'Outfit'; font-weight: 700; color: #10b981;" x-text="'+' + Number(activeOrder?.tip_amount).toLocaleString() + ' ' + (activeOrder?.currency || '{{ $vendor->currency }}')"></span>
+                        <span style="font-family: 'Outfit'; font-weight: 700; color: #10b981; white-space: nowrap;" x-text="'+' + Number(activeOrder?.tip_amount).toLocaleString() + ' ' + (activeOrder?.currency || '{{ $currencySymbol }}')"></span>
                     </div>
                 </template>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-color);">
-                    <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">Ընդհանուր գումար</span>
-                    <span style="font-family: 'Outfit'; font-weight: 800; font-size: 1.2rem; color: var(--primary);" x-text="Number(activeOrder?.total_amount || 0).toLocaleString() + ' ' + (activeOrder?.currency || '{{ $vendor->currency }}')"></span>
+                    <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">{{ __('menu.total_to_pay') }}</span>
+                    <span style="font-family: 'Outfit'; font-weight: 800; font-size: 1.2rem; color: var(--primary); white-space: nowrap;" x-text="Number(activeOrder?.total_amount || 0).toLocaleString() + ' ' + (activeOrder?.currency || '{{ $currencySymbol }}')"></span>
                 </div>
             </div>
         </template>

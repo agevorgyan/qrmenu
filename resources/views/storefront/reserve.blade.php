@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="{{ app()->getLocale() }}">
+<html lang="{{ app()->getLocale() }}" dir="{{ in_array(app()->getLocale(), ['ar', 'fa', 'he']) ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ __('Reserve a Table') }} — {{ $vendor->name }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -25,6 +25,7 @@
         $locale = app()->getLocale();
         $isHy = ($locale === 'hy');
         $isRu = ($locale === 'ru');
+        $currencySymbol = (!$vendor->currency || strtoupper($vendor->currency) === 'AMD') ? '֏' : $vendor->currency;
     @endphp
 
     <style>
@@ -492,10 +493,17 @@
             padding: 0.3rem;
             border-radius: var(--radius-md);
             border: 1px solid var(--chip-border);
+            overflow-x: auto;
+            max-width: 100%;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        .time-filter-tabs::-webkit-scrollbar {
+            display: none;
         }
 
         .time-filter-tab {
-            flex: 1;
+            flex: 1 0 auto;
             padding: 0.55rem 0.75rem;
             border-radius: var(--radius-sm);
             border: none;
@@ -508,6 +516,8 @@
             align-items: center;
             justify-content: center;
             gap: 0.4rem;
+            white-space: nowrap;
+            flex-shrink: 0;
             transition: all 0.18s;
         }
 
@@ -602,6 +612,7 @@
             display: flex;
             flex-direction: column;
             gap: 0.4rem;
+            min-width: 0;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             user-select: none;
         }
@@ -623,15 +634,28 @@
 
         .table-card-top {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: space-between;
-            gap: 0.4rem;
+            flex-wrap: wrap;
+            gap: 0.35rem 0.5rem;
+            min-width: 0;
+        }
+
+        @media(max-width: 520px) {
+            .table-select-card:not(.full-width) .table-card-top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
         }
 
         .table-card-title {
             font-size: 0.92rem;
             font-weight: 700;
             color: var(--text-main);
+            min-width: 0;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            line-height: 1.3;
         }
 
         .table-card-badge {
@@ -641,6 +665,11 @@
             border-radius: 6px;
             background: color-mix(in srgb, var(--primary) 15%, transparent);
             color: var(--primary);
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .table-card-meta {
@@ -937,6 +966,10 @@
             border-radius: 9999px;
             box-shadow: 0 2px 8px color-mix(in srgb, var(--primary) 35%, transparent);
             letter-spacing: 0.02em;
+            white-space: nowrap;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
         }
 
         .preorder-cta-box {
@@ -1022,7 +1055,7 @@
         }
 
         .preorder-item-main {
-            flex: 1;
+            flex: 1 1 auto;
             min-width: 0;
         }
 
@@ -1034,6 +1067,9 @@
             align-items: center;
             gap: 0.5rem;
             flex-wrap: wrap;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            line-height: 1.35;
         }
 
         .preorder-variation-pill {
@@ -1044,6 +1080,7 @@
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             color: var(--text-subtle);
+            white-space: nowrap;
         }
 
         .preorder-item-price {
@@ -1051,6 +1088,7 @@
             font-weight: 600;
             color: var(--text-muted);
             margin-top: 0.2rem;
+            white-space: nowrap;
         }
 
         .preorder-item-controls {
@@ -1104,6 +1142,26 @@
             color: var(--text-main);
             min-width: 75px;
             text-align: right;
+            white-space: nowrap;
+        }
+
+        @media(max-width: 540px) {
+            .preorder-item-card {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.65rem;
+                padding: 0.85rem 0.95rem;
+            }
+            .preorder-item-controls {
+                width: 100%;
+                justify-content: space-between;
+                padding-top: 0.55rem;
+                border-top: 1px dashed var(--item-border);
+            }
+            .preorder-item-subtotal {
+                margin-left: auto;
+                min-width: 0;
+            }
         }
 
         .preorder-remove-btn {
@@ -1133,6 +1191,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
             margin-bottom: 1rem;
         }
 
@@ -1140,6 +1200,8 @@
             display: flex;
             flex-direction: column;
             gap: 0.2rem;
+            min-width: 0;
+            flex: 1 1 180px;
         }
 
         .summary-label {
@@ -1160,6 +1222,8 @@
             font-size: 1.25rem;
             color: var(--primary);
             letter-spacing: -0.01em;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .preorder-actions-bar {
@@ -1170,8 +1234,20 @@
             flex-wrap: wrap;
         }
 
+        @media(max-width: 520px) {
+            .preorder-actions-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .btn-edit-in-menu,
+            .btn-clear-preorder {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
         .btn-edit-in-menu {
-            flex: 1;
+            flex: 1 1 auto;
             padding: 0.8rem 1.1rem;
             border-radius: var(--radius-md);
             background: color-mix(in srgb, var(--primary) 10%, var(--card-bg));
@@ -1184,6 +1260,8 @@
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
+            text-align: center;
+            line-height: 1.3;
             transition: all 0.2s;
         }
 
@@ -1376,7 +1454,7 @@
     <!-- Page Title Headline -->
     <div class="booking-headline">
         <h2>{{ __('Reserve a Table') }}</h2>
-        <p>{{ $isHy ? 'Ակնթարթային առցանց հաստատում • Անվճար ամրագրում' : ($isRu ? 'Мгновенное подтверждение • Без комиссии' : __('Instant online confirmation • Zero booking fee')) }}</p>
+        <p>{{ __('Instant online confirmation • Zero booking fee') }}</p>
     </div>
 
     @if($vendor->isEventInquiryFeatureEnabled())
@@ -1413,7 +1491,7 @@
                 <span class="step-badge"><i class="fa-solid fa-user-group"></i></span>
                 <div>
                     <div class="step-title">{{ __('Choose Date & Guests') }}</div>
-                    <div class="step-subtitle">{{ $isHy ? 'Ընտրեք հյուրերի քանակը և նախընտրելի օրը' : ($isRu ? 'Выберите количество гостей и дату' : __('Select party size and preferred day')) }}</div>
+                    <div class="step-subtitle">{{ __('Select party size and preferred day') }}</div>
                 </div>
             </div>
         </div>
@@ -1504,7 +1582,7 @@
                 <span class="step-badge"><i class="fa-regular fa-clock"></i></span>
                 <div>
                     <div class="step-title">{{ __('Available Time Slots') }}</div>
-                    <div class="step-subtitle">{{ $isHy ? 'Ընտրեք հարմար ժամը' : ($isRu ? 'Выберите удобное время' : __('Select a seating time')) }}</div>
+                    <div class="step-subtitle">{{ __('Select a seating time') }}</div>
                 </div>
             </div>
         </div>
@@ -1516,21 +1594,21 @@
                     :class="{ 'active': selectedTimeFilter === 'all' }" 
                     @click="selectedTimeFilter = 'all'">
                 <i class="fa-solid fa-sparkles"></i>
-                <span>{{ $isHy ? 'Բոլոր ժամերը' : ($isRu ? 'Все часы' : __('All Times')) }}</span>
+                <span>{{ __('All Times') }}</span>
             </button>
             <button type="button" 
                     class="time-filter-tab" 
                     :class="{ 'active': selectedTimeFilter === 'lunch' }" 
                     @click="selectedTimeFilter = 'lunch'">
                 <i class="fa-solid fa-sun"></i>
-                <span>{{ $isHy ? 'Կեսօր' : ($isRu ? 'Обед' : __('Lunch')) }}</span>
+                <span>{{ __('Lunch') }}</span>
             </button>
             <button type="button" 
                     class="time-filter-tab" 
                     :class="{ 'active': selectedTimeFilter === 'dinner' }" 
                     @click="selectedTimeFilter = 'dinner'">
                 <i class="fa-solid fa-moon"></i>
-                <span>{{ $isHy ? 'Երեկո' : ($isRu ? 'Ужин' : __('Dinner')) }}</span>
+                <span>{{ __('Dinner') }}</span>
             </button>
         </div>
 
@@ -1587,7 +1665,7 @@
                 <span class="step-badge"><i class="fa-solid fa-chair"></i></span>
                 <div>
                     <div class="step-title">{{ __('Table Selection (Optional)') }}</div>
-                    <div class="step-subtitle">{{ $isHy ? 'Ընտրեք նախընտրելի սրահը կամ ավտոմատ նշանակում' : ($isRu ? 'Выберите зону зала или автоназначение' : __('Choose preferred area or auto-assign')) }}</div>
+                    <div class="step-subtitle">{{ __('Choose preferred area or auto-assign') }}</div>
                 </div>
             </div>
         </div>
@@ -1598,7 +1676,7 @@
                     class="time-filter-tab" 
                     :class="{ 'active': selectedTableSection === 'all' }" 
                     @click="selectedTableSection = 'all'">
-                <span>{{ $isHy ? 'Բոլոր սրահները' : ($isRu ? 'Все залы' : __('All Areas')) }}</span>
+                <span>{{ __('All Areas') }}</span>
             </button>
             <template x-for="sec in tableSections" :key="sec">
                 <button type="button" 
@@ -1617,12 +1695,12 @@
                  :class="{ 'active': selectedTableId === '' }" 
                  @click="selectedTableId = ''">
                 <div class="table-card-top">
-                    <span class="table-card-title">✨ {{ $isHy ? 'Ավտոմատ նշանակում' : ($isRu ? 'Автоназначение' : __('Auto-assign')) }}</span>
-                    <span class="table-card-badge">{{ $isHy ? 'Խորհուրդ է տրվում' : ($isRu ? 'Рекомендуется' : __('Recommended')) }}</span>
+                    <span class="table-card-title">✨ {{ __('Auto-assign') }}</span>
+                    <span class="table-card-badge">{{ __('Recommended') }}</span>
                 </div>
                 <div class="table-card-meta">
                     <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    <span>{{ $isHy ? 'Համակարգը կընտրի լավագույն հասանելի սեղանը' : ($isRu ? 'Система подберет лучший свободный стол' : __('Best available table for your party')) }}</span>
+                    <span>{{ __('Best available table for your party') }}</span>
                 </div>
             </div>
 
@@ -1639,7 +1717,7 @@
                     </div>
                     <div class="table-card-meta">
                         <i class="fa-solid fa-users"></i>
-                        <span x-text="t.capacity + ' ' + '{{ $isHy ? 'նստատեղ' : ($isRu ? 'мест' : __('seats')) }}'"></span>
+                        <span x-text="t.capacity + ' ' + '{{ __('seats') }}'"></span>
                     </div>
                 </div>
             </template>
@@ -1650,7 +1728,7 @@
                         @click="showAllTables = !showAllTables" 
                         style="background: transparent; border: 1.5px dashed var(--card-border); padding: 0.6rem 1.25rem; border-radius: var(--radius-md); color: var(--primary); font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">
                     <i class="fa-solid" :class="showAllTables ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                    <span x-text="showAllTables ? '{{ $isHy ? 'Ցուցադրել ավելի քիչ' : ($isRu ? 'Свернуть' : __('Show fewer')) }}' : ('+ ' + (eligibleTables.length - 5) + ' {{ $isHy ? 'այլ սեղաններ (Տեսնել բոլորը)' : ($isRu ? 'других столов (Показать все)' : __('more tables (Show all)')) }}')"></span>
+                    <span x-text="showAllTables ? '{{ __('Show fewer') }}' : ('+ ' + (eligibleTables.length - 5) + ' {{ __('more tables (Show all)') }}')"></span>
                 </button>
             </div>
         </div>
@@ -1673,7 +1751,7 @@
                 <span class="step-badge"><i class="fa-regular fa-address-card"></i></span>
                 <div>
                     <div class="step-title">{{ __('Guest Details') }}</div>
-                    <div class="step-subtitle">{{ $isHy ? 'Հաստատման տվյալները կուղարկվեն այստեղ' : ($isRu ? 'Данные подтверждения будут отправлены сюда' : __('We\'ll send reservation confirmation here')) }}</div>
+                    <div class="step-subtitle">{{ __('We\'ll send reservation confirmation here') }}</div>
                 </div>
             </div>
         </div>
@@ -1692,7 +1770,7 @@
                 <span>{{ __('Email Address') }} *</span>
             </label>
             <input type="email" class="form-input" x-model="customerEmail" placeholder="{{ __('name@example.com') }}" required>
-            <small class="form-helper">{{ $isHy ? 'Ամրագրման հաստատման կոդը և հղումը կուղարկվեն այս էլ. հասցեին:' : ($isRu ? 'Код подтверждения и ссылка на бронь будут отправлены на этот email.' : __('Confirmation reference and tracking link will be sent here.')) }}</small>
+            <small class="form-helper">{{ __('Confirmation reference and tracking link will be sent here.') }}</small>
         </div>
 
         <div class="form-group">
@@ -1779,23 +1857,23 @@
 
             <!-- Quick Tap Request Chips (International UX Best Practice) -->
             <div class="quick-request-tags">
-                <button type="button" class="quick-tag-chip" :class="{ 'active': specialRequests.includes('🎂') }" @click="toggleSpecialRequestTag('🎂 {{ $isHy ? 'Ծննդյան օր' : ($isRu ? 'День рождения' : __('Birthday')) }}')">
-                    <span>🎂 {{ $isHy ? 'Ծննդյան օր' : ($isRu ? 'День рождения' : __('Birthday')) }}</span>
+                <button type="button" class="quick-tag-chip" :class="{ 'active': specialRequests.includes('🎂') }" @click="toggleSpecialRequestTag('🎂 {{ __('Birthday') }}')">
+                    <span>🎂 {{ __('Birthday') }}</span>
                 </button>
-                <button type="button" class="quick-tag-chip" :class="{ 'active': specialRequests.includes('🕯️') }" @click="toggleSpecialRequestTag('🕯️ {{ $isHy ? 'Ռոմանտիկ' : ($isRu ? 'Романтический ужин' : __('Romantic')) }}')">
-                    <span>🕯️ {{ $isHy ? 'Ռոմանտիկ' : ($isRu ? 'Романтический ужин' : __('Romantic')) }}</span>
+                <button type="button" class="quick-tag-chip" :class="{ 'active': specialRequests.includes('🕯️') }" @click="toggleSpecialRequestTag('🕯️ {{ __('Romantic') }}')">
+                    <span>🕯️ {{ __('Romantic') }}</span>
                 </button>
-                <button type="button" class="quick-tag-chip" :class="{ 'active': specialRequests.includes('💼') }" @click="toggleSpecialRequestTag('💼 {{ $isHy ? 'Գործնական' : ($isRu ? 'Деловая встреча' : __('Business')) }}')">
-                    <span>💼 {{ $isHy ? 'Գործնական' : ($isRu ? 'Деловая встреча' : __('Business')) }}</span>
+                <button type="button" class="quick-tag-chip" :class="{ 'active': specialRequests.includes('💼') }" @click="toggleSpecialRequestTag('💼 {{ __('Business') }}')">
+                    <span>💼 {{ __('Business') }}</span>
                 </button>
-                <button type="button" class="quick-tag-chip" :class="{ 'active': specialRequests.includes('🪟') }" @click="toggleSpecialRequestTag('🪟 {{ $isHy ? 'Պատուհանի մոտ' : ($isRu ? 'У окна' : __('Window Table')) }}')">
-                    <span>🪟 {{ $isHy ? 'Պատուհանի մոտ' : ($isRu ? 'У окна' : __('Window Table')) }}</span>
+                <button type="button" class="quick-tag-chip" :class="{ 'active': specialRequests.includes('🪟') }" @click="toggleSpecialRequestTag('🪟 {{ __('Window Table') }}')">
+                    <span>🪟 {{ __('Window Table') }}</span>
                 </button>
-                <button type="button" class="quick-tag-chip" :class="{ 'active': specialRequests.includes('🤫') }" @click="toggleSpecialRequestTag('🤫 {{ $isHy ? 'Հանգիստ անկյուն' : ($isRu ? 'Тихий уголок' : __('Quiet Corner')) }}')">
-                    <span>🤫 {{ $isHy ? 'Հանգիստ անկյուն' : ($isRu ? 'Тихий уголок' : __('Quiet Corner')) }}</span>
+                <button type="button" class="quick-tag-chip" :class="{ 'active': specialRequests.includes('🤫') }" @click="toggleSpecialRequestTag('🤫 {{ __('Quiet Corner') }}')">
+                    <span>🤫 {{ __('Quiet Corner') }}</span>
                 </button>
-                <button type="button" class="quick-tag-chip" :class="{ 'active': specialRequests.includes('👶') }" @click="toggleSpecialRequestTag('👶 {{ $isHy ? 'Մանկական աթոռ' : ($isRu ? 'Детский стульчик' : __('High Chair')) }}')">
-                    <span>👶 {{ $isHy ? 'Մանկական աթոռ' : ($isRu ? 'Детский стульчик' : __('High Chair')) }}</span>
+                <button type="button" class="quick-tag-chip" :class="{ 'active': specialRequests.includes('👶') }" @click="toggleSpecialRequestTag('👶 {{ __('High Chair') }}')">
+                    <span>👶 {{ __('High Chair') }}</span>
                 </button>
             </div>
         </div>
@@ -1809,7 +1887,7 @@
                 <span class="step-badge"><i class="fa-solid fa-utensils"></i></span>
                 <div>
                     <div class="step-title">{{ __('Pre-Order Food & Drinks (Optional)') }}</div>
-                    <div class="step-subtitle">{{ $isHy ? 'Ընտրեք սիրելի ուտեստները նախապես մեր մենյուից' : ($isRu ? 'Предзакажите блюда заранее из нашего меню' : __('Choose favorite dishes in advance from our digital menu')) }}</div>
+                    <div class="step-subtitle">{{ __('Choose favorite dishes in advance from our digital menu') }}</div>
                 </div>
             </div>
             <span class="preorder-count-badge" x-show="preOrderItems.length > 0" x-text="preOrderItems.length + ' ' + '{{ __('dishes') }}'"></span>
@@ -1853,7 +1931,7 @@
                                 </template>
                             </div>
                             <div class="preorder-item-price">
-                                <span x-text="formatCurrency(item.unit_price) + ' ' + '{{ $vendor->currency }}'"></span>
+                                <span x-text="formatCurrency(item.unit_price) + ' ' + '{{ $currencySymbol }}'"></span>
                             </div>
                         </div>
 
@@ -1868,7 +1946,7 @@
                                 </button>
                             </div>
                             <div class="preorder-item-subtotal">
-                                <span x-text="formatCurrency(item.unit_price * item.quantity) + ' ' + '{{ $vendor->currency }}'"></span>
+                                <span x-text="formatCurrency(item.unit_price * item.quantity) + ' ' + '{{ $currencySymbol }}'"></span>
                             </div>
                             <button type="button" class="preorder-remove-btn" @click="removeItemAt(idx)" title="{{ __('Remove') }}" aria-label="{{ __('Remove') }}">
                                 <i class="fa-solid fa-trash-can"></i>
@@ -1884,7 +1962,7 @@
                     <span class="summary-label">{{ __('Estimated Pre-Order Total:') }}</span>
                     <span class="summary-note">{{ __('Payment is made at the restaurant upon arrival') }}</span>
                 </div>
-                <div class="summary-amount" x-text="formatCurrency(calculatePreOrderTotal()) + ' ' + '{{ $vendor->currency }}'"></div>
+                <div class="summary-amount" x-text="formatCurrency(calculatePreOrderTotal()) + ' ' + '{{ $currencySymbol }}'"></div>
             </div>
 
             <!-- Pre-order notes field (Optional) -->
@@ -2092,7 +2170,7 @@ function reservationBookingApp() {
 
         getSelectedTableLabel() {
             if (!this.selectedTableId) {
-                return '{{ $isHy ? '✨ Ավտոմատ լավագույն սեղան' : ($isRu ? '✨ Автоназначенный стол' : '✨ ' . __('Auto-assigned optimal table')) }}';
+                return '✨ {{ __('Auto-assigned optimal table') }}';
             }
             const tbl = (this.eligibleTables || []).find(t => String(t.id) === String(this.selectedTableId));
             return tbl ? (tbl.display_name + (tbl.section ? ' (' + tbl.section + ')' : '')) : '{{ __('Selected Table') }}';

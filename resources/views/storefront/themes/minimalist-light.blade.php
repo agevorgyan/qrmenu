@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="{{ $lang }}" class="light" data-theme="light">
+<html lang="{{ $lang }}" dir="{{ in_array($lang, ['ar', 'fa', 'he', 'ur']) ? 'rtl' : 'ltr' }}" class="light" data-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="{{ $vendor->primary_color ?? '#0f172a' }}">
     <link rel="manifest" href="{{ route('client.manifest', ['vendor_slug' => $vendor->slug]) }}">
     <title>{{ $vendor->name }} - {{ __('menu.digital_menu') }}</title>
@@ -11,12 +11,15 @@
     <link rel="icon" type="image/png" href="{{ $vendor->logo ?: \App\Models\SystemSetting::getFavicon() }}">
     <link rel="apple-touch-icon" href="{{ $vendor->logo ?: \App\Models\SystemSetting::getFavicon() }}">
 
-    <!-- Google Fonts: Outfit & Inter -->
+    <!-- Google Fonts: Outfit, Inter & Noto Sans Armenian -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Armenian:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+    @php
+        $currencySymbol = (!$vendor->currency || strtoupper($vendor->currency) === 'AMD') ? '֏' : $vendor->currency;
+    @endphp
 
     <style>
         :root {
@@ -469,7 +472,7 @@
                             <span><i class="fa-solid fa-location-dot" style="font-size: 0.7rem; color: var(--text-muted);"></i> {{ $location->name }}</span>
                         @endif
                         @if(!empty($table))
-                            <span style="font-weight: 700; color: var(--primary);">{{ __('Սեղան') }} #{{ $table }}</span>
+                            <span style="font-weight: 700; color: var(--primary);">{{ __('menu.table') }} #{{ $table }}</span>
                         @endif
                         <span style="color: var(--primary); font-weight: 600;"><i class="fa-solid fa-circle-info" style="font-size: 0.78rem;"></i> {{ __('menu.nav_info') }}</span>
                     </div>
@@ -660,17 +663,17 @@
                                 <div class="dish-footer">
                                     <div class="price-text" style="line-height: 1.2;">
                                         @if($prod->isDiscountActive())
-                                            <div style="display: flex; align-items: baseline; gap: 0.35rem;">
-                                                <span style="color: #ef4444;">{{ number_format($prod->getEffectivePrice($location?->id)) }} {{ $vendor->currency }}</span>
-                                                <span style="font-size: 0.75rem; text-decoration: line-through; color: var(--text-muted); font-weight: 500;">
+                                            <div style="display: flex; align-items: baseline; gap: 0.35rem; flex-wrap: wrap;">
+                                                <span style="color: #ef4444; white-space: nowrap;">{{ number_format($prod->getEffectivePrice($location?->id)) }} {{ $currencySymbol }}</span>
+                                                <span style="font-size: 0.75rem; text-decoration: line-through; color: var(--text-muted); font-weight: 500; white-space: nowrap;">
                                                     {{ number_format($prod->getRegularPrice($location?->id)) }}
                                                 </span>
                                             </div>
                                         @elseif($prod->variations->count() > 1)
                                             <span style="font-size: 0.72rem; font-weight: 500; color: var(--text-muted); padding-right: 0.2rem;">{{ __('menu.starting_from') }}</span>
-                                            <span>{{ number_format($prod->variations->min('price')) }} {{ $vendor->currency }}</span>
+                                            <span style="white-space: nowrap;">{{ number_format($prod->variations->min('price')) }} {{ $currencySymbol }}</span>
                                         @else
-                                            <span>{{ number_format($prod->getEffectivePrice($location?->id)) }} {{ $vendor->currency }}</span>
+                                            <span style="white-space: nowrap;">{{ number_format($prod->getEffectivePrice($location?->id)) }} {{ $currencySymbol }}</span>
                                         @endif
                                         @if($vendor->isSecondaryCurrencyActive())
                                             @php

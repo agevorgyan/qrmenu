@@ -39,4 +39,13 @@ return [
     'rating_2_stars' => 'Բավարար',
     'rating_1_star' => 'Վատ',
     'error_submitting_rating' => 'Չհաջողվեց գրանցել գնահատականը: Խնդրում ենք ստուգել տվյալները:',
+    'cat_food_quality' => '🍽️ Սննդի որակ',
+    'cat_service_speed' => '⚡ Արագ սպասարկում',
+    'cat_waiter_politeness' => '😊 Բարեհամբույր մատուցող',
+    'cat_cleanliness' => '✨ Մաքրություն',
+    'cat_ambiance' => '🎶 Մթնոլորտ',
+    'cat_table_presentation' => '🥗 Մատուցման տեսք',
+    'comment_required' => 'Խնդրում ենք գրել մեկնաբանություն (պարտադիր է ցածր գնահատականի դեպքում)',
+    'thank_you_title' => 'Շնորհակալություն գնահատականի համար!',
+    'submit_failed' => 'Չհաջողվեց ուղարկել գնահատականը',
 ];

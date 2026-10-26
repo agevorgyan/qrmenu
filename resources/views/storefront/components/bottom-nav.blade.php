@@ -27,6 +27,7 @@
             $isDarkNav = ($luminance < 140);
         }
     }
+    $currencySymbol = (!$vendor->currency || strtoupper($vendor->currency) === 'AMD') ? '֏' : $vendor->currency;
 @endphp
 
 <!-- Pre-Order Floating Top Banner (Shown when customer is choosing dishes from main menu for table reservation) -->
@@ -83,7 +84,7 @@
                     <div class="order-pill-desc" style="display: flex; align-items: center; gap: 0.4rem;">
                         <span x-text="activeOrder.status_desc"></span>
                         <template x-if="activeOrder.total_amount">
-                            <span style="font-weight: 700; color: var(--text-main);" x-text="'• ' + Number(activeOrder.total_amount).toLocaleString() + ' ' + (activeOrder.currency || '{{ $vendor->currency }}')"></span>
+                            <span style="font-weight: 700; color: var(--text-main); white-space: nowrap;" x-text="'• ' + Number(activeOrder.total_amount).toLocaleString() + ' ' + (activeOrder.currency || '{{ $currencySymbol }}')"></span>
                         </template>
                     </div>
                 </div>
@@ -119,7 +120,7 @@
         </div>
         <div class="ai-bubble-content">
             <span class="ai-bubble-title">{{ $vendor->getAiWaiterName() }}</span>
-            <span class="ai-bubble-desc">✨ Օգնե՞մ ընտրել</span>
+            <span class="ai-bubble-desc">{{ __('menu.ai_help_choose') }}</span>
         </div>
     </div>
     @endif
@@ -167,7 +168,7 @@
             <div class="nav-icon-wrapper" style="position: relative;">
                 <i class="fa-solid fa-wand-magic-sparkles"></i>
             </div>
-            <span class="nav-label">{{ __('AI Մատուցող') }}</span>
+            <span class="nav-label">{{ __('menu.ai_waiter') }}</span>
         </button>
         @endif
 
