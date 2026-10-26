@@ -268,7 +268,7 @@
                             <span>Արժույթ *</span>
                         </label>
                         <select name="currency" class="form-select" required>
-                            <option value="AMD" {{ old('currency', $vendor->currency) === 'AMD' ? 'selected' : '' }}>AMD (֏ - ՀՀ Դրամ)</option>
+                            <option value="AMD" {{ in_array(old('currency', $vendor->currency), ['AMD', '֏'], true) ? 'selected' : '' }}>֏ (ՀՀ Դրամ)</option>
                             <option value="USD" {{ old('currency', $vendor->currency) === 'USD' ? 'selected' : '' }}>USD ($ - US Dollar)</option>
                             <option value="EUR" {{ old('currency', $vendor->currency) === 'EUR' ? 'selected' : '' }}>EUR (€ - Euro)</option>
                             <option value="RUB" {{ old('currency', $vendor->currency) === 'RUB' ? 'selected' : '' }}>RUB (₽ - Российский рубль)</option>

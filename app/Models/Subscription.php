@@ -53,6 +53,13 @@ class Subscription extends Model
         'metadata' => 'array',
     ];
 
+    public function getCurrencyAttribute(?string $value): string
+    {
+        $val = trim((string) ($value ?: '֏'));
+
+        return strtoupper($val) === 'AMD' ? '֏' : $val;
+    }
+
     /**
      * Relationship to the owning vendor.
      */

@@ -67,7 +67,7 @@ class SplitBillService
                 'total_amount' => $totalAmount,
                 'paid_amount' => $existingPaid,
                 'remaining_amount' => max(0, $totalAmount - $existingPaid),
-                'currency' => $vendor->currency ?? 'AMD',
+                'currency' => $vendor->currency ?? '֏',
                 'total_participants' => 1,
             ]);
         });
@@ -87,8 +87,8 @@ class SplitBillService
             throw new InvalidArgumentException(__("Participants count must be between 2 and {$max}."));
         }
 
-        $currency = strtoupper($bill->currency ?? 'AMD');
-        $decimals = in_array($currency, ['AMD', 'RUB', 'JPY'], true) ? 0 : 2;
+        $currency = strtoupper($bill->currency ?? '֏');
+        $decimals = in_array($currency, ['AMD', '֏', 'RUB', 'JPY'], true) ? 0 : 2;
         $factor = 10 ** $decimals;
 
         $remaining = (float) $bill->remaining_amount;
@@ -238,8 +238,8 @@ class SplitBillService
         $orderCharges = max(0.0, (float) $order->total_amount - (float) $order->subtotal);
         $apportionedFees = round($orderCharges * $ratio, 2);
 
-        $currency = strtoupper($order->vendor->currency ?? 'AMD');
-        $decimals = in_array($currency, ['AMD', 'RUB', 'JPY'], true) ? 0 : 2;
+        $currency = strtoupper($order->vendor->currency ?? '֏');
+        $decimals = in_array($currency, ['AMD', '֏', 'RUB', 'JPY'], true) ? 0 : 2;
 
         $totalPayable = round($itemsSubtotal + $apportionedFees, $decimals);
 
@@ -271,8 +271,8 @@ class SplitBillService
             throw new InvalidArgumentException(__('Split bill is disabled for this restaurant.'));
         }
 
-        $currency = strtoupper($bill->currency ?? 'AMD');
-        $decimals = in_array($currency, ['AMD', 'RUB', 'JPY'], true) ? 0 : 2;
+        $currency = strtoupper($bill->currency ?? '֏');
+        $decimals = in_array($currency, ['AMD', '֏', 'RUB', 'JPY'], true) ? 0 : 2;
         $amount = round($amount, $decimals);
 
         if ($amount <= 0) {
@@ -483,8 +483,8 @@ class SplitBillService
      */
     protected function applyPaidBalance(SplitBill $bill, Order $order, float $amountAdded, string $method): void
     {
-        $currency = strtoupper($bill->currency ?? 'AMD');
-        $decimals = in_array($currency, ['AMD', 'RUB', 'JPY'], true) ? 0 : 2;
+        $currency = strtoupper($bill->currency ?? '֏');
+        $decimals = in_array($currency, ['AMD', '֏', 'RUB', 'JPY'], true) ? 0 : 2;
 
         $totalPaid = (float) SplitBillPayment::withoutGlobalScopes()
             ->where('split_bill_id', $bill->id)

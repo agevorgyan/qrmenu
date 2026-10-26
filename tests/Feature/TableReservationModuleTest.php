@@ -354,7 +354,7 @@ class TableReservationModuleTest extends TestCase
         $this->assertNotNull($reservation->preOrder);
         $this->assertEquals(ReservationPreOrder::STATUS_PENDING, $reservation->preOrder->status);
         $this->assertEquals(15000.00, (float) $reservation->preOrder->subtotal); // 2 * 7500
-        $this->assertEquals('AMD', $reservation->preOrder->currency);
+        $this->assertEquals('֏', $reservation->preOrder->currency);
 
         $items = $reservation->preOrder->items;
         $this->assertCount(1, $items);

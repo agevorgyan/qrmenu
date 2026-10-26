@@ -91,6 +91,13 @@ class CurrencyExchangeService
         $base = strtoupper(trim($baseCurrency));
         $target = strtoupper(trim($targetCurrency));
 
+        if ($base === '֏') {
+            $base = 'AMD';
+        }
+        if ($target === '֏') {
+            $target = 'AMD';
+        }
+
         if ($base === '' || $target === '') {
             return null;
         }
@@ -270,7 +277,11 @@ class CurrencyExchangeService
     {
         $options = [];
         foreach (self::SUPPORTED_CURRENCIES as $code => $meta) {
-            $options[$code] = "{$code} ({$meta['symbol']} - {$meta['name']})";
+            if ($code === 'AMD') {
+                $options[$code] = "֏ ({$meta['name']})";
+            } else {
+                $options[$code] = "{$code} ({$meta['symbol']} - {$meta['name']})";
+            }
         }
 
         return $options;
@@ -281,6 +292,11 @@ class CurrencyExchangeService
      */
     public function isCurrencySupported(string $currency): bool
     {
-        return array_key_exists(strtoupper(trim($currency)), self::SUPPORTED_CURRENCIES);
+        $code = strtoupper(trim($currency));
+        if ($code === '֏') {
+            $code = 'AMD';
+        }
+
+        return array_key_exists($code, self::SUPPORTED_CURRENCIES);
     }
 }

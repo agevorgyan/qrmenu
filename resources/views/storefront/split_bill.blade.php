@@ -568,7 +568,7 @@ function storefrontSplitBillApp() {
 
         formatMoney(val) {
             return Number(val || 0).toLocaleString(undefined, {
-                minimumFractionDigits: (['AMD', 'RUB', 'JPY'].includes(this.bill.currency)) ? 0 : 2,
+                minimumFractionDigits: (['AMD', '֏', 'RUB', 'JPY'].includes(this.bill.currency)) ? 0 : 2,
                 maximumFractionDigits: 2
             });
         },
@@ -592,7 +592,7 @@ function storefrontSplitBillApp() {
 
         getEqualShare() {
             if (this.bill.remaining_amount <= 0 || this.participantsCount <= 0) return 0;
-            const decimals = (['AMD', 'RUB', 'JPY'].includes(this.bill.currency)) ? 0 : 2;
+            const decimals = (['AMD', '֏', 'RUB', 'JPY'].includes(this.bill.currency)) ? 0 : 2;
             const factor = Math.pow(10, decimals);
             return Math.round((this.bill.remaining_amount / this.participantsCount) * factor) / factor;
         },

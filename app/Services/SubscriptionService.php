@@ -40,7 +40,8 @@ class SubscriptionService
         $statusStr = $vendor->subscription_status ?? 'trialing';
         $status = SubscriptionStatus::tryFrom($statusStr) ?? SubscriptionStatus::Trialing;
 
-        $priceObj = $plan?->priceFor('monthly', $vendor->currency ?: 'AMD');
+        $vendorCurr = Vendor::normalizeCurrencyCode($vendor->getRawOriginal('currency') ?: $vendor->currency);
+        $priceObj = $plan?->priceFor('monthly', $vendorCurr);
         $basePrice = $priceObj ? (float) $priceObj->price : (float) ($plan?->price ?? 0);
 
         $subscription = Subscription::create([
@@ -48,7 +49,7 @@ class SubscriptionService
             'subscription_plan_id' => $planId,
             'subscription_plan_price_id' => $priceObj?->id,
             'price' => $basePrice,
-            'currency' => $vendor->currency ?: ($plan?->currency ?? 'AMD'),
+            'currency' => $vendorCurr ?: ($plan?->currency ?? 'AMD'),
             'status' => $status,
             'billing_interval' => 'monthly',
             'trial_starts_at' => $vendor->created_at ?? now(),
@@ -127,7 +128,8 @@ class SubscriptionService
 
             $trialStartsAt = $existing?->trial_starts_at ?? $now;
             $trialEnd = (clone $now)->addDays($days);
-            $priceObj = $plan->priceFor('monthly', $vendor->currency ?: 'AMD');
+            $vendorCurr = Vendor::normalizeCurrencyCode($vendor->getRawOriginal('currency') ?: $vendor->currency);
+            $priceObj = $plan->priceFor('monthly', $vendorCurr);
             $basePrice = $priceObj ? (float) $priceObj->price : (float) $plan->price;
 
             $subscription = Subscription::withoutTenantQuery()->updateOrCreate(
@@ -136,7 +138,7 @@ class SubscriptionService
                     'subscription_plan_id' => $plan->id,
                     'subscription_plan_price_id' => $priceObj?->id,
                     'price' => $basePrice,
-                    'currency' => $vendor->currency ?: ($plan->currency ?? 'AMD'),
+                    'currency' => $vendorCurr ?: ($plan->currency ?? 'AMD'),
                     'status' => SubscriptionStatus::Trialing,
                     'billing_interval' => 'monthly',
                     'trial_starts_at' => $trialStartsAt,
@@ -190,14 +192,14 @@ class SubscriptionService
             $periodEnd = $payment->period_end ? Carbon::parse($payment->period_end) : (clone $periodStart)->addMonth();
             $ref = $attempt?->provider_transaction_id ?? $attempt?->merchant_reference ?? (string) $payment->invoice_number;
 
-            $priceObj = $plan->priceFor($payment->period_end ? 'monthly' : 'monthly', $payment->currency ?: 'AMD');
+            $priceObj = $plan->priceFor($payment->period_end ? 'monthly' : 'monthly', Vendor::normalizeCurrencyCode($payment->currency ?: 'AMD'));
             $oldStatus = $lockedSub->status;
 
             $lockedSub->update([
                 'subscription_plan_id' => $plan->id,
                 'subscription_plan_price_id' => $priceObj?->id ?? $lockedSub->subscription_plan_price_id,
                 'price' => $payment->amount,
-                'currency' => $payment->currency ?: ($plan->currency ?? 'AMD'),
+                'currency' => Vendor::normalizeCurrencyCode($payment->currency ?: ($plan->getRawOriginal('currency') ?: $plan->currency ?: 'AMD')),
                 'status' => SubscriptionStatus::Active,
                 'current_period_start' => $periodStart,
                 'current_period_end' => $periodEnd,
@@ -300,7 +302,7 @@ class SubscriptionService
             }
 
             $plan = SubscriptionPlan::find($planId);
-            $planPrice = $plan?->priceFor($interval, $payment->currency ?: ($lockedSub->currency ?? 'AMD'));
+            $planPrice = $plan?->priceFor($interval, Vendor::normalizeCurrencyCode($payment->currency ?: ($lockedSub->getRawOriginal('currency') ?: $lockedSub->currency ?: 'AMD')));
             $priceId = $attempt->request_payload['subscription_plan_price_id'] ?? $planPrice?->id ?? $lockedSub->subscription_plan_price_id;
 
             $lockedSub->update([
@@ -308,7 +310,7 @@ class SubscriptionService
                 'subscription_plan_price_id' => $priceId,
                 'billing_interval' => $interval,
                 'price' => $payment->amount,
-                'currency' => $payment->currency ?: $lockedSub->currency,
+                'currency' => Vendor::normalizeCurrencyCode($payment->currency ?: ($lockedSub->getRawOriginal('currency') ?: $lockedSub->currency ?: 'AMD')),
                 'status' => SubscriptionStatus::Active,
                 'current_period_start' => $lockedSub->current_period_start ?? ($payment->period_start ? Carbon::parse($payment->period_start) : now()),
                 'current_period_end' => $newExpiry,
@@ -729,14 +731,14 @@ class SubscriptionService
             }
 
             $oldPlanId = $lockedSub->subscription_plan_id;
-            $priceObj = $newPrice ?? $newPlan->priceFor($lockedSub->billing_interval ?: 'monthly', $lockedSub->currency ?: 'AMD');
+            $priceObj = $newPrice ?? $newPlan->priceFor($lockedSub->billing_interval ?: 'monthly', Vendor::normalizeCurrencyCode($lockedSub->getRawOriginal('currency') ?: $lockedSub->currency ?: 'AMD'));
             $newPriceAmount = $priceObj ? (float) $priceObj->price : (float) $newPlan->price;
 
             $lockedSub->update([
                 'subscription_plan_id' => $newPlan->id,
                 'subscription_plan_price_id' => $priceObj?->id,
                 'price' => $newPriceAmount,
-                'currency' => $priceObj?->currency ?: $newPlan->currency ?: $lockedSub->currency,
+                'currency' => Vendor::normalizeCurrencyCode($priceObj?->currency ?: $newPlan->getRawOriginal('currency') ?: $newPlan->currency ?: $lockedSub->getRawOriginal('currency') ?: $lockedSub->currency ?: 'AMD'),
             ]);
 
             $lockedSub->recordLifecycleEvent(
@@ -983,8 +985,8 @@ class SubscriptionService
         string $currency,
         int $monthsCount = 1
     ): bool {
-        $expectedCurrency = $plan->currency ?? 'AMD';
-        if (strtoupper($currency) !== strtoupper($expectedCurrency)) {
+        $expectedCurrency = Vendor::normalizeCurrencyCode($plan->currency ?? 'AMD');
+        if (Vendor::normalizeCurrencyCode($currency) !== $expectedCurrency) {
             return false;
         }
 

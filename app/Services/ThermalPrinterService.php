@@ -270,7 +270,7 @@ class ThermalPrinterService
         $headerTitle = ! empty($settings['header_title']) ? $settings['header_title'] : $vendor->name;
         $headerSubtitle = $settings['header_subtitle'] ?? ($order->location?->name ?? '');
         $footerText = ! empty($settings['footer_text']) ? $settings['footer_text'] : $dict['thank_you'];
-        $currency = $vendor->currency ?? 'AMD';
+        $currency = $vendor->currency ?? '֏';
 
         $showLogo = ! empty($settings['show_logo']) && ! empty($vendor->logo);
         $logoUrl = $showLogo ? $vendor->logo : null;

@@ -55,7 +55,7 @@ class Tip extends Model
                 $tip->uuid = (string) Str::uuid();
             }
             if (empty($tip->currency)) {
-                $tip->currency = 'AMD';
+                $tip->currency = '֏';
             }
             if (empty($tip->payment_status)) {
                 $tip->payment_status = $tip->is_cash ? 'paid' : 'pending';
@@ -91,6 +91,13 @@ class Tip extends Model
                 }
             }
         });
+    }
+
+    public function getCurrencyAttribute(?string $value): string
+    {
+        $val = trim((string) ($value ?: '֏'));
+
+        return strtoupper($val) === 'AMD' ? '֏' : $val;
     }
 
     public function vendor(): BelongsTo

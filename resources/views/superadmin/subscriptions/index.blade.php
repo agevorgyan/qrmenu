@@ -391,7 +391,7 @@
                 @csrf
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
-                        <label class="form-label">{{ __('Amount (AMD)') }} *</label>
+                        <label class="form-label">{{ __('Amount (֏)') }} *</label>
                         <input type="number" id="pay_amount" name="amount" step="100" min="0" class="form-input" required placeholder="19900">
                     </div>
                     <div>

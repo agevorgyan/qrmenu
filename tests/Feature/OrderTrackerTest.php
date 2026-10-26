@@ -99,7 +99,7 @@ class OrderTrackerTest extends TestCase
                     'status_step' => 3,
                     'status_percent' => 75,
                     'total_amount' => 3500,
-                    'currency' => 'AMD',
+                    'currency' => '֏',
                 ],
             ])
             ->assertJsonStructure([

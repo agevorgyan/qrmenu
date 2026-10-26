@@ -245,7 +245,7 @@
                                         <div style="display: flex; align-items: baseline; gap: 0.35rem; flex-wrap: wrap;">
                                             <div style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 800; color: #ef4444; display: flex; align-items: baseline; gap: 0.2rem;">
                                                 <span>{{ number_format($item->effective_price, 0, '.', ',') }}</span>
-                                                <span style="font-size: 0.8rem; color: #ef4444; font-weight: 700;">{{ $vendor->currency ?? 'AMD' }}</span>
+                                                <span style="font-size: 0.8rem; color: #ef4444; font-weight: 700;">{{ $vendor->currency ?? '֏' }}</span>
                                             </div>
                                             <span style="font-size: 0.8rem; text-decoration: line-through; color: var(--text-muted); font-weight: 600;">
                                                 {{ number_format($item->regular_price, 0, '.', ',') }}
@@ -254,7 +254,7 @@
                                     @else
                                         <div style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--text-main); display: flex; align-items: baseline; gap: 0.2rem;">
                                             <span>{{ number_format($item->effective_price, 0, '.', ',') }}</span>
-                                            <span style="font-size: 0.8rem; color: var(--primary); font-weight: 700;">{{ $vendor->currency ?? 'AMD' }}</span>
+                                            <span style="font-size: 0.8rem; color: var(--primary); font-weight: 700;">{{ $vendor->currency ?? '֏' }}</span>
                                         </div>
                                     @endif
 

@@ -292,7 +292,7 @@ class EnterpriseSidebarAndSettingsRefactoringTest extends TestCase
 
         $this->vendor->refresh();
         $this->location->refresh();
-        $this->assertEquals('AMD', $this->vendor->currency);
+        $this->assertEquals('֏', $this->vendor->currency);
         $this->assertEquals('Asia/Yerevan', $this->vendor->timezone);
         $this->assertEquals(10, $this->vendor->service_fee_value);
         $this->assertEquals('Tumanyan 5, Yerevan', $this->location->address);

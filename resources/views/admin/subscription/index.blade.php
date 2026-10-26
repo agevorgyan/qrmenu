@@ -445,7 +445,7 @@
                 </div>
                 <div style="border-top: 1px dashed var(--border-color); padding-top: 0.65rem; display: flex; justify-content: space-between; align-items: center;">
                     <span style="font-weight: 800; font-size: 1rem; color: var(--text-main);">{{ __('Total Due:') }}</span>
-                    <span style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.35rem; color: var(--primary);" x-text="calculateTotal() + ' ' + '{{ $vendor->currency ?? 'AMD' }}'"></span>
+                    <span style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.35rem; color: var(--primary);" x-text="calculateTotal() + ' ' + '{{ $vendor->currency ?? '֏' }}'"></span>
                 </div>
             </div>
 

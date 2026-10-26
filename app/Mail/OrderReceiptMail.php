@@ -46,7 +46,7 @@ class OrderReceiptMail extends Mailable implements ShouldQueue
                 'vendor_name' => $this->order->vendor?->name ?? 'QRMenu',
                 'order_number' => $this->order->order_number,
                 'order_type' => $orderTypeLabel,
-                'total_amount' => number_format((float) $this->order->total_amount).' '.($this->order->vendor?->currency ?? 'AMD'),
+                'total_amount' => number_format((float) $this->order->total_amount).' '.($this->order->vendor?->currency ?? '֏'),
                 'support_email' => 'support@menu.elab.am',
                 'site_name' => $siteName,
             ], $targetLocale);

@@ -338,7 +338,7 @@
                         <i class="fa-solid fa-paste" style="color: var(--primary); margin-right: 0.35rem;"></i>
                         {{ __('Paste Menu Text or Price List') }}
                     </label>
-                    <textarea name="menu_text" rows="7" class="ai-textarea" placeholder="STARTERS&#10;Truffle Hummus 3500 AMD&#10;Fried Calamari 4500 AMD&#10;&#10;MAINS&#10;Ribeye Steak 12500 AMD"></textarea>
+                    <textarea name="menu_text" rows="7" class="ai-textarea" placeholder="STARTERS&#10;Truffle Hummus 3500 ֏&#10;Fried Calamari 4500 ֏&#10;&#10;MAINS&#10;Ribeye Steak 12500 ֏"></textarea>
                 </div>
 
                 <button type="submit" class="btn btn-primary" style="width: 100%; box-sizing: border-box; justify-content: center; border-radius: 12px; font-weight: 800; padding: 0.85rem 1.5rem; font-size: 0.95rem; box-shadow: 0 4px 14px var(--primary-glow); gap: 0.5rem;">

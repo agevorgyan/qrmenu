@@ -135,7 +135,7 @@
             marketingOptIn: true,
             orderNotes: '',
             selectedLang: bootConfig.lang || 'hy',
-            currency: vendor.currency || 'AMD',
+            currency: (!vendor.currency || vendor.currency === 'AMD') ? '֏' : vendor.currency,
             vendorSlug: vendor.slug || '',
             csrfToken: bootConfig.csrfToken || '',
             locationId: bootConfig.locationId || 1,
@@ -594,7 +594,8 @@
 
             formatCurrency(val) {
                 const num = Number(val || 0);
-                return num.toLocaleString() + ' ' + (this.currency || 'AMD');
+                const curr = (!this.currency || this.currency === 'AMD') ? '֏' : this.currency;
+                return num.toLocaleString() + ' ' + curr;
             },
 
             getCartItemQty(dishId) {

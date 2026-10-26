@@ -60,6 +60,8 @@ class SubscriptionPlanPrice extends Model
             default => __('month'),
         };
 
-        return number_format($this->price, 0, '.', ' ').' '.$this->currency.' / '.$intervalLabel;
+        $currSymbol = strtoupper((string) $this->currency) === 'AMD' ? '֏' : $this->currency;
+
+        return number_format($this->price, 0, '.', ' ').' '.$currSymbol.' / '.$intervalLabel;
     }
 }

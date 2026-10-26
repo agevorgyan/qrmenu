@@ -619,9 +619,9 @@
                                         </option>
                                     @endforeach
                                 @else
-                                    <option value="basic" {{ old('subscription_plan', request('plan', 'pro')) == 'basic' ? 'selected' : '' }}>Basic — 9 900 AMD / {{ __('month') }} ({{ __('14-day free trial') }})</option>
-                                    <option value="pro" {{ old('subscription_plan', request('plan', 'pro')) == 'pro' ? 'selected' : '' }}>Pro — 19 900 AMD / {{ __('month') }} ({{ __('14-day free trial') }})</option>
-                                    <option value="business" {{ old('subscription_plan', request('plan', 'pro')) == 'business' ? 'selected' : '' }}>Business — 34 900 AMD / {{ __('month') }} ({{ __('14-day free trial') }})</option>
+                                    <option value="basic" {{ old('subscription_plan', request('plan', 'pro')) == 'basic' ? 'selected' : '' }}>Basic — 9 900 ֏ / {{ __('month') }} ({{ __('14-day free trial') }})</option>
+                                    <option value="pro" {{ old('subscription_plan', request('plan', 'pro')) == 'pro' ? 'selected' : '' }}>Pro — 19 900 ֏ / {{ __('month') }} ({{ __('14-day free trial') }})</option>
+                                    <option value="business" {{ old('subscription_plan', request('plan', 'pro')) == 'business' ? 'selected' : '' }}>Business — 34 900 ֏ / {{ __('month') }} ({{ __('14-day free trial') }})</option>
                                     <option value="custom" {{ old('subscription_plan', request('plan', 'pro')) == 'custom' ? 'selected' : '' }}>Custom — {{ __('Contractual') }}</option>
                                 @endif
                             </select>

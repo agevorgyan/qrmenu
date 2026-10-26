@@ -1044,7 +1044,7 @@ self.addEventListener('fetch', event => {
                 'status' => $order->status,
                 'payment_status' => $order->payment_status,
                 'total_amount' => (float) $order->total_amount,
-                'currency' => $vendor->currency ?? 'AMD',
+                'currency' => $vendor->currency ?? '֏',
             ],
             'bill' => [
                 'split_token' => $splitBill->split_token,

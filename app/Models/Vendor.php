@@ -37,7 +37,7 @@ class Vendor extends Model
         'delivery_enabled' => true,
         'allow_whatsapp_orders' => true,
         'timezone' => 'Asia/Yerevan',
-        'currency' => 'AMD',
+        'currency' => '֏',
         'weight_unit' => 'g',
         'volume_unit' => 'ml',
         'secondary_currency_enabled' => false,
@@ -212,6 +212,26 @@ class Vendor extends Model
     ];
 
     /**
+     * Get the currency attribute, normalizing 'AMD' to '֏' for system-wide display.
+     */
+    public function getCurrencyAttribute(?string $value): string
+    {
+        $val = trim((string) ($value ?: '֏'));
+
+        return strtoupper($val) === 'AMD' ? '֏' : $val;
+    }
+
+    /**
+     * Normalize a currency symbol or code back to its canonical ISO 4217 code (e.g. '֏' -> 'AMD').
+     */
+    public static function normalizeCurrencyCode(?string $currency): string
+    {
+        $val = strtoupper(trim((string) ($currency ?: 'AMD')));
+
+        return ($val === '֏' || $val === 'AMD' || $val === '') ? 'AMD' : $val;
+    }
+
+    /**
      * Determine if secondary currency display is enabled and actively valid.
      */
     public function isSecondaryCurrencyActive(): bool
@@ -229,8 +249,8 @@ class Vendor extends Model
             return false;
         }
 
-        $primary = strtoupper(trim((string) ($this->currency ?: 'AMD')));
-        $secondary = strtoupper(trim((string) $this->secondary_currency));
+        $primary = self::normalizeCurrencyCode($this->getRawOriginal('currency') ?: $this->currency);
+        $secondary = self::normalizeCurrencyCode($this->secondary_currency);
 
         if ($primary === $secondary) {
             return false;
@@ -246,7 +266,7 @@ class Vendor extends Model
      */
     public function resolveSecondaryCurrency(?string $lang = null): ?string
     {
-        $primary = strtoupper(trim((string) ($this->currency ?: 'AMD')));
+        $primary = self::normalizeCurrencyCode($this->getRawOriginal('currency') ?: $this->currency);
 
         if ($this->secondary_currency_rate_mode === 'auto_by_language') {
             $effectiveLang = strtolower(trim((string) ($lang ?: app()->getLocale() ?: 'en')));
@@ -255,7 +275,7 @@ class Vendor extends Model
             if ($mapped === $primary) {
                 // If native language is Armenian and primary is AMD, display the vendor's fallback secondary currency (e.g. USD)
                 if ($effectiveLang === 'hy') {
-                    $fallback = strtoupper(trim((string) ($this->secondary_currency ?: 'USD')));
+                    $fallback = self::normalizeCurrencyCode($this->secondary_currency ?: 'USD');
 
                     return $fallback !== $primary ? $fallback : null;
                 }
@@ -266,9 +286,9 @@ class Vendor extends Model
             return $mapped;
         }
 
-        $secondary = strtoupper(trim((string) $this->secondary_currency));
+        $secondary = self::normalizeCurrencyCode($this->secondary_currency);
 
-        return ($secondary !== '' && $secondary !== $primary) ? $secondary : null;
+        return ($this->secondary_currency && $secondary !== $primary) ? $secondary : null;
     }
 
     /**
@@ -276,15 +296,15 @@ class Vendor extends Model
      */
     public function getSecondaryExchangeRate(?string $targetCurrency = null): ?float
     {
-        $primary = strtoupper(trim((string) ($this->currency ?: 'AMD')));
-        $target = strtoupper(trim((string) ($targetCurrency ?: $this->resolveSecondaryCurrency() ?: $this->secondary_currency ?: 'USD')));
+        $primary = self::normalizeCurrencyCode($this->getRawOriginal('currency') ?: $this->currency);
+        $target = self::normalizeCurrencyCode($targetCurrency ?: $this->resolveSecondaryCurrency() ?: $this->secondary_currency ?: 'USD');
 
         if ($primary === $target) {
             return 1.0;
         }
 
         // If manual mode and requesting the configured secondary currency
-        if ($this->secondary_currency_rate_mode === 'manual' && $target === strtoupper(trim((string) $this->secondary_currency))) {
+        if ($this->secondary_currency_rate_mode === 'manual' && $target === self::normalizeCurrencyCode($this->secondary_currency)) {
             $rate = (float) $this->secondary_currency_exchange_rate;
 
             return ($rate > 0 && is_finite($rate)) ? $rate : null;
@@ -292,7 +312,7 @@ class Vendor extends Model
 
         // If standard automatic mode with existing valid stored rate for configured currency
         if ($this->secondary_currency_rate_mode === 'automatic'
-            && $target === strtoupper(trim((string) $this->secondary_currency))
+            && $target === self::normalizeCurrencyCode($this->secondary_currency)
             && (float) $this->secondary_currency_exchange_rate > 0) {
             return (float) $this->secondary_currency_exchange_rate;
         }

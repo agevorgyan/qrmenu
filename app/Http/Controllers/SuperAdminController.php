@@ -647,7 +647,7 @@ class SuperAdminController extends Controller
             'subscription_id' => $subscription->id,
             'subscription_plan_id' => $vendor->subscription_plan_id,
             'amount' => $validated['amount'],
-            'currency' => $vendor->currency ?? 'AMD',
+            'currency' => Vendor::normalizeCurrencyCode($vendor->getRawOriginal('currency') ?: $vendor->currency),
             'payment_method' => $validated['payment_method'],
             'invoice_number' => $validated['invoice_number'] ?? 'INV-'.strtoupper(Str::random(6)),
             'period_start' => $validated['period_start'],
@@ -914,7 +914,7 @@ class SuperAdminController extends Controller
             'type' => 'required|string|in:restaurant,cafe,hotel',
             'custom_domain' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:50',
-            'currency' => ['required', 'string', Rule::in(['AMD', 'USD', 'EUR', 'RUB', 'GEL', 'GBP', 'AED', 'CNY', 'KZT', 'TRY'])],
+            'currency' => ['required', 'string', Rule::in(['AMD', '֏', 'USD', 'EUR', 'RUB', 'GEL', 'GBP', 'AED', 'CNY', 'KZT', 'TRY'])],
             'timezone' => ['nullable', 'string', 'max:50', Rule::in(\DateTimeZone::listIdentifiers())],
             'weight_unit' => ['nullable', 'string', Rule::in(['g', 'kg', 'oz', 'lb'])],
             'volume_unit' => ['nullable', 'string', Rule::in(['ml', 'l', 'fl_oz', 'fl oz'])],
@@ -953,6 +953,7 @@ class SuperAdminController extends Controller
         }
 
         $validated['slug'] = Str::slug($validated['slug']);
+        $validated['currency'] = Vendor::normalizeCurrencyCode($validated['currency']);
         $validated['service_fee_enabled'] = $request->boolean('service_fee_enabled');
         $validated['delivery_enabled'] = $request->boolean('delivery_enabled');
         $validated['takeaway_enabled'] = $request->boolean('takeaway_enabled');

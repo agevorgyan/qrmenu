@@ -178,7 +178,7 @@
                     <input type="text" name="name" class="form-input" required placeholder="օր․ Ultra Business">
                 </div>
                 <div>
-                    <label class="form-label">Գին (AMD / ամիս) *</label>
+                    <label class="form-label">Գին (֏ / ամիս) *</label>
                     <input type="number" name="price" step="100" min="0" class="form-input" required placeholder="0 = Պայմանագրային">
                 </div>
             </div>
@@ -243,7 +243,7 @@
                     <input type="text" id="edit_name" name="name" class="form-input" required>
                 </div>
                 <div>
-                    <label class="form-label">Գին (AMD / ամիս) *</label>
+                    <label class="form-label">Գին (֏ / ամիս) *</label>
                     <input type="number" id="edit_price" name="price" step="100" min="0" class="form-input" required>
                 </div>
             </div>

@@ -76,6 +76,13 @@ class SplitBillPayment extends Model
         });
     }
 
+    public function getCurrencyAttribute(?string $value): string
+    {
+        $val = trim((string) ($value ?: '֏'));
+
+        return strtoupper($val) === 'AMD' ? '֏' : $val;
+    }
+
     public function splitBill(): BelongsTo
     {
         return $this->belongsTo(SplitBill::class);

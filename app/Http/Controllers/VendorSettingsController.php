@@ -94,7 +94,7 @@ class VendorSettingsController extends Controller
         }
 
         $currencies = [
-            'AMD' => 'AMD (֏ - ՀՀ Դրամ)',
+            'AMD' => '֏ (ՀՀ Դրամ)',
             'USD' => 'USD ($ - US Dollar)',
             'EUR' => 'EUR (€ - Euro)',
             'RUB' => 'RUB (₽ - Российский рубль)',
@@ -158,9 +158,9 @@ class VendorSettingsController extends Controller
         $validated = $request->validate([
             // Regional & Localization Settings
             'timezone' => ['nullable', 'string', 'max:50', Rule::in(\DateTimeZone::listIdentifiers())],
-            'currency' => ['nullable', 'string', 'max:10', Rule::in(['AMD', 'USD', 'EUR', 'RUB', 'GEL', 'GBP', 'AED', 'CNY', 'KZT', 'TRY', 'IRR'])],
+            'currency' => ['nullable', 'string', 'max:10', Rule::in(['AMD', '֏', 'USD', 'EUR', 'RUB', 'GEL', 'GBP', 'AED', 'CNY', 'KZT', 'TRY', 'IRR'])],
             'secondary_currency_enabled' => ['nullable', 'boolean'],
-            'secondary_currency' => ['nullable', 'string', 'max:10', Rule::in(['AMD', 'USD', 'EUR', 'RUB', 'GEL', 'GBP', 'AED', 'CNY', 'KZT', 'TRY', 'IRR'])],
+            'secondary_currency' => ['nullable', 'string', 'max:10', Rule::in(['AMD', '֏', 'USD', 'EUR', 'RUB', 'GEL', 'GBP', 'AED', 'CNY', 'KZT', 'TRY', 'IRR'])],
             'secondary_currency_rate_mode' => ['nullable', 'string', Rule::in(['manual', 'automatic', 'auto_by_language'])],
             'secondary_currency_exchange_rate' => ['nullable', 'numeric', 'gt:0', 'lte:100000000'],
             'secondary_currency_rate_provider' => ['nullable', 'string', 'max:50'],
@@ -251,8 +251,11 @@ class VendorSettingsController extends Controller
 
         $secondaryEnabled = $request->boolean('secondary_currency_enabled');
         if ($secondaryEnabled) {
-            $effectivePrimary = strtoupper(trim((string) ($request->input('currency') ?: $vendor->currency ?: 'AMD')));
-            $effectiveSecondary = strtoupper(trim((string) ($request->input('secondary_currency') ?: $vendor->secondary_currency)));
+            $effectivePrimary = Vendor::normalizeCurrencyCode($request->input('currency') ?: $vendor->getRawOriginal('currency') ?: 'AMD');
+            $effectiveSecondary = $request->input('secondary_currency') ?: $vendor->secondary_currency;
+            if (! empty($effectiveSecondary)) {
+                $effectiveSecondary = Vendor::normalizeCurrencyCode($effectiveSecondary);
+            }
             $rateMode = $request->input('secondary_currency_rate_mode', $vendor->secondary_currency_rate_mode ?? 'manual');
 
             if (empty($effectiveSecondary)) {
@@ -462,7 +465,7 @@ class VendorSettingsController extends Controller
             $vendorUpdate['timezone'] = ! empty($validated['timezone']) ? $validated['timezone'] : 'Asia/Yerevan';
         }
         if (array_key_exists('currency', $validated)) {
-            $vendorUpdate['currency'] = ! empty($validated['currency']) ? strtoupper(trim($validated['currency'])) : ($vendor->currency ?: 'AMD');
+            $vendorUpdate['currency'] = ! empty($validated['currency']) ? Vendor::normalizeCurrencyCode($validated['currency']) : ($vendor->getRawOriginal('currency') ?: 'AMD');
         }
         if (array_key_exists('weight_unit', $validated)) {
             $vendorUpdate['weight_unit'] = ! empty($validated['weight_unit']) ? $validated['weight_unit'] : 'g';
@@ -474,7 +477,7 @@ class VendorSettingsController extends Controller
         // Secondary Currency Settings
         $vendorUpdate['secondary_currency_enabled'] = $secondaryEnabled;
         if ($request->has('secondary_currency') && $request->filled('secondary_currency')) {
-            $vendorUpdate['secondary_currency'] = strtoupper(trim((string) $request->input('secondary_currency')));
+            $vendorUpdate['secondary_currency'] = Vendor::normalizeCurrencyCode((string) $request->input('secondary_currency'));
         }
         if ($request->has('secondary_currency_rate_mode') && $request->filled('secondary_currency_rate_mode')) {
             $rateMode = $request->input('secondary_currency_rate_mode');
@@ -482,7 +485,7 @@ class VendorSettingsController extends Controller
 
             if ($rateMode === 'automatic' || $rateMode === 'auto_by_language') {
                 $targetCurr = $vendorUpdate['secondary_currency'] ?? $vendor->secondary_currency ?? 'USD';
-                $primaryCurr = $vendorUpdate['currency'] ?? $vendor->currency ?? 'AMD';
+                $primaryCurr = Vendor::normalizeCurrencyCode($vendorUpdate['currency'] ?? $vendor->getRawOriginal('currency') ?? 'AMD');
                 $liveRate = app(CurrencyExchangeService::class)->getLiveRate($primaryCurr, $targetCurr);
                 if ($liveRate) {
                     $vendorUpdate['secondary_currency_exchange_rate'] = $liveRate;
@@ -1190,8 +1193,8 @@ class VendorSettingsController extends Controller
         $vendor = Auth::user()->vendor;
         $this->authorize('viewSettings', $vendor);
 
-        $primary = strtoupper(trim((string) ($request->input('currency') ?: $vendor->currency ?: 'AMD')));
-        $target = strtoupper(trim((string) ($request->input('secondary_currency') ?: $vendor->secondary_currency ?: 'USD')));
+        $primary = Vendor::normalizeCurrencyCode($request->input('currency') ?: $vendor->getRawOriginal('currency') ?: 'AMD');
+        $target = Vendor::normalizeCurrencyCode($request->input('secondary_currency') ?: $vendor->secondary_currency ?: 'USD');
 
         $service = app(CurrencyExchangeService::class);
         $rate = $service->getLiveRate($primary, $target);
@@ -1203,6 +1206,9 @@ class VendorSettingsController extends Controller
             ], 422);
         }
 
+        $primaryLabel = $primary === 'AMD' ? '֏' : $primary;
+        $targetLabel = $target === 'AMD' ? '֏' : $target;
+
         return response()->json([
             'success' => true,
             'primary' => $primary,
@@ -1211,7 +1217,7 @@ class VendorSettingsController extends Controller
             'rate_full' => $rate,
             'provider' => 'ExchangeRate-API',
             'updated_at' => now()->format('Y-m-d H:i:s'),
-            'label' => "1 {$target} = ".number_format($rate, 2)." {$primary}",
+            'label' => "1 {$targetLabel} = ".number_format($rate, 2)." {$primaryLabel}",
         ]);
     }
 

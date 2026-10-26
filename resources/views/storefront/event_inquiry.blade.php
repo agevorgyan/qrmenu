@@ -1305,7 +1305,7 @@
                                    class="input-control" 
                                    x-model="form.budget" 
                                    placeholder="{{ $isHy ? 'օր.՝ 250,000' : 'e.g. 250000' }}">
-                            <span class="budget-currency-badge">{{ $vendor->currency ?: 'AMD' }}</span>
+                            <span class="budget-currency-badge">{{ $vendor->currency ?: '֏' }}</span>
                         </div>
                         <div class="field-hint">{{ $isHy ? 'Օգնում է մեր թիմին կազմել համահունչ ճաշացանկ Ձեր ակնկալիքների սահմաններում։' : ($isRu ? 'Поможет составить оптимальное меню под ваш бюджет.' : __('Optional: helps our team customize the menu within your expectations.')) }}</div>
                     </div>

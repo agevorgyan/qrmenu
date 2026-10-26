@@ -64,9 +64,11 @@ class SubscriptionPlan extends Model
      */
     public function priceFor(string $interval = 'monthly', string $currency = 'AMD'): ?SubscriptionPlanPrice
     {
+        $code = Vendor::normalizeCurrencyCode($currency);
+
         return $this->activePrices()
             ->where('billing_interval', strtolower(trim($interval)))
-            ->where('currency', strtoupper(trim($currency)))
+            ->whereIn('currency', [$code, $currency === 'AMD' ? '֏' : $code])
             ->first();
     }
 
@@ -88,13 +90,22 @@ class SubscriptionPlan extends Model
         return $base;
     }
 
+    public function getCurrencyAttribute(?string $value): string
+    {
+        $val = trim((string) ($value ?: '֏'));
+
+        return strtoupper($val) === 'AMD' ? '֏' : $val;
+    }
+
     public function getFormattedPriceAttribute(): string
     {
         if ($this->is_custom || $this->price <= 0) {
             return __('Custom / Negotiated');
         }
 
-        return number_format($this->price, 0, '.', ' ').' '.$this->currency.' / '.__('month');
+        $currSymbol = strtoupper((string) $this->currency) === 'AMD' ? '֏' : $this->currency;
+
+        return number_format($this->price, 0, '.', ' ').' '.$currSymbol.' / '.__('month');
     }
 
     public function formattedPriceFor(string $interval = 'monthly', string $currency = 'AMD'): string
@@ -115,6 +126,8 @@ class SubscriptionPlan extends Model
             default => __('month'),
         };
 
-        return number_format($amt, 0, '.', ' ').' '.$currency.' / '.$intervalLabel;
+        $currSymbol = strtoupper($currency) === 'AMD' ? '֏' : $currency;
+
+        return number_format($amt, 0, '.', ' ').' '.$currSymbol.' / '.$intervalLabel;
     }
 }

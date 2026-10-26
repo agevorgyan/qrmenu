@@ -293,7 +293,7 @@ class LocaleManager
         $formattedNumber = number_format($amount, 0, '.', ',');
 
         return match (strtoupper($currency)) {
-            'AMD' => "{$formattedNumber} ֏",
+            'AMD', '֏' => "{$formattedNumber} ֏",
             'USD' => "\${$formattedNumber}",
             'EUR' => "€{$formattedNumber}",
             'RUB' => "{$formattedNumber} ₽",

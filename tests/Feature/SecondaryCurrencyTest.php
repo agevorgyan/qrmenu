@@ -99,7 +99,7 @@ class SecondaryCurrencyTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('3,500');
-        $response->assertSee('AMD');
+        $response->assertSee('֏');
         $response->assertDontSee('secondary-price');
         $response->assertDontSee('≈ $');
     }
@@ -150,7 +150,7 @@ class SecondaryCurrencyTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('3,500');
-        $response->assertSee('AMD');
+        $response->assertSee('֏');
         $response->assertSee('≈ $10.00');
         $response->assertSee('secondary-price');
     }

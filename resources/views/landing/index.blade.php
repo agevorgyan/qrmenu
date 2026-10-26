@@ -3031,7 +3031,7 @@
                                         </div>
                                     </div>
                                     <div class="app-dish-title">{{ __('Ribeye Prime Angus Steak') }}</div>
-                                    <div class="app-dish-price">8 900 AMD</div>
+                                    <div class="app-dish-price">8 900 ֏</div>
                                 </div>
 
                                 <!-- Floating AI Waiter Bubble -->
@@ -3202,7 +3202,7 @@
                         </div>
                         <div id="sim-text" class="sim-recommendation-text">
                             @if(app()->getLocale() === 'hy')
-                                «Տավարի Սթեյքի հյութեղությունը հիանալի կընդգծի Areni Noir պահուստային կարմիր գինին (3 200 AMD) և ջեռոցում բոված հազարաթերթ բանջարեղենը։»
+                                «Տավարի Սթեյքի հյութեղությունը հիանալի կընդգծի Areni Noir պահուստային կարմիր գինին (3 200 ֏) և ջեռոցում բոված հազարաթերթ բանջարեղենը։»
                             @else
                                 "To elevate this Prime Ribeye, we recommend pairing it with a glass of Areni Noir Reserve Red Wine and char-grilled asparagus."
                             @endif
@@ -3247,7 +3247,7 @@
                     <div class="calc-group">
                         <div class="calc-label-row">
                             <span>{{ __('calc_check_label') }}</span>
-                            <span id="check-val" class="calc-value-display">8 500 AMD</span>
+                            <span id="check-val" class="calc-value-display">8 500 ֏</span>
                         </div>
                         <input type="range" id="check-slider" class="calc-slider" min="3000" max="30000" value="8500" step="500" oninput="calculateROI()">
                     </div>
@@ -3382,7 +3382,7 @@
                                 <div class="plan-price-unit">{{ app()->getLocale() === 'hy' ? 'Անհատական լուծում' : 'Bespoke integration' }}</div>
                             @else
                                 <span class="plan-price-num">{{ number_format($plan->price, 0, '.', ' ') }}</span>
-                                <span class="plan-price-unit">AMD / {{ $plan->billing_interval === 'yearly' ? (app()->getLocale() === 'hy' ? 'տարի' : 'year') : (app()->getLocale() === 'hy' ? 'ամիս' : 'month') }}</span>
+                                <span class="plan-price-unit">֏ / {{ $plan->billing_interval === 'yearly' ? (app()->getLocale() === 'hy' ? 'տարի' : 'year') : (app()->getLocale() === 'hy' ? 'ամիս' : 'month') }}</span>
                             @endif
                         </div>
 
@@ -3710,26 +3710,26 @@
         // AI Waiter Simulator Data
         const dishData = {
             steak: {
-                hy: "«Տավարի Սթեյքի հյութեղությունը հիանալի կընդգծի Areni Noir պահուստային կարմիր գինին (3 200 AMD) և ջեռոցում բոված հազարաթերթ բանջարեղենը։»",
-                ru: "«Сочность стейка Рибай идеально подчеркнет выдержанное красное вино Areni Noir (3 200 AMD) и запеченные на гриле овощи.»",
+                hy: "«Տավարի Սթեյքի հյութեղությունը հիանալի կընդգծի Areni Noir պահուստային կարմիր գինին (3 200 ֏) և ջեռոցում բոված հազարաթերթ բանջարեղենը։»",
+                ru: "«Сочность стейка Рибай идеально подчеркнет выдержанное красное вино Areni Noir (3 200 ֏) и запеченные на гриле овощи.»",
                 en: "\"To elevate this Prime Ribeye, we recommend pairing it with a glass of Areni Noir Reserve Red Wine and char-grilled asparagus.\"",
                 lift: "+32% Check Lift"
             },
             pizza: {
-                hy: "«Դիավոլա պիցցայի կծվությունը իդեալական մեղմացնում է մեր թարմ իտալական ցիտրուսային լիմոնադը (1 400 AMD) կամ սառը սպիտակ գինին։»",
-                ru: "«Пикантную остроту пиццы Диавола прекрасно сбалансирует домашний цитрусовый лимонад (1 400 AMD) или охлажденное белое вино.»",
+                hy: "«Դիավոլա պիցցայի կծվությունը իդեալական մեղմացնում է մեր թարմ իտալական ցիտրուսային լիմոնադը (1 400 ֏) կամ սառը սպիտակ գինին։»",
+                ru: "«Пикантную остроту пиццы Диавола прекрасно сбалансирует домашний цитрусовый лимонад (1 400 ֏) или охлажденное белое вино.»",
                 en: "\"For spicy Diavola pizza, the AI suggests our homemade San Pellegrino citrus spritz or chilled Italian Pinot Grigio.\"",
                 lift: "+28% Check Lift"
             },
             salad: {
-                hy: "«Թարմ Բուրատա աղցանի հետ հիանալի համադրվում են իտալական տաք ֆոկաչիան (1 200 AMD) և թեթև ռոզե գինին։»",
-                ru: "«К свежей буррате изумительно подходит теплая фокачча с розмарином (1 200 AMD) и бокал освежающего прованского розе.»",
+                hy: "«Թարմ Բուրատա աղցանի հետ հիանալի համադրվում են իտալական տաք ֆոկաչիան (1 200 ֏) և թեթև ռոզե գինին։»",
+                ru: "«К свежей буррате изумительно подходит теплая фокачча с розмарином (1 200 ֏) и бокал освежающего прованского розе.»",
                 en: "\"Pairing Burrata salad with crispy rosemary focaccia and Provence Rosé wine increases satisfaction and check value.\"",
                 lift: "+24% Check Lift"
             },
             dessert: {
-                hy: "«Շոկոլադե Ֆոնդանի տաք շոկոլադի հետ անհրաժեշտ է թարմ աղացած էսպրեսսո (900 AMD) և վանիլային պաղպաղակի գնդիկ։»",
-                ru: "«К горячему шоколадному фондану AI мгновенно предложит чашку ароматного двойного эспрессо (900 AMD) и шарик мороженого.»",
+                hy: "«Շոկոլադե Ֆոնդանի տաք շոկոլադի հետ անհրաժեշտ է թարմ աղացած էսպրեսսո (900 ֏) և վանիլային պաղպաղակի գնդիկ։»",
+                ru: "«К горячему шоколадному фондану AI мгновенно предложит чашку ароматного двойного эспрессо (900 ֏) и шарик мороженого.»",
                 en: "\"For Chocolate Fondant, AI automatically offers a freshly roasted Double Espresso and artisanal vanilla gelato.\"",
                 lift: "+35% Check Lift"
             }
@@ -3758,7 +3758,7 @@
 
             document.getElementById('tables-val').innerText = tables;
             document.getElementById('guests-val').innerText = guests;
-            document.getElementById('check-val').innerText = avgCheck.toLocaleString() + ' AMD';
+            document.getElementById('check-val').innerText = avgCheck.toLocaleString() + ' ֏';
 
             // Calculate extra monthly revenue from AI upsell (+18% conservative average) & table turnover
             const dailyOrders = tables * guests;

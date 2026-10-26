@@ -74,9 +74,19 @@ class ReservationPreOrder extends Model
                 $preOrder->vendor_id = $preOrder->reservation->vendor_id;
             }
             if (empty($preOrder->currency)) {
-                $preOrder->currency = $preOrder->vendor?->currency ?: 'AMD';
+                $preOrder->currency = $preOrder->vendor?->currency ?: '֏';
             }
         });
+    }
+
+    /**
+     * Get the currency attribute, normalizing 'AMD' to '֏' for display.
+     */
+    public function getCurrencyAttribute(?string $value): string
+    {
+        $val = trim((string) ($value ?: '֏'));
+
+        return strtoupper($val) === 'AMD' ? '֏' : $val;
     }
 
     public function reservation(): BelongsTo

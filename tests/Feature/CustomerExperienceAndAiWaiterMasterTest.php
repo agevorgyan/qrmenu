@@ -543,8 +543,8 @@ class CustomerExperienceAndAiWaiterMasterTest extends TestCase
         $chatResponse->assertOk();
         $reply = $chatResponse->json('reply');
         $this->assertEquals('delivery', $chatResponse->json('intent'));
-        $this->assertStringContainsString('5,000 AMD', $reply);
-        $this->assertStringContainsString('1,000 AMD', $reply);
+        $this->assertStringContainsString('5,000 ֏', $reply);
+        $this->assertStringContainsString('1,000 ֏', $reply);
     }
 
     public function test_event_planning_inquiry_provides_guidance_and_submission_option(): void

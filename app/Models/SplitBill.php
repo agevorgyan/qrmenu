@@ -68,6 +68,13 @@ class SplitBill extends Model
         });
     }
 
+    public function getCurrencyAttribute(?string $value): string
+    {
+        $val = trim((string) ($value ?: '֏'));
+
+        return strtoupper($val) === 'AMD' ? '֏' : $val;
+    }
+
     public static function generateSplitToken(): string
     {
         return 'spt_'.bin2hex(random_bytes(20));

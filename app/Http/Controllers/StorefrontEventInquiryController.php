@@ -199,7 +199,7 @@ class StorefrontEventInquiryController extends Controller
                 'guest_count' => (int) $validated['guest_count'],
                 'budget' => ! empty($validated['budget']) ? (float) $validated['budget'] : null,
                 'budget_range' => ! empty($validated['budget_range']) ? trim($validated['budget_range']) : null,
-                'budget_currency' => $vendor->currency ?: 'AMD',
+                'budget_currency' => $vendor->currency ?: '֏',
                 'venue_arrangement' => $validated['venue_arrangement'] ?? EventInquiry::VENUE_NO_PREFERENCE,
                 'food_beverage_preferences' => ! empty($validated['food_beverage_preferences']) ? trim($validated['food_beverage_preferences']) : null,
                 'additional_services' => $validated['additional_services'] ?? null,

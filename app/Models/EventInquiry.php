@@ -176,6 +176,13 @@ class EventInquiry extends Model
     /**
      * Relationship: Vendor
      */
+    public function getBudgetCurrencyAttribute(?string $value): string
+    {
+        $val = trim((string) ($value ?: '֏'));
+
+        return strtoupper($val) === 'AMD' ? '֏' : $val;
+    }
+
     public function vendor(): BelongsTo
     {
         return $this->belongsTo(Vendor::class);

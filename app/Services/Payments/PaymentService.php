@@ -79,7 +79,7 @@ class PaymentService
     ): array {
         $normalizedInterval = strtolower(trim($billingInterval)) === 'yearly' ? 'yearly' : 'monthly';
         $months = $monthsCount ?? ($normalizedInterval === 'yearly' ? 12 : 1);
-        $currency = $planPrice?->currency ?? $plan->currency ?? 'AMD';
+        $currency = Vendor::normalizeCurrencyCode($planPrice?->currency ?? $plan->getRawOriginal('currency') ?? $plan->currency ?? 'AMD');
 
         // Authoritative server-side pricing
         if ($planPrice !== null) {

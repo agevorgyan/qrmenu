@@ -3,7 +3,7 @@
     $isBilingual = ($targetLocale === 'bilingual');
     $siteName = \App\Models\SystemSetting::getSiteName();
     $vendor = $order->vendor;
-    $currency = $vendor?->currency ?? 'AMD';
+    $currency = $vendor?->currency ?? '֏';
 
     if ($isBilingual) {
         $orderTypeLabel = match ($order->type) {

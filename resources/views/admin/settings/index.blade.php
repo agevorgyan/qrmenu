@@ -834,7 +834,7 @@ if (window.Alpine) {
                                 </span>
                             </div>
                             <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
-                                {{ __('e.g. 10% or 500 AMD') }}
+                                {{ __('e.g. 10% or 500 ֏') }}
                             </span>
                         </div>
 
@@ -1952,7 +1952,7 @@ if (window.Alpine) {
                     <!-- 2. REGIONAL & LOCALIZATION SETTINGS CARD -->
             @php
                 $currentTz = old('timezone', $vendor->timezone ?? 'Asia/Yerevan');
-                $currentCurrency = old('currency', $vendor->currency ?? 'AMD');
+                $currentCurrency = \App\Models\Vendor::normalizeCurrencyCode(old('currency', $vendor->getRawOriginal('currency') ?? 'AMD'));
                 $currentWeightUnit = old('weight_unit', $vendor->weight_unit ?? 'g');
                 $currentVolumeUnit = old('volume_unit', $vendor->volume_unit ?? 'ml');
             @endphp
@@ -2021,7 +2021,7 @@ if (window.Alpine) {
                         <select name="currency" id="vendor_currency" class="form-input" onchange="onCurrencyChanged(this.value)" style="width: 100%; border-radius: 10px; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-body); border: 1.5px solid var(--border-color); color: var(--text-main); cursor: pointer;">
                             @php
                                 $currencyOptions = [
-                                    'AMD' => 'AMD (֏ - ' . __('Armenian Dram') . ')',
+                                    'AMD' => '֏ (' . __('Armenian Dram') . ')',
                                     'USD' => 'USD ($ - ' . __('US Dollar') . ')',
                                     'EUR' => 'EUR (€ - ' . __('Euro') . ')',
                                     'RUB' => 'RUB (₽ - ' . __('Russian Ruble') . ')',
@@ -2108,7 +2108,7 @@ if (window.Alpine) {
                  style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);"
                  x-data="{
                      enabled: {{ $secEnabled ? 'true' : 'false' }},
-                     primaryCurrency: '{{ strtoupper(old('currency', $vendor->currency ?? 'AMD')) }}',
+                     primaryCurrency: '{{ old('currency', $vendor->currency ?? '֏') }}',
                      secondaryCurrency: '{{ strtoupper($secCurrency) }}',
                      rateMode: '{{ $secRateMode }}',
                      exchangeRate: '{{ $secRate }}',
@@ -2130,7 +2130,8 @@ if (window.Alpine) {
                          'IRR': '﷼'
                      },
                      get isSameAsPrimary() {
-                         return this.secondaryCurrency && this.primaryCurrency && this.secondaryCurrency.toUpperCase() === this.primaryCurrency.toUpperCase();
+                         const norm = (c) => (c === '֏' || c === 'AMD') ? 'AMD' : (c || '').toUpperCase();
+                         return this.secondaryCurrency && this.primaryCurrency && norm(this.secondaryCurrency) === norm(this.primaryCurrency);
                      },
                      get secondarySymbol() {
                          return this.symbols[this.secondaryCurrency] || this.secondaryCurrency;
@@ -2261,7 +2262,7 @@ if (window.Alpine) {
                                         'GEL' => 'GEL (₾ - Georgian Lari)',
                                         'GBP' => 'GBP (£ - British Pound)',
                                         'AED' => 'AED (د.إ - UAE Dirham)',
-                                        'AMD' => 'AMD (֏ - Armenian Dram)',
+                                        'AMD' => '֏ (Armenian Dram)',
                                         'CNY' => 'CNY (¥ - Chinese Yuan)',
                                         'TRY' => 'TRY (₺ - Turkish Lira)',
                                         'KZT' => 'KZT (₸ - Kazakhstani Tenge)',
@@ -2491,7 +2492,7 @@ if (window.Alpine) {
                             </div>
 
                             <div style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 0.35rem;">
-                                <span style="color: #10b981;" x-text="primaryCurrency">AMD</span>
+                                <span style="color: #10b981;" x-text="primarySymbol">֏</span>
                             </div>
 
                             <span x-show="rateMode === 'automatic'" x-cloak style="font-size: 0.75rem; font-weight: 700; background: rgba(14, 165, 233, 0.15); color: #0284c7; border: 1px solid rgba(14, 165, 233, 0.3); padding: 0.2rem 0.5rem; border-radius: 6px;">
@@ -2503,7 +2504,7 @@ if (window.Alpine) {
                         </div>
 
                         <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.45;">
-                            {{ __('Հաշվարկման կարգ. Երկրորդային գին = Հիմնական գին / Փոխարժեք։ Օրինակ՝ եթե հիմնական գինը 3,500 AMD է և 1 USD = 350 AMD, ապա հաճախորդը կտեսնի') }}
+                            {{ __('Հաշվարկման կարգ. Երկրորդային գին = Հիմնական գին / Փոխարժեք։ Օրինակ՝ եթե հիմնական գինը 3,500 ֏ է և 1 USD = 350 ֏, ապա հաճախորդը կտեսնի') }}
                             <strong style="color: var(--text-main);">≈ $10.00</strong>։
                         </div>
 
@@ -2595,7 +2596,7 @@ if (window.Alpine) {
             <!-- 3. MULTI-PRODUCT DAILY OFFERS CAROUSEL CARD -->
             <div class="card settings-card"
                  id="dailyOffersSettingsCard"
-                 x-data="dailyOffersAdminApp({{ json_encode($productsJson) }}, {{ json_encode($dailyOffersJson) }}, '{{ route('admin.settings.daily_offers.update') }}', '{{ csrf_token() }}', '{{ $vendor->currency ?? 'AMD' }}')"
+                 x-data="dailyOffersAdminApp({{ json_encode($productsJson) }}, {{ json_encode($dailyOffersJson) }}, '{{ route('admin.settings.daily_offers.update') }}', '{{ csrf_token() }}', '{{ $vendor->currency ?? '֏' }}')"
                  style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
 
                 <!-- Header Row -->
@@ -2678,7 +2679,7 @@ if (window.Alpine) {
                                     data-price="{{ number_format($prod->price, 0) }}"
                                     data-desc="{{ $prod->description }}"
                                     {{ old('featured_product_id', $vendor->featured_product_id) == $prod->id ? 'selected' : '' }}>
-                                🍽️ {{ $prod->name }} — {{ number_format($prod->price, 0) }} {{ $vendor->currency ?? 'AMD' }} ({{ $prod->category?->name ?? 'Uncategorized' }})
+                                🍽️ {{ $prod->name }} — {{ number_format($prod->price, 0) }} {{ $vendor->currency ?? '֏' }} ({{ $prod->category?->name ?? 'Uncategorized' }})
                             </option>
                         @endforeach
                     </select>
@@ -3548,8 +3549,9 @@ if (window.Alpine) {
 let CURRENCY = "{{ $vendor->currency }}";
 
 function onCurrencyChanged(newCurrency) {
-    CURRENCY = newCurrency;
-    document.querySelectorAll('.currency-label-display').forEach(el => el.textContent = newCurrency);
+    CURRENCY = newCurrency === 'AMD' ? '֏' : newCurrency;
+    document.querySelectorAll('.currency-label-display').forEach(el => el.textContent = CURRENCY);
+    window.dispatchEvent(new CustomEvent('primary-currency-changed', { detail: CURRENCY }));
     const suffix = document.getElementById('serviceFeeSuffix');
     const serviceFeeType = document.querySelector('input[name="service_fee_type"]:checked')?.value || 'percent';
     if (suffix && serviceFeeType === 'fixed') {
@@ -3745,7 +3747,7 @@ function updateFeaturedDishPreview() {
 
     if (opt && opt.value) {
         if (nameEl) nameEl.textContent = opt.dataset.name || opt.text;
-        if (priceEl) priceEl.textContent = (opt.dataset.price || '') + ' ' + '{{ $vendor->currency ?? "AMD" }}';
+        if (priceEl) priceEl.textContent = (opt.dataset.price || '') + ' ' + '{{ $vendor->currency ?? "֏" }}';
         if (imgEl && opt.dataset.image) imgEl.src = opt.dataset.image;
         if (descEl) descEl.textContent = subtitleInput.value.trim() || opt.dataset.desc || "Chef's special selection";
     } else {
@@ -3767,7 +3769,7 @@ function dailyOffersAdminApp(allProducts, initialOffers, updateUrl, csrfToken, c
         selectedCategory: 'all',
         searchQuery: '',
         isEnabled: true,
-        currency: currency || 'AMD',
+        currency: (!currency || currency === 'AMD') ? '֏' : currency,
         isSaving: false,
         saveMessage: '',
         saveMessageType: 'success',
