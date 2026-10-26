@@ -530,16 +530,7 @@ function storefrontSplitBillApp() {
 
         items: @json($items),
         selectedItemQuantities: {},
-        payments: @json($splitBill->payments()->orderBy('created_at', 'desc')->get()->map(fn($p) => [
-            'uuid' => $p->uuid,
-            'participant_name' => $p->participant_name,
-            'amount' => (float) $p->amount,
-            'currency' => $p->currency,
-            'status' => $p->status,
-            'payment_method' => $p->payment_method,
-            'is_paid' => $p->isPaid(),
-            'created_at_time' => $p->created_at->format('H:i')
-        ])),
+        payments: @json($payments),
 
         initApp() {
             // Default active tab to first enabled method

@@ -209,7 +209,7 @@
                             <label style="display: block; font-weight: 700; font-size: 0.88rem; color: var(--text-main); margin-bottom: 0.4rem;">
                                 {{ __('Maximum Equal Split Participants') }}
                             </label>
-                            <input type="number" name="max_participants" min="2" max="50" x-model="maxParticipants" required
+                            <input type="number" name="max_participants" min="2" max="50" x-model="maxParticipants"
                                    style="width: 100%; padding: 0.75rem 1rem; border-radius: 12px; border: 1.5px solid var(--border-color); background: var(--bg-main); color: var(--text-main); font-size: 0.95rem; font-family: 'Outfit'; font-weight: 700; box-sizing: border-box;">
                             <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem;">
                                 {{ __('Recommended: 10 people. Minimum 2, maximum 50.') }}

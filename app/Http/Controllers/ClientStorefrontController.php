@@ -17,6 +17,7 @@ use App\Models\Order;
 use App\Models\PaymentAttempt;
 use App\Models\Product;
 use App\Models\RestaurantTable;
+use App\Models\SplitBill;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Models\WaiterCall;
@@ -1094,6 +1095,8 @@ self.addEventListener('fetch', event => {
                 'table_number' => $order->table_number,
                 'type' => $order->type,
                 'status' => $order->status,
+                'payment_status' => $order->payment_status,
+                'payment_method' => $order->payment_method,
                 'status_step' => $meta['step'],
                 'status_percent' => $meta['percent'],
                 'status_label' => $meta['label'],
@@ -1393,6 +1396,21 @@ self.addEventListener('fetch', event => {
         $splitBill = $splitBillService->getOrCreateSplitBill($order);
         $settings = $vendor->getSplitBillSetting();
         $items = $splitBillService->getItemizedAvailability($order);
+        $payments = $splitBill->payments()
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'uuid' => $p->uuid,
+                    'participant_name' => $p->participant_name,
+                    'amount' => (float) $p->amount,
+                    'currency' => $p->currency,
+                    'status' => $p->status,
+                    'payment_method' => $p->payment_method,
+                    'is_paid' => $p->isPaid(),
+                    'created_at_time' => $p->created_at->format('H:i'),
+                ];
+            });
 
         $lang = session('app_locale', $vendor->getDefaultLanguageCode() ?: 'hy');
         App::setLocale($lang);
@@ -1403,6 +1421,7 @@ self.addEventListener('fetch', event => {
             'splitBill',
             'settings',
             'items',
+            'payments',
             'lang'
         ));
     }
@@ -1585,6 +1604,23 @@ self.addEventListener('fetch', event => {
     protected function resolveAndAuthorizeOrder(Vendor $vendor, string $token, Request $request): ?Order
     {
         $isTokenLookup = str_starts_with($token, 'trk_');
+        $isSplitTokenLookup = str_starts_with($token, 'spt_');
+
+        if ($isSplitTokenLookup) {
+            $splitBill = SplitBill::where('split_token', $token)
+                ->where('vendor_id', $vendor->id)
+                ->first();
+
+            if (! $splitBill || ! $splitBill->order_id) {
+                return null;
+            }
+
+            return Order::withoutGlobalScopes()
+                ->where('vendor_id', $vendor->id)
+                ->where('id', $splitBill->order_id)
+                ->with(['items.product', 'vendor'])
+                ->first();
+        }
 
         $order = Order::withoutGlobalScopes()
             ->where('vendor_id', $vendor->id)

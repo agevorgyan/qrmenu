@@ -243,6 +243,7 @@ class FeatureCatalog
             self::AI_WAITER,
             self::BRANDING_CUSTOM_DOMAIN,
             self::TIPS_RATINGS,
+            self::BILLS_SPLIT,
         ], true)) {
             return 'Pro';
         }
@@ -274,6 +275,7 @@ class FeatureCatalog
             self::BRANDING_CUSTOM_DOMAIN => 'Սեփական դոմեն (White-label)',
             self::API_ACCESS => 'API Ինտեգրացիաներ',
             self::TIPS_RATINGS => 'Թեյավճար և Մատուցողի գնահատում',
+            self::BILLS_SPLIT => 'Հաշվի բաժանում (Split Bill)',
         ];
 
         $namesEn = [
@@ -293,6 +295,7 @@ class FeatureCatalog
             self::BRANDING_CUSTOM_DOMAIN => 'Custom Domain Branding',
             self::API_ACCESS => 'API Access',
             self::TIPS_RATINGS => 'Tips & Waiter Rating',
+            self::BILLS_SPLIT => 'Split Bill',
         ];
 
         if ($locale === 'en') {

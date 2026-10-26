@@ -512,4 +512,106 @@ class SplitBillModuleTest extends TestCase
             'remaining_amount' => 5000,
         ]);
     }
+
+    public function test_admin_settings_can_be_updated_and_saved(): void
+    {
+        // 1. Enable split bill and customize limits
+        $response = $this->actingAs($this->owner1)->post(route('admin.settings.split_bill.update'), [
+            'is_enabled' => 1,
+            'allow_equal_split' => 1,
+            'allow_item_split' => 1,
+            'allow_custom_amount' => 1,
+            'allow_share_link' => 1,
+            'max_participants' => 8,
+            'require_staff_approval' => 1,
+        ]);
+
+        $response->assertStatus(302);
+        $response->assertSessionHas('success');
+
+        $settings = $this->vendor1->getSplitBillSetting()->fresh();
+        $this->assertTrue((bool) $settings->is_enabled);
+        $this->assertEquals(8, $settings->max_participants);
+        $this->assertTrue((bool) $settings->require_staff_approval);
+        $this->assertTrue($this->vendor1->isSplitBillEnabled());
+
+        // 2. Disable split bill without providing max_participants (should not fail validation)
+        $disableResponse = $this->actingAs($this->owner1)->post(route('admin.settings.split_bill.update'), [
+            'is_enabled' => 0,
+        ]);
+
+        $disableResponse->assertStatus(302);
+        $disableResponse->assertSessionHasNoErrors();
+        $settings->refresh();
+        $this->vendor1->refresh();
+        $this->assertFalse((bool) $settings->is_enabled);
+        $this->assertFalse($this->vendor1->isSplitBillEnabled());
+    }
+
+    public function test_admin_order_split_bill_view_renders_cleanly(): void
+    {
+        $this->vendor1->getSplitBillSetting()->update(['is_enabled' => true]);
+        $order = $this->createSampleOrder($this->vendor1, $this->location1);
+
+        $response = $this->actingAs($this->waiter1)->get(route('admin.orders.split_bill', $order));
+
+        $response->assertStatus(200);
+        $response->assertViewIs('admin.orders.split_bill_modal');
+        $response->assertSee($order->order_number);
+    }
+
+    public function test_customer_shared_bill_accessible_via_split_token(): void
+    {
+        $this->vendor1->getSplitBillSetting()->update(['is_enabled' => true]);
+        $order = $this->createSampleOrder($this->vendor1, $this->location1);
+
+        $splitService = app(SplitBillService::class);
+        $splitBill = $splitService->getOrCreateSplitBill($order);
+
+        $this->assertStringStartsWith('spt_', $splitBill->split_token);
+
+        // Access web view using split_token (spt_...)
+        $webRes = $this->get(route('client.bill.show', [
+            'vendor_slug' => $this->vendor1->slug,
+            'token' => $splitBill->split_token,
+        ]));
+        $webRes->assertStatus(200);
+        $webRes->assertSee($order->order_number);
+
+        // Access JSON status API using split_token
+        $apiRes = $this->getJson(route('client.bill.status', [
+            'vendor_slug' => $this->vendor1->slug,
+            'token' => $splitBill->split_token,
+        ]));
+        $apiRes->assertStatus(200);
+        $apiRes->assertJson([
+            'success' => true,
+            'order' => [
+                'order_number' => $order->order_number,
+            ],
+            'bill' => [
+                'split_token' => $splitBill->split_token,
+            ],
+        ]);
+    }
+
+    public function test_order_status_api_returns_payment_status_and_method(): void
+    {
+        $order = $this->createSampleOrder($this->vendor1, $this->location1);
+
+        $res = $this->getJson(route('client.order.status', [
+            'vendor_slug' => $this->vendor1->slug,
+            'order_number' => $order->tracking_token,
+        ]));
+
+        $res->assertStatus(200);
+        $res->assertJson([
+            'success' => true,
+            'order' => [
+                'order_number' => $order->order_number,
+                'payment_status' => 'unpaid',
+                'payment_method' => 'cash',
+            ],
+        ]);
+    }
 }

@@ -45,6 +45,21 @@
                                 </span>
                             </div>
                         @endif
+                        @php
+                            $sb = $order->activeSplitBill ?? $order->splitBills->first();
+                            $hasPendingCashSplit = $sb && $sb->payments->where('status', 'pending')->isNotEmpty();
+                        @endphp
+                        @if($sb)
+                            <div style="margin-top: 0.35rem;">
+                                <a href="{{ route('admin.orders.split_bill', $order->id) }}" style="text-decoration: none; font-size: 0.7rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 6px; background: {{ $hasPendingCashSplit ? 'rgba(234, 179, 8, 0.15)' : ($sb->isFullyPaid() ? 'rgba(16, 185, 129, 0.15)' : 'rgba(59, 130, 246, 0.15)') }}; color: {{ $hasPendingCashSplit ? '#d97706' : ($sb->isFullyPaid() ? '#10b981' : '#2563eb') }}; border: 1px solid currentColor; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                    <i class="fa-solid fa-divide"></i>
+                                    <span>{{ __('Split') }}: {{ number_format($sb->paid_amount) }}/{{ number_format($sb->total_amount) }}</span>
+                                    @if($hasPendingCashSplit)
+                                        <span style="background: #ef4444; color: #fff; border-radius: 9999px; padding: 0.05rem 0.35rem; font-size: 0.62rem; animation: pulse 1.5s infinite;">!</span>
+                                    @endif
+                                </a>
+                            </div>
+                        @endif
                     </div>
                 </div>
 
@@ -128,6 +143,12 @@
                         <button type="button" class="btn btn-secondary" style="padding: 0.45rem 0.65rem; font-size: 0.78rem; border-color: rgba(245, 158, 11, 0.4); color: var(--primary);" title="{{ __('Print Receipt (ESC/POS)') }}" onclick="printOrderReceipt({{ $order->id }})">
                             <i class="fa-solid fa-print"></i>
                         </button>
+
+                        @if($sb || ($vendor->isSplitBillEnabled() && $order->payment_status !== 'paid'))
+                            <a href="{{ route('admin.orders.split_bill', $order->id) }}" class="btn btn-secondary" style="padding: 0.45rem 0.65rem; font-size: 0.78rem; color: #3b82f6; border-color: rgba(59, 130, 246, 0.4); text-decoration: none;" title="{{ __('Split Bill Details & Payments') }}">
+                                <i class="fa-solid fa-divide"></i>
+                            </a>
+                        @endif
 
                         @if($order->status == 'pending')
                             <button type="button" class="btn btn-primary" style="padding: 0.45rem 0.85rem; font-size: 0.78rem;" onclick="changeOrderStatus({{ $order->id }}, 'preparing')">

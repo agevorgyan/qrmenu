@@ -61,12 +61,16 @@ class AdminSplitBillController extends Controller
             'allow_item_split' => 'nullable|boolean',
             'allow_custom_amount' => 'nullable|boolean',
             'allow_share_link' => 'nullable|boolean',
-            'max_participants' => 'required|integer|min:2|max:50',
+            'max_participants' => 'nullable|integer|min:2|max:50',
             'require_staff_approval' => 'nullable|boolean',
         ]);
 
         $settings = $vendor->getSplitBillSetting();
         $oldSettings = $settings->toArray();
+
+        $maxParticipants = isset($validated['max_participants']) && $validated['max_participants'] !== null
+            ? (int) $validated['max_participants']
+            : (int) ($settings->max_participants ?? 10);
 
         $settings->update([
             'is_enabled' => $request->boolean('is_enabled', false),
@@ -74,7 +78,7 @@ class AdminSplitBillController extends Controller
             'allow_item_split' => $request->boolean('allow_item_split', true),
             'allow_custom_amount' => $request->boolean('allow_custom_amount', true),
             'allow_share_link' => $request->boolean('allow_share_link', true),
-            'max_participants' => (int) $validated['max_participants'],
+            'max_participants' => $maxParticipants,
             'require_staff_approval' => $request->boolean('require_staff_approval', false),
         ]);
 
@@ -107,6 +111,10 @@ class AdminSplitBillController extends Controller
         }
 
         $splitBill = $order->activeSplitBill ?? $order->splitBills()->latest()->first();
+
+        if (! $splitBill && $vendor->isSplitBillEnabled()) {
+            $splitBill = $this->splitBillService->getOrCreateSplitBill($order);
+        }
 
         return view('admin.orders.split_bill_modal', [
             'order' => $order,
