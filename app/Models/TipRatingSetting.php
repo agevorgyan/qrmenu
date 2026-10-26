@@ -166,6 +166,38 @@ class TipRatingSetting extends Model
     }
 
     /**
+     * Backward-compatible alias for allocation_policy.
+     */
+    public function getTipRecipientPolicyAttribute(): string
+    {
+        return $this->allocation_policy ?? 'pool';
+    }
+
+    /**
+     * Backward-compatible alias for !require_written_feedback.
+     */
+    public function getIsWrittenFeedbackOptionalAttribute(): bool
+    {
+        return ! (bool) ($this->require_written_feedback ?? false);
+    }
+
+    /**
+     * Backward-compatible alias for is_anonymous_by_default.
+     */
+    public function getAllowAnonymousRatingsAttribute(): bool
+    {
+        return (bool) ($this->is_anonymous_by_default ?? true);
+    }
+
+    /**
+     * Fallback for trigger point.
+     */
+    public function getTriggerPointAttribute(): string
+    {
+        return 'after_order';
+    }
+
+    /**
      * Belongs to vendor relationship.
      */
     public function vendor(): BelongsTo

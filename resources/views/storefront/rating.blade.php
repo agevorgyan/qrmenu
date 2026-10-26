@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+@php $tipSetting = $tipSetting ?? $settings ?? $vendor->getTipRatingSetting(); @endphp
 <html lang="{{ $lang ?? 'hy' }}" dir="{{ in_array($lang ?? 'hy', ['ar', 'fa', 'he', 'ur'], true) ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="UTF-8">

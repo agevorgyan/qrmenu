@@ -17,6 +17,7 @@ use App\Models\Order;
 use App\Models\PaymentAttempt;
 use App\Models\Product;
 use App\Models\RestaurantTable;
+use App\Models\User;
 use App\Models\Vendor;
 use App\Models\WaiterCall;
 use App\Services\PaymentGatewayService;
@@ -1359,9 +1360,12 @@ self.addEventListener('fetch', event => {
         $lang = session('app_locale', $vendor->getDefaultLanguageCode() ?: 'hy');
         App::setLocale($lang);
 
+        $tipSetting = $settings;
+
         return view('storefront.rating', compact(
             'vendor',
             'settings',
+            'tipSetting',
             'order',
             'table',
             'waiters',

@@ -65,6 +65,35 @@ class AdminTipRatingController extends Controller
 
         $this->authorizeSettingsManage($user);
 
+        // Alias compatibility for allocation policy
+        if ($request->filled('tip_recipient_policy') && ! $request->filled('allocation_policy')) {
+            $request->merge(['allocation_policy' => $request->input('tip_recipient_policy')]);
+        }
+
+        // Convert comma-separated string inputs to arrays if array format was not directly supplied
+        if ($request->filled('tip_percentages_str') && ! $request->has('tip_percentages')) {
+            $percentages = array_values(array_filter(
+                array_map('intval', explode(',', (string) $request->input('tip_percentages_str'))),
+                fn (int $v): bool => $v > 0 && $v <= 100
+            ));
+            $request->merge(['tip_percentages' => $percentages]);
+        }
+
+        if ($request->filled('fixed_tip_amounts_str') && ! $request->has('fixed_tip_amounts')) {
+            $fixed = array_values(array_filter(
+                array_map('floatval', explode(',', (string) $request->input('fixed_tip_amounts_str'))),
+                fn (float $v): bool => $v > 0
+            ));
+            $request->merge(['fixed_tip_amounts' => $fixed]);
+        }
+
+        if ($request->filled('feedback_categories_str') && ! $request->has('feedback_categories')) {
+            $categories = array_values(array_filter(
+                array_map('trim', explode(',', (string) $request->input('feedback_categories_str')))
+            ));
+            $request->merge(['feedback_categories' => $categories]);
+        }
+
         $validated = $request->validate([
             'is_enabled' => 'nullable|boolean',
             'tips_enabled' => 'nullable|boolean',
@@ -74,8 +103,8 @@ class AdminTipRatingController extends Controller
             'fixed_tip_amounts' => 'nullable|array',
             'fixed_tip_amounts.*' => 'numeric|min:1|max:1000000',
             'allow_custom_tip' => 'nullable|boolean',
-            'default_tip_selection' => 'required|string|max:20',
-            'calculation_base' => 'required|string|in:subtotal,subtotal_with_fees',
+            'default_tip_selection' => 'required|string|in:none,percentage,fixed',
+            'calculation_base' => 'required|string|in:subtotal,after_discount,total_with_fees,subtotal_with_fees',
             'applicable_order_types' => 'nullable|array',
             'applicable_order_types.*' => 'string|in:dine_in,takeaway,delivery',
             'min_tip_amount' => 'nullable|numeric|min:0',
@@ -84,17 +113,20 @@ class AdminTipRatingController extends Controller
             'supported_payment_methods.*' => 'string|in:idram,telcell,arca,stripe,cash,pos_terminal',
             'allow_cash_tips' => 'nullable|boolean',
             'allocation_policy' => 'required|string|in:waiter,pool,house',
-            'rating_scale' => 'required|integer|in:5,10',
+            'rating_scale' => 'required|integer|in:3,5,10',
             'allow_written_feedback' => 'nullable|boolean',
             'require_written_feedback' => 'nullable|boolean',
             'is_anonymous_by_default' => 'nullable|boolean',
+            'allow_anonymous_ratings' => 'nullable|boolean',
+            'is_written_feedback_optional' => 'nullable|boolean',
             'allow_customer_name' => 'nullable|boolean',
             'feedback_categories' => 'nullable|array',
             'feedback_categories.*' => 'string|max:50',
             'allow_waiter_selection' => 'nullable|boolean',
             'submission_window_hours' => 'required|integer|min:1|max:720',
-            'duplicate_policy' => 'required|string|in:once_per_order,once_per_session_day',
+            'duplicate_policy' => 'required|string|in:once_per_order,per_order,once_per_session_day,per_table_session,time_window',
             'auto_publish_ratings' => 'nullable|boolean',
+            'trigger_point' => 'nullable|string|max:50',
         ]);
 
         $settings = $vendor->getTipRatingSetting();
@@ -116,6 +148,21 @@ class AdminTipRatingController extends Controller
             ? array_values(array_unique($validated['applicable_order_types']))
             : ['dine_in', 'takeaway', 'delivery'];
 
+        $duplicatePolicy = match ($validated['duplicate_policy'] ?? 'once_per_order') {
+            'per_order', 'once_per_order' => 'once_per_order',
+            'per_table_session', 'once_per_session_day' => 'once_per_session_day',
+            'time_window' => 'time_window',
+            default => 'once_per_order',
+        };
+
+        $isAnonymous = $request->has('allow_anonymous_ratings')
+            ? $request->boolean('allow_anonymous_ratings')
+            : $request->boolean('is_anonymous_by_default', true);
+
+        $requireWritten = $request->has('is_written_feedback_optional')
+            ? ! $request->boolean('is_written_feedback_optional')
+            : $request->boolean('require_written_feedback', false);
+
         $settings->update([
             'is_enabled' => $request->boolean('is_enabled', true),
             'tips_enabled' => $request->boolean('tips_enabled', true),
@@ -133,13 +180,13 @@ class AdminTipRatingController extends Controller
             'allocation_policy' => $validated['allocation_policy'] ?? 'pool',
             'rating_scale' => (int) ($validated['rating_scale'] ?? 5),
             'allow_written_feedback' => $request->boolean('allow_written_feedback', true),
-            'require_written_feedback' => $request->boolean('require_written_feedback', false),
-            'is_anonymous_by_default' => $request->boolean('is_anonymous_by_default', true),
+            'require_written_feedback' => $requireWritten,
+            'is_anonymous_by_default' => $isAnonymous,
             'allow_customer_name' => $request->boolean('allow_customer_name', true),
             'feedback_categories' => $categories,
             'allow_waiter_selection' => $request->boolean('allow_waiter_selection', true),
             'submission_window_hours' => (int) ($validated['submission_window_hours'] ?? 24),
-            'duplicate_policy' => $validated['duplicate_policy'] ?? 'once_per_order',
+            'duplicate_policy' => $duplicatePolicy,
             'auto_publish_ratings' => $request->boolean('auto_publish_ratings', true),
         ]);
 

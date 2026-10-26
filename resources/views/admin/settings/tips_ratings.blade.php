@@ -226,10 +226,10 @@
                                     <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem; display: block;">
                                         {{ __('Tip Allocation Policy') }}
                                     </label>
-                                    <select name="tip_recipient_policy" style="width: 100%; padding: 0.75rem 0.85rem; background: var(--bg-main); border: 1.5px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 0.88rem; outline: none;">
-                                        <option value="waiter" {{ old('tip_recipient_policy', $settings->tip_recipient_policy) === 'waiter' ? 'selected' : '' }}>{{ __('Assigned Waiter / Server') }}</option>
-                                        <option value="pool" {{ old('tip_recipient_policy', $settings->tip_recipient_policy) === 'pool' ? 'selected' : '' }}>{{ __('Shared Staff Pool') }}</option>
-                                        <option value="house" {{ old('tip_recipient_policy', $settings->tip_recipient_policy) === 'house' ? 'selected' : '' }}>{{ __('House / Restaurant Allocation') }}</option>
+                                    <select name="allocation_policy" style="width: 100%; padding: 0.75rem 0.85rem; background: var(--bg-main); border: 1.5px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 0.88rem; outline: none;">
+                                        <option value="waiter" {{ old('allocation_policy', $settings->allocation_policy) === 'waiter' ? 'selected' : '' }}>{{ __('Assigned Waiter / Server') }}</option>
+                                        <option value="pool" {{ old('allocation_policy', $settings->allocation_policy) === 'pool' ? 'selected' : '' }}>{{ __('Shared Staff Pool') }}</option>
+                                        <option value="house" {{ old('allocation_policy', $settings->allocation_policy) === 'house' ? 'selected' : '' }}>{{ __('House / Restaurant Allocation') }}</option>
                                     </select>
                                 </div>
 
@@ -302,8 +302,8 @@
                                         {{ __('Duplicate Submission Policy') }}
                                     </label>
                                     <select name="duplicate_policy" style="width: 100%; padding: 0.75rem 0.85rem; background: var(--bg-main); border: 1.5px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 0.88rem; outline: none;">
-                                        <option value="per_order" {{ old('duplicate_policy', $settings->duplicate_policy) === 'per_order' ? 'selected' : '' }}>{{ __('One Rating Per Unique Order') }}</option>
-                                        <option value="per_table_session" {{ old('duplicate_policy', $settings->duplicate_policy) === 'per_table_session' ? 'selected' : '' }}>{{ __('One Rating Per Table Visit / Session') }}</option>
+                                        <option value="once_per_order" {{ in_array(old('duplicate_policy', $settings->duplicate_policy), ['once_per_order', 'per_order'], true) ? 'selected' : '' }}>{{ __('One Rating Per Unique Order') }}</option>
+                                        <option value="once_per_session_day" {{ in_array(old('duplicate_policy', $settings->duplicate_policy), ['once_per_session_day', 'per_table_session'], true) ? 'selected' : '' }}>{{ __('One Rating Per Table Visit / Session') }}</option>
                                         <option value="time_window" {{ old('duplicate_policy', $settings->duplicate_policy) === 'time_window' ? 'selected' : '' }}>{{ __('Rate-limited by Time Window') }}</option>
                                     </select>
                                 </div>

@@ -446,4 +446,85 @@ class TipRatingModuleTest extends TestCase
         $resExport->assertStatus(200);
         $this->assertStringContainsString('text/csv', $resExport->headers->get('content-type'));
     }
+
+    public function test_admin_can_save_settings_from_admin_form(): void
+    {
+        $payload = [
+            'is_enabled' => '1',
+            'tips_enabled' => '1',
+            'ratings_enabled' => '1',
+            'tip_percentages_str' => '5, 10, 15, 20',
+            'fixed_tip_amounts_str' => '200, 500, 1000, 2000',
+            'calculation_base' => 'subtotal',
+            'default_tip_selection' => 'none',
+            'min_tip_amount' => '0.00',
+            'max_tip_amount' => '50000.00',
+            'allocation_policy' => 'waiter',
+            'applicable_order_types' => ['dine_in', 'takeaway', 'delivery'],
+            'allow_custom_tip' => '1',
+            'allow_cash_tips' => '1',
+            'allow_waiter_selection' => '1',
+            'rating_scale' => '5',
+            'duplicate_policy' => 'once_per_order',
+            'submission_window_hours' => '24',
+            'trigger_point' => 'manual_qr',
+            'feedback_categories_str' => 'Food Quality, Speed of Service, Staff Friendliness, Cleanliness, Atmosphere',
+        ];
+
+        $res = $this->actingAs($this->owner1)->post(route('admin.settings.tips_ratings.update'), $payload);
+        $res->assertSessionHasNoErrors();
+        $res->assertRedirect();
+
+        $settings = $this->vendor1->getTipRatingSetting()->fresh();
+        $this->assertEquals('waiter', $settings->allocation_policy);
+        $this->assertEquals('once_per_order', $settings->duplicate_policy);
+        $this->assertEquals([5, 10, 15, 20], $settings->tip_percentages);
+        $this->assertEquals([200, 500, 1000, 2000], $settings->fixed_tip_amounts);
+        $this->assertCount(5, $settings->feedback_categories);
+        $this->assertEquals('Food Quality', $settings->feedback_categories[0]);
+    }
+
+    public function test_admin_settings_legacy_field_compatibility(): void
+    {
+        $payload = [
+            'is_enabled' => '1',
+            'tips_enabled' => '1',
+            'ratings_enabled' => '1',
+            'tip_recipient_policy' => 'house',
+            'duplicate_policy' => 'per_order',
+            'calculation_base' => 'after_discount',
+            'default_tip_selection' => 'percentage',
+            'rating_scale' => '3',
+            'submission_window_hours' => '12',
+            'allow_anonymous_ratings' => '1',
+            'is_written_feedback_optional' => '1',
+        ];
+
+        $res = $this->actingAs($this->owner1)->post(route('admin.settings.tips_ratings.update'), $payload);
+        $res->assertSessionHasNoErrors();
+        $res->assertRedirect();
+
+        $settings = $this->vendor1->getTipRatingSetting()->fresh();
+        $this->assertEquals('house', $settings->allocation_policy);
+        $this->assertEquals('once_per_order', $settings->duplicate_policy);
+        $this->assertEquals('after_discount', $settings->calculation_base);
+        $this->assertEquals(3, $settings->rating_scale);
+        $this->assertTrue($settings->is_anonymous_by_default);
+        $this->assertFalse($settings->require_written_feedback);
+    }
+
+    public function test_storefront_rating_page_renders_properly(): void
+    {
+        $this->vendor1->getTipRatingSetting()->update([
+            'is_enabled' => true,
+            'ratings_enabled' => true,
+            'tips_enabled' => true,
+            'feedback_categories' => ['Food Quality', 'Speed of Service'],
+        ]);
+
+        $res = $this->get(route('client.rate', ['vendor_slug' => $this->vendor1->slug]));
+        $res->assertStatus(200);
+        $res->assertSee('Food Quality');
+        $res->assertSee('Speed of Service');
+    }
 }
