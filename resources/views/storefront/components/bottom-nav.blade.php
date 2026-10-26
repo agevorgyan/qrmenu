@@ -241,7 +241,7 @@
         align-items: center;
         gap: 4px;
         padding: 6px 8px;
-        margin: 0 auto max(14px, env(safe-area-inset-bottom, 14px)) auto;
+        margin: 0 auto 2px auto;
         width: calc(100% - 28px);
         max-width: 440px;
         box-sizing: border-box;
@@ -449,7 +449,7 @@
     .storefront-scroll-top-btn {
         pointer-events: auto;
         position: fixed;
-        bottom: calc(76px + max(14px, env(safe-area-inset-bottom, 14px)));
+        bottom: 70px;
         right: 1.25rem;
         z-index: 76;
         width: 44px;
@@ -498,15 +498,15 @@
     }
 
     .storefront-scroll-top-btn.has-ai-bubble {
-        bottom: calc(134px + max(14px, env(safe-area-inset-bottom, 14px)));
+        bottom: 126px;
     }
 
     .storefront-scroll-top-btn.has-active-order-pill {
-        bottom: calc(146px + max(14px, env(safe-area-inset-bottom, 14px)));
+        bottom: 140px;
     }
 
     .storefront-scroll-top-btn.has-ai-bubble.has-active-order-pill {
-        bottom: calc(220px + max(14px, env(safe-area-inset-bottom, 14px)));
+        bottom: 208px;
     }
 
     @media (min-width: 601px) {
@@ -729,7 +729,7 @@
     .ai-waiter-floating-bubble {
         pointer-events: auto;
         position: fixed;
-        bottom: calc(78px + max(0.5rem, env(safe-area-inset-bottom)));
+        bottom: 70px;
         right: 1.25rem;
         z-index: 75;
         background: var(--primary);
@@ -745,7 +745,7 @@
         transition: bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .ai-waiter-floating-bubble.has-active-order-pill {
-        bottom: calc(165px + max(0.5rem, env(safe-area-inset-bottom)));
+        bottom: 146px;
     }
     @media (min-width: 601px) {
         .ai-waiter-floating-bubble {
