@@ -126,7 +126,12 @@ class TipRatingService
         $isCashOrPos = in_array($paymentMethod, ['cash', 'pos_terminal'], true);
         $paymentStatus = $isCashOrPos ? 'paid' : 'pending';
 
-        return DB::transaction(function () use ($order, $vendor, $settings, $tipAmount, $paymentMethod, $tipType, $percentage, $waiterId, $isCashOrPos, $paymentStatus) {
+        $resolvedWaiterId = $waiterId ?? $order->waiter_id;
+        if ($resolvedWaiterId && in_array($settings->waiter_attribution_scope ?? 'both', ['none', 'ratings'], true)) {
+            $resolvedWaiterId = null;
+        }
+
+        return DB::transaction(function () use ($order, $vendor, $settings, $tipAmount, $paymentMethod, $tipType, $percentage, $resolvedWaiterId, $isCashOrPos, $paymentStatus) {
             // Find existing tip for this order if appending/updating
             $tip = Tip::withoutGlobalScopes()
                 ->where('vendor_id', $vendor->id)
@@ -138,7 +143,7 @@ class TipRatingService
                 'location_id' => $order->location_id,
                 'order_id' => $order->id,
                 'table_number' => $order->table_number,
-                'waiter_id' => $waiterId ?? $order->waiter_id,
+                'waiter_id' => $resolvedWaiterId,
                 'amount' => $tipAmount,
                 'currency' => $vendor->currency ?? 'AMD',
                 'tip_type' => $tipType,
@@ -187,6 +192,12 @@ class TipRatingService
             $waiter = User::where('vendor_id', $vendor->id)->find($waiterId);
             if (! $waiter) {
                 throw ValidationException::withMessages(['waiter_id' => 'Selected waiter does not belong to this restaurant.']);
+            }
+            if (! $waiter->is_active) {
+                throw ValidationException::withMessages(['waiter_id' => 'Selected waiter is currently inactive.']);
+            }
+            if (in_array($settings->waiter_attribution_scope ?? 'both', ['none', 'ratings'], true)) {
+                $waiterId = null;
             }
         }
 
@@ -283,6 +294,14 @@ class TipRatingService
                 throw ValidationException::withMessages([
                     'waiter_id' => 'Selected waiter does not belong to this restaurant.',
                 ]);
+            }
+            if (! $waiter->is_active) {
+                throw ValidationException::withMessages([
+                    'waiter_id' => 'Selected waiter is currently inactive.',
+                ]);
+            }
+            if (in_array($settings->waiter_attribution_scope ?? 'both', ['none', 'tips'], true)) {
+                $waiterId = null;
             }
         }
 

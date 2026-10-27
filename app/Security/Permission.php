@@ -78,6 +78,11 @@ class Permission
 
     public const SPLIT_BILL_MANAGE = 'split_bill.manage';
 
+    // Waiter Management permissions
+    public const WAITERS_VIEW = 'waiters.view';
+
+    public const WAITERS_MANAGE = 'waiters.manage';
+
     // Translation permissions
     public const TRANSLATIONS_VIEW = 'translations.view';
 
@@ -137,6 +142,8 @@ class Permission
             self::STAFF_METRICS_VIEW,
             self::SPLIT_BILL_VIEW,
             self::SPLIT_BILL_MANAGE,
+            self::WAITERS_VIEW,
+            self::WAITERS_MANAGE,
             self::TRANSLATIONS_VIEW,
             self::TRANSLATIONS_MANAGE,
             self::TRANSLATIONS_PUBLISH,
@@ -177,6 +184,8 @@ class Permission
                 self::STAFF_METRICS_VIEW,
                 self::SPLIT_BILL_VIEW,
                 self::SPLIT_BILL_MANAGE,
+                self::WAITERS_VIEW,
+                self::WAITERS_MANAGE,
             ],
             'vendor_owner' => [
                 self::MENU_VIEW,
@@ -213,6 +222,8 @@ class Permission
                 self::STAFF_METRICS_VIEW,
                 self::SPLIT_BILL_VIEW,
                 self::SPLIT_BILL_MANAGE,
+                self::WAITERS_VIEW,
+                self::WAITERS_MANAGE,
             ],
             'manager' => [
                 self::MENU_VIEW,
@@ -247,6 +258,8 @@ class Permission
                 self::STAFF_METRICS_VIEW,
                 self::SPLIT_BILL_VIEW,
                 self::SPLIT_BILL_MANAGE,
+                self::WAITERS_VIEW,
+                self::WAITERS_MANAGE,
             ],
             'staff' => [
                 self::MENU_VIEW,
@@ -258,6 +271,7 @@ class Permission
                 self::TIPS_VIEW,
                 self::RATINGS_VIEW,
                 self::SPLIT_BILL_VIEW,
+                self::WAITERS_VIEW,
                 // Staff CANNOT:
                 // modify billing
                 // modify AI credentials

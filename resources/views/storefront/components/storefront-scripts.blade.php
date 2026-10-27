@@ -40,14 +40,59 @@
     $splitBillSetting = $vendor->getSplitBillSetting();
     $tipsEnabled = $vendor->isTipsEnabled();
     $ratingsEnabled = $vendor->isRatingsEnabled();
-    $activeWaiters = ($tipSetting->allow_waiter_selection && ($tipsEnabled || $ratingsEnabled))
-        ? $vendor->users()
-            ->whereIn('role', ['staff', 'manager', 'cashier'])
-            ->get(['id', 'name'])
-            ->map(fn($u) => ['id' => $u->id, 'name' => $u->name])
-            ->values()
-            ->toArray()
-        : [];
+    $activeWaiters = [];
+    if ($tipSetting->allow_waiter_selection && ($tipsEnabled || $ratingsEnabled)) {
+        $waiterQuery = $vendor->users()
+            ->whereIn('role', ['waiter', 'staff', 'manager', 'cashier'])
+            ->where('is_active', true);
+
+        if (($tipSetting->waiter_sort_by ?? 'sort_order') === 'name') {
+            $waiterQuery->orderBy('name', 'asc');
+        } else {
+            $waiterQuery->orderBy('sort_order', 'asc')->orderBy('name', 'asc');
+        }
+
+        // Table-based filtering if enabled and table is reliably identified
+        $filteredByTable = false;
+        $resolvedTableNum = $tableNumber ?? ($table ?? null);
+        if ($tipSetting->filter_waiters_by_table && !empty($resolvedTableNum)) {
+            $matchedTable = \App\Models\RestaurantTable::where('vendor_id', $vendor->id)
+                ->where(function ($q) use ($resolvedTableNum) {
+                    $q->where('table_number', (string) $resolvedTableNum)
+                      ->orWhere('name', (string) $resolvedTableNum);
+                })
+                ->first();
+
+            if ($matchedTable) {
+                $assignedWaiters = $matchedTable->assignedWaiters()
+                    ->where('is_active', true)
+                    ->orderBy('sort_order', 'asc')
+                    ->orderBy('name', 'asc')
+                    ->get();
+
+                if ($assignedWaiters->isNotEmpty()) {
+                    $waitersCollection = $assignedWaiters;
+                    $filteredByTable = true;
+                }
+            }
+        }
+
+        if (!$filteredByTable) {
+            $waitersCollection = $waiterQuery->get();
+        }
+
+        $activeWaiters = $waitersCollection->map(function ($u) use ($tipSetting) {
+            $displayName = !empty($u->display_name) ? $u->display_name : $u->name;
+            return [
+                'id' => (int) $u->id,
+                'name' => (string) $displayName,
+                'short_description' => ($tipSetting->show_waiter_descriptions ?? true) ? ($u->short_description ?: null) : null,
+                'photo_url' => (($tipSetting->show_waiter_photos ?? true) && !empty($u->avatar_url)) ? asset($u->avatar_url) : null,
+                'initial' => mb_substr($displayName, 0, 1),
+                'sort_order' => (int) ($u->sort_order ?? 0),
+            ];
+        })->values()->toArray();
+    }
 
     $rawPaymentSettings = is_array($vendor->payment_settings) ? $vendor->payment_settings : [];
     $cashEnabled = (bool) ($rawPaymentSettings['cash_enabled'] ?? true);
@@ -132,6 +177,11 @@
                 'is_written_feedback_optional' => (bool) $tipSetting->is_written_feedback_optional,
                 'allow_anonymous_ratings' => (bool) $tipSetting->allow_anonymous_ratings,
                 'allow_waiter_selection' => (bool) $tipSetting->allow_waiter_selection,
+                'waiter_selection_stage' => (string) ($tipSetting->waiter_selection_stage ?? 'all'),
+                'waiter_selection_required' => (bool) $tipSetting->waiter_selection_required,
+                'show_waiter_photos' => (bool) ($tipSetting->show_waiter_photos ?? true),
+                'show_waiter_descriptions' => (bool) ($tipSetting->show_waiter_descriptions ?? true),
+                'waiter_attribution_scope' => (string) ($tipSetting->waiter_attribution_scope ?? 'both'),
                 'waiters' => $activeWaiters,
             ],
             'splitBill' => [

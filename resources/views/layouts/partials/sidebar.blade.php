@@ -417,6 +417,21 @@
                 </a>
             @endcan
 
+            @can('waiters.view')
+                <a href="{{ route('admin.waiters.index') }}" 
+                   class="nav-item {{ request()->routeIs('admin.waiters.*') ? 'active' : '' }}" 
+                   style="justify-content: space-between;"
+                   title="{{ __('Waiters Management') }}">
+                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        <i class="fa-solid fa-user-tie" style="color: #f59e0b;"></i>
+                        <span>{{ __('Waiters Management') }}</span>
+                    </span>
+                    @if($v && !$v->hasFeature('tips.ratings'))
+                        <span class="nav-lock-badge">🔒 PRO</span>
+                    @endif
+                </a>
+            @endcan
+
             <!-- ========================================== -->
             <!-- E. ACCOUNT & SYSTEM MANAGEMENT             -->
             <!-- ========================================== -->

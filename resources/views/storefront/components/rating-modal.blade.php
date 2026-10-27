@@ -115,20 +115,67 @@
                         </div>
                     </template>
 
-                    <!-- Waiter Attribution (Optional) -->
-                    <template x-if="tipsRatingsSettings.allow_waiter_selection && tipsRatingsSettings.waiters && tipsRatingsSettings.waiters.length > 0">
+                    <!-- Waiter Attribution (Visual Avatar Cards) -->
+                    <template x-if="tipsRatingsSettings.allow_waiter_selection && tipsRatingsSettings.waiters && tipsRatingsSettings.waiters.length > 0 && (!tipsRatingsSettings.waiter_selection_stage || tipsRatingsSettings.waiter_selection_stage === 'all' || tipsRatingsSettings.waiter_selection_stage === 'rating')">
                         <div>
-                            <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
-                                <i class="fa-solid fa-user-tie"></i>
-                                <span>{{ __('tips.waiter_attribution') ?? 'Սպասարկող մատուցող' }}</span>
-                            </label>
-                            <select x-model="ratingWaiterId" 
-                                    style="width: 100%; padding: 0.65rem 0.85rem; background: var(--bg-main); border: 1.5px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 0.88rem; font-weight: 600; outline: none;">
-                                <option :value="null">{{ __('tips.general_service') ?? 'Ընդհանուր սպասարկում' }}</option>
-                                <template x-for="waiter in tipsRatingsSettings.waiters" :key="waiter.id">
-                                    <option :value="waiter.id" x-text="waiter.name"></option>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem;">
+                                <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin: 0;">
+                                    <i class="fa-solid fa-user-tie" style="color: var(--primary);"></i>
+                                    <span>{{ __('tips.waiter_attribution') ?? 'Սպասարկող մատուցող' }}</span>
+                                </label>
+                                <template x-if="tipsRatingsSettings.waiter_selection_required">
+                                    <span style="font-size: 0.72rem; color: #ef4444; font-weight: 700;">({{ __('tips.required') ?? 'պարտադիր' }})</span>
                                 </template>
-                            </select>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 0.5rem;">
+                                <!-- General Service / Skip Option -->
+                                <template x-if="!tipsRatingsSettings.waiter_selection_required">
+                                    <div @click="ratingWaiterId = null"
+                                         :style="ratingWaiterId === null ? 'border-color: var(--primary); background: rgba(245, 158, 11, 0.08); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);' : 'border-color: var(--border-color); background: var(--bg-main);'"
+                                         style="cursor: pointer; border-radius: 12px; padding: 0.6rem 0.35rem; text-align: center; transition: all 0.2s ease; border: 1.5px solid var(--border-color); position: relative;">
+                                        <template x-if="ratingWaiterId === null">
+                                            <div style="position: absolute; top: 0.25rem; right: 0.25rem; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.6rem;">
+                                                <i class="fa-solid fa-check"></i>
+                                            </div>
+                                        </template>
+                                        <div style="width: 38px; height: 38px; border-radius: 50%; margin: 0 auto 0.3rem; background: rgba(107, 114, 128, 0.12); color: var(--text-muted); display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
+                                            <i class="fa-solid fa-users"></i>
+                                        </div>
+                                        <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                            {{ __('Not sure / Skip') }}
+                                        </div>
+                                        <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.1rem;">
+                                            {{ __('tips.restaurant_service') ?? 'Սրահի աշխատանք' }}
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Waiter Cards -->
+                                <template x-for="waiter in tipsRatingsSettings.waiters" :key="waiter.id">
+                                    <div @click="ratingWaiterId = waiter.id"
+                                         :style="ratingWaiterId === waiter.id ? 'border-color: var(--primary); background: rgba(245, 158, 11, 0.08); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);' : 'border-color: var(--border-color); background: var(--bg-main);'"
+                                         style="cursor: pointer; border-radius: 12px; padding: 0.6rem 0.35rem; text-align: center; transition: all 0.2s ease; border: 1.5px solid var(--border-color); position: relative;">
+                                        <template x-if="ratingWaiterId === waiter.id">
+                                            <div style="position: absolute; top: 0.25rem; right: 0.25rem; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.6rem;">
+                                                <i class="fa-solid fa-check"></i>
+                                            </div>
+                                        </template>
+                                        <div style="width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 0.3rem; overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(245, 158, 11, 0.15); border: 2px solid var(--primary);">
+                                            <template x-if="waiter.photo_url">
+                                                <img :src="waiter.photo_url" :alt="waiter.name" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
+                                            </template>
+                                            <template x-if="!waiter.photo_url">
+                                                <span style="font-weight: 800; font-size: 0.95rem; color: var(--primary);" x-text="waiter.initial || waiter.name.charAt(0)"></span>
+                                            </template>
+                                        </div>
+                                        <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" x-text="waiter.name"></div>
+                                        <template x-if="waiter.short_description">
+                                            <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" x-text="waiter.short_description"></div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
                     </template>
 

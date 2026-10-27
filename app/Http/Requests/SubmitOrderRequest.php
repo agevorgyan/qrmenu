@@ -111,8 +111,8 @@ class SubmitOrderRequest extends FormRequest
             'tip_type' => 'nullable|string|in:none,percentage,fixed,custom',
             'tip_value' => 'nullable|numeric|min:0',
             'waiter_id' => [
-                'nullable',
-                Rule::exists('users', 'id')->where('vendor_id', $vendorId),
+                ($vendor?->getTipRatingSetting()?->allow_waiter_selection && $vendor?->getTipRatingSetting()?->waiter_selection_required) ? 'required' : 'nullable',
+                Rule::exists('users', 'id')->where('vendor_id', $vendorId)->where('is_active', true),
             ],
             'items' => 'required|array|min:1',
             'items.*.product_id' => [

@@ -26,6 +26,7 @@ class StorageService
         'qr',
         'documents',
         'temp',
+        'waiters',
     ];
 
     public const MAX_FILE_SIZE_BYTES = 15728640; // 15 MB

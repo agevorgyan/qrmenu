@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
@@ -122,6 +123,12 @@ class RestaurantTable extends Model
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class, 'location_id');
+    }
+
+    public function assignedWaiters(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'restaurant_table_user', 'restaurant_table_id', 'user_id')
+            ->withTimestamps();
     }
 
     public function reservations(): HasMany

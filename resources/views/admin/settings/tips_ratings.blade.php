@@ -267,10 +267,15 @@
                                     <span>{{ __('Allow Cash Tips') }}</span>
                                 </label>
 
-                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; color: var(--text-main);">
-                                    <input type="checkbox" name="allow_waiter_selection" value="1" {{ old('allow_waiter_selection', $settings->allow_waiter_selection) ? 'checked' : '' }} style="width: 16px; height: 16px;">
-                                    <span>{{ __('Allow Customer Waiter Selection') }}</span>
-                                </label>
+                                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; color: var(--text-main);">
+                                        <input type="checkbox" name="allow_waiter_selection" value="1" {{ old('allow_waiter_selection', $settings->allow_waiter_selection) ? 'checked' : '' }} style="width: 16px; height: 16px;">
+                                        <span>{{ __('Allow Customer Waiter Selection') }}</span>
+                                    </label>
+                                    <a href="{{ route('admin.waiters.index') }}" style="color: var(--primary); font-size: 0.8rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                        <i class="fa-solid fa-user-tie"></i> {{ __('Manage Waiters & Photos') }} →
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>

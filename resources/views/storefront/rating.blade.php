@@ -271,20 +271,79 @@
                 </div>
                 @endif
 
-                <!-- Waiter Selection -->
-                @if($tipSetting->allow_waiter_selection)
+                <!-- Waiter Selection (Visual Cards) -->
+                @if($tipSetting->allow_waiter_selection && (!isset($tipSetting->waiter_selection_stage) || in_array($tipSetting->waiter_selection_stage, ['all', 'rating'], true)))
+                @php
+                    $pageWaitersQuery = $vendor->users()
+                        ->whereIn('role', ['waiter', 'staff', 'manager', 'cashier'])
+                        ->where('is_active', true);
+                    if (($tipSetting->waiter_sort_by ?? 'sort_order') === 'name') {
+                        $pageWaitersQuery->orderBy('name', 'asc');
+                    } else {
+                        $pageWaitersQuery->orderBy('sort_order', 'asc')->orderBy('name', 'asc');
+                    }
+                    $pageWaiters = $pageWaitersQuery->get();
+                @endphp
+                @if($pageWaiters->isNotEmpty())
                 <div>
-                    <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
-                        <i class="fa-solid fa-user-tie"></i>
-                        <span>{{ __('tips.waiter_attribution') ?? 'Սպասարկող մատուցող' }}</span>
-                    </label>
-                    <select x-model="waiterId" class="input-control">
-                        <option :value="null">{{ __('tips.general_service') ?? 'Ընդհանուր սպասարկում' }}</option>
-                        @foreach($vendor->users()->whereIn('role', ['staff', 'manager', 'cashier'])->get() as $u)
-                            <option value="{{ $u->id }}">{{ $u->name }}</option>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem;">
+                        <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin: 0;">
+                            <i class="fa-solid fa-user-tie" style="color: var(--primary);"></i>
+                            <span>{{ __('tips.waiter_attribution') ?? 'Սպասարկող մատուցող' }}</span>
+                        </label>
+                        @if($tipSetting->waiter_selection_required)
+                            <span style="font-size: 0.72rem; color: #ef4444; font-weight: 700;">({{ __('tips.required') ?? 'պարտադիր' }})</span>
+                        @endif
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 0.5rem;">
+                        @if(!$tipSetting->waiter_selection_required)
+                        <!-- General / Skip Option -->
+                        <div @click="waiterId = null"
+                             :style="waiterId === null ? 'border-color: var(--primary); background: rgba(245, 158, 11, 0.08); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);' : 'border-color: var(--border-color); background: var(--bg-card);'"
+                             style="cursor: pointer; border-radius: 12px; padding: 0.6rem 0.35rem; text-align: center; transition: all 0.2s ease; border: 1.5px solid var(--border-color); position: relative;">
+                            <template x-if="waiterId === null">
+                                <div style="position: absolute; top: 0.25rem; right: 0.25rem; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.6rem;">
+                                    <i class="fa-solid fa-check"></i>
+                                </div>
+                            </template>
+                            <div style="width: 38px; height: 38px; border-radius: 50%; margin: 0 auto 0.3rem; background: rgba(107, 114, 128, 0.12); color: var(--text-muted); display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                {{ __('Not sure / Skip') }}
+                            </div>
+                            <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.1rem;">
+                                {{ __('tips.restaurant_service') ?? 'Սրահի աշխատանք' }}
+                            </div>
+                        </div>
+                        @endif
+
+                        @foreach($pageWaiters as $pw)
+                        <div @click="waiterId = {{ $pw->id }}"
+                             :style="waiterId === {{ $pw->id }} ? 'border-color: var(--primary); background: rgba(245, 158, 11, 0.08); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);' : 'border-color: var(--border-color); background: var(--bg-card);'"
+                             style="cursor: pointer; border-radius: 12px; padding: 0.6rem 0.35rem; text-align: center; transition: all 0.2s ease; border: 1.5px solid var(--border-color); position: relative;">
+                            <template x-if="waiterId === {{ $pw->id }}">
+                                <div style="position: absolute; top: 0.25rem; right: 0.25rem; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.6rem;">
+                                    <i class="fa-solid fa-check"></i>
+                                </div>
+                            </template>
+                            <div style="width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 0.3rem; overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(245, 158, 11, 0.15); border: 2px solid var(--primary);">
+                                @if(($tipSetting->show_waiter_photos ?? true) && !empty($pw->avatar_url))
+                                    <img src="{{ asset($pw->avatar_url) }}" alt="{{ $pw->display_name ?: $pw->name }}" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
+                                @else
+                                    <span style="font-weight: 800; font-size: 0.95rem; color: var(--primary);">{{ mb_substr($pw->display_name ?: $pw->name, 0, 1) }}</span>
+                                @endif
+                            </div>
+                            <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $pw->display_name ?: $pw->name }}</div>
+                            @if(($tipSetting->show_waiter_descriptions ?? true) && !empty($pw->short_description))
+                                <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $pw->short_description }}</div>
+                            @endif
+                        </div>
                         @endforeach
-                    </select>
+                    </div>
                 </div>
+                @endif
                 @endif
 
                 <!-- Written Comment -->

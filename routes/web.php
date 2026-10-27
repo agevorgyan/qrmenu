@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminReservationController;
 use App\Http\Controllers\AdminSplitBillController;
 use App\Http\Controllers\AdminTableController;
 use App\Http\Controllers\AdminTipRatingController;
+use App\Http\Controllers\AdminWaiterController;
 use App\Http\Controllers\AiMenuController;
 use App\Http\Controllers\AiWaiterController;
 use App\Http\Controllers\AnalyticsController;
@@ -554,6 +555,16 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cas
         Route::post('/tips-ratings/ratings/{rating}/moderate', [AdminTipRatingController::class, 'moderateRating'])->name('tips_ratings.moderate');
         Route::get('/settings/tips-ratings', [AdminTipRatingController::class, 'settingsIndex'])->name('settings.tips_ratings');
         Route::post('/settings/tips-ratings', [AdminTipRatingController::class, 'updateSettings'])->name('settings.tips_ratings.update');
+
+        // Waiter Management
+        Route::get('/waiters', [AdminWaiterController::class, 'index'])->name('waiters.index');
+        Route::post('/waiters', [AdminWaiterController::class, 'store'])->name('waiters.store');
+        Route::post('/waiters/reorder', [AdminWaiterController::class, 'reorder'])->name('waiters.reorder');
+        Route::match(['post', 'put'], '/waiters/settings', [AdminWaiterController::class, 'updateCustomerSelectionSettings'])->name('waiters.settings.update');
+        Route::match(['post', 'put'], '/waiters/{waiter}', [AdminWaiterController::class, 'update'])->name('waiters.update');
+        Route::match(['post', 'patch'], '/waiters/{waiter}/toggle-status', [AdminWaiterController::class, 'toggleStatus'])->name('waiters.toggle_status');
+        Route::delete('/waiters/{waiter}/photo', [AdminWaiterController::class, 'deletePhoto'])->name('waiters.delete_photo');
+        Route::delete('/waiters/{waiter}', [AdminWaiterController::class, 'destroy'])->name('waiters.destroy');
     });
 
     // Split Bill (Pro / Business Plan Feature)

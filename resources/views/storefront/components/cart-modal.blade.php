@@ -738,19 +738,67 @@
                             </div>
                         </template>
 
-                        <!-- Optional Waiter Selection -->
-                        <template x-if="tipsRatingsSettings.allow_waiter_selection && tipsRatingsSettings.waiters && tipsRatingsSettings.waiters.length > 0">
-                            <div class="cart-tip-waiter-wrap">
-                                <label class="cart-tip-waiter-label">
-                                    <i class="fa-solid fa-user-tie"></i>
-                                    <span>{{ __('tips.select_waiter_optional') ?? 'Ում եք ցանկանում թողնել թեյավճարը (ըստ ցանկության)' }}</span>
-                                </label>
-                                <select x-model="selectedWaiterId" class="cart-tip-waiter-select">
-                                    <option :value="null">{{ __('tips.general_staff_pool') ?? 'Ընդհանուր անձնակազմին / Սրահին' }}</option>
-                                    <template x-for="waiter in tipsRatingsSettings.waiters" :key="waiter.id">
-                                        <option :value="waiter.id" x-text="waiter.name"></option>
+                        <!-- Waiter Selection (Visual Avatar Cards) -->
+                        <template x-if="tipsRatingsSettings.allow_waiter_selection && tipsRatingsSettings.waiters && tipsRatingsSettings.waiters.length > 0 && (!tipsRatingsSettings.waiter_selection_stage || tipsRatingsSettings.waiter_selection_stage === 'all' || tipsRatingsSettings.waiter_selection_stage === 'order' || tipsRatingsSettings.waiter_selection_stage === 'bill')">
+                            <div class="cart-tip-waiter-wrap" style="margin-top: 0.85rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem;">
+                                    <label class="cart-tip-waiter-label" style="margin-bottom: 0; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem;">
+                                        <i class="fa-solid fa-user-tie" style="color: var(--primary);"></i>
+                                        <span>{{ __('tips.select_waiter_optional') ?? 'Ում եք ցանկանում թողնել թեյավճարը' }}</span>
+                                    </label>
+                                    <template x-if="tipsRatingsSettings.waiter_selection_required">
+                                        <span style="font-size: 0.72rem; color: #ef4444; font-weight: 700;">({{ __('tips.required') ?? 'պարտադիր' }})</span>
                                     </template>
-                                </select>
+                                </div>
+
+                                <div class="waiter-selection-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); gap: 0.55rem;">
+                                    <!-- Skip / General Staff Pool Option (if not strictly required) -->
+                                    <template x-if="!tipsRatingsSettings.waiter_selection_required">
+                                        <div @click="selectedWaiterId = null"
+                                             :style="selectedWaiterId === null ? 'border-color: var(--primary); background: rgba(245, 158, 11, 0.08); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);' : 'border-color: var(--border-color); background: var(--bg-card);'"
+                                             style="cursor: pointer; border-radius: 12px; padding: 0.65rem 0.4rem; text-align: center; transition: all 0.2s ease; border: 1.5px solid var(--border-color); position: relative;">
+                                            <template x-if="selectedWaiterId === null">
+                                                <div style="position: absolute; top: 0.25rem; right: 0.25rem; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.6rem;">
+                                                    <i class="fa-solid fa-check"></i>
+                                                </div>
+                                            </template>
+                                            <div style="width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 0.35rem; background: rgba(107, 114, 128, 0.12); color: var(--text-muted); display: flex; align-items: center; justify-content: center; font-size: 1rem;">
+                                                <i class="fa-solid fa-users"></i>
+                                            </div>
+                                            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                {{ __('Not sure / Skip') }}
+                                            </div>
+                                            <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.1rem;">
+                                                {{ __('tips.shared_pool') ?? 'Ամբողջ սրահին' }}
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                    <!-- Waiter Cards -->
+                                    <template x-for="waiter in tipsRatingsSettings.waiters" :key="waiter.id">
+                                        <div @click="selectedWaiterId = waiter.id"
+                                             :style="selectedWaiterId === waiter.id ? 'border-color: var(--primary); background: rgba(245, 158, 11, 0.08); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);' : 'border-color: var(--border-color); background: var(--bg-card);'"
+                                             style="cursor: pointer; border-radius: 12px; padding: 0.65rem 0.4rem; text-align: center; transition: all 0.2s ease; border: 1.5px solid var(--border-color); position: relative;">
+                                            <template x-if="selectedWaiterId === waiter.id">
+                                                <div style="position: absolute; top: 0.25rem; right: 0.25rem; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.6rem;">
+                                                    <i class="fa-solid fa-check"></i>
+                                                </div>
+                                            </template>
+                                            <div style="width: 42px; height: 42px; border-radius: 50%; margin: 0 auto 0.35rem; overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(245, 158, 11, 0.15); border: 2px solid var(--primary);">
+                                                <template x-if="waiter.photo_url">
+                                                    <img :src="waiter.photo_url" :alt="waiter.name" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
+                                                </template>
+                                                <template x-if="!waiter.photo_url">
+                                                    <span style="font-weight: 800; font-size: 1rem; color: var(--primary);" x-text="waiter.initial || waiter.name.charAt(0)"></span>
+                                                </template>
+                                            </div>
+                                            <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" x-text="waiter.name"></div>
+                                            <template x-if="waiter.short_description">
+                                                <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" x-text="waiter.short_description"></div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
                         </template>
                     </div>

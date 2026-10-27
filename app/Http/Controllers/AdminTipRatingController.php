@@ -40,7 +40,7 @@ class AdminTipRatingController extends Controller
         $settings = $vendor->getTipRatingSetting();
         $locations = $vendor->locations;
         $staffMembers = User::where('vendor_id', $vendor->id)
-            ->whereIn('role', ['staff', 'manager'])
+            ->whereIn('role', ['waiter', 'staff', 'manager'])
             ->orderBy('name')
             ->get();
 
@@ -123,6 +123,13 @@ class AdminTipRatingController extends Controller
             'feedback_categories' => 'nullable|array',
             'feedback_categories.*' => 'string|max:50',
             'allow_waiter_selection' => 'nullable|boolean',
+            'waiter_selection_stage' => 'nullable|string|in:order,bill,rating,all',
+            'waiter_selection_required' => 'nullable|boolean',
+            'show_waiter_photos' => 'nullable|boolean',
+            'show_waiter_descriptions' => 'nullable|boolean',
+            'waiter_sort_by' => 'nullable|string|in:sort_order,name',
+            'filter_waiters_by_table' => 'nullable|boolean',
+            'waiter_attribution_scope' => 'nullable|string|in:both,tips,ratings,none',
             'submission_window_hours' => 'required|integer|min:1|max:720',
             'duplicate_policy' => 'required|string|in:once_per_order,per_order,once_per_session_day,per_table_session,time_window',
             'auto_publish_ratings' => 'nullable|boolean',
@@ -185,6 +192,13 @@ class AdminTipRatingController extends Controller
             'allow_customer_name' => $request->boolean('allow_customer_name', true),
             'feedback_categories' => $categories,
             'allow_waiter_selection' => $request->boolean('allow_waiter_selection', true),
+            'waiter_selection_stage' => $validated['waiter_selection_stage'] ?? ($settings->waiter_selection_stage ?? 'all'),
+            'waiter_selection_required' => $request->has('waiter_selection_required') ? $request->boolean('waiter_selection_required') : ($settings->waiter_selection_required ?? false),
+            'show_waiter_photos' => $request->has('show_waiter_photos') ? $request->boolean('show_waiter_photos') : ($settings->show_waiter_photos ?? true),
+            'show_waiter_descriptions' => $request->has('show_waiter_descriptions') ? $request->boolean('show_waiter_descriptions') : ($settings->show_waiter_descriptions ?? true),
+            'waiter_sort_by' => $validated['waiter_sort_by'] ?? ($settings->waiter_sort_by ?? 'sort_order'),
+            'filter_waiters_by_table' => $request->has('filter_waiters_by_table') ? $request->boolean('filter_waiters_by_table') : ($settings->filter_waiters_by_table ?? false),
+            'waiter_attribution_scope' => $validated['waiter_attribution_scope'] ?? ($settings->waiter_attribution_scope ?? 'both'),
             'submission_window_hours' => (int) ($validated['submission_window_hours'] ?? 24),
             'duplicate_policy' => $duplicatePolicy,
             'auto_publish_ratings' => $request->boolean('auto_publish_ratings', true),
@@ -261,7 +275,7 @@ class AdminTipRatingController extends Controller
 
         $ratings = $ratingsQuery->paginate(15, ['*'], 'ratings_page')->withQueryString();
         $locations = $vendor->locations;
-        $waiters = $vendor->users()->whereIn('role', ['staff', 'manager', 'cashier'])->get(['id', 'name']);
+        $waiters = $vendor->users()->whereIn('role', ['waiter', 'staff', 'manager', 'cashier'])->get(['id', 'name', 'display_name', 'avatar_url']);
 
         $canModerate = $user->isSuperAdmin() || $user->hasPermission(Permission::RATINGS_MANAGE) || $user->hasPermission(Permission::SETTINGS_MANAGE);
         $canExport = $user->isSuperAdmin() || $user->hasPermission(Permission::REPORTS_EXPORT);

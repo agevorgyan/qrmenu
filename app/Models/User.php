@@ -6,7 +6,11 @@ use App\Security\Permission;
 use App\Services\EntitlementService;
 use App\Services\SecurityAuditService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -16,6 +20,13 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $fillable = [
         'name',
+        'display_name',
+        'short_description',
+        'employee_id',
+        'avatar_url',
+        'is_active',
+        'sort_order',
+        'assigned_table_ids',
         'email',
         'email_verified_at',
         'password',
@@ -46,6 +57,9 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'custom_permissions' => 'array',
+            'is_active' => 'boolean',
+            'sort_order' => 'integer',
+            'assigned_table_ids' => 'array',
             'two_factor_enabled' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
             'two_factor_email_expires_at' => 'datetime',
@@ -99,14 +113,35 @@ class User extends Authenticatable implements MustVerifyEmail
         });
     }
 
-    public function vendor()
+    public function vendor(): BelongsTo
     {
         return $this->belongsTo(Vendor::class);
     }
 
-    public function location()
+    public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
+    }
+
+    public function assignedTables(): BelongsToMany
+    {
+        return $this->belongsToMany(RestaurantTable::class, 'restaurant_table_user', 'user_id', 'restaurant_table_id')
+            ->withTimestamps();
+    }
+
+    public function tips(): HasMany
+    {
+        return $this->hasMany(Tip::class, 'waiter_id');
+    }
+
+    public function ratings(): HasMany
+    {
+        return $this->hasMany(ServiceRating::class, 'waiter_id');
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class, 'waiter_id');
     }
 
     public function isSuperAdmin(): bool
@@ -126,7 +161,12 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isStaff(): bool
     {
-        return $this->role === 'staff';
+        return in_array($this->role, ['staff', 'waiter']);
+    }
+
+    public function isWaiter(): bool
+    {
+        return in_array($this->role, ['waiter', 'staff']);
     }
 
     public function isChef(): bool
@@ -137,6 +177,25 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isCashier(): bool
     {
         return $this->role === 'cashier';
+    }
+
+    /**
+     * Get the customer-facing display name.
+     */
+    public function getPublicDisplayNameAttribute(): string
+    {
+        return ! empty($this->display_name) ? $this->display_name : $this->name;
+    }
+
+    /**
+     * Scope query to active waiters for a vendor.
+     */
+    public function scopeActiveWaiters(Builder $query): Builder
+    {
+        return $query->whereIn('role', ['waiter', 'staff', 'manager', 'cashier'])
+            ->where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('name', 'asc');
     }
 
     /**
@@ -312,13 +371,8 @@ class User extends Authenticatable implements MustVerifyEmail
         return $maskedName.'@'.$domain;
     }
 
-    public function tips()
+    public function serviceRatings(): HasMany
     {
-        return $this->hasMany(Tip::class, 'waiter_id');
-    }
-
-    public function serviceRatings()
-    {
-        return $this->hasMany(ServiceRating::class, 'waiter_id');
+        return $this->ratings();
     }
 }
