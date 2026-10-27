@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Traits\BelongsToVendor;
 use App\Models\Traits\HasContentTranslations;
 use App\Services\StorageService;
+use App\Services\TenantCache;
 use App\Services\TenantContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -35,7 +36,7 @@ class Product extends Model
 
         static::saved(function (Product $product) {
             if ($product->vendor_id) {
-                \App\Services\TenantCache::invalidateMenu((int) $product->vendor_id);
+                TenantCache::invalidateMenu((int) $product->vendor_id);
             }
         });
 
@@ -45,7 +46,7 @@ class Product extends Model
 
         static::deleted(function (Product $product) {
             if ($product->vendor_id) {
-                \App\Services\TenantCache::invalidateMenu((int) $product->vendor_id);
+                TenantCache::invalidateMenu((int) $product->vendor_id);
             }
         });
     }

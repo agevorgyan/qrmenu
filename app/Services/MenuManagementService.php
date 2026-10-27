@@ -11,6 +11,7 @@ use App\Models\ProductVariation;
 use App\Models\Vendor;
 use App\Security\QuotaCatalog;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -603,5 +604,378 @@ class MenuManagementService
         }
 
         return $defaultUrl;
+    }
+
+    /**
+     * Bulk update multiple products for a vendor safely within a transaction.
+     *
+     * @param  array<int>  $productIds
+     * @param  array<string, mixed>  $actions
+     * @return array{updated_count: int, product_ids: array<int>}
+     */
+    public function bulkUpdateProducts(Vendor $vendor, array $productIds, array $actions): array
+    {
+        if (empty($productIds)) {
+            return ['updated_count' => 0, 'product_ids' => []];
+        }
+
+        // Bounded payload safeguard (max 250 products per batch)
+        $cleanIds = array_slice(array_unique(array_map('intval', $productIds)), 0, 250);
+
+        // Multi-tenant isolation: verify all target products belong to the authenticated vendor
+        $products = Product::where('vendor_id', $vendor->id)
+            ->whereIn('id', $cleanIds)
+            ->get();
+
+        if ($products->isEmpty()) {
+            return ['updated_count' => 0, 'product_ids' => []];
+        }
+
+        // Validate target category if category reassignment is requested
+        $targetCategoryId = null;
+        if (! empty($actions['category_id'])) {
+            $cat = Category::where('vendor_id', $vendor->id)->find($actions['category_id']);
+            if (! $cat) {
+                throw ValidationException::withMessages([
+                    'category_id' => __('The selected target category does not belong to your restaurant.'),
+                ]);
+            }
+            $targetCategoryId = (int) $cat->id;
+        }
+
+        $priceAction = $actions['price_action'] ?? 'none';
+        $priceValue = isset($actions['price_value']) ? (float) $actions['price_value'] : null;
+        $priceRounding = $actions['price_rounding'] ?? 'none';
+
+        if ($priceAction !== 'none' && ($priceValue === null || $priceValue < 0)) {
+            throw ValidationException::withMessages([
+                'price_value' => __('Price adjustment value must be a non-negative number.'),
+            ]);
+        }
+
+        $updatedIds = [];
+
+        DB::transaction(function () use (
+            $products,
+            $priceAction,
+            $priceValue,
+            $priceRounding,
+            $targetCategoryId,
+            $actions,
+            &$updatedIds
+        ) {
+            foreach ($products as $product) {
+                $dirty = false;
+
+                // 1. Price Adjustment
+                if ($priceAction !== 'none' && $priceValue !== null) {
+                    $oldPrice = (float) $product->price;
+                    $newPrice = match ($priceAction) {
+                        'set' => $priceValue,
+                        'increase_amount' => $oldPrice + $priceValue,
+                        'decrease_amount' => max(0.0, $oldPrice - $priceValue),
+                        'increase_percent' => $oldPrice * (1 + ($priceValue / 100)),
+                        'decrease_percent' => max(0.0, $oldPrice * (1 - ($priceValue / 100))),
+                        default => $oldPrice,
+                    };
+
+                    // Apply documented rounding rule
+                    $newPrice = match ($priceRounding) {
+                        'nearest_10' => round($newPrice / 10) * 10,
+                        'nearest_50' => round($newPrice / 50) * 50,
+                        'nearest_100' => round($newPrice / 100) * 100,
+                        'integer' => round($newPrice),
+                        default => round($newPrice, 2),
+                    };
+
+                    // Pricing safety constraint: never allow negative price
+                    $newPrice = max(0.0, (float) $newPrice);
+
+                    $product->price = $newPrice;
+                    $dirty = true;
+
+                    // Sync default portion variation price
+                    ProductVariation::where('product_id', $product->id)
+                        ->where('is_default', true)
+                        ->update(['price' => $newPrice]);
+                }
+
+                // 2. Category Reassignment
+                if ($targetCategoryId !== null && (int) $product->category_id !== $targetCategoryId) {
+                    $product->category_id = $targetCategoryId;
+                    $dirty = true;
+                }
+
+                // 3. Availability (In stock / Out of stock)
+                if (array_key_exists('is_available', $actions) && $actions['is_available'] !== null) {
+                    $product->is_available = (bool) $actions['is_available'];
+                    $dirty = true;
+                }
+
+                // 4. Feature & Channel Attributes
+                if (array_key_exists('is_featured', $actions) && $actions['is_featured'] !== null) {
+                    $product->is_featured = (bool) $actions['is_featured'];
+                    $dirty = true;
+                }
+
+                if (array_key_exists('available_for_dine_in', $actions) && $actions['available_for_dine_in'] !== null) {
+                    $product->available_for_dine_in = (bool) $actions['available_for_dine_in'];
+                    $dirty = true;
+                }
+
+                if (array_key_exists('available_for_takeaway', $actions) && $actions['available_for_takeaway'] !== null) {
+                    $product->available_for_takeaway = (bool) $actions['available_for_takeaway'];
+                    $dirty = true;
+                }
+
+                if (array_key_exists('available_for_delivery', $actions) && $actions['available_for_delivery'] !== null) {
+                    $product->available_for_delivery = (bool) $actions['available_for_delivery'];
+                    $dirty = true;
+                }
+
+                if (array_key_exists('ai_enabled', $actions) && $actions['ai_enabled'] !== null) {
+                    $product->ai_enabled = (bool) $actions['ai_enabled'];
+                    $dirty = true;
+                }
+
+                if ($dirty) {
+                    $product->save();
+                    $updatedIds[] = (int) $product->id;
+                }
+            }
+        });
+
+        TenantCache::invalidateMenu($vendor->id);
+
+        return [
+            'updated_count' => count($updatedIds),
+            'product_ids' => $updatedIds,
+        ];
+    }
+
+    /**
+     * Bulk delete multiple products safely within a transaction.
+     *
+     * @param  array<int>  $productIds
+     */
+    public function bulkDeleteProducts(Vendor $vendor, array $productIds): int
+    {
+        if (empty($productIds)) {
+            return 0;
+        }
+
+        $cleanIds = array_slice(array_unique(array_map('intval', $productIds)), 0, 250);
+
+        $products = Product::where('vendor_id', $vendor->id)
+            ->whereIn('id', $cleanIds)
+            ->get();
+
+        if ($products->isEmpty()) {
+            return 0;
+        }
+
+        DB::transaction(function () use ($products) {
+            foreach ($products as $product) {
+                $product->deleteImageFile();
+                $product->delete();
+            }
+        });
+
+        TenantCache::invalidateMenu($vendor->id);
+
+        return $products->count();
+    }
+
+    /**
+     * Inline update a single low-risk field on a product.
+     */
+    public function inlineUpdateProduct(Product $product, string $field, mixed $value): Product
+    {
+        $allowedFields = ['name', 'price', 'is_available', 'sort_order'];
+        if (! in_array($field, $allowedFields, true)) {
+            throw ValidationException::withMessages([
+                'field' => __('Field :field is not eligible for inline updates.', ['field' => $field]),
+            ]);
+        }
+
+        switch ($field) {
+            case 'price':
+                $price = (float) $value;
+                if ($price < 0) {
+                    throw ValidationException::withMessages([
+                        'value' => __('Price cannot be negative.'),
+                    ]);
+                }
+                $product->price = round($price, 2);
+                $product->save();
+
+                // Keep default variation in sync
+                ProductVariation::where('product_id', $product->id)
+                    ->where('is_default', true)
+                    ->update(['price' => $product->price]);
+                break;
+
+            case 'name':
+                $name = trim((string) $value);
+                if (empty($name) || mb_strlen($name) > 255) {
+                    throw ValidationException::withMessages([
+                        'value' => __('Product name is required and cannot exceed 255 characters.'),
+                    ]);
+                }
+                $product->name = $name;
+                $translations = is_array($product->name_translations) ? $product->name_translations : [];
+                $translations['en'] = $name;
+                $product->name_translations = $translations;
+                $product->save();
+                break;
+
+            case 'is_available':
+                $product->is_available = (bool) $value;
+                $product->save();
+                break;
+
+            case 'sort_order':
+                $product->sort_order = max(0, (int) $value);
+                $product->save();
+                break;
+        }
+
+        TenantCache::invalidateMenu($product->vendor_id);
+
+        return $product;
+    }
+
+    /**
+     * Reorder categories for a vendor.
+     *
+     * @param  array<array{id: int, sort_order: int}>  $orderList
+     */
+    public function reorderCategories(Vendor $vendor, array $orderList): void
+    {
+        if (empty($orderList)) {
+            return;
+        }
+
+        DB::transaction(function () use ($vendor, $orderList) {
+            foreach ($orderList as $item) {
+                if (! isset($item['id'], $item['sort_order'])) {
+                    continue;
+                }
+
+                Category::where('id', (int) $item['id'])
+                    ->where('vendor_id', $vendor->id)
+                    ->update(['sort_order' => (int) $item['sort_order']]);
+            }
+        });
+
+        TenantCache::invalidateMenu($vendor->id);
+    }
+
+    /**
+     * Safely delete a category with product reassignment or explicit force deletion.
+     *
+     * @return array{reassigned_count: int, category_name: string}
+     */
+    public function deleteCategorySafely(Category $category, ?int $reassignToCategoryId = null, bool $forceDelete = false): array
+    {
+        $vendorId = $category->vendor_id;
+        $categoryName = $category->name;
+        $productCount = $category->products()->count();
+        $reassignedCount = 0;
+
+        if ($productCount > 0) {
+            if ($reassignToCategoryId !== null) {
+                if ($reassignToCategoryId === (int) $category->id) {
+                    throw ValidationException::withMessages([
+                        'reassign_to_category_id' => __('Cannot reassign products to the same category being deleted.'),
+                    ]);
+                }
+
+                $targetCategory = Category::where('vendor_id', $vendorId)->find($reassignToCategoryId);
+                if (! $targetCategory) {
+                    throw ValidationException::withMessages([
+                        'reassign_to_category_id' => __('Target category does not belong to this restaurant.'),
+                    ]);
+                }
+
+                DB::transaction(function () use ($category, $targetCategory, &$reassignedCount) {
+                    $reassignedCount = Product::where('category_id', $category->id)
+                        ->where('vendor_id', $category->vendor_id)
+                        ->update(['category_id' => $targetCategory->id]);
+
+                    $category->delete();
+                });
+            } elseif (! $forceDelete) {
+                throw ValidationException::withMessages([
+                    'category' => __('This category contains :count products. Reassign them to another category or confirm permanent deletion.', ['count' => $productCount]),
+                ]);
+            } else {
+                DB::transaction(function () use ($category) {
+                    $category->products()->delete();
+                    $category->delete();
+                });
+            }
+        } else {
+            $category->delete();
+        }
+
+        TenantCache::invalidateMenu($vendorId);
+
+        return [
+            'reassigned_count' => $reassignedCount,
+            'category_name' => $categoryName,
+        ];
+    }
+
+    /**
+     * Duplicate an existing category with all its dishes.
+     */
+    public function duplicateCategory(Category $category): Category
+    {
+        $vendor = $category->vendor;
+
+        return DB::transaction(function () use ($category, $vendor) {
+            $maxOrder = (int) (Category::where('vendor_id', $vendor->id)->max('sort_order') ?? 0);
+            $copyName = $category->name.' ('.__('Copy').')';
+
+            $newCat = Category::create([
+                'vendor_id' => $vendor->id,
+                'location_id' => $category->location_id,
+                'name' => $copyName,
+                'name_translations' => $category->name_translations,
+                'description' => $category->description,
+                'image' => $category->image,
+                'sort_order' => $maxOrder + 1,
+                'is_active' => $category->is_active,
+            ]);
+
+            $products = Product::where('category_id', $category->id)
+                ->where('vendor_id', $vendor->id)
+                ->with(['variations', 'allergens'])
+                ->get();
+
+            foreach ($products as $prod) {
+                $newProd = $prod->replicate(['id', 'created_at', 'updated_at', 'deleted_at']);
+                $newProd->category_id = $newCat->id;
+                $newProd->name = $prod->name;
+                $newProd->save();
+
+                // Replicate variations
+                foreach ($prod->variations as $var) {
+                    $newVar = $var->replicate(['id', 'product_id', 'created_at', 'updated_at']);
+                    $newVar->product_id = $newProd->id;
+                    $newVar->save();
+                }
+
+                // Sync allergens
+                if ($prod->allergens->isNotEmpty()) {
+                    $newProd->allergens()->sync($prod->allergens->pluck('id')->all());
+                }
+            }
+
+            TenantCache::invalidateMenu($vendor->id);
+
+            return $newCat;
+        });
     }
 }

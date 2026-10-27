@@ -48,6 +48,16 @@ class ProductPolicy
             && $user->hasPermission(Permission::MENU_DELETE);
     }
 
+    public function bulkUpdate(User $user): bool
+    {
+        return ! empty($user->vendor_id) && $user->hasPermission(Permission::MENU_UPDATE);
+    }
+
+    public function bulkDelete(User $user): bool
+    {
+        return ! empty($user->vendor_id) && $user->hasPermission(Permission::MENU_DELETE);
+    }
+
     public function export(User $user): bool
     {
         return ! empty($user->vendor_id) && $user->hasPermission(Permission::REPORTS_EXPORT);

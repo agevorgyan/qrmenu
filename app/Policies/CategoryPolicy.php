@@ -42,6 +42,11 @@ class CategoryPolicy
             && $user->hasPermission(Permission::MENU_UPDATE);
     }
 
+    public function reorder(User $user): bool
+    {
+        return ! empty($user->vendor_id) && $user->hasPermission(Permission::MENU_UPDATE);
+    }
+
     public function delete(User $user, Category $category): bool
     {
         return (int) $user->vendor_id === (int) $category->vendor_id

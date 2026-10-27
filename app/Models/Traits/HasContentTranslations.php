@@ -3,6 +3,7 @@
 namespace App\Models\Traits;
 
 use App\Models\ContentTranslation;
+use App\Services\TenantCache;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 trait HasContentTranslations
@@ -155,7 +156,7 @@ trait HasContentTranslations
         ]);
 
         if (! empty($this->vendor_id)) {
-            \App\Services\TenantCache::invalidateMenu((int) $this->vendor_id);
+            TenantCache::invalidateMenu((int) $this->vendor_id);
         }
     }
 }

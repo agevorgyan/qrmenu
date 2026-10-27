@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Traits\BelongsToVendor;
 use App\Models\Traits\HasContentTranslations;
+use App\Services\TenantCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -41,13 +42,13 @@ class Category extends Model
 
         static::saved(function (Category $category) {
             if ($category->vendor_id) {
-                \App\Services\TenantCache::invalidateMenu((int) $category->vendor_id);
+                TenantCache::invalidateMenu((int) $category->vendor_id);
             }
         });
 
         static::deleted(function (Category $category) {
             if ($category->vendor_id) {
-                \App\Services\TenantCache::invalidateMenu((int) $category->vendor_id);
+                TenantCache::invalidateMenu((int) $category->vendor_id);
             }
         });
     }

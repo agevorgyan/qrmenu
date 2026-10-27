@@ -423,9 +423,14 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cas
     // Menu Builder
     Route::get('/menu', [MenuBuilderController::class, 'index'])->name('menu.index');
     Route::post('/menu/categories', [MenuBuilderController::class, 'storeCategory'])->name('menu.categories.store');
+    Route::post('/menu/categories/reorder', [MenuBuilderController::class, 'reorderCategories'])->name('menu.categories.reorder');
+    Route::post('/menu/categories/{category}/duplicate', [MenuBuilderController::class, 'duplicateCategory'])->name('menu.categories.duplicate');
     Route::post('/menu/categories/{category}', [MenuBuilderController::class, 'updateCategory'])->name('menu.categories.update');
     Route::delete('/menu/categories/{category}', [MenuBuilderController::class, 'destroyCategory'])->name('menu.categories.destroy');
     Route::post('/menu/products', [MenuBuilderController::class, 'storeProduct'])->name('menu.products.store');
+    Route::post('/menu/products/bulk-update', [MenuBuilderController::class, 'bulkUpdateProducts'])->name('menu.products.bulk_update');
+    Route::post('/menu/products/bulk-delete', [MenuBuilderController::class, 'bulkDeleteProducts'])->name('menu.products.bulk_delete');
+    Route::post('/menu/products/{product}/inline-update', [MenuBuilderController::class, 'inlineUpdateProduct'])->name('menu.products.inline_update');
     Route::post('/menu/products/{product}', [MenuBuilderController::class, 'updateProduct'])->name('menu.products.update');
     Route::post('/menu/products/{product}/toggle', [MenuBuilderController::class, 'toggleAvailability'])->name('menu.products.toggle');
     Route::post('/menu/products/{product}/daily-offer-toggle', [MenuBuilderController::class, 'toggleDailyOffer'])->name('menu.products.daily_offer.toggle');
