@@ -84,4 +84,23 @@ class AuthAndDemoLoginTest extends TestCase
         $this->assertNotEquals('superadmin', auth()->user()->role);
         $this->assertFalse(auth()->user()->isSuperAdmin());
     }
+
+    public function test_login_rate_limiting_redirects_back_with_friendly_message_instead_of_raw_429(): void
+    {
+        for ($i = 0; $i < 10; $i++) {
+            $this->post('/login', [
+                'email' => 'wrong@test.com',
+                'password' => 'wrongpass',
+            ]);
+        }
+
+        // The 11th request triggers rate limiting
+        $response = $this->post('/login', [
+            'email' => 'wrong@test.com',
+            'password' => 'wrongpass',
+        ]);
+
+        $response->assertStatus(302);
+        $response->assertSessionHasErrors('email');
+    }
 }

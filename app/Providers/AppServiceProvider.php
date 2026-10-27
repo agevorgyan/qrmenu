@@ -49,6 +49,8 @@ use App\Services\Localization\TranslationService;
 use App\Services\Localization\TranslationValidator;
 use App\Services\QuotaService;
 use App\Services\TenantContext;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Queue\Events\JobExceptionOccurred;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
@@ -57,6 +59,7 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -91,6 +94,15 @@ class AppServiceProvider extends ServiceProvider
         if (app()->environment('production') || str_starts_with(config('app.url'), 'https://')) {
             URL::forceScheme('https');
         }
+
+        RateLimiter::for('login', function (Request $request) {
+            $email = (string) $request->input('email');
+
+            return [
+                Limit::perMinute(10)->by($email.$request->ip()),
+                Limit::perMinute(60)->by($request->ip()),
+            ];
+        });
 
         // Guarantee tenant context isolation across queue worker lifecycle
         Queue::before(function (JobProcessing $event): void {

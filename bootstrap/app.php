@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Routing\Middleware\ThrottleRequests;
@@ -30,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->trustProxies(at: '*');
         $middleware->append(SecurityHeaders::class);
         $middleware->web(append: [
             SetAppLocale::class,
@@ -53,6 +55,18 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->render(function (ThrottleRequestsException $e, Request $request) {
+            if (! $request->expectsJson() && ($request->is('login') || $request->is('demo/login') || $request->is('register') || $request->is('forgot-password'))) {
+                $seconds = $e->getHeaders()['Retry-After'] ?? 60;
+
+                return back()
+                    ->withInput($request->only('email'))
+                    ->withErrors([
+                        'email' => __('Too many attempts. Please try again in :seconds seconds.', ['seconds' => $seconds]),
+                    ]);
+            }
+        });
+
         $exceptions->render(function (Throwable $e, Request $request) {
             if ($request->is('api/m/*')) {
                 $status = 500;

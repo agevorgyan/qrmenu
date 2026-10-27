@@ -1,4 +1,7 @@
 {
+    "Too Many Requests": "Չափազանց շատ հարցումներ",
+    "You have made too many requests in a short period of time. Please wait a few moments and try again.": "Դուք կատարել եք չափազանց շատ հարցումներ կարճ ժամանակահատվածում։ Խնդրում ենք սպասել մի քանի վայրկյան և փորձել կրկին։",
+    "Too many attempts. Please try again in :seconds seconds.": "Չափազանց շատ մուտքի փորձեր։ Խնդրում ենք փորձել կրկին :seconds վայրկյանից։",
     "':name' is now the primary active default mail connection.": "«:name»-ն այժմ հանդիսանում է հիմնական ակտիվ փոստային միացումը։",
     "+ Add Pre-Order for Arrival": "+ Ավելացնել նախնական պատվեր ժամանման համար",
     "+ Daily Offer": "+ Օրվա առաջարկ",
