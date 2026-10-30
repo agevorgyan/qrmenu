@@ -21,6 +21,7 @@ use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\MenuBuilderController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentWebhookController;
+use App\Http\Controllers\PosAuthController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\PosDeviceController;
 use App\Http\Controllers\PosSettingController;
@@ -590,11 +591,26 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cas
 });
 
 // 5. Point of Sale (POS) Module Routes
+Route::prefix('pos/api/auth')->name('pos.api.auth.')->group(function () {
+    Route::post('/login', [PosAuthController::class, 'login'])->middleware('throttle:10,1')->name('login');
+    Route::post('/pin-login', [PosAuthController::class, 'pinLogin'])->middleware('throttle:15,1')->name('pin_login');
+});
+
 Route::middleware(['auth', EnsurePosAccess::class])->group(function () {
     Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
     Route::get('/admin/pos', [PosController::class, 'index'])->name('admin.pos.index');
 
     Route::prefix('pos/api')->name('pos.api.')->group(function () {
+        // POS Authentication & Employee Switcher
+        Route::prefix('auth')->name('auth.')->group(function () {
+            Route::get('/employees', [PosAuthController::class, 'getEmployees'])->name('employees');
+            Route::post('/quick-switch', [PosAuthController::class, 'quickSwitch'])->name('quick_switch');
+            Route::post('/pin', [PosAuthController::class, 'setPin'])->name('set_pin');
+            Route::post('/lock', [PosAuthController::class, 'lock'])->name('lock');
+            Route::post('/unlock', [PosAuthController::class, 'unlock'])->name('unlock');
+            Route::post('/logout', [PosAuthController::class, 'logout'])->name('logout');
+        });
+
         Route::get('/bootstrap', [PosController::class, 'bootstrap'])->name('bootstrap');
         Route::get('/orders', [PosController::class, 'getOrders'])->name('orders.index');
         Route::post('/orders', [PosController::class, 'storeOrder'])->name('orders.store');
@@ -609,6 +625,7 @@ Route::middleware(['auth', EnsurePosAccess::class])->group(function () {
         Route::get('/devices', [PosDeviceController::class, 'index'])->name('devices.index');
         Route::post('/devices/register', [PosDeviceController::class, 'register'])->name('devices.register');
         Route::post('/devices/pair', [PosDeviceController::class, 'pair'])->name('devices.pair');
+        Route::post('/devices/{device}/regenerate-code', [PosDeviceController::class, 'regenerateCode'])->name('devices.regenerate_code');
         Route::post('/devices/heartbeat', [PosDeviceController::class, 'heartbeat'])->name('devices.heartbeat');
         Route::post('/devices/{device}/toggle', [PosDeviceController::class, 'toggle'])->name('devices.toggle');
         Route::delete('/devices/{device}', [PosDeviceController::class, 'destroy'])->name('devices.destroy');

@@ -8,9 +8,11 @@ use App\Models\PosDeviceSession;
 use App\Models\PosOperationLog;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Security\Permission;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -99,6 +101,292 @@ class PosDeviceService
         );
 
         return $device;
+    }
+
+    /**
+     * Regenerate the device pairing code.
+     */
+    public function regeneratePairingCode(PosDevice $device, ?User $actor = null): string
+    {
+        $newCode = PosDevice::generatePairingCode();
+        $device->update([
+            'pairing_code' => $newCode,
+            'is_paired' => false,
+            'paired_at' => null,
+        ]);
+
+        PosOperationLog::log(
+            vendor: $device->vendor,
+            action: 'device_regenerate_code',
+            user: $actor,
+            device: $device,
+            entity: $device,
+            details: ['new_code' => $newCode]
+        );
+
+        return $newCode;
+    }
+
+    /**
+     * Authenticate an employee using username/email and password.
+     */
+    public function loginWithCredentials(string $email, string $password, ?string $deviceUuid = null, string $mode = 'waiter'): array
+    {
+        $user = User::where('email', strtolower(trim($email)))->first();
+
+        if (! $user || ! Hash::check($password, $user->password)) {
+            throw ValidationException::withMessages([
+                'email' => __('These credentials do not match our records.'),
+            ]);
+        }
+
+        if (! $user->is_active) {
+            throw ValidationException::withMessages([
+                'email' => __('This user account is inactive.'),
+            ]);
+        }
+
+        if (! $user->hasPermission(Permission::POS_ACCESS)) {
+            throw ValidationException::withMessages([
+                'email' => __('Your role is not authorized to access the POS terminal.'),
+            ]);
+        }
+
+        $device = null;
+        if (! empty($deviceUuid)) {
+            $device = PosDevice::where('uuid', $deviceUuid)->first();
+            if ($device && (int) $device->vendor_id !== (int) $user->vendor_id) {
+                throw ValidationException::withMessages([
+                    'device' => __('This device belongs to a different restaurant account.'),
+                ]);
+            }
+        }
+
+        // If no device supplied, look for or create a default terminal record
+        if (! $device && $user->vendor) {
+            $device = PosDevice::firstOrCreate(
+                ['vendor_id' => $user->vendor_id, 'name' => 'Default POS Terminal'],
+                [
+                    'uuid' => (string) Str::uuid(),
+                    'location_id' => $user->location_id,
+                    'device_type' => 'terminal',
+                    'is_active' => true,
+                    'is_paired' => true,
+                    'paired_at' => now(),
+                ]
+            );
+        }
+
+        $session = $this->createSession(
+            device: $device,
+            user: $user,
+            mode: in_array($mode, ['waiter', 'cashier', 'manager', 'kds'], true) ? $mode : ($user->pos_mode ?: 'waiter'),
+            ipAddress: request()?->ip(),
+            userAgent: request()?->userAgent()
+        );
+
+        return [
+            'user' => $user,
+            'device' => $device,
+            'session' => $session,
+            'token' => $session->session_token,
+        ];
+    }
+
+    /**
+     * Authenticate an employee using their PIN on a registered device.
+     */
+    public function loginWithPin(int $userId, string $pin, string $deviceUuid, string $mode = 'waiter'): array
+    {
+        $throttleKey = 'pos_pin_attempt:'.$deviceUuid.':'.$userId;
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            throw ValidationException::withMessages([
+                'pin' => __('Too many failed PIN attempts. Please wait :seconds seconds before trying again.', ['seconds' => $seconds]),
+            ]);
+        }
+
+        $device = PosDevice::where('uuid', $deviceUuid)->first();
+        if (! $device || ! $device->is_active) {
+            throw ValidationException::withMessages([
+                'device' => __('POS device is unregistered, revoked, or inactive.'),
+            ]);
+        }
+
+        $user = User::where('id', $userId)
+            ->where('vendor_id', $device->vendor_id)
+            ->where('is_active', true)
+            ->first();
+
+        if (! $user) {
+            RateLimiter::hit($throttleKey, 60);
+            throw ValidationException::withMessages([
+                'pin' => __('Invalid employee selection for this restaurant.'),
+            ]);
+        }
+
+        if (! $user->hasPin()) {
+            throw ValidationException::withMessages([
+                'pin' => __('PIN is not configured for this employee. Please login with password first.'),
+            ]);
+        }
+
+        if (! $user->verifyPin($pin)) {
+            RateLimiter::hit($throttleKey, 60);
+
+            PosOperationLog::log(
+                vendor: $device->vendor,
+                action: 'pin_login_failed',
+                user: $user,
+                device: $device,
+                details: ['reason' => 'invalid_pin']
+            );
+
+            throw ValidationException::withMessages([
+                'pin' => __('Incorrect PIN code.'),
+            ]);
+        }
+
+        RateLimiter::clear($throttleKey);
+
+        $session = $this->createSession(
+            device: $device,
+            user: $user,
+            mode: in_array($mode, ['waiter', 'cashier', 'manager', 'kds'], true) ? $mode : ($user->pos_mode ?: 'waiter'),
+            ipAddress: request()?->ip(),
+            userAgent: request()?->userAgent()
+        );
+
+        return [
+            'user' => $user,
+            'device' => $device,
+            'session' => $session,
+            'token' => $session->session_token,
+        ];
+    }
+
+    /**
+     * Quick employee switching on a POS terminal using a PIN.
+     */
+    public function quickSwitchEmployee(PosDevice $device, int $targetUserId, string $pin, string $mode = 'waiter'): array
+    {
+        $throttleKey = 'pos_pin_switch:'.$device->uuid.':'.$targetUserId;
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            throw ValidationException::withMessages([
+                'pin' => __('Too many failed attempts. Try again in :seconds seconds.', ['seconds' => $seconds]),
+            ]);
+        }
+
+        $targetUser = User::where('id', $targetUserId)
+            ->where('vendor_id', $device->vendor_id)
+            ->where('is_active', true)
+            ->first();
+
+        if (! $targetUser) {
+            throw ValidationException::withMessages([
+                'target_user_id' => __('Selected employee not found or inactive.'),
+            ]);
+        }
+
+        if (! $targetUser->verifyPin($pin)) {
+            RateLimiter::hit($throttleKey, 60);
+
+            PosOperationLog::log(
+                vendor: $device->vendor,
+                action: 'quick_switch_failed',
+                user: $targetUser,
+                device: $device,
+                details: ['reason' => 'incorrect_pin']
+            );
+
+            throw ValidationException::withMessages([
+                'pin' => __('Incorrect PIN code.'),
+            ]);
+        }
+
+        RateLimiter::clear($throttleKey);
+
+        // Terminate previous sessions on this device
+        PosDeviceSession::where('device_id', $device->id)
+            ->where('is_active', true)
+            ->update(['is_active' => false]);
+
+        $session = $this->createSession(
+            device: $device,
+            user: $targetUser,
+            mode: $mode,
+            ipAddress: request()?->ip(),
+            userAgent: request()?->userAgent()
+        );
+
+        PosOperationLog::log(
+            vendor: $device->vendor,
+            action: 'quick_switch',
+            user: $targetUser,
+            device: $device,
+            entity: $session,
+            details: ['mode' => $session->mode]
+        );
+
+        return [
+            'user' => $targetUser,
+            'session' => $session,
+            'token' => $session->session_token,
+        ];
+    }
+
+    /**
+     * Set or change employee PIN code.
+     */
+    public function setUserPin(User $user, string $newPin, ?User $actor = null): void
+    {
+        if (! preg_match('/^\d{4,6}$/', $newPin)) {
+            throw ValidationException::withMessages([
+                'pin' => __('PIN must be between 4 and 6 numeric digits.'),
+            ]);
+        }
+
+        $user->setPin($newPin);
+
+        PosOperationLog::log(
+            vendor: $user->vendor,
+            action: 'pin_change',
+            user: $user,
+            entity: $user,
+            details: [
+                'updated_by' => $actor?->id ?? $user->id,
+            ]
+        );
+    }
+
+    /**
+     * Get active employees eligible for POS for a vendor and branch.
+     */
+    public function getActiveEmployees(Vendor $vendor, ?int $locationId = null): array
+    {
+        $users = $vendor->users()
+            ->where('is_active', true)
+            ->whereIn('role', ['vendor_owner', 'manager', 'waiter', 'staff', 'cashier', 'chef'])
+            ->when($locationId, function ($query, $locId) {
+                return $query->where(function ($q) use ($locId) {
+                    $q->whereNull('location_id')->orWhere('location_id', $locId);
+                });
+            })
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        return $users->map(fn (User $u) => [
+            'id' => $u->id,
+            'name' => $u->name,
+            'display_name' => $u->display_name ?: $u->name,
+            'role' => $u->role,
+            'avatar_url' => $u->avatar_url,
+            'has_pin' => $u->hasPin(),
+            'pos_mode' => $u->pos_mode ?: 'waiter',
+            'assigned_table_ids' => $u->assigned_table_ids ?? [],
+        ])->values()->all();
     }
 
     /**
@@ -250,4 +538,3 @@ class PosDeviceService
             ->get();
     }
 }
-

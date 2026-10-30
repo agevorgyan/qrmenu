@@ -89,6 +89,30 @@ class PosDeviceController extends Controller
     }
 
     /**
+     * Regenerate device pairing code.
+     */
+    public function regenerateCode(Request $request, PosDevice $device): JsonResponse
+    {
+        $user = Auth::user();
+
+        if ((int) $device->vendor_id !== (int) $user->vendor_id) {
+            abort(403, 'Unauthorized device access.');
+        }
+
+        if (! $user->hasPermission(Permission::POS_DEVICES) && ! $user->hasPermission(Permission::POS_SETTINGS)) {
+            abort(403, 'Unauthorized to manage POS devices.');
+        }
+
+        $newCode = $this->posDeviceService->regeneratePairingCode($device, $user);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pairing code regenerated.',
+            'pairing_code' => $newCode,
+        ]);
+    }
+
+    /**
      * Toggle device active status.
      */
     public function toggle(Request $request, PosDevice $device): JsonResponse
@@ -278,4 +302,3 @@ class PosDeviceController extends Controller
         ]);
     }
 }
-
