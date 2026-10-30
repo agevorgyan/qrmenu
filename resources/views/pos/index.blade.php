@@ -1529,75 +1529,270 @@
         <!-- ========================================== -->
         <div class="pos-mode-pane" x-show="activeMode === 'manager'" x-cloak>
             <div style="width: 100%; max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem;">
-                <!-- KPI Bar -->
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
-                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
-                        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ __('Today\'s Sales') }}</div>
-                        <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: var(--primary); margin-top: 4px;" x-text="formatCurrency(managerStats.todaySales)"></div>
+                <!-- Manager Navigation Tabs -->
+                <div style="display: flex; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; flex-wrap: wrap;">
+                    <button type="button" class="pos-mode-btn" :class="{ 'active': managerTab === 'overview' }" @click="switchManagerTab('overview')">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>{{ __('Overview') }}</span>
+                    </button>
+                    <button type="button" class="pos-mode-btn" :class="{ 'active': managerTab === 'sales' }" @click="switchManagerTab('sales')">
+                        <i class="fa-solid fa-receipt"></i>
+                        <span>{{ __('Sales Analytics') }}</span>
+                    </button>
+                    <button type="button" class="pos-mode-btn" :class="{ 'active': managerTab === 'employees' }" @click="switchManagerTab('employees')">
+                        <i class="fa-solid fa-users"></i>
+                        <span>{{ __('Employee Reports') }}</span>
+                    </button>
+                    <button type="button" class="pos-mode-btn" :class="{ 'active': managerTab === 'products' }" @click="switchManagerTab('products')">
+                        <i class="fa-solid fa-burger"></i>
+                        <span>{{ __('Product Reports') }}</span>
+                    </button>
+                    <button type="button" class="pos-mode-btn" :class="{ 'active': managerTab === 'cash' }" @click="switchManagerTab('cash')">
+                        <i class="fa-solid fa-vault"></i>
+                        <span>{{ __('Cash & Shifts') }}</span>
+                    </button>
+                    <button type="button" class="pos-mode-btn" :class="{ 'active': managerTab === 'devices' }" @click="switchManagerTab('devices')">
+                        <i class="fa-solid fa-desktop"></i>
+                        <span>{{ __('Devices') }}</span>
+                    </button>
+                </div>
+
+                <!-- 1. TAB: OVERVIEW -->
+                <div x-show="managerTab === 'overview'" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <!-- KPI Bar -->
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
+                            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ __('Today\'s Sales') }}</div>
+                            <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: var(--primary); margin-top: 4px;" x-text="formatCurrency(managerStats.todaySales)"></div>
+                        </div>
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
+                            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ __('Active Orders') }}</div>
+                            <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: #fff; margin-top: 4px;" x-text="cashierOrders.length"></div>
+                        </div>
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
+                            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ __('Occupied Tables') }}</div>
+                            <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: #34d399; margin-top: 4px;" x-text="managerStats.occupiedTables"></div>
+                        </div>
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
+                            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ __('Connected Devices') }}</div>
+                            <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: #60a5fa; margin-top: 4px;" x-text="devices.length"></div>
+                        </div>
                     </div>
-                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
-                        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ __('Active Orders') }}</div>
-                        <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: #fff; margin-top: 4px;" x-text="cashierOrders.length"></div>
+
+                    <!-- Low Stock Alerts Card -->
+                    <template x-if="managerDashboard?.low_stock_alerts && managerDashboard.low_stock_alerts.length > 0">
+                        <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 14px; padding: 1rem 1.25rem;">
+                            <div style="font-weight: 700; color: #ef4444; font-size: 0.95rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <span>{{ __('Low Stock Inventory Alerts') }}</span>
+                            </div>
+                            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                                <template x-for="item in managerDashboard.low_stock_alerts" :key="item.id">
+                                    <span style="background: rgba(0,0,0,0.3); border: 1px solid rgba(239, 68, 68, 0.4); padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; color: #fff;">
+                                        <span x-text="item.name"></span>: <strong style="color: #ef4444;" x-text="item.stock_quantity"></strong> left (min: <span x-text="item.low_stock_threshold"></span>)
+                                    </span>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- 2. TAB: SALES ANALYTICS -->
+                <div x-show="managerTab === 'sales'" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 700;">{{ __('Sales Analytics') }}</h3>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button type="button" class="pos-mode-btn" :class="{ 'active': reportPeriod === 'today' }" @click="reportPeriod = 'today'; fetchSalesReport()">{{ __('Today') }}</button>
+                            <button type="button" class="pos-mode-btn" :class="{ 'active': reportPeriod === '7d' }" @click="reportPeriod = '7d'; fetchSalesReport()">7 {{ __('Days') }}</button>
+                            <button type="button" class="pos-mode-btn" :class="{ 'active': reportPeriod === '30d' }" @click="reportPeriod = '30d'; fetchSalesReport()">30 {{ __('Days') }}</button>
+                        </div>
                     </div>
-                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
-                        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ __('Occupied Tables') }}</div>
-                        <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: #34d399; margin-top: 4px;" x-text="managerStats.occupiedTables"></div>
-                    </div>
-                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
-                        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ __('Connected Devices') }}</div>
-                        <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: #60a5fa; margin-top: 4px;" x-text="devices.length"></div>
+
+                    <template x-if="salesReport">
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+                                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem;">
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);">{{ __('Net Sales') }}</div>
+                                    <div style="font-size: 1.4rem; font-weight: 800; color: #10b981;" x-text="formatCurrency(salesReport.summary.net_sales)"></div>
+                                </div>
+                                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem;">
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);">{{ __('Gross Sales') }}</div>
+                                    <div style="font-size: 1.4rem; font-weight: 800; color: #fff;" x-text="formatCurrency(salesReport.summary.gross_sales)"></div>
+                                </div>
+                                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem;">
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);">{{ __('Total Discounts') }}</div>
+                                    <div style="font-size: 1.4rem; font-weight: 800; color: #f59e0b;" x-text="formatCurrency(salesReport.summary.discount_total)"></div>
+                                </div>
+                                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem;">
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);">{{ __('Average Order Value') }}</div>
+                                    <div style="font-size: 1.4rem; font-weight: 800; color: #60a5fa;" x-text="formatCurrency(salesReport.summary.average_order_value)"></div>
+                                </div>
+                            </div>
+
+                            <!-- Tender breakdown -->
+                            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
+                                <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.75rem;">{{ __('Orders by Tender') }}</h4>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem;">
+                                    <template x-for="item in salesReport.by_payment_method" :key="item.method">
+                                        <div style="background: var(--bg-surface); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;" x-text="item.method"></div>
+                                            <div style="font-size: 1.15rem; font-weight: 800; color: #fff;" x-text="formatCurrency(item.total)"></div>
+                                            <div style="font-size: 0.7rem; color: var(--text-muted);" x-text="item.count + ' orders'"></div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- 3. TAB: EMPLOYEE REPORTS -->
+                <div x-show="managerTab === 'employees'" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden;">
+                        <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color);">
+                            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Waiter Performance') }}</h3>
+                        </div>
+                        <table class="device-table" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Staff Member') }}</th>
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Orders') }}</th>
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Guests Served') }}</th>
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Tips Collected') }}</th>
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem; text-align: right;">{{ __('Sales Generated') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="w in employeeReport?.waiters || []" :key="w.user_id">
+                                    <tr style="border-bottom: 1px solid var(--border-color-light);">
+                                        <td style="padding: 12px 14px; font-weight: 700; color: #fff;" x-text="w.name"></td>
+                                        <td style="padding: 12px 14px;" x-text="w.orders_count"></td>
+                                        <td style="padding: 12px 14px;" x-text="w.total_guests"></td>
+                                        <td style="padding: 12px 14px; color: #f59e0b; font-weight: 700;" x-text="formatCurrency(w.total_tips)"></td>
+                                        <td style="padding: 12px 14px; text-align: right; font-weight: 800; color: #10b981;" x-text="formatCurrency(w.total_sales)"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
-                <!-- Device Management Card -->
-                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden;">
-                    <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-                        <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Device Management') }}</h3>
-                        <button type="button" class="pos-mode-btn active" @click="openRegisterDeviceModal()">
-                            <i class="fa-solid fa-plus"></i>
-                            <span>{{ __('Register Device') }}</span>
-                        </button>
-                    </div>
-
-                    <table class="device-table" style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
-                                <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Device Name') }}</th>
-                                <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Device Type') }}</th>
-                                <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Pairing Code') }}</th>
-                                <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Status') }}</th>
-                                <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem; text-align: right;">{{ __('Actions') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <template x-for="dev in devices" :key="dev.id">
-                                <tr style="border-bottom: 1px solid var(--border-color-light);">
-                                    <td style="padding: 12px 14px;">
-                                        <div style="font-weight: 600; color: #fff;" x-text="dev.name"></div>
-                                        <div style="font-size: 0.7rem; color: var(--text-subtle);" x-text="dev.uuid"></div>
-                                    </td>
-                                    <td style="padding: 12px 14px; text-transform: capitalize;" x-text="dev.device_type"></td>
-                                    <td style="padding: 12px 14px;">
-                                        <code style="background: rgba(255,255,255,0.06); padding: 3px 6px; border-radius: 4px; color: var(--primary); font-weight: 700;" x-text="dev.pairing_code || 'PAIRED'"></code>
-                                    </td>
-                                    <td style="padding: 12px 14px;">
-                                        <span class="status-pill" :class="{ 'offline': !dev.is_active }">
-                                            <span class="status-dot"></span>
-                                            <span x-text="dev.is_active ? '{{ __('Active') }}' : '{{ __('Inactive') }}'"></span>
-                                        </span>
-                                    </td>
-                                    <td style="padding: 12px 14px; text-align: right;">
-                                        <button type="button" class="pos-tool-btn" style="width: 32px; height: 32px; font-size: 0.8rem;" @click="regenerateCode(dev.id)" title="{{ __('Regenerate Code') }}">
-                                            <i class="fa-solid fa-rotate"></i>
-                                        </button>
-                                        <button type="button" class="pos-tool-btn" style="width: 32px; height: 32px; font-size: 0.8rem; color: var(--danger);" @click="revokeDevice(dev.id)" title="{{ __('Revoke Device') }}">
-                                            <i class="fa-solid fa-trash-can"></i>
-                                        </button>
-                                    </td>
+                <!-- 4. TAB: PRODUCT REPORTS -->
+                <div x-show="managerTab === 'products'" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden;">
+                        <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color);">
+                            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Top Selling Dishes & Items') }}</h3>
+                        </div>
+                        <table class="device-table" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Dish Name') }}</th>
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Category') }}</th>
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Qty Sold') }}</th>
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Stock') }}</th>
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem; text-align: right;">{{ __('Revenue') }}</th>
                                 </tr>
-                            </template>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <template x-for="p in productReport?.products || []" :key="p.product_id">
+                                    <tr style="border-bottom: 1px solid var(--border-color-light);">
+                                        <td style="padding: 12px 14px; font-weight: 700; color: #fff;" x-text="p.product_name"></td>
+                                        <td style="padding: 12px 14px; color: var(--text-muted);" x-text="p.category_name"></td>
+                                        <td style="padding: 12px 14px; font-weight: 700;" x-text="p.quantity_sold"></td>
+                                        <td style="padding: 12px 14px;" x-text="p.tracks_inventory ? (p.current_stock + ' left') : '—'"></td>
+                                        <td style="padding: 12px 14px; text-align: right; font-weight: 800; color: #10b981;" x-text="formatCurrency(p.revenue)"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 5. TAB: CASH & SHIFTS -->
+                <div x-show="managerTab === 'cash'" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden;">
+                        <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color);">
+                            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Shift Reconciliation') }}</h3>
+                        </div>
+                        <table class="device-table" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Shift ID') }}</th>
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Cashier') }}</th>
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Opening Float') }}</th>
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Cash Sales') }}</th>
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Discrepancy') }}</th>
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem; text-align: right;">{{ __('Status') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="s in cashReport?.shifts || []" :key="s.shift_id">
+                                    <tr style="border-bottom: 1px solid var(--border-color-light);">
+                                        <td style="padding: 12px 14px; font-weight: 700; color: var(--primary);" x-text="'#' + s.shift_id"></td>
+                                        <td style="padding: 12px 14px; color: #fff;" x-text="s.cashier?.name"></td>
+                                        <td style="padding: 12px 14px;" x-text="formatCurrency(s.opening_float)"></td>
+                                        <td style="padding: 12px 14px; color: #10b981; font-weight: 700;" x-text="formatCurrency(s.total_cash_sales)"></td>
+                                        <td style="padding: 12px 14px;" :style="s.discrepancy < 0 ? 'color: #ef4444;' : (s.discrepancy > 0 ? 'color: #10b981;' : 'color: var(--text-muted);')" x-text="formatCurrency(s.discrepancy)"></td>
+                                        <td style="padding: 12px 14px; text-align: right; text-transform: uppercase; font-weight: 700;" :style="s.status === 'open' ? 'color: #3b82f6;' : 'color: #6ee7b7;'" x-text="s.status"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 6. TAB: DEVICES (EXISTING) -->
+                <div x-show="managerTab === 'devices'" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <!-- Device Management Card -->
+                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden;">
+                        <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Device Management') }}</h3>
+                            <button type="button" class="pos-mode-btn active" @click="openRegisterDeviceModal()">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>{{ __('Register Device') }}</span>
+                            </button>
+                        </div>
+
+                        <table class="device-table" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Device Name') }}</th>
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Device Type') }}</th>
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Pairing Code') }}</th>
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Status') }}</th>
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem; text-align: right;">{{ __('Actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="dev in devices" :key="dev.id">
+                                    <tr style="border-bottom: 1px solid var(--border-color-light);">
+                                        <td style="padding: 12px 14px;">
+                                            <div style="font-weight: 600; color: #fff;" x-text="dev.name"></div>
+                                            <div style="font-size: 0.7rem; color: var(--text-subtle);" x-text="dev.uuid"></div>
+                                        </td>
+                                        <td style="padding: 12px 14px; text-transform: capitalize;" x-text="dev.device_type"></td>
+                                        <td style="padding: 12px 14px;">
+                                            <code style="background: rgba(255,255,255,0.06); padding: 3px 6px; border-radius: 4px; color: var(--primary); font-weight: 700;" x-text="dev.pairing_code || 'PAIRED'"></code>
+                                        </td>
+                                        <td style="padding: 12px 14px;">
+                                            <span class="status-pill" :class="{ 'offline': !dev.is_active }">
+                                                <span class="status-dot"></span>
+                                                <span x-text="dev.is_active ? '{{ __('Active') }}' : '{{ __('Inactive') }}'"></span>
+                                            </span>
+                                        </td>
+                                        <td style="padding: 12px 14px; text-align: right;">
+                                            <button type="button" class="pos-tool-btn" style="width: 32px; height: 32px; font-size: 0.8rem;" @click="regenerateCode(dev.id)" title="{{ __('Regenerate Code') }}">
+                                                <i class="fa-solid fa-rotate"></i>
+                                            </button>
+                                            <button type="button" class="pos-tool-btn" style="width: 32px; height: 32px; font-size: 0.8rem; color: var(--danger);" @click="revokeDevice(dev.id)" title="{{ __('Revoke Device') }}">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2515,6 +2710,16 @@
                 showQrPaymentModal: false,
                 activeQrPayment: null,
 
+                // Phase 10 Reporting & Analytics state
+                managerTab: 'overview',
+                managerDashboard: null,
+                salesReport: null,
+                employeeReport: null,
+                productReport: null,
+                categoryReport: null,
+                cashReport: null,
+                reportPeriod: 'today',
+
                 initPos() {
                     this.offlineQueue = JSON.parse(localStorage.getItem('elam_pos_offline_queue') || '[]');
                     this.offlineManifest = JSON.parse(localStorage.getItem('elam_pos_offline_manifest') || 'null');
@@ -2571,7 +2776,7 @@
                         this.fetchCashierOrders();
                     } else if (mode === 'manager') {
                         this.loadDevices();
-                        this.refreshManagerStats();
+                        this.fetchManagerDashboard();
                     }
                 },
 
@@ -3869,6 +4074,68 @@
                     } catch (e) {
                         alert('Error printing fiscal receipt');
                     }
+                },
+
+                async switchManagerTab(tab) {
+                    this.managerTab = tab;
+                    if (tab === 'overview') this.fetchManagerDashboard();
+                    else if (tab === 'sales') this.fetchSalesReport();
+                    else if (tab === 'employees') this.fetchEmployeeReport();
+                    else if (tab === 'products') this.fetchProductReport();
+                    else if (tab === 'cash') this.fetchCashReport();
+                    else if (tab === 'devices') this.loadDevices();
+                },
+                async fetchManagerDashboard() {
+                    try {
+                        const res = await fetch(`/pos/api/reports/dashboard?location_id=${this.activeLocationId || ''}`);
+                        const data = await res.json();
+                        if (data.success) {
+                            this.managerDashboard = data.dashboard;
+                            this.managerStats.todaySales = data.dashboard.today?.net_sales || 0;
+                            this.managerStats.occupiedTables = data.dashboard.tables?.occupied || 0;
+                        }
+                    } catch (e) {}
+                },
+                async fetchSalesReport() {
+                    try {
+                        const res = await fetch(`/pos/api/reports/sales?location_id=${this.activeLocationId || ''}&start_date=${this.getPeriodStartDate()}`);
+                        const data = await res.json();
+                        if (data.success) this.salesReport = data.report;
+                    } catch (e) {}
+                },
+                async fetchEmployeeReport() {
+                    try {
+                        const res = await fetch(`/pos/api/reports/employees?location_id=${this.activeLocationId || ''}&start_date=${this.getPeriodStartDate()}`);
+                        const data = await res.json();
+                        if (data.success) this.employeeReport = data.report;
+                    } catch (e) {}
+                },
+                async fetchProductReport() {
+                    try {
+                        const [prodRes, catRes] = await Promise.all([
+                            fetch(`/pos/api/reports/products?location_id=${this.activeLocationId || ''}&start_date=${this.getPeriodStartDate()}`),
+                            fetch(`/pos/api/reports/categories?location_id=${this.activeLocationId || ''}&start_date=${this.getPeriodStartDate()}`)
+                        ]);
+                        const prodData = await prodRes.json();
+                        const catData = await catRes.json();
+                        if (prodData.success) this.productReport = prodData.report;
+                        if (catData.success) this.categoryReport = catData.report;
+                    } catch (e) {}
+                },
+                async fetchCashReport() {
+                    try {
+                        const res = await fetch(`/pos/api/reports/cash?location_id=${this.activeLocationId || ''}&start_date=${this.getPeriodStartDate()}`);
+                        const data = await res.json();
+                        if (data.success) this.cashReport = data.report;
+                    } catch (e) {}
+                },
+                getPeriodStartDate() {
+                    if (this.reportPeriod === '7d') {
+                        const d = new Date(); d.setDate(d.getDate() - 7); return d.toISOString().split('T')[0];
+                    } else if (this.reportPeriod === '30d') {
+                        const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString().split('T')[0];
+                    }
+                    return new Date().toISOString().split('T')[0];
                 },
 
                 setupAutoLock(seconds) {

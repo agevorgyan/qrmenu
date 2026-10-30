@@ -95,6 +95,11 @@ class PosShift extends Model
         return $this->belongsTo(PosDevice::class);
     }
 
+    public function device(): BelongsTo
+    {
+        return $this->posDevice();
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');

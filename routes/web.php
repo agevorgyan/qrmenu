@@ -29,6 +29,7 @@ use App\Http\Controllers\PosKdsController;
 use App\Http\Controllers\PosLanController;
 use App\Http\Controllers\PosOfflineSyncController;
 use App\Http\Controllers\PosPaymentShiftController;
+use App\Http\Controllers\PosReportingController;
 use App\Http\Controllers\PosSettingController;
 use App\Http\Controllers\ProfileSecurityController;
 use App\Http\Controllers\QrStudioController;
@@ -689,6 +690,18 @@ Route::middleware(['auth', EnsurePosAccess::class])->group(function () {
             Route::post('/orders/{order}/fiscal-receipt', [PosIntegrationsController::class, 'printFiscalReceipt'])->name('orders.fiscal_receipt');
             Route::get('/inventory/{product}', [PosIntegrationsController::class, 'getInventory'])->name('inventory.show');
             Route::post('/inventory/{product}/adjust', [PosIntegrationsController::class, 'adjustInventory'])->name('inventory.adjust');
+        });
+
+        // Reports & Analytics (Sales, Employees, Products, Categories, Cash, Tips, Discounts, Dashboard)
+        Route::prefix('reports')->name('reports.')->group(function () {
+            Route::get('/sales', [PosReportingController::class, 'sales'])->name('sales');
+            Route::get('/employees', [PosReportingController::class, 'employees'])->name('employees');
+            Route::get('/products', [PosReportingController::class, 'products'])->name('products');
+            Route::get('/categories', [PosReportingController::class, 'categories'])->name('categories');
+            Route::get('/cash', [PosReportingController::class, 'cash'])->name('cash');
+            Route::get('/tips', [PosReportingController::class, 'tips'])->name('tips');
+            Route::get('/discounts-refunds', [PosReportingController::class, 'discountsAndRefunds'])->name('discounts_refunds');
+            Route::get('/dashboard', [PosReportingController::class, 'dashboard'])->name('dashboard');
         });
 
         Route::get('/settings', [PosSettingController::class, 'show'])->name('settings.show');
