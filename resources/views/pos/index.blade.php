@@ -827,23 +827,80 @@
         /* Table Grid */
         .table-selection-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
             gap: 0.75rem;
         }
 
         .table-select-card {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--border-color);
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 0.85rem 0.5rem;
             text-align: center;
             cursor: pointer;
             transition: all 0.15s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 96px;
         }
 
         .table-select-card:hover, .table-select-card.active {
             background: rgba(245, 158, 11, 0.15);
             border-color: var(--primary);
+        }
+
+        .table-select-card.status-available {
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+        .table-select-card.status-available:hover {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: #10b981;
+        }
+
+        .table-select-card.status-occupied {
+            border-color: rgba(245, 158, 11, 0.6);
+            background: rgba(245, 158, 11, 0.06);
+        }
+        .table-select-card.status-occupied:hover {
+            background: rgba(245, 158, 11, 0.2);
+            border-color: #f59e0b;
+        }
+
+        .table-select-card.status-preparing {
+            border-color: rgba(139, 92, 246, 0.6);
+            background: rgba(139, 92, 246, 0.06);
+        }
+
+        .table-select-card.status-ready {
+            border-color: rgba(6, 182, 212, 0.6);
+            background: rgba(6, 182, 212, 0.06);
+        }
+
+        .table-select-card.status-cleaning {
+            border-color: rgba(148, 163, 184, 0.4);
+            opacity: 0.8;
+        }
+
+        .table-status-pill {
+            display: inline-block;
+            font-size: 0.62rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .table-timer-badge {
+            font-size: 0.65rem;
+            color: var(--primary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            margin-top: 2px;
         }
 
         /* Quick Cash Calculator */
@@ -1504,29 +1561,259 @@
             </div>
         </div>
 
-        <!-- 2. Table Selection Modal -->
+        <!-- 2. Table Selection & Floor Plan Modal -->
         <div class="pos-modal-overlay" x-show="showTableModal" x-cloak>
-            <div class="pos-modal-card">
+            <div class="pos-modal-card" style="max-width: 680px; max-height: 90vh;">
                 <div class="pos-modal-header">
-                    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Select Dining Table') }}</h3>
+                    <div>
+                        <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Dining Areas & Tables') }}</h3>
+                        <div style="font-size: 0.72rem; color: var(--text-muted);">{{ __('Select a table or manage occupied tables') }}</div>
+                    </div>
                     <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showTableModal = false">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
-                <div class="pos-modal-body">
+                <div class="pos-modal-body" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                    <!-- Section Tabs -->
+                    <div style="display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 4px;">
+                        <button type="button" class="pos-category-chip" :class="{ 'active': activeTableSection === 'all' }" @click="activeTableSection = 'all'">
+                            {{ __('All Sections') }}
+                        </button>
+                        <template x-for="sec in tableSections" :key="sec">
+                            <button type="button" class="pos-category-chip" :class="{ 'active': activeTableSection === sec }" @click="activeTableSection = sec" x-text="sec"></button>
+                        </template>
+                    </div>
+
+                    <!-- Table Selection Grid -->
                     <div class="table-selection-grid">
                         <div class="table-select-card" :class="{ 'active': !selectedTable }" @click="selectTable(null)">
                             <i class="fa-solid fa-store" style="font-size: 1.2rem; margin-bottom: 4px; color: var(--primary);"></i>
-                            <div style="font-size: 0.75rem; font-weight: 700;">{{ __('Counter') }}</div>
+                            <div style="font-size: 0.8rem; font-weight: 700;">{{ __('Counter') }}</div>
+                            <span class="table-status-pill" style="background: rgba(255,255,255,0.06); color: var(--text-muted);">{{ __('Quick') }}</span>
                         </div>
-                        <template x-for="t in tables" :key="t.id">
-                            <div class="table-select-card" :class="{ 'active': selectedTable && selectedTable.id === t.id }" @click="selectTable(t)">
-                                <i class="fa-solid fa-table-cells" style="font-size: 1.2rem; margin-bottom: 4px; color: var(--text-muted);"></i>
-                                <div style="font-size: 0.85rem; font-weight: 700;" x-text="t.table_number"></div>
+                        <template x-for="t in filteredTables" :key="t.id">
+                            <div class="table-select-card"
+                                 :class="'status-' + t.status + (selectedTable && selectedTable.id === t.id ? ' active' : '')"
+                                 @click="handleTableCardClick(t)">
+                                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 2px;">
+                                    <span class="table-status-pill"
+                                          :style="getTableStatusStyle(t.status)"
+                                          x-text="t.status"></span>
+                                    <template x-if="t.order && t.order.source === 'qr_menu'">
+                                        <i class="fa-solid fa-qrcode" style="font-size: 0.7rem; color: #10b981;" title="QR Menu Order"></i>
+                                    </template>
+                                </div>
+                                <div style="font-size: 0.92rem; font-weight: 800; color: #fff;" x-text="t.table_number"></div>
                                 <div style="font-size: 0.65rem; color: var(--text-subtle);" x-text="t.capacity + ' seats'"></div>
+                                <template x-if="t.occupancy_minutes !== null">
+                                    <div class="table-timer-badge">
+                                        <i class="fa-regular fa-clock" style="font-size: 0.6rem;"></i>
+                                        <span x-text="t.occupancy_minutes + 'm'"></span>
+                                    </div>
+                                </template>
+                                <template x-if="t.order">
+                                    <div style="font-size: 0.68rem; font-weight: 700; color: var(--text-main); margin-top: 2px;" x-text="formatCurrency(t.order.total_amount)"></div>
+                                </template>
                             </div>
                         </template>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2.1 Table Operations Detail Modal -->
+        <div class="pos-modal-overlay" x-show="showTableActionModal" x-cloak>
+            <div class="pos-modal-card" style="max-width: 440px;" @click.away="showTableActionModal = false">
+                <div class="pos-modal-header">
+                    <div>
+                        <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;" x-text="'Table ' + (selectedTableForActions?.table_number || '')"></h3>
+                        <div style="font-size: 0.72rem; color: var(--text-muted);" x-text="'Status: ' + (selectedTableForActions?.status || 'available')"></div>
+                    </div>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showTableActionModal = false">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="pos-modal-body" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <template x-if="selectedTableForActions?.order">
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary);" x-text="selectedTableForActions.order.order_number"></span>
+                                <span class="table-status-pill" :style="getTableStatusStyle(selectedTableForActions.order.status)" x-text="selectedTableForActions.order.status"></span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+                                <span x-text="'Waiter: ' + (selectedTableForActions.order.waiter_name || 'Unassigned')"></span>
+                                <span style="font-weight: 700; color: #fff;" x-text="formatCurrency(selectedTableForActions.order.total_amount)"></span>
+                            </div>
+                            <template x-if="selectedTableForActions.order.source === 'qr_menu'">
+                                <div style="margin-top: 4px; font-size: 0.7rem; color: #10b981; display: flex; align-items: center; gap: 4px;">
+                                    <i class="fa-solid fa-qrcode"></i>
+                                    <span>{{ __('Placed by Guest via QR Menu') }}</span>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- Table Action Buttons -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <button type="button" class="cart-btn-primary" @click="selectTableFromActionModal()">
+                            <i class="fa-solid fa-cart-plus"></i>
+                            <span>{{ __('Select for Current Order') }}</span>
+                        </button>
+                        <template x-if="selectedTableForActions?.order">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                <button type="button" class="cart-btn-secondary" @click="openTransferModal()">
+                                    <i class="fa-solid fa-arrows-turn-to-dots"></i>
+                                    <span>{{ __('Transfer Table') }}</span>
+                                </button>
+                                <button type="button" class="cart-btn-secondary" @click="openMergeModal()">
+                                    <i class="fa-solid fa-object-group"></i>
+                                    <span>{{ __('Merge Orders') }}</span>
+                                </button>
+                                <button type="button" class="cart-btn-secondary" @click="openSplitModal()">
+                                    <i class="fa-solid fa-scissors"></i>
+                                    <span>{{ __('Split Order') }}</span>
+                                </button>
+                                <button type="button" class="cart-btn-secondary" @click="openAssignWaiterModal()">
+                                    <i class="fa-solid fa-user-tag"></i>
+                                    <span>{{ __('Assign Waiter') }}</span>
+                                </button>
+                            </div>
+                        </template>
+
+                        <!-- Direct Status Overrides -->
+                        <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+                            <button type="button" class="cart-btn-secondary" style="flex: 1; font-size: 0.75rem;" @click="changeTableStatusDirect(selectedTableForActions, 'cleaning')">
+                                <i class="fa-solid fa-broom"></i>
+                                <span>{{ __('Set to Cleaning') }}</span>
+                            </button>
+                            <button type="button" class="cart-btn-secondary" style="flex: 1; font-size: 0.75rem;" @click="changeTableStatusDirect(selectedTableForActions, 'available')">
+                                <i class="fa-solid fa-circle-check"></i>
+                                <span>{{ __('Set to Available') }}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2.2 Transfer Table Modal -->
+        <div class="pos-modal-overlay" x-show="showTransferModal" x-cloak>
+            <div class="pos-modal-card" style="max-width: 440px;" @click.away="showTransferModal = false">
+                <div class="pos-modal-header">
+                    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Transfer Table') }}</h3>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showTransferModal = false">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="pos-modal-body" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">{{ __('Destination Table') }}</label>
+                        <select class="pos-input" x-model="destinationTableId">
+                            <option value="">{{ __('Select Available Table') }}</option>
+                            <template x-for="t in tables.filter(t => t.id !== selectedTableForActions?.id && (t.status === 'available' || t.status === 'cleaning'))" :key="t.id">
+                                <option :value="t.id" x-text="t.table_number + ' (' + t.capacity + ' seats)'"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <button type="button" class="cart-btn-primary" :disabled="!destinationTableId" @click="executeTransferTable()">
+                        <span>{{ __('Confirm Transfer') }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2.3 Merge Orders Modal -->
+        <div class="pos-modal-overlay" x-show="showMergeModal" x-cloak>
+            <div class="pos-modal-card" style="max-width: 440px;" @click.away="showMergeModal = false">
+                <div class="pos-modal-header">
+                    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Merge Orders') }}</h3>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showMergeModal = false">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="pos-modal-body" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">{{ __('Merge with Order') }}</label>
+                        <select class="pos-input" x-model="targetMergeOrderId">
+                            <option value="">{{ __('Select Target Order') }}</option>
+                            <template x-for="t in tables.filter(t => t.order && t.order.id !== selectedTableForActions?.order?.id)" :key="t.order.id">
+                                <option :value="t.order.id" x-text="t.order.order_number + ' (Table ' + t.table_number + ' - ' + formatCurrency(t.order.total_amount) + ')'"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <button type="button" class="cart-btn-primary" :disabled="!targetMergeOrderId" @click="executeMergeOrders()">
+                        <span>{{ __('Confirm Merge') }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2.4 Split Order Modal -->
+        <div class="pos-modal-overlay" x-show="showSplitModal" x-cloak>
+            <div class="pos-modal-card" style="max-width: 500px;" @click.away="showSplitModal = false">
+                <div class="pos-modal-header">
+                    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Split Order') }}</h3>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showSplitModal = false">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="pos-modal-body" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">{{ __('Select quantities to move to the new split bill:') }}</div>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 260px; overflow-y: auto;">
+                        <template x-for="item in splitItems" :key="item.order_item_id">
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px;">
+                                <div>
+                                    <div style="font-size: 0.82rem; font-weight: 700;" x-text="item.name"></div>
+                                    <div style="font-size: 0.7rem; color: var(--text-muted);" x-text="'Max: ' + item.max_quantity + ' × ' + formatCurrency(item.unit_price)"></div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <button type="button" class="pos-tool-btn" style="width: 28px; height: 28px;" @click="item.quantity = Math.max(0, item.quantity - 1)">-</button>
+                                    <span style="font-size: 0.85rem; font-weight: 700; min-width: 20px; text-align: center;" x-text="item.quantity"></span>
+                                    <button type="button" class="pos-tool-btn" style="width: 28px; height: 28px;" @click="item.quantity = Math.min(item.max_quantity, item.quantity + 1)">+</button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">{{ __('Assign to New Table (Optional)') }}</label>
+                        <select class="pos-input" x-model="splitTargetTableId">
+                            <option value="">{{ __('Same Table / Sub-Bill') }}</option>
+                            <template x-for="t in tables.filter(t => t.status === 'available')" :key="t.id">
+                                <option :value="t.id" x-text="t.table_number + ' (' + t.capacity + ' seats)'"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <button type="button" class="cart-btn-primary" @click="executeSplitOrder()">
+                        <span>{{ __('Create Split Bill') }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2.5 Assign Waiter Modal -->
+        <div class="pos-modal-overlay" x-show="showAssignWaiterModal" x-cloak>
+            <div class="pos-modal-card" style="max-width: 440px;" @click.away="showAssignWaiterModal = false">
+                <div class="pos-modal-header">
+                    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Assign Waiter') }}</h3>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showAssignWaiterModal = false">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="pos-modal-body" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">{{ __('Select Waiter') }}</label>
+                        <select class="pos-input" x-model="assignedWaiterId">
+                            <option value="">{{ __('Select Waiter') }}</option>
+                            <template x-for="emp in employees" :key="emp.id">
+                                <option :value="emp.id" x-text="emp.name + ' (' + emp.role + ')'"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <button type="button" class="cart-btn-primary" :disabled="!assignedWaiterId" @click="executeAssignWaiter()">
+                        <span>{{ __('Confirm Assignment') }}</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -1699,8 +1986,11 @@
                 bootstrapData: @json($bootstrapData),
                 currentUser: @json($bootstrapData['user']),
                 menu: @json($bootstrapData['menu'] ?? ['categories' => [], 'products' => [], 'favorites' => []]),
-                tables: [],
+                tables: @json($bootstrapData['tables']['tables'] ?? []),
+                tableSections: @json($bootstrapData['tables']['sections'] ?? ['Main Hall']),
+                activeTableSection: 'all',
                 selectedTable: null,
+                selectedTableForActions: null,
                 guestCount: 1,
                 orderType: 'dine_in',
                 searchQuery: '',
@@ -1718,6 +2008,16 @@
                 selectedModifiers: [],
                 customizerNotes: '',
                 showTableModal: false,
+                showTableActionModal: false,
+                showTransferModal: false,
+                destinationTableId: null,
+                showMergeModal: false,
+                targetMergeOrderId: null,
+                showSplitModal: false,
+                splitTargetTableId: null,
+                splitItems: [],
+                showAssignWaiterModal: false,
+                assignedWaiterId: null,
                 showDiscountModal: false,
                 showCashModal: false,
                 cashReceived: 0,
@@ -1794,14 +2094,17 @@
 
                 async loadTables() {
                     try {
-                        const res = await fetch(`/pos/api/bootstrap?location_id=${this.activeLocationId || ''}`, {
+                        const res = await fetch(`/pos/api/tables?location_id=${this.activeLocationId || ''}`, {
                             headers: { 'Accept': 'application/json' }
                         });
                         const data = await res.json();
-                        if (data.success) {
-                            // Can also query tables specifically if needed
+                        if (data.success && data.data) {
+                            this.tables = data.data.tables || [];
+                            this.tableSections = data.data.sections || ['Main Hall'];
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        console.error('Failed to load tables:', e);
+                    }
                 },
 
                 async fetchCashierOrders() {
@@ -1979,14 +2282,242 @@
                     return Math.max(0, this.cartSubtotal - this.discountAmount + this.taxAmount + this.serviceFee);
                 },
 
-                // Table Selection
+                // Table Selection & Floor Plan Operations
+                get filteredTables() {
+                    if (this.activeTableSection === 'all') {
+                        return this.tables;
+                    }
+                    return this.tables.filter(t => t.section === this.activeTableSection || t.dining_area === this.activeTableSection);
+                },
+
+                getTableStatusStyle(status) {
+                    switch (status) {
+                        case 'available': return 'background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);';
+                        case 'occupied': return 'background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);';
+                        case 'preparing': return 'background: rgba(139, 92, 246, 0.15); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.3);';
+                        case 'ready': return 'background: rgba(6, 182, 212, 0.15); color: #06b6d4; border: 1px solid rgba(6, 182, 212, 0.3);';
+                        case 'awaiting_payment': return 'background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);';
+                        case 'cleaning': return 'background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);';
+                        case 'reserved': return 'background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3);';
+                        default: return 'background: rgba(255, 255, 255, 0.05); color: var(--text-muted);';
+                    }
+                },
+
                 openTableModal() {
+                    this.loadTables();
                     this.showTableModal = true;
+                },
+
+                handleTableCardClick(table) {
+                    if (table.status === 'occupied' || table.order) {
+                        this.selectedTableForActions = table;
+                        this.showTableActionModal = true;
+                    } else {
+                        this.selectTable(table);
+                    }
                 },
 
                 selectTable(table) {
                     this.selectedTable = table;
                     this.showTableModal = false;
+                },
+
+                selectTableFromActionModal() {
+                    this.selectedTable = this.selectedTableForActions;
+                    this.showTableActionModal = false;
+                    this.showTableModal = false;
+                },
+
+                openTransferModal() {
+                    this.destinationTableId = '';
+                    this.showTableActionModal = false;
+                    this.showTransferModal = true;
+                },
+
+                async executeTransferTable() {
+                    if (!this.selectedTableForActions?.order?.id || !this.destinationTableId) return;
+                    try {
+                        const res = await fetch(`/pos/api/orders/${this.selectedTableForActions.order.id}/transfer-table`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({
+                                destination_table_id: this.destinationTableId,
+                                lock_version: this.selectedTableForActions.order.lock_version
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.showTransferModal = false;
+                            this.showTableModal = false;
+                            this.showToast('{{ __('Order Transferred Successfully') }}');
+                            await this.loadTables();
+                        } else {
+                            alert(data.message || 'Transfer failed');
+                        }
+                    } catch (e) {
+                        alert('Error during table transfer');
+                    }
+                },
+
+                openMergeModal() {
+                    this.targetMergeOrderId = '';
+                    this.showTableActionModal = false;
+                    this.showMergeModal = true;
+                },
+
+                async executeMergeOrders() {
+                    if (!this.selectedTableForActions?.order?.id || !this.targetMergeOrderId) return;
+                    try {
+                        const res = await fetch('/pos/api/orders/merge', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({
+                                source_order_id: this.selectedTableForActions.order.id,
+                                target_order_id: this.targetMergeOrderId
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.showMergeModal = false;
+                            this.showTableModal = false;
+                            this.showToast('{{ __('Orders Merged Successfully') }}');
+                            await this.loadTables();
+                        } else {
+                            alert(data.message || 'Merge failed');
+                        }
+                    } catch (e) {
+                        alert('Error during order merge');
+                    }
+                },
+
+                async openSplitModal() {
+                    if (!this.selectedTableForActions?.order?.id) return;
+                    try {
+                        const res = await fetch(`/pos/api/orders/${this.selectedTableForActions.order.id}`, {
+                            headers: { 'Accept': 'application/json' }
+                        });
+                        const data = await res.json();
+                        if (data.success && data.order?.items) {
+                            this.splitItems = data.order.items.map(i => ({
+                                order_item_id: i.id,
+                                name: i.product_name,
+                                unit_price: i.unit_price,
+                                max_quantity: i.quantity,
+                                quantity: 0
+                            }));
+                            this.splitTargetTableId = '';
+                            this.showTableActionModal = false;
+                            this.showSplitModal = true;
+                        }
+                    } catch (e) {
+                        alert('Error loading order for split');
+                    }
+                },
+
+                async executeSplitOrder() {
+                    const toSplit = this.splitItems.filter(i => i.quantity > 0).map(i => ({
+                        order_item_id: i.order_item_id,
+                        quantity: i.quantity
+                    }));
+                    if (toSplit.length === 0) {
+                        alert('{{ __('Please select at least one item to split.') }}');
+                        return;
+                    }
+                    try {
+                        const res = await fetch(`/pos/api/orders/${this.selectedTableForActions.order.id}/split`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({
+                                items: toSplit,
+                                target_table_id: this.splitTargetTableId || null
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.showSplitModal = false;
+                            this.showTableModal = false;
+                            this.showToast('{{ __('Order Split Successfully') }}');
+                            await this.loadTables();
+                        } else {
+                            alert(data.message || 'Split failed');
+                        }
+                    } catch (e) {
+                        alert('Error during order split');
+                    }
+                },
+
+                openAssignWaiterModal() {
+                    this.assignedWaiterId = this.selectedTableForActions?.order?.waiter_id || '';
+                    this.showTableActionModal = false;
+                    this.showAssignWaiterModal = true;
+                },
+
+                async executeAssignWaiter() {
+                    if (!this.selectedTableForActions?.order?.id || !this.assignedWaiterId) return;
+                    try {
+                        const res = await fetch(`/pos/api/orders/${this.selectedTableForActions.order.id}/assign-waiter`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({
+                                waiter_id: this.assignedWaiterId
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.showAssignWaiterModal = false;
+                            this.showTableModal = false;
+                            this.showToast('{{ __('Waiter Assigned Successfully') }}');
+                            await this.loadTables();
+                        } else {
+                            alert(data.message || 'Assign waiter failed');
+                        }
+                    } catch (e) {
+                        alert('Error during waiter assignment');
+                    }
+                },
+
+                async changeTableStatusDirect(table, status) {
+                    if (!table) return;
+                    try {
+                        const res = await fetch(`/pos/api/tables/${table.id}/status`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({
+                                status: status,
+                                lock_version: table.lock_version
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.showTableActionModal = false;
+                            this.showToast('{{ __('Table status updated') }}');
+                            await this.loadTables();
+                        } else {
+                            alert(data.message || 'Status update failed');
+                        }
+                    } catch (e) {
+                        alert('Error updating table status');
+                    }
                 },
 
                 // Discount Modal
@@ -2041,6 +2572,7 @@
                             this.clearCart();
                             this.showToast('{{ __('Order Sent to Kitchen!') }}');
                             this.fetchCashierOrders();
+                            await this.loadTables();
                         } else {
                             alert(data.message || 'Error submitting order');
                         }
