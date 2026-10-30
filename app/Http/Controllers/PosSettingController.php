@@ -90,3 +90,4 @@ class PosSettingController extends Controller
         ]);
     }
 }
+

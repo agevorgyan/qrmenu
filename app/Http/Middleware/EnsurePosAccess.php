@@ -75,3 +75,4 @@ class EnsurePosAccess
         return $next($request);
     }
 }
+

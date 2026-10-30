@@ -278,3 +278,4 @@ class PosDeviceController extends Controller
         ]);
     }
 }
+

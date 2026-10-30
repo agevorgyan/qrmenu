@@ -112,3 +112,4 @@ class PosSetting extends Model
         ]);
     }
 }
+

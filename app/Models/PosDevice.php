@@ -143,3 +143,4 @@ class PosDevice extends Model
         $this->update($updates);
     }
 }
+

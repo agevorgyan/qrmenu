@@ -83,3 +83,4 @@ class PosOperationLog extends Model
         ]);
     }
 }
+

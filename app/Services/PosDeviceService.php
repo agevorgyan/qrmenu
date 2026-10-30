@@ -250,3 +250,4 @@ class PosDeviceService
             ->get();
     }
 }
+
