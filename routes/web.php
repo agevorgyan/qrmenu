@@ -24,6 +24,7 @@ use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\PosAuthController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\PosDeviceController;
+use App\Http\Controllers\PosKdsController;
 use App\Http\Controllers\PosPaymentShiftController;
 use App\Http\Controllers\PosSettingController;
 use App\Http\Controllers\ProfileSecurityController;
@@ -600,6 +601,7 @@ Route::prefix('pos/api/auth')->name('pos.api.auth.')->group(function () {
 Route::middleware(['auth', EnsurePosAccess::class])->group(function () {
     Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
     Route::get('/admin/pos', [PosController::class, 'index'])->name('admin.pos.index');
+    Route::get('/pos/kds', [PosKdsController::class, 'index'])->name('pos.kds');
 
     Route::prefix('pos/api')->name('pos.api.')->group(function () {
         // POS Authentication & Employee Switcher
@@ -639,6 +641,17 @@ Route::middleware(['auth', EnsurePosAccess::class])->group(function () {
         // Financial Operations (Payments & Refunds)
         Route::post('/orders/{order}/payment', [PosPaymentShiftController::class, 'processPayment'])->name('orders.payment');
         Route::post('/payments/{payment}/refund', [PosPaymentShiftController::class, 'refundPayment'])->name('payments.refund');
+
+        // Kitchen Display System (KDS) & Hardware Printing
+        Route::prefix('kds')->name('kds.')->group(function () {
+            Route::get('/tickets', [PosKdsController::class, 'getTickets'])->name('tickets');
+            Route::get('/stations', [PosKdsController::class, 'getStations'])->name('stations');
+            Route::post('/items/{item}/status', [PosKdsController::class, 'updateItemStatus'])->name('items.status');
+            Route::post('/orders/{order}/bump', [PosKdsController::class, 'bumpOrder'])->name('orders.bump');
+            Route::post('/orders/{order}/print', [PosKdsController::class, 'printKitchenTicket'])->name('orders.print');
+            Route::get('/orders/{order}/receipt', [PosKdsController::class, 'printCustomerReceipt'])->name('orders.receipt');
+            Route::post('/orders/{order}/receipt', [PosKdsController::class, 'printCustomerReceipt'])->name('orders.receipt.post');
+        });
 
         Route::get('/settings', [PosSettingController::class, 'show'])->name('settings.show');
         Route::post('/settings', [PosSettingController::class, 'update'])->name('settings.update');

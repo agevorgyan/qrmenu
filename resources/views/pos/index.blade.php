@@ -1105,6 +1105,11 @@
                 <span x-text="isOnline ? '{{ __('Online') }}' : '{{ __('Offline') }}'"></span>
             </div>
 
+            <!-- Kitchen Display System (KDS) Button -->
+            <a href="{{ route('pos.kds') }}" target="_blank" class="pos-tool-btn" title="{{ __('Kitchen Display System (KDS)') }}" style="text-decoration: none; color: #f59e0b;">
+                <i class="fa-solid fa-fire-burner"></i>
+            </a>
+
             <!-- Fullscreen Toggle -->
             <button type="button" class="pos-tool-btn" @click="toggleFullscreen()" title="{{ __('Toggle Fullscreen') }}">
                 <i class="fa-solid" :class="isFullscreen ? 'fa-compress' : 'fa-expand'"></i>

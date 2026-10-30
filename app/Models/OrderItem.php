@@ -24,6 +24,9 @@ class OrderItem extends Model
         'discount_amount',
         'kitchen_station',
         'notes',
+        'prepared_at',
+        'ready_at',
+        'served_at',
     ];
 
     protected $casts = [
@@ -33,6 +36,9 @@ class OrderItem extends Model
         'discount_amount' => 'decimal:2',
         'variants' => 'array',
         'modifiers' => 'array',
+        'prepared_at' => 'datetime',
+        'ready_at' => 'datetime',
+        'served_at' => 'datetime',
     ];
 
     protected static function booted(): void

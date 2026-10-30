@@ -358,6 +358,14 @@ class Permission
                 self::POS_ACCESS,
                 self::POS_KDS,
             ],
+            'kitchen' => [
+                self::MENU_VIEW,
+                self::ORDERS_VIEW,
+                self::ORDERS_UPDATE,
+                self::LOCATIONS_VIEW,
+                self::POS_ACCESS,
+                self::POS_KDS,
+            ],
             'cashier' => [
                 self::MENU_VIEW,
                 self::ORDERS_VIEW,
