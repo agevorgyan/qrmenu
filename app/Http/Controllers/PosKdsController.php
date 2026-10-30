@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PosDevice;
+use App\Models\User;
 use App\Models\Vendor;
+use App\Security\Permission;
 use App\Services\KdsService;
 use App\Services\ReceiptPrinterService;
 use Illuminate\Http\JsonResponse;
@@ -21,11 +23,25 @@ class PosKdsController extends Controller
     ) {}
 
     /**
+     * Authorize user access to KDS.
+     */
+    protected function authorizeKds(Request $request): User
+    {
+        $user = $request->user();
+
+        if (! $user->hasPermission(Permission::POS_KDS) && ! in_array($user->role, ['vendor_owner', 'manager', 'chef', 'kitchen'], true)) {
+            abort(403, 'Unauthorized access to Kitchen Display System.');
+        }
+
+        return $user;
+    }
+
+    /**
      * Render the fullscreen KDS view.
      */
     public function index(Request $request): View
     {
-        $user = $request->user();
+        $user = $this->authorizeKds($request);
         $vendor = $user->vendor ?: Vendor::find($user->vendor_id);
         $stations = $this->kdsService->getStations($vendor);
         $device = $this->resolveDevice($request, $vendor->id);
@@ -43,7 +59,7 @@ class PosKdsController extends Controller
      */
     public function getTickets(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $user = $this->authorizeKds($request);
         $vendor = $user->vendor ?: Vendor::find($user->vendor_id);
         $station = $request->query('station', 'all');
         $locationId = $request->query('location_id') ? (int) $request->query('location_id') : null;
@@ -63,7 +79,7 @@ class PosKdsController extends Controller
      */
     public function getStations(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $user = $this->authorizeKds($request);
         $vendor = $user->vendor ?: Vendor::find($user->vendor_id);
         $locationId = $request->query('location_id') ? (int) $request->query('location_id') : null;
 
@@ -80,11 +96,12 @@ class PosKdsController extends Controller
      */
     public function updateItemStatus(Request $request, OrderItem $item): JsonResponse
     {
+        $user = $this->authorizeKds($request);
+
         $request->validate([
             'status' => 'required|string|in:pending,preparing,ready,served,cancelled',
         ]);
 
-        $user = $request->user();
         $order = $item->order ?: Order::withoutGlobalScopes()->findOrFail($item->order_id);
 
         if ((int) $order->vendor_id !== (int) $user->vendor_id) {
@@ -107,12 +124,12 @@ class PosKdsController extends Controller
      */
     public function bumpOrder(Request $request, Order $order): JsonResponse
     {
+        $user = $this->authorizeKds($request);
+
         $request->validate([
             'status' => 'required|string|in:ready,served,preparing',
             'station' => 'nullable|string|max:50',
         ]);
-
-        $user = $request->user();
 
         if ((int) $order->vendor_id !== (int) $user->vendor_id) {
             abort(403, 'Unauthorized access to this order.');
@@ -137,11 +154,11 @@ class PosKdsController extends Controller
      */
     public function printKitchenTicket(Request $request, Order $order): JsonResponse
     {
+        $user = $this->authorizeKds($request);
+
         $request->validate([
             'station' => 'nullable|string|max:50',
         ]);
-
-        $user = $request->user();
 
         if ((int) $order->vendor_id !== (int) $user->vendor_id) {
             abort(403, 'Unauthorized access to this order.');

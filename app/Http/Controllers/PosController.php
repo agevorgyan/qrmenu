@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\PosDevice;
+use App\Models\PosOperationLog;
 use App\Models\RestaurantTable;
 use App\Models\User;
+use App\Models\Vendor;
+use App\Security\Permission;
 use App\Services\PosDeviceService;
 use App\Services\PosService;
 use Illuminate\Http\JsonResponse;
@@ -19,6 +22,35 @@ class PosController extends Controller
         protected PosService $posService,
         protected PosDeviceService $posDeviceService,
     ) {}
+
+    /**
+     * Verify manager PIN for elevated operations.
+     */
+    protected function verifyManagerPin(Vendor $vendor, string $pin, string $action): User
+    {
+        $managers = User::where('vendor_id', $vendor->id)
+            ->whereIn('role', ['vendor_owner', 'manager'])
+            ->whereNotNull('pin_code')
+            ->get();
+
+        foreach ($managers as $mgr) {
+            if ($mgr->verifyPin($pin)) {
+                PosOperationLog::log(
+                    vendor: $vendor,
+                    action: 'manager_approval',
+                    user: $mgr,
+                    details: [
+                        'authorized_action' => $action,
+                        'approved_for_user_id' => Auth::id(),
+                    ]
+                );
+
+                return $mgr;
+            }
+        }
+
+        abort(403, 'Invalid manager PIN or insufficient permissions.');
+    }
 
     /**
      * Show the main fullscreen POS terminal interface.
@@ -126,6 +158,7 @@ class PosController extends Controller
             'discount_amount' => 'nullable|numeric|min:0',
             'discount_type' => 'nullable|string|max:30',
             'discount_reason' => 'nullable|string|max:200',
+            'manager_pin' => 'nullable|string|max:10',
             'tax_amount' => 'nullable|numeric|min:0',
             'tip_amount' => 'nullable|numeric|min:0',
             'status' => 'nullable|string|in:draft,held,pending,confirmed',
@@ -139,6 +172,16 @@ class PosController extends Controller
             'items.*.variants' => 'nullable|array',
             'items.*.kitchen_station' => 'nullable|string|max:50',
         ]);
+
+        if (! empty($validated['discount_amount']) && (float) $validated['discount_amount'] > 0) {
+            if ($validated['discount_type'] === 'manager_override' || (! $user->hasPermission(Permission::POS_DISCOUNTS) && ! in_array($user->role, ['vendor_owner', 'manager', 'cashier', 'waiter'], true))) {
+                if ($request->filled('manager_pin')) {
+                    $this->verifyManagerPin($vendor, (string) $request->input('manager_pin'), 'discount');
+                } else {
+                    abort(403, 'Unauthorized to apply manager override discount. Manager approval required.');
+                }
+            }
+        }
 
         $device = null;
         $deviceUuid = $request->header('X-POS-Device-UUID', $request->cookie('pos_device_uuid'));
@@ -188,7 +231,19 @@ class PosController extends Controller
         $validated = $request->validate([
             'status' => 'required|string|in:draft,held,pending,accepted,confirmed,preparing,partially_ready,ready,served,completed,cancelled',
             'reason' => 'nullable|string|max:255',
+            'lock_version' => 'nullable|integer',
+            'manager_pin' => 'nullable|string|max:10',
         ]);
+
+        if ($validated['status'] === 'cancelled') {
+            if (! $user->hasPermission(Permission::ORDERS_CANCEL) && ! in_array($user->role, ['vendor_owner', 'manager', 'cashier'], true)) {
+                if ($request->filled('manager_pin')) {
+                    $this->verifyManagerPin($order->vendor, (string) $request->input('manager_pin'), 'cancellation');
+                } else {
+                    abort(403, 'Unauthorized to cancel orders. Manager approval required.');
+                }
+            }
+        }
 
         $device = null;
         $deviceUuid = $request->header('X-POS-Device-UUID');
@@ -196,7 +251,14 @@ class PosController extends Controller
             $device = PosDevice::where('vendor_id', $user->vendor_id)->where('uuid', $deviceUuid)->first();
         }
 
-        $updated = $this->posService->updateOrderStatus($order, $validated['status'], $user, $device, $validated['reason'] ?? null);
+        $updated = $this->posService->updateOrderStatus(
+            order: $order,
+            newStatus: $validated['status'],
+            user: $user,
+            device: $device,
+            reason: $validated['reason'] ?? null,
+            expectedLockVersion: $validated['lock_version'] ?? null
+        );
 
         return response()->json([
             'success' => true,

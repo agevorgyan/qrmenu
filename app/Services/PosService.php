@@ -272,8 +272,17 @@ class PosService
     /**
      * Update order status with audit trail.
      */
-    public function updateOrderStatus(Order $order, string $newStatus, User $user, ?PosDevice $device = null, ?string $reason = null): Order
+    public function updateOrderStatus(Order $order, string $newStatus, User $user, ?PosDevice $device = null, ?string $reason = null, ?int $expectedLockVersion = null): Order
     {
+        if ($expectedLockVersion !== null && (int) $order->lock_version !== (int) $expectedLockVersion) {
+            abort(response()->json([
+                'success' => false,
+                'code' => 'CONCURRENCY_CONFLICT',
+                'message' => 'Order was modified by another terminal. Please refresh.',
+                'current_lock_version' => $order->lock_version,
+            ], 409));
+        }
+
         $allowed = [
             'draft',
             'held',
@@ -315,6 +324,7 @@ class PosService
             }
         }
 
+        $order->lock_version++;
         $order->save();
 
         PosOperationLog::log(

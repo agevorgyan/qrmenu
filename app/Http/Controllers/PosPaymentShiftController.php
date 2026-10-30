@@ -4,8 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\PosDevice;
+use App\Models\PosOperationLog;
 use App\Models\PosPayment;
 use App\Models\PosShift;
+use App\Models\User;
+use App\Models\Vendor;
+use App\Security\Permission;
 use App\Services\PosPaymentShiftService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,11 +22,45 @@ class PosPaymentShiftController extends Controller
     ) {}
 
     /**
+     * Verify manager PIN for elevated operations.
+     */
+    protected function verifyManagerPin(Vendor $vendor, string $pin, string $action): User
+    {
+        $managers = User::where('vendor_id', $vendor->id)
+            ->whereIn('role', ['vendor_owner', 'manager'])
+            ->whereNotNull('pin_code')
+            ->get();
+
+        foreach ($managers as $mgr) {
+            if ($mgr->verifyPin($pin)) {
+                PosOperationLog::log(
+                    vendor: $vendor,
+                    action: 'manager_approval',
+                    user: $mgr,
+                    details: [
+                        'authorized_action' => $action,
+                        'approved_for_user_id' => Auth::id(),
+                    ]
+                );
+
+                return $mgr;
+            }
+        }
+
+        abort(403, 'Invalid manager PIN or insufficient permissions.');
+    }
+
+    /**
      * Get the active cash drawer shift.
      */
     public function getCurrentShift(Request $request): JsonResponse
     {
         $user = Auth::user();
+
+        if (! $user->hasPermission(Permission::POS_CASH_DRAWER) && ! $user->hasPermission(Permission::POS_PAYMENTS) && ! in_array($user->role, ['vendor_owner', 'manager', 'cashier'], true)) {
+            abort(403, 'Unauthorized access to cash shifts.');
+        }
+
         $device = $this->resolveDevice($request, $user->vendor_id);
         $locationId = $request->filled('location_id') ? (int) $request->get('location_id') : $user->location_id;
 
@@ -40,6 +78,11 @@ class PosPaymentShiftController extends Controller
     public function openShift(Request $request): JsonResponse
     {
         $user = Auth::user();
+
+        if (! $user->hasPermission(Permission::POS_CASH_DRAWER) && ! in_array($user->role, ['vendor_owner', 'manager', 'cashier'], true)) {
+            abort(403, 'Unauthorized to open cash shifts.');
+        }
+
         $device = $this->resolveDevice($request, $user->vendor_id);
 
         $validated = $request->validate([
@@ -68,6 +111,11 @@ class PosPaymentShiftController extends Controller
     public function recordCashMovement(Request $request): JsonResponse
     {
         $user = Auth::user();
+
+        if (! $user->hasPermission(Permission::POS_CASH_DRAWER) && ! in_array($user->role, ['vendor_owner', 'manager', 'cashier'], true)) {
+            abort(403, 'Unauthorized to record cash movements.');
+        }
+
         $device = $this->resolveDevice($request, $user->vendor_id);
 
         $validated = $request->validate([
@@ -101,6 +149,11 @@ class PosPaymentShiftController extends Controller
     public function closeShift(Request $request, PosShift $shift): JsonResponse
     {
         $user = Auth::user();
+
+        if (! $user->hasPermission(Permission::POS_CASH_DRAWER) && ! in_array($user->role, ['vendor_owner', 'manager', 'cashier'], true)) {
+            abort(403, 'Unauthorized to close cash shifts.');
+        }
+
         $device = $this->resolveDevice($request, $user->vendor_id);
 
         if ((int) $shift->vendor_id !== (int) $user->vendor_id) {
@@ -133,6 +186,10 @@ class PosPaymentShiftController extends Controller
     {
         $user = Auth::user();
 
+        if (! $user->hasPermission(Permission::POS_CASH_DRAWER) && ! $user->hasPermission(Permission::POS_REPORTS) && ! in_array($user->role, ['vendor_owner', 'manager', 'cashier'], true)) {
+            abort(403, 'Unauthorized shift access.');
+        }
+
         if ((int) $shift->vendor_id !== (int) $user->vendor_id) {
             abort(403, 'Unauthorized shift access.');
         }
@@ -155,6 +212,14 @@ class PosPaymentShiftController extends Controller
             abort(403, 'Unauthorized order payment.');
         }
 
+        if (! $user->hasPermission(Permission::POS_PAYMENTS) && ! in_array($user->role, ['vendor_owner', 'manager', 'cashier'], true)) {
+            if ($request->filled('manager_pin')) {
+                $this->verifyManagerPin($user->vendor, (string) $request->input('manager_pin'), 'payment');
+            } else {
+                abort(403, 'Unauthorized to process payments. Manager approval required.');
+            }
+        }
+
         $validated = $request->validate([
             'payment_method' => 'required|string|in:cash,card,mixed,split,external',
             'amount' => 'nullable|numeric|min:0',
@@ -162,6 +227,7 @@ class PosPaymentShiftController extends Controller
             'tip_amount' => 'nullable|numeric|min:0',
             'transaction_reference' => 'nullable|string|max:100',
             'notes' => 'nullable|string|max:255',
+            'manager_pin' => 'nullable|string|max:10',
             'split_payments' => 'nullable|array',
             'split_payments.*.payment_method' => 'required_with:split_payments|string|in:cash,card,external',
             'split_payments.*.amount' => 'required_with:split_payments|numeric|min:0.01',
@@ -198,9 +264,18 @@ class PosPaymentShiftController extends Controller
             abort(403, 'Unauthorized payment refund.');
         }
 
+        if (! $user->hasPermission(Permission::POS_REFUNDS) && ! in_array($user->role, ['vendor_owner', 'manager'], true)) {
+            if ($request->filled('manager_pin')) {
+                $this->verifyManagerPin($user->vendor, (string) $request->input('manager_pin'), 'refund');
+            } else {
+                abort(403, 'Unauthorized to issue refunds. Manager approval required.');
+            }
+        }
+
         $validated = $request->validate([
             'amount' => 'required|numeric|min:0.01',
             'reason' => 'nullable|string|max:255',
+            'manager_pin' => 'nullable|string|max:10',
         ]);
 
         $refunded = $this->paymentShiftService->refundPayment(

@@ -643,8 +643,8 @@ Route::middleware(['auth', EnsurePosAccess::class])->group(function () {
         Route::get('/shifts/{shift}/report', [PosPaymentShiftController::class, 'getShiftReport'])->name('shifts.report');
 
         // Financial Operations (Payments & Refunds)
-        Route::post('/orders/{order}/payment', [PosPaymentShiftController::class, 'processPayment'])->name('orders.payment');
-        Route::post('/payments/{payment}/refund', [PosPaymentShiftController::class, 'refundPayment'])->name('payments.refund');
+        Route::post('/orders/{order}/payment', [PosPaymentShiftController::class, 'processPayment'])->middleware('throttle:60,1')->name('orders.payment');
+        Route::post('/payments/{payment}/refund', [PosPaymentShiftController::class, 'refundPayment'])->middleware('throttle:30,1')->name('payments.refund');
 
         // Kitchen Display System (KDS) & Hardware Printing
         Route::prefix('kds')->name('kds.')->group(function () {
@@ -660,7 +660,7 @@ Route::middleware(['auth', EnsurePosAccess::class])->group(function () {
         // Offline-First Sync & Cache Management
         Route::prefix('offline')->name('offline.')->group(function () {
             Route::get('/manifest', [PosOfflineSyncController::class, 'manifest'])->name('manifest');
-            Route::post('/sync', [PosOfflineSyncController::class, 'sync'])->name('sync');
+            Route::post('/sync', [PosOfflineSyncController::class, 'sync'])->middleware('throttle:60,1')->name('sync');
             Route::get('/conflicts', [PosOfflineSyncController::class, 'getConflicts'])->name('conflicts');
             Route::post('/conflicts/{conflict}/resolve', [PosOfflineSyncController::class, 'resolveConflict'])->name('conflicts.resolve');
         });
