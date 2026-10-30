@@ -4,10 +4,12 @@ namespace App\Services;
 
 use App\Actions\CreateOrderAction;
 use App\DTOs\CreateOrderDTO;
+use App\Models\Category;
 use App\Models\Order;
 use App\Models\PosDevice;
 use App\Models\PosOperationLog;
 use App\Models\PosSetting;
+use App\Models\Product;
 use App\Models\RestaurantTable;
 use App\Models\User;
 use App\Models\Vendor;
@@ -128,6 +130,81 @@ class PosService
                 'total' => $tables->count(),
                 'active' => $tables->where('is_active', true)->count(),
             ],
+            'menu' => $this->getMenuPayload($vendor, $activeLocation?->id),
+        ];
+    }
+
+    /**
+     * Get menu catalog formatted for POS order taking.
+     */
+    public function getMenuPayload(Vendor $vendor, ?int $locationId = null): array
+    {
+        $categories = Category::where('vendor_id', $vendor->id)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        $products = Product::where('vendor_id', $vendor->id)
+            ->where('is_available', true)
+            ->with(['variations', 'category'])
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        $mappedCategories = $categories->map(function ($cat) use ($products) {
+            return [
+                'id' => $cat->id,
+                'name' => method_exists($cat, 'getTranslatedName') ? $cat->getTranslatedName() : $cat->name,
+                'sort_order' => (int) $cat->sort_order,
+                'products_count' => $products->where('category_id', $cat->id)->count(),
+            ];
+        })->values()->all();
+
+        $mappedProducts = $products->map(function ($prod) {
+            $station = 'kitchen';
+            $catName = mb_strtolower($prod->category?->name ?? '');
+            if (str_contains($catName, 'bar') || str_contains($catName, 'խմիչք') || str_contains($catName, 'cocktail') || str_contains($catName, 'напитки')) {
+                $station = 'bar';
+            } elseif (str_contains($catName, 'coffee') || str_contains($catName, 'սուրճ') || str_contains($catName, 'кофе')) {
+                $station = 'coffee';
+            } elseif (str_contains($catName, 'dessert') || str_contains($catName, 'աղանդեր') || str_contains($catName, 'десерт')) {
+                $station = 'dessert';
+            }
+
+            return [
+                'id' => $prod->id,
+                'category_id' => $prod->category_id,
+                'name' => method_exists($prod, 'getTranslatedName') ? $prod->getTranslatedName() : $prod->name,
+                'description' => $prod->description,
+                'price' => (float) $prod->price,
+                'image' => $prod->image ?: Product::DEFAULT_IMAGE,
+                'is_available' => (bool) $prod->is_available,
+                'is_featured' => (bool) $prod->is_featured,
+                'kitchen_station' => $station,
+                'variations' => $prod->variations->map(fn ($v) => [
+                    'id' => $v->id,
+                    'name' => method_exists($v, 'getTranslatedName') ? $v->getTranslatedName() : $v->name,
+                    'price' => (float) $v->price,
+                ])->values()->all(),
+                'modifiers' => [
+                    ['id' => 'no_onion', 'name' => __('No Onion'), 'price' => 0.00],
+                    ['id' => 'extra_sauce', 'name' => __('Extra Sauce'), 'price' => 200.00],
+                    ['id' => 'extra_cheese', 'name' => __('Extra Cheese'), 'price' => 500.00],
+                    ['id' => 'spicy', 'name' => __('Spicy'), 'price' => 0.00],
+                ],
+            ];
+        })->values()->all();
+
+        $favorites = collect($mappedProducts)->filter(fn ($p) => $p['is_featured'])->values()->all();
+        if (empty($favorites)) {
+            $favorites = collect($mappedProducts)->take(8)->values()->all();
+        }
+
+        return [
+            'categories' => $mappedCategories,
+            'products' => $mappedProducts,
+            'favorites' => $favorites,
         ];
     }
 

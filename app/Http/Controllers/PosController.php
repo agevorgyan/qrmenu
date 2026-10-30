@@ -55,6 +55,21 @@ class PosController extends Controller
     }
 
     /**
+     * Get menu catalog for POS.
+     */
+    public function getMenu(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+        $locationId = $request->filled('location_id') ? (int) $request->get('location_id') : $user->location_id;
+        $menu = $this->posService->getMenuPayload($user->vendor, $locationId);
+
+        return response()->json([
+            'success' => true,
+            'menu' => $menu,
+        ]);
+    }
+
+    /**
      * List active orders for the POS feed.
      */
     public function getOrders(Request $request): JsonResponse

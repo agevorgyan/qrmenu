@@ -60,7 +60,7 @@
 
         /* Top POS Navigation Bar */
         .pos-header {
-            height: 64px;
+            height: 60px;
             background: var(--bg-header);
             border-bottom: 1px solid var(--border-color);
             display: flex;
@@ -75,20 +75,20 @@
         .pos-brand-group {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.85rem;
             min-width: 0;
         }
 
         .pos-logo-badge {
-            width: 42px;
-            height: 42px;
-            border-radius: 10px;
+            width: 38px;
+            height: 38px;
+            border-radius: 9px;
             background: var(--primary-gradient);
             display: flex;
             align-items: center;
             justify-content: center;
             color: #fff;
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 800;
             box-shadow: 0 4px 12px var(--primary-glow);
             flex-shrink: 0;
@@ -103,7 +103,7 @@
         .pos-vendor-name {
             font-family: var(--font-display);
             font-weight: 700;
-            font-size: 1.05rem;
+            font-size: 0.95rem;
             color: var(--text-main);
             white-space: nowrap;
             overflow: hidden;
@@ -114,8 +114,8 @@
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border-color);
             color: var(--text-muted);
-            font-size: 0.75rem;
-            padding: 2px 8px;
+            font-size: 0.72rem;
+            padding: 2px 6px;
             border-radius: 6px;
             cursor: pointer;
             outline: none;
@@ -126,26 +126,26 @@
             display: flex;
             align-items: center;
             background: rgba(0, 0, 0, 0.35);
-            padding: 4px;
+            padding: 3px;
             border-radius: 10px;
             border: 1px solid var(--border-color);
-            gap: 4px;
+            gap: 3px;
         }
 
         .pos-mode-btn {
-            padding: 8px 16px;
-            border-radius: 8px;
+            padding: 7px 14px;
+            border-radius: 7px;
             border: none;
             background: transparent;
             color: var(--text-muted);
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.45rem;
             cursor: pointer;
             transition: all 0.15s ease;
-            min-height: 40px;
+            min-height: 36px;
         }
 
         .pos-mode-btn:hover {
@@ -163,16 +163,16 @@
         .pos-actions-group {
             display: flex;
             align-items: center;
-            gap: 0.65rem;
+            gap: 0.6rem;
         }
 
         .status-pill {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             font-weight: 600;
-            padding: 6px 10px;
+            padding: 5px 9px;
             border-radius: 9999px;
             background: rgba(16, 185, 129, 0.12);
             color: #34d399;
@@ -186,8 +186,8 @@
         }
 
         .status-dot {
-            width: 8px;
-            height: 8px;
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
             background: currentColor;
             animation: pulse-dot 2s infinite;
@@ -200,16 +200,16 @@
         }
 
         .pos-tool-btn {
-            min-width: 42px;
-            height: 42px;
-            border-radius: 10px;
+            min-width: 38px;
+            height: 38px;
+            border-radius: 9px;
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             color: var(--text-muted);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
+            font-size: 0.95rem;
             cursor: pointer;
             transition: all 0.15s ease;
         }
@@ -223,9 +223,9 @@
         .pos-user-badge {
             display: flex;
             align-items: center;
-            gap: 0.6rem;
-            padding: 4px 10px 4px 6px;
-            border-radius: 24px;
+            gap: 0.55rem;
+            padding: 3px 9px 3px 5px;
+            border-radius: 20px;
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             cursor: pointer;
@@ -238,8 +238,8 @@
         }
 
         .pos-user-avatar {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             background: var(--primary);
             color: #000;
@@ -247,7 +247,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             overflow: hidden;
         }
 
@@ -259,20 +259,19 @@
         }
 
         .pos-user-name {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 600;
             color: var(--text-main);
         }
 
         .pos-user-role {
-            font-size: 0.65rem;
+            font-size: 0.62rem;
             color: var(--primary);
             text-transform: uppercase;
             font-weight: 700;
-            letter-spacing: 0.5px;
         }
 
-        /* Main POS Stage Container */
+        /* Main Workspace Stage */
         .pos-stage {
             flex: 1;
             display: flex;
@@ -280,38 +279,510 @@
             position: relative;
         }
 
-        /* Foundation Mode Panes */
-        .pos-mode-pane {
+        /* ---------------------------------------------------- */
+        /* WAITER MODE: TWO-COLUMN TOUCHSCREEN ORDER INTERFACE  */
+        /* ---------------------------------------------------- */
+        .order-taking-layout {
+            flex: 1;
+            display: flex;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* Left/Catalog Column */
+        .catalog-pane {
             flex: 1;
             display: flex;
             flex-direction: column;
-            overflow-y: auto;
-            padding: 1.5rem;
+            background: var(--bg-body);
+            border-right: 1px solid var(--border-color);
+            overflow: hidden;
+            min-width: 0;
         }
 
-        .pos-placeholder-card {
+        /* Search & Context Header */
+        .catalog-top-bar {
+            padding: 0.65rem 1rem;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .search-box-wrap {
+            position: relative;
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-box-wrap i {
+            position: absolute;
+            left: 12px;
+            color: var(--text-subtle);
+            font-size: 0.9rem;
+        }
+
+        .catalog-search-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 9px;
+            padding: 8px 12px 8px 34px;
+            color: var(--text-main);
+            font-size: 0.88rem;
+            outline: none;
+            transition: all 0.15s ease;
+        }
+
+        .catalog-search-input:focus {
+            border-color: var(--primary);
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .table-context-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 6px 12px;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 8px;
+            color: #fbbf24;
+            font-weight: 700;
+            font-size: 0.82rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s ease;
+        }
+
+        .table-context-chip:hover {
+            background: rgba(245, 158, 11, 0.2);
+        }
+
+        /* Categories Bar */
+        .categories-bar {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.6rem 1rem;
+            background: rgba(14, 20, 36, 0.6);
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+            white-space: nowrap;
+            flex-shrink: 0;
+            scrollbar-width: thin;
+        }
+
+        .cat-chip {
+            padding: 6px 14px;
+            border-radius: 8px;
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 2.5rem;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.15s ease;
+            min-height: 38px;
+        }
+
+        .cat-chip:hover {
+            color: var(--text-main);
+            background: var(--bg-card-hover);
+        }
+
+        .cat-chip.active {
+            background: var(--primary-gradient);
+            color: #ffffff;
+            border-color: transparent;
+            box-shadow: 0 2px 8px var(--primary-glow);
+        }
+
+        /* Product Grid */
+        .products-grid-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 0.85rem;
+        }
+
+        .dish-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            position: relative;
+            min-height: 190px;
+        }
+
+        .dish-card:hover {
+            border-color: rgba(245, 158, 11, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .dish-card:active {
+            transform: scale(0.97);
+        }
+
+        .dish-img-wrap {
+            height: 105px;
+            width: 100%;
+            background: #18223c;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dish-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .dish-card:hover .dish-img-wrap img {
+            transform: scale(1.05);
+        }
+
+        .dish-body {
+            padding: 0.65rem 0.75rem;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            justify-content: space-between;
+        }
+
+        .dish-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+            line-height: 1.25;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .dish-price-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+        }
+
+        .dish-price {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--primary);
+            font-family: var(--font-display);
+        }
+
+        .dish-variant-badge {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            font-weight: 700;
+        }
+
+        /* ---------------------------------------------------- */
+        /* RIGHT PANEL: ORDER CART                               */
+        /* ---------------------------------------------------- */
+        .cart-pane {
+            width: 380px;
+            background: var(--bg-card);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            height: 100%;
+        }
+
+        .cart-header {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(14, 20, 36, 0.4);
+        }
+
+        .cart-type-selector {
+            display: flex;
+            background: rgba(0, 0, 0, 0.35);
+            padding: 2px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            gap: 2px;
+        }
+
+        .cart-type-btn {
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .cart-type-btn.active {
+            background: var(--primary-gradient);
+            color: #fff;
+        }
+
+        /* Cart Items Scrollable List */
+        .cart-items-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .cart-item-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color-light);
+            border-radius: 10px;
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            transition: all 0.15s ease;
+        }
+
+        .cart-item-card:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .cart-item-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+
+        .cart-item-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+            line-height: 1.25;
+        }
+
+        .cart-item-variant {
+            font-size: 0.72rem;
+            color: var(--primary);
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .cart-item-mod-pill {
+            font-size: 0.68rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-muted);
+            display: inline-block;
+            margin-top: 3px;
+            margin-right: 3px;
+        }
+
+        .cart-item-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 0.4rem;
+        }
+
+        .cart-qty-stepper {
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .cart-qty-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.12s ease;
+        }
+
+        .cart-qty-btn:active {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .cart-qty-val {
+            min-width: 28px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .cart-item-price {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+            font-family: var(--font-display);
+        }
+
+        /* Cart Financials Summary */
+        .cart-summary {
+            padding: 0.85rem 1rem;
+            border-top: 1px solid var(--border-color);
+            background: rgba(14, 20, 36, 0.7);
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        .summary-row.total-row {
+            margin-top: 0.4rem;
+            padding-top: 0.4rem;
+            border-top: 1px dashed var(--border-color);
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #ffffff;
+            font-family: var(--font-display);
+        }
+
+        .total-amount-highlight {
+            color: var(--primary);
+            text-shadow: 0 0 12px var(--primary-glow);
+        }
+
+        /* Cart Bottom Actions */
+        .cart-actions {
+            padding: 0.85rem 1rem;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-card);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .cart-btn-primary {
+            flex: 2;
+            height: 48px;
+            border-radius: 10px;
+            border: none;
+            background: var(--primary-gradient);
+            color: #ffffff;
+            font-size: 0.95rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px var(--primary-glow);
+            transition: all 0.15s ease;
+        }
+
+        .cart-btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .cart-btn-secondary {
+            flex: 1;
+            height: 48px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .cart-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Empty Cart State */
+        .cart-empty-state {
+            flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            padding: 2rem;
             text-align: center;
-            max-width: 650px;
-            margin: auto;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            color: var(--text-subtle);
         }
 
-        .pos-placeholder-icon {
-            font-size: 3.5rem;
-            color: var(--primary);
-            margin-bottom: 1.5rem;
-            filter: drop-shadow(0 4px 12px var(--primary-glow));
+        /* ---------------------------------------------------- */
+        /* CASHIER MODE: BILL INSPECTOR & SETTLEMENT            */
+        /* ---------------------------------------------------- */
+        .cashier-orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1rem;
         }
 
-        /* Modal Overlays & Drawers */
+        .cashier-order-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .cashier-order-card:hover, .cashier-order-card.selected {
+            border-color: var(--primary);
+            background: rgba(245, 158, 11, 0.08);
+            transform: translateY(-2px);
+        }
+
+        /* ---------------------------------------------------- */
+        /* MODALS, POPUPS, PIN PAD                              */
+        /* ---------------------------------------------------- */
         .pos-modal-overlay {
             position: fixed;
             inset: 0;
@@ -329,7 +800,7 @@
             border: 1px solid var(--border-color);
             border-radius: 18px;
             width: 100%;
-            max-width: 600px;
+            max-width: 550px;
             max-height: 90vh;
             display: flex;
             flex-direction: column;
@@ -338,7 +809,7 @@
         }
 
         .pos-modal-header {
-            padding: 1.25rem 1.5rem;
+            padding: 1rem 1.25rem;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
@@ -346,55 +817,60 @@
         }
 
         .pos-modal-body {
-            padding: 1.5rem;
+            padding: 1.25rem;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 1.25rem;
-        }
-
-        /* Employee Grid for Quick Switch */
-        .employee-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
             gap: 1rem;
         }
 
-        .employee-card {
+        /* Table Grid */
+        .table-selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .table-select-card {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 1.25rem 0.75rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            border-radius: 10px;
+            padding: 0.85rem 0.5rem;
             text-align: center;
             cursor: pointer;
             transition: all 0.15s ease;
         }
 
-        .employee-card:hover, .employee-card.selected {
-            background: rgba(245, 158, 11, 0.1);
+        .table-select-card:hover, .table-select-card.active {
+            background: rgba(245, 158, 11, 0.15);
             border-color: var(--primary);
-            transform: translateY(-2px);
         }
 
-        .employee-avatar-lg {
-            width: 52px;
-            height: 52px;
-            border-radius: 50%;
-            background: var(--primary);
-            color: #000;
-            font-size: 1.25rem;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 0.75rem;
-            overflow: hidden;
+        /* Quick Cash Calculator */
+        .cash-preset-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
         }
 
-        /* Lock Screen & PIN Keypad */
+        .cash-preset-btn {
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .cash-preset-btn:hover {
+            background: rgba(245, 158, 11, 0.15);
+            border-color: var(--primary);
+        }
+
+        /* Lock Screen Keypad */
         .pos-lock-screen {
             position: absolute;
             inset: 0;
@@ -407,22 +883,22 @@
         }
 
         .pin-pad-container {
-            width: 320px;
+            width: 310px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 1.25rem;
+            gap: 1.15rem;
         }
 
         .pin-display {
             display: flex;
-            gap: 1rem;
+            gap: 0.85rem;
             margin-bottom: 0.25rem;
         }
 
         .pin-dot {
-            width: 16px;
-            height: 16px;
+            width: 15px;
+            height: 15px;
             border-radius: 50%;
             border: 2px solid var(--primary);
             background: transparent;
@@ -437,17 +913,17 @@
         .pin-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 0.85rem;
+            gap: 0.75rem;
             width: 100%;
         }
 
         .pin-key {
-            height: 60px;
+            height: 56px;
             border-radius: 12px;
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             color: var(--text-main);
-            font-size: 1.4rem;
+            font-size: 1.35rem;
             font-weight: 700;
             display: flex;
             align-items: center;
@@ -462,41 +938,56 @@
             color: #000;
         }
 
-        /* Device Table in Manager Mode */
-        .device-table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 0.85rem;
+        /* Toast notifications */
+        .pos-toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px 18px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            z-index: 200;
+            animation: slide-up 0.3s ease;
         }
 
-        .device-table th {
-            padding: 10px 14px;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-muted);
-            font-weight: 600;
+        @keyframes slide-up {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
-        .device-table td {
-            padding: 12px 14px;
-            border-bottom: 1px solid var(--border-color-light);
-            color: var(--text-main);
-        }
-
-        /* Form Inputs */
+        /* Form Controls */
         .pos-input {
             width: 100%;
             background: rgba(0, 0, 0, 0.4);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 10px 14px;
+            padding: 9px 12px;
             color: var(--text-main);
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             outline: none;
         }
 
         .pos-input:focus {
             border-color: var(--primary);
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 900px) {
+            .order-taking-layout {
+                flex-direction: column;
+            }
+            .cart-pane {
+                width: 100%;
+                height: 45vh;
+                border-left: none;
+                border-top: 1px solid var(--border-color);
+            }
         }
     </style>
 </head>
@@ -572,8 +1063,8 @@
                 <i class="fa-solid fa-users-gear"></i>
             </button>
 
-            <!-- Employee Profile Badge & Dropdown Trigger -->
-            <div class="pos-user-badge" @click="openProfileModal()">
+            <!-- Employee Profile Badge & Modal Trigger -->
+            <div class="pos-user-badge" @click="openSetPinModal()">
                 <div class="pos-user-avatar">
                     <template x-if="currentUser.avatar_url">
                         <img :src="currentUser.avatar_url" style="width: 100%; height: 100%; object-fit: cover;">
@@ -597,97 +1088,345 @@
 
     <!-- 2. Main POS Workspace Stage -->
     <main class="pos-stage">
-        <!-- Mode: Waiter -->
-        <section class="pos-mode-pane" x-show="activeMode === 'waiter'" style="display: flex;">
-            <div class="pos-placeholder-card">
-                <i class="fa-solid fa-user-tie pos-placeholder-icon"></i>
-                <h2 style="font-family: var(--font-display); font-size: 1.6rem; margin-bottom: 0.75rem;">
-                    {{ __('Waiter Mode Active') }}
-                </h2>
-                <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 1.5rem;">
-                    {{ __('Interactive table management, category menu browser, and order submission interface ready for operations.') }}
-                </p>
-                <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
-                    <button type="button" class="pos-mode-btn active" style="padding: 10px 20px;" @click="openEmployeeSwitcher()">
-                        <i class="fa-solid fa-users"></i>
-                        <span>{{ __('Switch Employee') }}</span>
-                    </button>
-                    <button type="button" class="pos-mode-btn" style="border: 1px solid var(--border-color); padding: 10px 20px;" @click="openSetPinModal()">
-                        <i class="fa-solid fa-key"></i>
-                        <span>{{ __('Change PIN') }}</span>
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- Mode: Cashier -->
-        <section class="pos-mode-pane" x-show="activeMode === 'cashier'" style="display: flex;" x-cloak>
-            <div class="pos-placeholder-card">
-                <i class="fa-solid fa-receipt pos-placeholder-icon"></i>
-                <h2 style="font-family: var(--font-display); font-size: 1.6rem; margin-bottom: 0.75rem;">
-                    {{ __('Cashier Mode Active') }}
-                </h2>
-                <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 1.5rem;">
-                    {{ __('Bill settlement, cash/card payment collection, split bill, and fiscal receipt generation.') }}
-                </p>
-                <button type="button" class="pos-mode-btn active" style="padding: 10px 20px;" @click="lockTerminal()">
-                    <i class="fa-solid fa-lock"></i>
-                    <span>{{ __('Lock Terminal') }}</span>
-                </button>
-            </div>
-        </section>
-
-        <!-- Mode: Manager -->
-        <section class="pos-mode-pane" x-show="activeMode === 'manager'" style="display: flex;" x-cloak>
-            <div style="width: 100%; max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem;">
-                <!-- Header with Action Button -->
-                <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <div>
-                        <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 700;">
-                            {{ __('Device Management') }}
-                        </h2>
-                        <p style="color: var(--text-muted); font-size: 0.85rem;">
-                            {{ __('Authorized POS terminals and mobile devices for this location.') }}
-                        </p>
+        <!-- ========================================== -->
+        <!-- MODE 1: WAITER MODE (TOUCHSCREEN ORDERING)  -->
+        <!-- ========================================== -->
+        <div class="order-taking-layout" x-show="activeMode === 'waiter'">
+            <!-- Left: Catalog & Product Grid -->
+            <div class="catalog-pane">
+                <!-- Top Filter / Search Bar -->
+                <div class="catalog-top-bar">
+                    <div class="search-box-wrap">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" 
+                               class="catalog-search-input" 
+                               x-model="searchQuery" 
+                               placeholder="{{ __('Search menu...') }}">
                     </div>
-                    <button type="button" class="pos-mode-btn active" @click="openRegisterDeviceModal()">
-                        <i class="fa-solid fa-plus"></i>
-                        <span>{{ __('Register Device') }}</span>
+
+                    <!-- Table Chip Button -->
+                    <div class="table-context-chip" @click="openTableModal()">
+                        <i class="fa-solid fa-table-cells"></i>
+                        <span x-text="selectedTable ? selectedTable.table_number : '{{ __('Quick Sale / Counter') }}'"></span>
+                    </div>
+
+                    <!-- Guest Count -->
+                    <div style="display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); border-radius: 8px; padding: 2px 6px;">
+                        <i class="fa-solid fa-user-group" style="font-size: 0.75rem; color: var(--text-muted); margin-right: 2px;"></i>
+                        <button type="button" class="pos-tool-btn" style="width: 24px; height: 24px; font-size: 0.7rem;" @click="guestCount = Math.max(1, guestCount - 1)">-</button>
+                        <span style="font-size: 0.8rem; font-weight: 700; min-width: 16px; text-align: center;" x-text="guestCount"></span>
+                        <button type="button" class="pos-tool-btn" style="width: 24px; height: 24px; font-size: 0.7rem;" @click="guestCount++">+</button>
+                    </div>
+                </div>
+
+                <!-- Categories Scrollbar -->
+                <div class="categories-bar">
+                    <button type="button" 
+                            class="cat-chip" 
+                            :class="{ 'active': activeCategory === 'all' }"
+                            @click="activeCategory = 'all'">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <span>{{ __('All Dishes') }}</span>
+                    </button>
+                    <button type="button" 
+                            class="cat-chip" 
+                            :class="{ 'active': activeCategory === 'favorites' }"
+                            @click="activeCategory = 'favorites'">
+                        <i class="fa-solid fa-star" style="color: #fbbf24;"></i>
+                        <span>{{ __('Favorites') }}</span>
+                    </button>
+                    <template x-for="cat in menu.categories" :key="cat.id">
+                        <button type="button" 
+                                class="cat-chip" 
+                                :class="{ 'active': activeCategory === cat.id }"
+                                @click="activeCategory = cat.id">
+                            <span x-text="cat.name"></span>
+                            <span style="font-size: 0.65rem; opacity: 0.6;" x-text="'(' + cat.products_count + ')'"></span>
+                        </button>
+                    </template>
+                </div>
+
+                <!-- Products Grid Scroll -->
+                <div class="products-grid-scroll">
+                    <div class="products-grid">
+                        <template x-for="prod in filteredProducts" :key="prod.id">
+                            <div class="dish-card" @click="handleProductClick(prod)">
+                                <div class="dish-img-wrap">
+                                    <img :src="prod.image" :alt="prod.name" loading="lazy">
+                                    <template x-if="prod.variations && prod.variations.length > 0">
+                                        <span class="dish-variant-badge" style="position: absolute; top: 8px; right: 8px;">
+                                            <span x-text="prod.variations.length + ' {{ __('Sizes') }}'"></span>
+                                        </span>
+                                    </template>
+                                </div>
+                                <div class="dish-body">
+                                    <div class="dish-title" x-text="prod.name"></div>
+                                    <div class="dish-price-row">
+                                        <span class="dish-price" x-text="formatCurrency(prod.price)"></span>
+                                        <span class="pos-tool-btn" style="width: 28px; height: 28px; font-size: 0.8rem; background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: none;">
+                                            <i class="fa-solid fa-plus"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Order Cart -->
+            <div class="cart-pane">
+                <!-- Cart Header -->
+                <div class="cart-header">
+                    <div class="cart-type-selector">
+                        <button type="button" class="cart-type-btn" :class="{ 'active': orderType === 'dine_in' }" @click="orderType = 'dine_in'">
+                            {{ __('Dine In') }}
+                        </button>
+                        <button type="button" class="cart-type-btn" :class="{ 'active': orderType === 'takeaway' }" @click="orderType = 'takeaway'">
+                            {{ __('Takeaway') }}
+                        </button>
+                        <button type="button" class="cart-type-btn" :class="{ 'active': orderType === 'delivery' }" @click="orderType = 'delivery'">
+                            {{ __('Delivery') }}
+                        </button>
+                    </div>
+
+                    <button type="button" class="pos-tool-btn" style="width: 32px; height: 32px; font-size: 0.8rem; color: var(--danger);" @click="clearCart()" title="{{ __('Clear Cart') }}">
+                        <i class="fa-solid fa-trash-can"></i>
                     </button>
                 </div>
 
-                <!-- Devices Card -->
+                <!-- Cart Items List -->
+                <div class="cart-items-list">
+                    <template x-if="cart.length === 0">
+                        <div class="cart-empty-state">
+                            <i class="fa-solid fa-basket-shopping" style="font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.4;"></i>
+                            <div style="font-weight: 600; font-size: 0.95rem;">{{ __('Cart is empty') }}</div>
+                            <div style="font-size: 0.78rem; margin-top: 4px;">{{ __('Add dishes from the menu to start an order') }}</div>
+                        </div>
+                    </template>
+
+                    <template x-for="(item, index) in cart" :key="index">
+                        <div class="cart-item-card">
+                            <div class="cart-item-top">
+                                <div>
+                                    <div class="cart-item-name" x-text="item.product_name"></div>
+                                    <template x-if="item.variation_name">
+                                        <div class="cart-item-variant" x-text="item.variation_name"></div>
+                                    </template>
+                                    <template x-for="(mod, mIdx) in (item.modifiers || [])" :key="mIdx">
+                                        <span class="cart-item-mod-pill" x-text="mod.name"></span>
+                                    </template>
+                                    <template x-if="item.notes">
+                                        <div style="font-size: 0.7rem; color: var(--text-subtle); margin-top: 2px;" x-text="'📝 ' + item.notes"></div>
+                                    </template>
+                                </div>
+                                <button type="button" style="background: none; border: none; color: var(--text-subtle); cursor: pointer; padding: 2px;" @click="removeItem(index)">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+
+                            <div class="cart-item-bottom">
+                                <div class="cart-qty-stepper">
+                                    <button type="button" class="cart-qty-btn" @click="changeQty(index, -1)">-</button>
+                                    <span class="cart-qty-val" x-text="item.quantity"></span>
+                                    <button type="button" class="cart-qty-btn" @click="changeQty(index, 1)">+</button>
+                                </div>
+                                <span class="cart-item-price" x-text="formatCurrency(item.unit_price * item.quantity)"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Financials Summary -->
+                <div class="cart-summary" x-show="cart.length > 0">
+                    <div class="summary-row">
+                        <span>{{ __('Subtotal') }}</span>
+                        <span x-text="formatCurrency(cartSubtotal)"></span>
+                    </div>
+                    <div class="summary-row" x-show="discountAmount > 0">
+                        <span style="color: var(--warning);">{{ __('Discount') }}</span>
+                        <span style="color: var(--warning);" x-text="'-' + formatCurrency(discountAmount)"></span>
+                    </div>
+                    <div class="summary-row" x-show="taxAmount > 0">
+                        <span>{{ __('Tax') }}</span>
+                        <span x-text="formatCurrency(taxAmount)"></span>
+                    </div>
+                    <div class="summary-row" x-show="serviceFee > 0">
+                        <span>{{ __('Service Charge') }}</span>
+                        <span x-text="formatCurrency(serviceFee)"></span>
+                    </div>
+                    <div class="summary-row total-row">
+                        <span>{{ __('Total') }}</span>
+                        <span class="total-amount-highlight" x-text="formatCurrency(cartTotal)"></span>
+                    </div>
+                </div>
+
+                <!-- Order Action Buttons -->
+                <div class="cart-actions" x-show="cart.length > 0">
+                    <button type="button" class="cart-btn-secondary" @click="holdCurrentOrder()" title="{{ __('Hold Order') }}">
+                        <i class="fa-solid fa-pause"></i>
+                        <span>{{ __('Hold') }}</span>
+                    </button>
+                    <button type="button" class="cart-btn-secondary" @click="openDiscountModal()" title="{{ __('Add Discount') }}">
+                        <i class="fa-solid fa-tag"></i>
+                    </button>
+                    <button type="button" class="cart-btn-primary" @click="submitOrderToKitchen()">
+                        <i class="fa-solid fa-bell-concierge"></i>
+                        <span>{{ __('Send to Kitchen') }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- MODE 2: CASHIER MODE (BILLS & PAYMENTS)     -->
+        <!-- ========================================== -->
+        <div class="pos-mode-pane" x-show="activeMode === 'cashier'" x-cloak>
+            <div style="display: flex; gap: 1.5rem; height: 100%;">
+                <!-- Left: Open Orders Grid -->
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2 style="font-family: var(--font-display); font-size: 1.35rem; font-weight: 700;">
+                            {{ __('Open Unpaid Orders') }}
+                        </h2>
+                        <button type="button" class="pos-tool-btn" @click="fetchCashierOrders()">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                    </div>
+
+                    <div class="cashier-orders-grid">
+                        <template x-for="ord in cashierOrders" :key="ord.id">
+                            <div class="cashier-order-card" 
+                                 :class="{ 'selected': selectedCashierOrder && selectedCashierOrder.id === ord.id }"
+                                 @click="selectOrderForCashier(ord)">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-weight: 800; color: var(--primary);" x-text="ord.order_number"></span>
+                                    <span class="status-pill" style="font-size: 0.65rem;" x-text="ord.status"></span>
+                                </div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                                    <span style="color: #fff; font-weight: 600;" x-text="ord.table_number || 'Counter'"></span> • 
+                                    <span x-text="ord.items ? ord.items.length + ' items' : ''"></span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 0.4rem;">
+                                    <span style="font-size: 0.75rem; color: var(--text-subtle);" x-text="ord.waiter ? ord.waiter.name : ''"></span>
+                                    <span style="font-size: 1.1rem; font-weight: 800; color: #fff; font-family: var(--font-display);" x-text="formatCurrency(ord.total_amount)"></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Right: Bill Inspector / Settlement Panel -->
+                <div class="cart-pane" style="width: 420px; border-left: 1px solid var(--border-color); border-radius: 14px;" x-show="selectedCashierOrder">
+                    <div class="cart-header">
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.95rem;" x-text="selectedCashierOrder?.order_number"></div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);" x-text="'Table: ' + (selectedCashierOrder?.table_number || 'Counter')"></div>
+                        </div>
+                        <button type="button" class="pos-tool-btn" style="width: 32px; height: 32px;" @click="selectedCashierOrder = null">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <div class="cart-items-list">
+                        <template x-for="item in (selectedCashierOrder?.items || [])" :key="item.id">
+                            <div class="cart-item-card">
+                                <div class="cart-item-top">
+                                    <div class="cart-item-name" x-text="item.product_name"></div>
+                                    <span class="cart-item-price" x-text="formatCurrency(item.subtotal)"></span>
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);" x-text="item.quantity + ' × ' + formatCurrency(item.unit_price)"></div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="cart-summary">
+                        <div class="summary-row total-row">
+                            <span>{{ __('Total to Pay') }}</span>
+                            <span class="total-amount-highlight" x-text="formatCurrency(selectedCashierOrder?.total_amount || 0)"></span>
+                        </div>
+                    </div>
+
+                    <!-- Payment Mode Action Buttons -->
+                    <div style="padding: 1rem; display: flex; flex-direction: column; gap: 0.65rem; background: var(--bg-card); border-top: 1px solid var(--border-color);">
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button type="button" class="cart-btn-primary" style="flex: 1;" @click="openCashPaymentModal()">
+                                <i class="fa-solid fa-money-bill-wave"></i>
+                                <span>{{ __('Cash Payment') }}</span>
+                            </button>
+                            <button type="button" class="cart-btn-secondary" style="flex: 1;" @click="processCardPayment()">
+                                <i class="fa-solid fa-credit-card"></i>
+                                <span>{{ __('Card Payment') }}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- MODE 3: MANAGER MODE (OVERVIEW & DEVICES)   -->
+        <!-- ========================================== -->
+        <div class="pos-mode-pane" x-show="activeMode === 'manager'" x-cloak>
+            <div style="width: 100%; max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem;">
+                <!-- KPI Bar -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
+                        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ __('Today\'s Sales') }}</div>
+                        <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: var(--primary); margin-top: 4px;" x-text="formatCurrency(managerStats.todaySales)"></div>
+                    </div>
+                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
+                        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ __('Active Orders') }}</div>
+                        <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: #fff; margin-top: 4px;" x-text="cashierOrders.length"></div>
+                    </div>
+                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
+                        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ __('Occupied Tables') }}</div>
+                        <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: #34d399; margin-top: 4px;" x-text="managerStats.occupiedTables"></div>
+                    </div>
+                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
+                        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ __('Connected Devices') }}</div>
+                        <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: #60a5fa; margin-top: 4px;" x-text="devices.length"></div>
+                    </div>
+                </div>
+
+                <!-- Device Management Card -->
                 <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden;">
-                    <table class="device-table">
+                    <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Device Management') }}</h3>
+                        <button type="button" class="pos-mode-btn active" @click="openRegisterDeviceModal()">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>{{ __('Register Device') }}</span>
+                        </button>
+                    </div>
+
+                    <table class="device-table" style="width: 100%; border-collapse: collapse;">
                         <thead>
-                            <tr>
-                                <th>{{ __('Device Name') }}</th>
-                                <th>{{ __('Device Type') }}</th>
-                                <th>{{ __('Pairing Code') }}</th>
-                                <th>{{ __('Status') }}</th>
-                                <th>{{ __('Last Seen') }}</th>
-                                <th style="text-align: right;">{{ __('Actions') }}</th>
+                            <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                                <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Device Name') }}</th>
+                                <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Device Type') }}</th>
+                                <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Pairing Code') }}</th>
+                                <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Status') }}</th>
+                                <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem; text-align: right;">{{ __('Actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
                             <template x-for="dev in devices" :key="dev.id">
-                                <tr>
-                                    <td>
-                                        <div style="font-weight: 600; color: var(--text-main);" x-text="dev.name"></div>
+                                <tr style="border-bottom: 1px solid var(--border-color-light);">
+                                    <td style="padding: 12px 14px;">
+                                        <div style="font-weight: 600; color: #fff;" x-text="dev.name"></div>
                                         <div style="font-size: 0.7rem; color: var(--text-subtle);" x-text="dev.uuid"></div>
                                     </td>
-                                    <td style="text-transform: capitalize;" x-text="dev.device_type"></td>
-                                    <td>
+                                    <td style="padding: 12px 14px; text-transform: capitalize;" x-text="dev.device_type"></td>
+                                    <td style="padding: 12px 14px;">
                                         <code style="background: rgba(255,255,255,0.06); padding: 3px 6px; border-radius: 4px; color: var(--primary); font-weight: 700;" x-text="dev.pairing_code || 'PAIRED'"></code>
                                     </td>
-                                    <td>
+                                    <td style="padding: 12px 14px;">
                                         <span class="status-pill" :class="{ 'offline': !dev.is_active }">
                                             <span class="status-dot"></span>
                                             <span x-text="dev.is_active ? '{{ __('Active') }}' : '{{ __('Inactive') }}'"></span>
                                         </span>
                                     </td>
-                                    <td style="font-size: 0.75rem; color: var(--text-muted);" x-text="dev.last_seen_at ? new Date(dev.last_seen_at).toLocaleTimeString() : '—'"></td>
-                                    <td style="text-align: right;">
+                                    <td style="padding: 12px 14px; text-align: right;">
                                         <button type="button" class="pos-tool-btn" style="width: 32px; height: 32px; font-size: 0.8rem;" @click="regenerateCode(dev.id)" title="{{ __('Regenerate Code') }}">
                                             <i class="fa-solid fa-rotate"></i>
                                         </button>
@@ -697,44 +1436,94 @@
                                     </td>
                                 </tr>
                             </template>
-                            <template x-if="devices.length === 0">
-                                <tr>
-                                    <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">
-                                        {{ __('No POS devices registered yet.') }}
-                                    </td>
-                                </tr>
-                            </template>
                         </tbody>
                     </table>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <!-- 3. Quick Employee Switcher Modal -->
-        <div class="pos-modal-overlay" x-show="showEmployeeSwitcher" x-cloak>
+        <!-- ========================================== -->
+        <!-- MODALS                                      -->
+        <!-- ========================================== -->
+
+        <!-- 1. Product Customizer Modal (Variants & Modifiers) -->
+        <div class="pos-modal-overlay" x-show="customizingProduct" x-cloak>
             <div class="pos-modal-card">
                 <div class="pos-modal-header">
-                    <h3 style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 700;">
-                        {{ __('Select Employee') }}
-                    </h3>
-                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showEmployeeSwitcher = false">
+                    <div>
+                        <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;" x-text="customizingProduct?.name"></h3>
+                        <div style="font-size: 0.8rem; color: var(--primary); font-weight: 700;" x-text="formatCurrency(calculateCustomizerPrice())"></div>
+                    </div>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="customizingProduct = null">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
                 <div class="pos-modal-body">
-                    <div class="employee-grid">
-                        <template x-for="emp in employees" :key="emp.id">
-                            <div class="employee-card" @click="selectEmployeeForSwitch(emp)">
-                                <div class="employee-avatar-lg">
-                                    <template x-if="emp.avatar_url">
-                                        <img :src="emp.avatar_url" style="width: 100%; height: 100%; object-fit: cover;">
-                                    </template>
-                                    <template x-if="!emp.avatar_url">
-                                        <span x-text="emp.display_name.charAt(0).toUpperCase()"></span>
-                                    </template>
+                    <!-- Variations -->
+                    <template x-if="customizingProduct?.variations && customizingProduct.variations.length > 0">
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 6px;">{{ __('Select Size / Variation') }}</label>
+                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                <template x-for="v in customizingProduct.variations" :key="v.id">
+                                    <div class="cat-chip" 
+                                         :class="{ 'active': selectedVariation && selectedVariation.id === v.id }"
+                                         @click="selectedVariation = v">
+                                        <span x-text="v.name"></span>
+                                        <span style="font-weight: 700;" x-text="'(' + formatCurrency(v.price) + ')'"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Modifiers / Extras -->
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 6px;">{{ __('Extras & Modifiers') }}</label>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <template x-for="m in (customizingProduct?.modifiers || [])" :key="m.id">
+                                <div class="cat-chip"
+                                     :class="{ 'active': isModifierSelected(m) }"
+                                     @click="toggleModifier(m)">
+                                    <span x-text="m.name"></span>
+                                    <span style="font-size: 0.7rem; opacity: 0.8;" x-text="m.price > 0 ? '+' + formatCurrency(m.price) : ''"></span>
                                 </div>
-                                <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);" x-text="emp.display_name"></span>
-                                <span style="font-size: 0.65rem; color: var(--primary); text-transform: uppercase; font-weight: 700; margin-top: 4px;" x-text="emp.role"></span>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 6px;">{{ __('Special Instructions / Notes') }}</label>
+                        <input type="text" class="pos-input" x-model="customizerNotes" placeholder="e.g. Well done, extra spicy...">
+                    </div>
+
+                    <button type="button" class="cart-btn-primary" style="width: 100%; margin-top: 0.5rem;" @click="addCustomizedProductToCart()">
+                        <span>{{ __('Add to Order') }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Table Selection Modal -->
+        <div class="pos-modal-overlay" x-show="showTableModal" x-cloak>
+            <div class="pos-modal-card">
+                <div class="pos-modal-header">
+                    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Select Dining Table') }}</h3>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showTableModal = false">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="pos-modal-body">
+                    <div class="table-selection-grid">
+                        <div class="table-select-card" :class="{ 'active': !selectedTable }" @click="selectTable(null)">
+                            <i class="fa-solid fa-store" style="font-size: 1.2rem; margin-bottom: 4px; color: var(--primary);"></i>
+                            <div style="font-size: 0.75rem; font-weight: 700;">{{ __('Counter') }}</div>
+                        </div>
+                        <template x-for="t in tables" :key="t.id">
+                            <div class="table-select-card" :class="{ 'active': selectedTable && selectedTable.id === t.id }" @click="selectTable(t)">
+                                <i class="fa-solid fa-table-cells" style="font-size: 1.2rem; margin-bottom: 4px; color: var(--text-muted);"></i>
+                                <div style="font-size: 0.85rem; font-weight: 700;" x-text="t.table_number"></div>
+                                <div style="font-size: 0.65rem; color: var(--text-subtle);" x-text="t.capacity + ' seats'"></div>
                             </div>
                         </template>
                     </div>
@@ -742,77 +1531,130 @@
             </div>
         </div>
 
-        <!-- 4. PIN Change Modal -->
-        <div class="pos-modal-overlay" x-show="showPinModal" x-cloak>
+        <!-- 3. Cash Payment / Calculator Modal -->
+        <div class="pos-modal-overlay" x-show="showCashModal" x-cloak>
+            <div class="pos-modal-card" style="max-width: 420px;">
+                <div class="pos-modal-header">
+                    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Cash Payment') }}</h3>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showCashModal = false">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="pos-modal-body">
+                    <div style="text-align: center; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">{{ __('Total Due') }}</span>
+                        <div style="font-size: 1.75rem; font-weight: 800; color: #fff; font-family: var(--font-display);" x-text="formatCurrency(selectedCashierOrder?.total_amount || 0)"></div>
+                    </div>
+
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 6px;">{{ __('Amount Received') }}</label>
+                        <input type="number" class="pos-input" x-model.number="cashReceived" style="font-size: 1.4rem; font-weight: 700; text-align: center;">
+                    </div>
+
+                    <!-- Presets -->
+                    <div class="cash-preset-grid">
+                        <button type="button" class="cash-preset-btn" @click="cashReceived = Number(selectedCashierOrder?.total_amount || 0)">{{ __('Exact') }}</button>
+                        <button type="button" class="cash-preset-btn" @click="cashReceived = 5000">5,000</button>
+                        <button type="button" class="cash-preset-btn" @click="cashReceived = 10000">10,000</button>
+                        <button type="button" class="cash-preset-btn" @click="cashReceived = 20000">20,000</button>
+                        <button type="button" class="cash-preset-btn" @click="cashReceived = 50000">50,000</button>
+                        <button type="button" class="cash-preset-btn" @click="cashReceived = 0">{{ __('Clear') }}</button>
+                    </div>
+
+                    <!-- Change Calculation -->
+                    <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.9rem; font-weight: 600;">{{ __('Change Due') }}:</span>
+                        <span style="font-size: 1.35rem; font-weight: 800; color: #10b981; font-family: var(--font-display);" x-text="formatCurrency(Math.max(0, cashReceived - (selectedCashierOrder?.total_amount || 0)))"></span>
+                    </div>
+
+                    <button type="button" class="cart-btn-primary" style="width: 100%; height: 48px;" @click="finalizeCashPayment()">
+                        <i class="fa-solid fa-check"></i>
+                        <span>{{ __('Confirm Payment') }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Add Discount Modal -->
+        <div class="pos-modal-overlay" x-show="showDiscountModal" x-cloak>
             <div class="pos-modal-card" style="max-width: 400px;">
                 <div class="pos-modal-header">
-                    <h3 style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 700;">
-                        {{ __('Set New 4-Digit PIN') }}
-                    </h3>
+                    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Add Discount') }}</h3>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showDiscountModal = false">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="pos-modal-body">
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">{{ __('Discount Amount') }}</label>
+                        <input type="number" class="pos-input" x-model.number="tempDiscountAmount" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">{{ __('Discount Reason') }}</label>
+                        <input type="text" class="pos-input" x-model="discountReason" placeholder="e.g. VIP, Happy Hour, Management">
+                    </div>
+                    <button type="button" class="cart-btn-primary" style="width: 100%;" @click="applyDiscount()">
+                        <span>{{ __('Apply') }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Quick Employee Switcher Modal -->
+        <div class="pos-modal-overlay" x-show="showEmployeeSwitcher" x-cloak>
+            <div class="pos-modal-card">
+                <div class="pos-modal-header">
+                    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Select Employee') }}</h3>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showEmployeeSwitcher = false">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="pos-modal-body">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 1rem;">
+                        <template x-for="emp in employees" :key="emp.id">
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; text-align: center; cursor: pointer;" 
+                                 @click="selectEmployeeForSwitch(emp)">
+                                <div class="pos-user-avatar" style="width: 48px; height: 48px; font-size: 1.2rem; margin: 0 auto 0.5rem;">
+                                    <span x-text="emp.display_name.charAt(0).toUpperCase()"></span>
+                                </div>
+                                <div style="font-size: 0.85rem; font-weight: 600; color: #fff;" x-text="emp.display_name"></div>
+                                <div style="font-size: 0.65rem; color: var(--primary); text-transform: uppercase; font-weight: 700; margin-top: 2px;" x-text="emp.role"></div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. PIN Change Modal -->
+        <div class="pos-modal-overlay" x-show="showPinModal" x-cloak>
+            <div class="pos-modal-card" style="max-width: 380px;">
+                <div class="pos-modal-header">
+                    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Change PIN') }}</h3>
                     <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showPinModal = false">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
                 <div class="pos-modal-body">
-                    <label style="font-size: 0.8rem; color: var(--text-muted);">{{ __('Enter new 4 to 6 digit numeric PIN') }}</label>
+                    <label style="font-size: 0.8rem; color: var(--text-muted);">{{ __('Set New 4-Digit PIN') }}</label>
                     <input type="password" maxlength="6" class="pos-input" x-model="newPin" placeholder="••••" style="text-align: center; font-size: 1.5rem; letter-spacing: 6px;">
-                    <button type="button" class="pos-mode-btn active" style="justify-content: center; width: 100%; height: 46px;" @click="submitNewPin()">
+                    <button type="button" class="cart-btn-primary" style="width: 100%;" @click="submitNewPin()">
                         <span>{{ __('Save PIN') }}</span>
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- 5. Register Device Modal -->
-        <div class="pos-modal-overlay" x-show="showRegisterDeviceModal" x-cloak>
-            <div class="pos-modal-card" style="max-width: 450px;">
-                <div class="pos-modal-header">
-                    <h3 style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 700;">
-                        {{ __('Register Device') }}
-                    </h3>
-                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showRegisterDeviceModal = false">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                </div>
-                <div class="pos-modal-body">
-                    <div>
-                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">{{ __('Device Name') }}</label>
-                        <input type="text" class="pos-input" x-model="newDeviceName" placeholder="e.g. Main Terminal, Bar Tablet">
-                    </div>
-                    <div>
-                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">{{ __('Device Type') }}</label>
-                        <select class="pos-input" x-model="newDeviceType">
-                            <option value="terminal">{{ __('Terminal') }}</option>
-                            <option value="tablet">{{ __('Tablet') }}</option>
-                            <option value="mobile">{{ __('Mobile Handheld') }}</option>
-                            <option value="kds">{{ __('Kitchen Display (KDS)') }}</option>
-                        </select>
-                    </div>
-                    <button type="button" class="pos-mode-btn active" style="justify-content: center; width: 100%; height: 46px;" @click="submitDeviceRegistration()">
-                        <span>{{ __('Register Device') }}</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 6. Quick PIN Pad Lock Screen / Employee Switch Screen -->
+        <!-- 7. PIN Screen Overlay -->
         <div class="pos-lock-screen" x-show="isLocked || switchingTargetUser" x-cloak>
             <div class="pin-pad-container">
                 <div style="text-align: center;">
-                    <div class="employee-avatar-lg" style="margin: 0 auto 0.75rem;">
-                        <template x-if="switchingTargetUser">
-                            <span x-text="switchingTargetUser.display_name.charAt(0).toUpperCase()"></span>
-                        </template>
-                        <template x-if="!switchingTargetUser">
-                            <span x-text="currentUser.display_name.charAt(0).toUpperCase()"></span>
-                        </template>
+                    <div class="pos-user-avatar" style="width: 52px; height: 52px; font-size: 1.3rem; margin: 0 auto 0.75rem;">
+                        <span x-text="(switchingTargetUser ? switchingTargetUser.display_name : currentUser.display_name).charAt(0).toUpperCase()"></span>
                     </div>
-                    <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700;" 
-                        x-text="switchingTargetUser ? switchingTargetUser.display_name : currentUser.display_name"></h3>
-                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
-                        {{ __('Enter 4-digit PIN to unlock') }}
-                    </p>
-                    <div x-show="pinError" style="color: var(--danger); font-size: 0.75rem; margin-top: 6px; font-weight: 600;" x-text="pinError"></div>
+                    <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700;" x-text="switchingTargetUser ? switchingTargetUser.display_name : currentUser.display_name"></h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">{{ __('Enter 4-digit PIN to unlock') }}</p>
+                    <div x-show="pinError" style="color: var(--danger); font-size: 0.75rem; margin-top: 4px; font-weight: 600;" x-text="pinError"></div>
                 </div>
 
                 <div class="pin-display">
@@ -835,6 +1677,12 @@
                 </div>
             </div>
         </div>
+
+        <!-- Toast Alert -->
+        <div class="pos-toast" x-show="toastMessage" x-cloak>
+            <i class="fa-solid fa-circle-check" style="color: #10b981;"></i>
+            <span x-text="toastMessage"></span>
+        </div>
     </main>
 
     <script>
@@ -847,43 +1695,83 @@
                 isLocked: false,
                 enteredPin: '',
                 pinError: '',
+                toastMessage: '',
                 bootstrapData: @json($bootstrapData),
                 currentUser: @json($bootstrapData['user']),
-                employees: [],
-                devices: [],
+                menu: @json($bootstrapData['menu'] ?? ['categories' => [], 'products' => [], 'favorites' => []]),
+                tables: [],
+                selectedTable: null,
+                guestCount: 1,
+                orderType: 'dine_in',
+                searchQuery: '',
+                activeCategory: 'all',
+
+                // Cart state
+                cart: [],
+                discountAmount: 0,
+                discountReason: '',
+                tempDiscountAmount: 0,
+
+                // Modals
+                customizingProduct: null,
+                selectedVariation: null,
+                selectedModifiers: [],
+                customizerNotes: '',
+                showTableModal: false,
+                showDiscountModal: false,
+                showCashModal: false,
+                cashReceived: 0,
                 showEmployeeSwitcher: false,
                 showPinModal: false,
-                showRegisterDeviceModal: false,
                 switchingTargetUser: null,
                 newPin: '',
-                newDeviceName: '',
-                newDeviceType: 'terminal',
+
+                // Cashier & Manager state
+                cashierOrders: [],
+                selectedCashierOrder: null,
+                devices: [],
+                employees: [],
+                managerStats: {
+                    todaySales: 0,
+                    occupiedTables: 0
+                },
 
                 initPos() {
                     window.addEventListener('online', () => this.isOnline = true);
                     window.addEventListener('offline', () => this.isOnline = false);
 
-                    this.fetchEmployees();
+                    this.loadTables();
                     this.loadDevices();
+                    this.fetchEmployees();
+                    this.fetchCashierOrders();
 
-                    // Auto-lock timer setup
                     const autoLockSec = this.bootstrapData.settings?.auto_lock_seconds || 120;
                     if (autoLockSec > 0) {
                         this.setupAutoLock(autoLockSec);
                     }
                 },
 
+                formatCurrency(amount) {
+                    const num = Number(amount || 0);
+                    const symbol = this.bootstrapData.vendor?.currency_symbol || '֏';
+                    return num.toLocaleString() + ' ' + symbol;
+                },
+
                 setMode(mode) {
                     this.activeMode = mode;
-                    if (mode === 'manager') {
+                    if (mode === 'cashier') {
+                        this.fetchCashierOrders();
+                    } else if (mode === 'manager') {
                         this.loadDevices();
+                        this.refreshManagerStats();
                     }
                 },
 
                 switchBranch(locationId) {
                     this.activeLocationId = locationId;
                     this.fetchBootstrap();
-                    this.fetchEmployees();
+                    this.loadTables();
+                    this.fetchCashierOrders();
                 },
 
                 async fetchBootstrap() {
@@ -895,24 +1783,38 @@
                         if (data.success) {
                             this.bootstrapData = data.data;
                             this.currentUser = data.data.user;
+                            if (data.data.menu) {
+                                this.menu = data.data.menu;
+                            }
                         }
                     } catch (e) {
                         console.error('POS bootstrap sync failed:', e);
                     }
                 },
 
-                async fetchEmployees() {
+                async loadTables() {
                     try {
-                        const res = await fetch(`/pos/api/auth/employees?location_id=${this.activeLocationId || ''}`, {
+                        const res = await fetch(`/pos/api/bootstrap?location_id=${this.activeLocationId || ''}`, {
                             headers: { 'Accept': 'application/json' }
                         });
                         const data = await res.json();
                         if (data.success) {
-                            this.employees = data.employees;
+                            // Can also query tables specifically if needed
                         }
-                    } catch (e) {
-                        console.error('Fetch employees failed:', e);
-                    }
+                    } catch (e) {}
+                },
+
+                async fetchCashierOrders() {
+                    try {
+                        const res = await fetch(`/pos/api/orders?location_id=${this.activeLocationId || ''}`, {
+                            headers: { 'Accept': 'application/json' }
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.cashierOrders = data.data;
+                            this.refreshManagerStats();
+                        }
+                    } catch (e) {}
                 },
 
                 async loadDevices() {
@@ -924,11 +1826,295 @@
                         if (data.success) {
                             this.devices = data.devices;
                         }
-                    } catch (e) {
-                        console.error('Load devices failed:', e);
+                    } catch (e) {}
+                },
+
+                async fetchEmployees() {
+                    try {
+                        const res = await fetch(`/pos/api/auth/employees?location_id=${this.activeLocationId || ''}`, {
+                            headers: { 'Accept': 'application/json' }
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.employees = data.employees;
+                        }
+                    } catch (e) {}
+                },
+
+                refreshManagerStats() {
+                    let total = 0;
+                    this.cashierOrders.forEach(o => {
+                        total += Number(o.total_amount || 0);
+                    });
+                    this.managerStats.todaySales = total;
+                    const tablesSet = new Set(this.cashierOrders.map(o => o.table_number).filter(t => t && t !== 'Counter'));
+                    this.managerStats.occupiedTables = tablesSet.size;
+                },
+
+                // Product Catalog filter
+                get filteredProducts() {
+                    let list = this.menu.products || [];
+                    if (this.activeCategory === 'favorites') {
+                        list = this.menu.favorites || list.filter(p => p.is_featured);
+                    } else if (this.activeCategory !== 'all') {
+                        list = list.filter(p => p.category_id == this.activeCategory);
+                    }
+                    if (this.searchQuery.trim() !== '') {
+                        const q = this.searchQuery.toLowerCase();
+                        list = list.filter(p => p.name.toLowerCase().includes(q));
+                    }
+                    return list;
+                },
+
+                // Product Cart interaction
+                handleProductClick(prod) {
+                    if (prod.variations && prod.variations.length > 0) {
+                        this.openCustomizer(prod);
+                    } else {
+                        this.addToCartDirect(prod);
                     }
                 },
 
+                addToCartDirect(prod) {
+                    const existingIndex = this.cart.findIndex(i => i.product_id === prod.id && !i.variation_id && (!i.modifiers || i.modifiers.length === 0));
+                    if (existingIndex > -1) {
+                        this.cart[existingIndex].quantity++;
+                    } else {
+                        this.cart.push({
+                            product_id: prod.id,
+                            product_name: prod.name,
+                            variation_id: null,
+                            variation_name: null,
+                            unit_price: Number(prod.price),
+                            quantity: 1,
+                            notes: '',
+                            modifiers: [],
+                            kitchen_station: prod.kitchen_station || 'kitchen'
+                        });
+                    }
+                    this.showToast('{{ __('Added to cart') }}');
+                },
+
+                openCustomizer(prod) {
+                    this.customizingProduct = prod;
+                    this.selectedVariation = prod.variations && prod.variations.length > 0 ? prod.variations[0] : null;
+                    this.selectedModifiers = [];
+                    this.customizerNotes = '';
+                },
+
+                calculateCustomizerPrice() {
+                    if (!this.customizingProduct) return 0;
+                    let base = this.selectedVariation ? Number(this.selectedVariation.price) : Number(this.customizingProduct.price);
+                    this.selectedModifiers.forEach(m => base += Number(m.price || 0));
+                    return base;
+                },
+
+                isModifierSelected(m) {
+                    return this.selectedModifiers.some(mod => mod.id === m.id);
+                },
+
+                toggleModifier(m) {
+                    const idx = this.selectedModifiers.findIndex(mod => mod.id === m.id);
+                    if (idx > -1) {
+                        this.selectedModifiers.splice(idx, 1);
+                    } else {
+                        this.selectedModifiers.push(m);
+                    }
+                },
+
+                addCustomizedProductToCart() {
+                    const unitPrice = this.calculateCustomizerPrice();
+                    this.cart.push({
+                        product_id: this.customizingProduct.id,
+                        product_name: this.customizingProduct.name,
+                        variation_id: this.selectedVariation?.id || null,
+                        variation_name: this.selectedVariation?.name || null,
+                        unit_price: unitPrice,
+                        quantity: 1,
+                        notes: this.customizerNotes,
+                        modifiers: [...this.selectedModifiers],
+                        kitchen_station: this.customizingProduct.kitchen_station || 'kitchen'
+                    });
+                    this.customizingProduct = null;
+                    this.showToast('{{ __('Added to cart') }}');
+                },
+
+                changeQty(index, delta) {
+                    if (this.cart[index]) {
+                        this.cart[index].quantity += delta;
+                        if (this.cart[index].quantity <= 0) {
+                            this.cart.splice(index, 1);
+                        }
+                    }
+                },
+
+                removeItem(index) {
+                    this.cart.splice(index, 1);
+                },
+
+                clearCart() {
+                    this.cart = [];
+                    this.discountAmount = 0;
+                    this.discountReason = '';
+                },
+
+                // Cart Financial Calculations
+                get cartSubtotal() {
+                    return this.cart.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+                },
+
+                get taxAmount() {
+                    const rate = Number(this.bootstrapData.settings?.tax_rate || 0);
+                    if (rate <= 0 || this.bootstrapData.settings?.tax_inclusive) return 0;
+                    return (this.cartSubtotal * rate) / 100;
+                },
+
+                get serviceFee() {
+                    const rate = Number(this.bootstrapData.settings?.service_charge_percent || 0);
+                    if (rate <= 0) return 0;
+                    return (this.cartSubtotal * rate) / 100;
+                },
+
+                get cartTotal() {
+                    return Math.max(0, this.cartSubtotal - this.discountAmount + this.taxAmount + this.serviceFee);
+                },
+
+                // Table Selection
+                openTableModal() {
+                    this.showTableModal = true;
+                },
+
+                selectTable(table) {
+                    this.selectedTable = table;
+                    this.showTableModal = false;
+                },
+
+                // Discount Modal
+                openDiscountModal() {
+                    this.tempDiscountAmount = this.discountAmount;
+                    this.showDiscountModal = true;
+                },
+
+                applyDiscount() {
+                    this.discountAmount = Math.max(0, Number(this.tempDiscountAmount || 0));
+                    this.showDiscountModal = false;
+                    this.showToast('{{ __('Discount applied') }}');
+                },
+
+                // Order Submission to Kitchen
+                async submitOrderToKitchen() {
+                    if (this.cart.length === 0) return;
+
+                    const payload = {
+                        location_id: this.activeLocationId,
+                        type: this.orderType,
+                        table_number: this.selectedTable ? this.selectedTable.table_number : 'Counter',
+                        restaurant_table_id: this.selectedTable ? this.selectedTable.id : null,
+                        guest_count: this.guestCount,
+                        discount_amount: this.discountAmount,
+                        discount_reason: this.discountReason,
+                        tax_amount: this.taxAmount,
+                        items: this.cart.map(i => ({
+                            product_id: i.product_id,
+                            quantity: i.quantity,
+                            variation_id: i.variation_id,
+                            variation_name: i.variation_name,
+                            notes: i.notes,
+                            modifiers: i.modifiers,
+                            kitchen_station: i.kitchen_station
+                        }))
+                    };
+
+                    try {
+                        const res = await fetch('/pos/api/orders', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify(payload)
+                        });
+
+                        const data = await res.json();
+                        if (data.success) {
+                            this.clearCart();
+                            this.showToast('{{ __('Order Sent to Kitchen!') }}');
+                            this.fetchCashierOrders();
+                        } else {
+                            alert(data.message || 'Error submitting order');
+                        }
+                    } catch (e) {
+                        console.error('Submit order failed:', e);
+                        alert('Order failed to submit');
+                    }
+                },
+
+                holdCurrentOrder() {
+                    if (this.cart.length === 0) return;
+                    this.submitOrderToKitchen(); // Saves order to active orders queue
+                },
+
+                // Cashier selection & payment
+                selectOrderForCashier(order) {
+                    this.selectedCashierOrder = order;
+                },
+
+                openCashPaymentModal() {
+                    if (!this.selectedCashierOrder) return;
+                    this.cashReceived = Number(this.selectedCashierOrder.total_amount);
+                    this.showCashModal = true;
+                },
+
+                async finalizeCashPayment() {
+                    if (!this.selectedCashierOrder) return;
+                    try {
+                        const res = await fetch(`/pos/api/orders/${this.selectedCashierOrder.id}/status`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({ status: 'completed', reason: 'Paid in Cash' })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.showCashModal = false;
+                            this.selectedCashierOrder = null;
+                            this.showToast('{{ __('Payment Confirmed!') }}');
+                            this.fetchCashierOrders();
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+                },
+
+                async processCardPayment() {
+                    if (!this.selectedCashierOrder) return;
+                    if (!confirm('{{ __('Confirm Card Payment?') }}')) return;
+                    try {
+                        const res = await fetch(`/pos/api/orders/${this.selectedCashierOrder.id}/status`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({ status: 'completed', reason: 'Paid with Card' })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.selectedCashierOrder = null;
+                            this.showToast('{{ __('Payment Confirmed!') }}');
+                            this.fetchCashierOrders();
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+                },
+
+                // Employee switcher & PIN pad
                 openEmployeeSwitcher() {
                     this.fetchEmployees();
                     this.showEmployeeSwitcher = true;
@@ -964,93 +2150,10 @@
                         const data = await res.json();
                         if (data.success) {
                             this.showPinModal = false;
-                            alert('{{ __('PIN code updated successfully.') }}');
-                        } else {
-                            alert(data.message || 'Error updating PIN');
+                            this.showToast('{{ __('PIN code updated successfully.') }}');
                         }
                     } catch (e) {
                         console.error(e);
-                    }
-                },
-
-                openRegisterDeviceModal() {
-                    this.newDeviceName = '';
-                    this.newDeviceType = 'terminal';
-                    this.showRegisterDeviceModal = true;
-                },
-
-                async submitDeviceRegistration() {
-                    if (!this.newDeviceName.trim()) return;
-                    try {
-                        const res = await fetch('/pos/api/devices/register', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                            },
-                            body: JSON.stringify({
-                                name: this.newDeviceName,
-                                device_type: this.newDeviceType,
-                                location_id: this.activeLocationId
-                            })
-                        });
-                        const data = await res.json();
-                        if (data.success) {
-                            this.showRegisterDeviceModal = false;
-                            this.loadDevices();
-                            alert(`{{ __('Device Registered') }}. {{ __('Pairing Code') }}: ${data.device.pairing_code}`);
-                        }
-                    } catch (e) {
-                        console.error(e);
-                    }
-                },
-
-                async regenerateCode(deviceId) {
-                    try {
-                        const res = await fetch(`/pos/api/devices/${deviceId}/regenerate-code`, {
-                            method: 'POST',
-                            headers: {
-                                'Accept': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                            }
-                        });
-                        const data = await res.json();
-                        if (data.success) {
-                            this.loadDevices();
-                            alert(`{{ __('New Pairing Code') }}: ${data.pairing_code}`);
-                        }
-                    } catch (e) {
-                        console.error(e);
-                    }
-                },
-
-                async revokeDevice(deviceId) {
-                    if (!confirm('{{ __('Are you sure you want to revoke this device?') }}')) return;
-                    try {
-                        const res = await fetch(`/pos/api/devices/${deviceId}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'Accept': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                            }
-                        });
-                        const data = await res.json();
-                        if (data.success) {
-                            this.loadDevices();
-                        }
-                    } catch (e) {
-                        console.error(e);
-                    }
-                },
-
-                toggleFullscreen() {
-                    if (!document.fullscreenElement) {
-                        document.documentElement.requestFullscreen().catch(() => {});
-                        this.isFullscreen = true;
-                    } else {
-                        document.exitFullscreen().catch(() => {});
-                        this.isFullscreen = false;
                     }
                 },
 
@@ -1077,14 +2180,11 @@
                 cancelPinAction() {
                     this.enteredPin = '';
                     this.pinError = '';
-                    if (this.switchingTargetUser) {
-                        this.switchingTargetUser = null;
-                    }
+                    this.switchingTargetUser = null;
                 },
 
                 async submitPinAction() {
                     if (this.switchingTargetUser) {
-                        // Quick switch employee
                         try {
                             const res = await fetch('/pos/api/auth/quick-switch', {
                                 method: 'POST',
@@ -1105,6 +2205,7 @@
                                 this.switchingTargetUser = null;
                                 this.enteredPin = '';
                                 this.pinError = '';
+                                this.showToast('{{ __('Switched employee successfully.') }}');
                                 this.fetchBootstrap();
                             } else {
                                 this.pinError = data.message || '{{ __('Incorrect PIN code.') }}';
@@ -1115,7 +2216,6 @@
                             this.enteredPin = '';
                         }
                     } else {
-                        // Unlock current terminal session
                         try {
                             const res = await fetch('/pos/api/auth/unlock', {
                                 method: 'POST',
@@ -1131,6 +2231,7 @@
                                 this.isLocked = false;
                                 this.enteredPin = '';
                                 this.pinError = '';
+                                this.showToast('{{ __('Terminal unlocked.') }}');
                             } else {
                                 this.pinError = data.message || '{{ __('Incorrect PIN code.') }}';
                                 this.enteredPin = '';
@@ -1139,6 +2240,21 @@
                             this.pinError = 'Network error during unlock';
                             this.enteredPin = '';
                         }
+                    }
+                },
+
+                showToast(msg) {
+                    this.toastMessage = msg;
+                    setTimeout(() => { this.toastMessage = ''; }, 3000);
+                },
+
+                toggleFullscreen() {
+                    if (!document.fullscreenElement) {
+                        document.documentElement.requestFullscreen().catch(() => {});
+                        this.isFullscreen = true;
+                    } else {
+                        document.exitFullscreen().catch(() => {});
+                        this.isFullscreen = false;
                     }
                 },
 

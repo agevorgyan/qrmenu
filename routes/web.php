@@ -612,6 +612,7 @@ Route::middleware(['auth', EnsurePosAccess::class])->group(function () {
         });
 
         Route::get('/bootstrap', [PosController::class, 'bootstrap'])->name('bootstrap');
+        Route::get('/menu', [PosController::class, 'getMenu'])->name('menu');
         Route::get('/orders', [PosController::class, 'getOrders'])->name('orders.index');
         Route::post('/orders', [PosController::class, 'storeOrder'])->name('orders.store');
         Route::get('/orders/{order}', [PosController::class, 'showOrder'])->name('orders.show');
