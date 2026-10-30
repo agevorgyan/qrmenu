@@ -22,12 +22,15 @@ class Customer extends Model
         'marketing_opt_in',
         'total_orders_count',
         'total_spent',
+        'loyalty_points',
+        'loyalty_tier',
         'last_order_at',
     ];
 
     protected $casts = [
         'marketing_opt_in' => 'boolean',
         'total_spent' => 'decimal:2',
+        'loyalty_points' => 'integer',
         'last_order_at' => 'datetime',
         'birthdate' => 'date',
     ];
@@ -75,5 +78,10 @@ class Customer extends Model
         $this->total_spent = $this->orders()->sum('total_amount');
         $this->last_order_at = $this->orders()->max('created_at');
         $this->save();
+    }
+
+    public function loyaltyTransactions()
+    {
+        return $this->hasMany(PosCustomerLoyaltyTransaction::class)->latest();
     }
 }

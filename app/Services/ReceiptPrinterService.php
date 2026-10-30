@@ -176,12 +176,27 @@ class ReceiptPrinterService
         // Payment Info
         if ($payment) {
             $out .= self::padBetween('Method:', strtoupper($payment->payment_method), $cols)."\n";
-            $out .= self::padBetween('Tendered:', number_format((float) $payment->tendered_amount, 2).' '.$currency, $cols)."\n";
-            if ((float) $payment->change_amount > 0) {
-                $out .= self::padBetween('Change:', number_format((float) $payment->change_amount, 2).' '.$currency, $cols)."\n";
+            $out .= self::padBetween('Tendered:', number_format((float) ($payment->tendered_amount ?? $payment->cash_tendered ?? $payment->amount), 2).' '.$currency, $cols)."\n";
+            if ((float) ($payment->change_amount ?? $payment->change_due) > 0) {
+                $out .= self::padBetween('Change:', number_format((float) ($payment->change_amount ?? $payment->change_due), 2).' '.$currency, $cols)."\n";
             }
             if ($payment->transaction_reference) {
                 $out .= self::padBetween('Ref #:', $payment->transaction_reference, $cols)."\n";
+            }
+
+            // Armenian HDM Fiscal section
+            if ($payment->fiscal_receipt_number) {
+                $out .= self::divider('*', $cols)."\n";
+                $out .= self::centerText('*** ARMENIA TAX SERVICE (ՀԴՄ) ***', $cols)."\n";
+                $out .= self::padBetween('CRN (ԳՀ):', (string) $payment->fiscal_crn, $cols)."\n";
+                $out .= self::padBetween('Receipt #:', (string) $payment->fiscal_receipt_number, $cols)."\n";
+                if ($payment->fiscal_signed_at) {
+                    $out .= self::padBetween('Signed:', $payment->fiscal_signed_at->format('d/m/Y H:i:s'), $cols)."\n";
+                }
+                if ($payment->fiscal_qr_data) {
+                    $out .= self::centerText('[QR: '.$payment->fiscal_qr_data.']', $cols)."\n";
+                }
+                $out .= self::divider('*', $cols)."\n";
             }
         } elseif ((float) ($order->paid_amount ?? 0) > 0) {
             $out .= self::padBetween('Paid Amount:', number_format((float) $order->paid_amount, 2).' '.$currency, $cols)."\n";
@@ -274,10 +289,27 @@ class ReceiptPrinterService
         $lines[] = str_repeat('=', $cols);
 
         if ($payment) {
+            $outTendered = number_format((float) ($payment->tendered_amount ?? $payment->cash_tendered ?? $payment->amount), 2);
+            $outChange = (float) ($payment->change_amount ?? $payment->change_due ?? 0);
             $lines[] = self::padBetween('Method:', strtoupper($payment->payment_method), $cols);
-            $lines[] = self::padBetween('Tendered:', number_format((float) $payment->tendered_amount, 2).' '.$currency, $cols);
-            if ((float) $payment->change_amount > 0) {
-                $lines[] = self::padBetween('Change:', number_format((float) $payment->change_amount, 2).' '.$currency, $cols);
+            $lines[] = self::padBetween('Tendered:', $outTendered.' '.$currency, $cols);
+            if ($outChange > 0) {
+                $lines[] = self::padBetween('Change:', number_format($outChange, 2).' '.$currency, $cols);
+            }
+
+            // Armenian HDM Fiscal section
+            if ($payment->fiscal_receipt_number) {
+                $lines[] = str_repeat('*', $cols);
+                $lines[] = self::centerText('*** ARMENIA TAX SERVICE (ՀԴՄ) ***', $cols);
+                $lines[] = self::padBetween('CRN (ԳՀ):', (string) $payment->fiscal_crn, $cols);
+                $lines[] = self::padBetween('Receipt #:', (string) $payment->fiscal_receipt_number, $cols);
+                if ($payment->fiscal_signed_at) {
+                    $lines[] = self::padBetween('Signed:', $payment->fiscal_signed_at->format('d/m/Y H:i:s'), $cols);
+                }
+                if ($payment->fiscal_qr_data) {
+                    $lines[] = self::centerText('[QR: '.$payment->fiscal_qr_data.']', $cols);
+                }
+                $lines[] = str_repeat('*', $cols);
             }
         }
 

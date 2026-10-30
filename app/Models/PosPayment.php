@@ -34,6 +34,11 @@ class PosPayment extends Model
         'is_offline',
         'client_sync_id',
         'offline_synced_at',
+        'fiscal_crn',
+        'fiscal_receipt_number',
+        'fiscal_qr_data',
+        'fiscal_signed_at',
+        'fiscal_status',
     ];
 
     protected function casts(): array
@@ -46,6 +51,7 @@ class PosPayment extends Model
             'refunded_amount' => 'decimal:2',
             'is_offline' => 'boolean',
             'offline_synced_at' => 'datetime',
+            'fiscal_signed_at' => 'datetime',
         ];
     }
 

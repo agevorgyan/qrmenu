@@ -9,6 +9,7 @@ use App\Services\TenantCache;
 use App\Services\TenantContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -139,6 +140,10 @@ class Product extends Model
         'ai_pairs_with',
         'ai_enabled',
         'is_available',
+        'tracks_inventory',
+        'stock_quantity',
+        'low_stock_threshold',
+        'allow_out_of_stock_sale',
         'available_start_time',
         'available_end_time',
         'available_days',
@@ -168,6 +173,10 @@ class Product extends Model
         'ai_pairs_with' => 'array',
         'ai_enabled' => 'boolean',
         'is_available' => 'boolean',
+        'tracks_inventory' => 'boolean',
+        'stock_quantity' => 'decimal:2',
+        'low_stock_threshold' => 'integer',
+        'allow_out_of_stock_sale' => 'boolean',
         'available_days' => 'array',
         'available_for_dine_in' => 'boolean',
         'available_for_takeaway' => 'boolean',
@@ -609,5 +618,10 @@ class Product extends Model
         }
 
         return true;
+    }
+
+    public function inventoryMovements(): HasMany
+    {
+        return $this->hasMany(PosInventoryMovement::class);
     }
 }

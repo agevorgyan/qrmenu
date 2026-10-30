@@ -1113,6 +1113,24 @@
                 </button>
             </template>
 
+            <!-- Waiter Calls Indicator -->
+            <button type="button" class="pos-tool-btn" @click="openWaiterCallsModal()" :style="waiterCalls.length > 0 ? 'color: #ef4444;' : ''" title="{{ __('Waiter Calls') }}" style="position: relative;">
+                <i class="fa-solid fa-bell"></i>
+                <span x-show="waiterCalls.length > 0" x-text="waiterCalls.length" style="position: absolute; top: 1px; right: 1px; background: #ef4444; color: #fff; font-size: 0.65rem; font-weight: 800; border-radius: 999px; padding: 0.05rem 0.35rem; line-height: 1;"></span>
+            </button>
+
+            <!-- Incoming External Orders (QR / Online) Indicator -->
+            <button type="button" class="pos-tool-btn" @click="openIncomingOrdersModal()" :style="incomingOrders.length > 0 ? 'color: #3b82f6;' : ''" title="{{ __('Incoming Orders') }}" style="position: relative;">
+                <i class="fa-solid fa-cloud-arrow-down"></i>
+                <span x-show="incomingOrders.length > 0" x-text="incomingOrders.length" style="position: absolute; top: 1px; right: 1px; background: #3b82f6; color: #fff; font-size: 0.65rem; font-weight: 800; border-radius: 999px; padding: 0.05rem 0.35rem; line-height: 1;"></span>
+            </button>
+
+            <!-- Reservations Indicator -->
+            <button type="button" class="pos-tool-btn" @click="openReservationsModal()" :style="reservations.length > 0 ? 'color: #10b981;' : ''" title="{{ __('Reservations') }}" style="position: relative;">
+                <i class="fa-regular fa-calendar-check"></i>
+                <span x-show="reservations.length > 0" x-text="reservations.length" style="position: absolute; top: 1px; right: 1px; background: #10b981; color: #fff; font-size: 0.65rem; font-weight: 800; border-radius: 999px; padding: 0.05rem 0.35rem; line-height: 1;"></span>
+            </button>
+
             <!-- Kitchen Display System (KDS) Button -->
             <a href="{{ route('pos.kds') }}" target="_blank" class="pos-tool-btn" title="{{ __('Kitchen Display System (KDS)') }}" style="text-decoration: none; color: #f59e0b;">
                 <i class="fa-solid fa-fire-burner"></i>
@@ -1485,6 +1503,20 @@
                             <button type="button" class="cart-btn-secondary" style="flex: 1;" @click="openMixedPaymentModal()">
                                 <i class="fa-solid fa-layer-group"></i>
                                 <span>{{ __('Mixed Payment') }}</span>
+                            </button>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button type="button" class="cart-btn-secondary" style="flex: 1;" @click="openCustomerLoyaltyModal()" title="{{ __('Loyalty Points') }}">
+                                <i class="fa-solid fa-award" style="color: #f59e0b;"></i>
+                                <span>{{ __('Loyalty Points') }}</span>
+                            </button>
+                            <button type="button" class="cart-btn-secondary" style="flex: 1;" @click="openQrPaymentModal('idram')" title="Idram / Telcell QR">
+                                <i class="fa-solid fa-qrcode" style="color: #06b6d4;"></i>
+                                <span>QR Pay</span>
+                            </button>
+                            <button type="button" class="cart-btn-secondary" style="flex: 1;" @click="printOrderFiscalReceipt(selectedCashierOrder)" title="{{ __('Print Fiscal Receipt') }}">
+                                <i class="fa-solid fa-receipt" style="color: #10b981;"></i>
+                                <span>{{ __('Fiscal Receipt (HDM)') }}</span>
                             </button>
                         </div>
                     </div>
@@ -2190,6 +2222,193 @@
             </div>
         </div>
 
+        <!-- 4. Waiter Calls Modal -->
+        <div class="pos-modal-overlay" x-show="showWaiterCallsModal" x-cloak>
+            <div class="pos-modal-card" style="max-width: 500px;">
+                <div class="pos-modal-header">
+                    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-bell" style="color: #ef4444;"></i>
+                        <span>{{ __('Waiter Calls') }}</span>
+                    </h3>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showWaiterCallsModal = false">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="pos-modal-body" style="max-height: 400px; overflow-y: auto;">
+                    <template x-if="waiterCalls.length === 0">
+                        <div style="text-align: center; color: var(--text-muted); padding: 2rem;">{{ __('No active waiter calls') }}</div>
+                    </template>
+                    <template x-for="call in waiterCalls" :key="call.id">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 0.5rem;">
+                            <div>
+                                <div style="font-weight: 700; font-size: 0.95rem; color: #fff;" x-text="'Table ' + call.table_number"></div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);" x-text="call.type === 'call_waiter' ? 'Call Waiter' : (call.type === 'bill_cash' ? 'Bill (Cash)' : 'Bill (Card)')"></div>
+                            </div>
+                            <button type="button" class="cart-btn-primary" style="padding: 0.35rem 0.85rem; font-size: 0.8rem;" @click="resolveWaiterCall(call)">
+                                <i class="fa-solid fa-check"></i>
+                                <span>{{ __('Resolve Call') }}</span>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Incoming Online & QR Orders Modal -->
+        <div class="pos-modal-overlay" x-show="showIncomingOrdersModal" x-cloak>
+            <div class="pos-modal-card" style="max-width: 600px;">
+                <div class="pos-modal-header">
+                    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-cloud-arrow-down" style="color: #3b82f6;"></i>
+                        <span>{{ __('Incoming Orders') }}</span>
+                    </h3>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showIncomingOrdersModal = false">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="pos-modal-body" style="max-height: 450px; overflow-y: auto;">
+                    <template x-if="incomingOrders.length === 0">
+                        <div style="text-align: center; color: var(--text-muted); padding: 2rem;">{{ __('No incoming orders') }}</div>
+                    </template>
+                    <template x-for="ord in incomingOrders" :key="ord.id">
+                        <div style="padding: 0.85rem; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <div style="font-weight: 800; font-size: 1rem; color: var(--primary);" x-text="'#' + ord.order_number"></div>
+                                <span style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;" x-text="ord.source"></span>
+                            </div>
+                            <div style="font-size: 0.85rem; color: #fff; margin-bottom: 4px;" x-text="(ord.customer_name || 'Guest') + (ord.table_number ? ' • Table ' + ord.table_number : '')"></div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;" x-text="(ord.items || []).map(i => i.quantity + 'x ' + (i.product_name || i.product?.name || 'Item')).join(', ')"></div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 800; font-size: 1.1rem; color: #fff;" x-text="formatCurrency(ord.total_amount)"></span>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button type="button" class="cart-btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; color: #ef4444;" @click="rejectOnlineOrder(ord)">{{ __('Reject Online Order') }}</button>
+                                    <button type="button" class="cart-btn-primary" style="padding: 0.35rem 0.85rem; font-size: 0.8rem;" @click="acceptOnlineOrder(ord)">{{ __('Accept Online Order') }}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. Reservations Modal -->
+        <div class="pos-modal-overlay" x-show="showReservationsModal" x-cloak>
+            <div class="pos-modal-card" style="max-width: 540px;">
+                <div class="pos-modal-header">
+                    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-regular fa-calendar-check" style="color: #10b981;"></i>
+                        <span>{{ __('Reservations') }}</span>
+                    </h3>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showReservationsModal = false">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="pos-modal-body" style="max-height: 450px; overflow-y: auto;">
+                    <template x-if="reservations.length === 0">
+                        <div style="text-align: center; color: var(--text-muted); padding: 2rem;">{{ __('No reservations scheduled for today') }}</div>
+                    </template>
+                    <template x-for="res in reservations" :key="res.id">
+                        <div style="padding: 0.85rem; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 800; font-size: 0.95rem; color: #fff;" x-text="res.customer_name"></div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);" x-text="res.reservation_time + ' • ' + res.guest_count + ' guests' + (res.table_number ? ' • Table ' + res.table_number : '')"></div>
+                                <template x-if="res.pre_order">
+                                    <span style="font-size: 0.7rem; color: #10b981; font-weight: 700;">• Has Pre-order</span>
+                                </template>
+                            </div>
+                            <button type="button" class="cart-btn-primary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem;" @click="seatReservation(res)">
+                                <i class="fa-solid fa-chair"></i>
+                                <span>{{ __('Seat Reservation') }}</span>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. Customer Loyalty Modal -->
+        <div class="pos-modal-overlay" x-show="showCustomerLoyaltyModal" x-cloak>
+            <div class="pos-modal-card" style="max-width: 480px;">
+                <div class="pos-modal-header">
+                    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-award" style="color: #f59e0b;"></i>
+                        <span>{{ __('Loyalty Points') }}</span>
+                    </h3>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showCustomerLoyaltyModal = false">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="pos-modal-body">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 6px;">{{ __('Search Customer (Phone, Name, Email)') }}</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" class="pos-input" x-model="customerSearchQuery" @keyup.enter="searchCustomers()" placeholder="e.g. +374 99 123456">
+                            <button type="button" class="cart-btn-primary" style="padding: 0 1rem;" @click="searchCustomers()">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="max-height: 200px; overflow-y: auto; margin-bottom: 1rem;">
+                        <template x-for="cust in customerSearchResults" :key="cust.id">
+                            <div style="padding: 0.65rem; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 0.5rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center;"
+                                 :style="selectedCustomer?.id === cust.id ? 'border-color: var(--primary); background: rgba(245, 158, 11, 0.1);' : ''"
+                                 @click="selectedCustomer = cust">
+                                <div>
+                                    <div style="font-weight: 700; color: #fff;" x-text="cust.name"></div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);" x-text="cust.phone || cust.email"></div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <span style="font-weight: 800; color: #f59e0b; font-size: 0.95rem;" x-text="cust.loyalty_points + ' pts'"></span>
+                                    <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;" x-text="cust.loyalty_tier"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <template x-if="selectedCustomer">
+                        <div style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 8px;">
+                                <span style="color: var(--text-muted);">{{ __('Available Points') }}:</span>
+                                <span style="font-weight: 700; color: #f59e0b;" x-text="selectedCustomer.loyalty_points"></span>
+                            </div>
+                            <div style="margin-bottom: 1rem;">
+                                <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 6px;">{{ __('Points to Redeem') }}</label>
+                                <input type="number" class="pos-input" x-model.number="pointsToRedeem" min="1" :max="selectedCustomer.loyalty_points">
+                            </div>
+                            <button type="button" class="cart-btn-primary" style="width: 100%; justify-content: center;" @click="redeemCustomerPoints()">
+                                <i class="fa-solid fa-gift"></i>
+                                <span>{{ __('Redeem Points') }}</span>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- 8. QR Payment Modal (Idram, Telcell, etc.) -->
+        <div class="pos-modal-overlay" x-show="showQrPaymentModal" x-cloak>
+            <div class="pos-modal-card" style="max-width: 420px; text-align: center;">
+                <div class="pos-modal-header">
+                    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;" x-text="activeQrPayment?.gateway?.toUpperCase() + ' QR Payment'"></h3>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showQrPaymentModal = false">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="pos-modal-body" style="padding: 1.5rem;">
+                    <div style="font-size: 1.5rem; font-weight: 800; color: #fff; font-family: var(--font-display); margin-bottom: 0.5rem;" x-text="formatCurrency(activeQrPayment?.amount || 0)"></div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">{{ __('Please instruct the guest to scan this QR code with their mobile wallet.') }}</p>
+                    <div style="background: #fff; padding: 1rem; border-radius: 12px; display: inline-block; margin-bottom: 1.25rem;">
+                        <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(activeQrPayment?.qr_data || '')" style="width: 220px; height: 220px; display: block;" alt="Payment QR">
+                    </div>
+                    <button type="button" class="cart-btn-primary" style="width: 100%; justify-content: center;" @click="finalizeQrPayment()">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>{{ __('Verify & Complete Order') }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Toast Alert -->
         <div class="pos-toast" x-show="toastMessage" x-cloak>
             <i class="fa-solid fa-circle-check" style="color: #10b981;"></i>
@@ -2281,6 +2500,21 @@
                     occupiedTables: 0
                 },
 
+                // Phase 9 Integrations state
+                waiterCalls: [],
+                incomingOrders: [],
+                reservations: [],
+                showWaiterCallsModal: false,
+                showIncomingOrdersModal: false,
+                showReservationsModal: false,
+                showCustomerLoyaltyModal: false,
+                customerSearchQuery: '',
+                customerSearchResults: [],
+                selectedCustomer: null,
+                pointsToRedeem: 0,
+                showQrPaymentModal: false,
+                activeQrPayment: null,
+
                 initPos() {
                     this.offlineQueue = JSON.parse(localStorage.getItem('elam_pos_offline_queue') || '[]');
                     this.offlineManifest = JSON.parse(localStorage.getItem('elam_pos_offline_manifest') || 'null');
@@ -2306,7 +2540,18 @@
                     this.loadDevices();
                     this.fetchEmployees();
                     this.fetchCashierOrders();
+                    this.fetchWaiterCalls();
+                    this.fetchIncomingOrders();
+                    this.fetchReservations();
                     this.initLanChannel();
+
+                    setInterval(() => {
+                        if (this.isOnline) {
+                            this.fetchWaiterCalls();
+                            this.fetchIncomingOrders();
+                            this.fetchReservations();
+                        }
+                    }, 25000);
 
                     const autoLockSec = this.bootstrapData.settings?.auto_lock_seconds || 120;
                     if (autoLockSec > 0) {
@@ -3431,6 +3676,198 @@
                                 }
                             }
                         };
+                    }
+                },
+
+                openWaiterCallsModal() {
+                    this.fetchWaiterCalls();
+                    this.showWaiterCallsModal = true;
+                },
+                openIncomingOrdersModal() {
+                    this.fetchIncomingOrders();
+                    this.showIncomingOrdersModal = true;
+                },
+                openReservationsModal() {
+                    this.fetchReservations();
+                    this.showReservationsModal = true;
+                },
+                openCustomerLoyaltyModal() {
+                    this.showCustomerLoyaltyModal = true;
+                },
+                async fetchWaiterCalls() {
+                    try {
+                        const res = await fetch(`/pos/api/integrations/waiter-calls?location_id=${this.activeLocationId || ''}`);
+                        const data = await res.json();
+                        if (data.success) {
+                            this.waiterCalls = data.waiter_calls || [];
+                        }
+                    } catch (e) {}
+                },
+                async resolveWaiterCall(call) {
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+                        const res = await fetch(`/pos/api/integrations/waiter-calls/${call.id}/resolve`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken }
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.waiterCalls = this.waiterCalls.filter(c => c.id !== call.id);
+                            this.showToast('{{ __('Resolve Call') }}');
+                        }
+                    } catch (e) {}
+                },
+                async fetchIncomingOrders() {
+                    try {
+                        const res = await fetch(`/pos/api/integrations/incoming-orders?location_id=${this.activeLocationId || ''}`);
+                        const data = await res.json();
+                        if (data.success) {
+                            this.incomingOrders = data.orders || [];
+                        }
+                    } catch (e) {}
+                },
+                async acceptOnlineOrder(order) {
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+                        const res = await fetch(`/pos/api/integrations/orders/${order.id}/accept`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken }
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.incomingOrders = this.incomingOrders.filter(o => o.id !== order.id);
+                            this.showToast('{{ __('Accept Online Order') }}');
+                            this.fetchCashierOrders();
+                        }
+                    } catch (e) {}
+                },
+                async rejectOnlineOrder(order) {
+                    const reason = prompt('Reason for rejection:') || 'Unable to fulfill';
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+                        const res = await fetch(`/pos/api/integrations/orders/${order.id}/reject`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                            body: JSON.stringify({ reason })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.incomingOrders = this.incomingOrders.filter(o => o.id !== order.id);
+                            this.showToast('{{ __('Reject Online Order') }}');
+                        }
+                    } catch (e) {}
+                },
+                async fetchReservations() {
+                    try {
+                        const res = await fetch(`/pos/api/integrations/reservations?location_id=${this.activeLocationId || ''}`);
+                        const data = await res.json();
+                        if (data.success) {
+                            this.reservations = data.reservations || [];
+                        }
+                    } catch (e) {}
+                },
+                async seatReservation(resObj) {
+                    let tableId = null;
+                    if (resObj.table_id) {
+                        tableId = resObj.table_id;
+                    } else if (this.tables && this.tables.length > 0) {
+                        const matched = this.tables.find(t => t.table_number === resObj.table_number || t.name === resObj.table_number) || this.tables[0];
+                        tableId = matched.id;
+                    }
+                    if (!tableId) return;
+
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+                        const res = await fetch(`/pos/api/integrations/reservations/${resObj.id}/seat`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                            body: JSON.stringify({ table_id: tableId })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.reservations = this.reservations.filter(r => r.id !== resObj.id);
+                            this.showReservationsModal = false;
+                            this.showToast('{{ __('Seat Reservation') }}');
+                            this.loadTables();
+                            this.fetchCashierOrders();
+                        }
+                    } catch (e) {}
+                },
+                async searchCustomers() {
+                    if (!this.customerSearchQuery) return;
+                    try {
+                        const res = await fetch(`/pos/api/integrations/customers/search?query=${encodeURIComponent(this.customerSearchQuery)}`);
+                        const data = await res.json();
+                        if (data.success) {
+                            this.customerSearchResults = data.customers || [];
+                            if (this.customerSearchResults.length > 0) {
+                                this.selectedCustomer = this.customerSearchResults[0];
+                                this.pointsToRedeem = this.selectedCustomer.loyalty_points;
+                            }
+                        }
+                    } catch (e) {}
+                },
+                async redeemCustomerPoints() {
+                    const order = this.selectedCashierOrder;
+                    if (!order || !this.selectedCustomer || this.pointsToRedeem <= 0) return;
+
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+                        const res = await fetch(`/pos/api/integrations/customers/${this.selectedCustomer.id}/loyalty/redeem`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                            body: JSON.stringify({ order_id: order.id, points: this.pointsToRedeem })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.showCustomerLoyaltyModal = false;
+                            this.showToast('{{ __('Redeem Points') }}');
+                            this.fetchCashierOrders();
+                        } else {
+                            alert(data.message || 'Loyalty redemption failed');
+                        }
+                    } catch (e) {
+                        alert('Error redeeming points');
+                    }
+                },
+                async openQrPaymentModal(gateway = 'idram') {
+                    if (!this.selectedCashierOrder) return;
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+                        const res = await fetch(`/pos/api/integrations/orders/${this.selectedCashierOrder.id}/qr-payment`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                            body: JSON.stringify({ gateway })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.activeQrPayment = data.payment;
+                            this.showQrPaymentModal = true;
+                        }
+                    } catch (e) {
+                        alert('Could not initiate QR payment');
+                    }
+                },
+                finalizeQrPayment() {
+                    this.showQrPaymentModal = false;
+                    this.processCardPayment();
+                },
+                async printOrderFiscalReceipt(order) {
+                    if (!order) return;
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+                        const res = await fetch(`/pos/api/integrations/orders/${order.id}/fiscal-receipt`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken }
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.showToast('{{ __('Print Fiscal Receipt') }}');
+                        } else {
+                            alert(data.message || 'Fiscal printing failed');
+                        }
+                    } catch (e) {
+                        alert('Error printing fiscal receipt');
                     }
                 },
 

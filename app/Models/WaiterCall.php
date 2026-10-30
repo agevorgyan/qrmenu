@@ -14,11 +14,18 @@ class WaiterCall extends Model
     protected $fillable = [
         'vendor_id',
         'location_id',
+        'pos_device_id',
+        'resolved_by_user_id',
         'call_token',
         'table_number',
         'type',
         'status',
         'notes',
+        'resolved_at',
+    ];
+
+    protected $casts = [
+        'resolved_at' => 'datetime',
     ];
 
     protected static function booted(): void
@@ -61,6 +68,16 @@ class WaiterCall extends Model
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
+    }
+
+    public function posDevice(): BelongsTo
+    {
+        return $this->belongsTo(PosDevice::class, 'pos_device_id');
+    }
+
+    public function resolvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'resolved_by_user_id');
     }
 
     /**

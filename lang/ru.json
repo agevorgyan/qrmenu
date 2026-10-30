@@ -3457,5 +3457,17 @@
     "LAN Mode Active": "Режим локальной сети (LAN) активен",
     "LAN Hub": "Главный узел LAN (Hub)",
     "Satellite Device": "Клиентское устройство",
-    "Connected Peers": "Подключенные устройства"
+    "Connected Peers": "Подключенные устройства",
+    "Incoming Orders": "Входящие заказы",
+    "Reservations": "Бронирования",
+    "Waiter Calls": "Вызовы официанта",
+    "Loyalty Points": "Баллы лояльности",
+    "Redeem Points": "Использовать баллы",
+    "Fiscal Receipt (HDM)": "Фискальный чек (ККМ)",
+    "Print Fiscal Receipt": "Печать фискального чека",
+    "Seat Reservation": "Посадить за стол",
+    "Accept Online Order": "Принять заказ",
+    "Reject Online Order": "Отклонить заказ",
+    "Resolve Call": "Завершить вызов",
+    "Inventory & Stock": "Склад и остатки"
 }

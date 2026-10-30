@@ -36,6 +36,12 @@ class PosSetting extends Model
         'tax_rate',
         'tax_inclusive',
         'service_charge_percent',
+        'fiscal_enabled',
+        'fiscal_adapter',
+        'fiscal_crn',
+        'fiscal_tax_number',
+        'fiscal_ip_address',
+        'fiscal_port',
         'custom_settings',
     ];
 
@@ -57,6 +63,8 @@ class PosSetting extends Model
             'allow_offline_card_payments' => 'boolean',
             'print_receipt_on_payment' => 'boolean',
             'print_kitchen_ticket_on_order' => 'boolean',
+            'fiscal_enabled' => 'boolean',
+            'fiscal_port' => 'integer',
             'tax_rate' => 'decimal:2',
             'tax_inclusive' => 'boolean',
             'service_charge_percent' => 'decimal:2',

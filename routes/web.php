@@ -24,6 +24,7 @@ use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\PosAuthController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\PosDeviceController;
+use App\Http\Controllers\PosIntegrationsController;
 use App\Http\Controllers\PosKdsController;
 use App\Http\Controllers\PosLanController;
 use App\Http\Controllers\PosOfflineSyncController;
@@ -671,6 +672,23 @@ Route::middleware(['auth', EnsurePosAccess::class])->group(function () {
             Route::post('/dispatch', [PosLanController::class, 'dispatchEvent'])->name('dispatch');
             Route::get('/dispatches/pending', [PosLanController::class, 'getPendingDispatches'])->name('dispatches.pending');
             Route::post('/dispatches/{dispatch}/ack', [PosLanController::class, 'acknowledgeDispatch'])->name('dispatches.ack');
+        });
+
+        // Integrations (QR Menu, Online Orders, Reservations, Waiter Calls, Loyalty, Fiscal, Inventory)
+        Route::prefix('integrations')->name('integrations.')->group(function () {
+            Route::get('/incoming-orders', [PosIntegrationsController::class, 'incomingOrders'])->name('orders.incoming');
+            Route::post('/orders/{order}/accept', [PosIntegrationsController::class, 'acceptOrder'])->name('orders.accept');
+            Route::post('/orders/{order}/reject', [PosIntegrationsController::class, 'rejectOrder'])->name('orders.reject');
+            Route::get('/reservations', [PosIntegrationsController::class, 'reservations'])->name('reservations.index');
+            Route::post('/reservations/{reservation}/seat', [PosIntegrationsController::class, 'seatReservation'])->name('reservations.seat');
+            Route::get('/waiter-calls', [PosIntegrationsController::class, 'waiterCalls'])->name('waiter_calls.index');
+            Route::post('/waiter-calls/{waiterCall}/resolve', [PosIntegrationsController::class, 'resolveWaiterCall'])->name('waiter_calls.resolve');
+            Route::get('/customers/search', [PosIntegrationsController::class, 'searchCustomers'])->name('customers.search');
+            Route::post('/customers/{customer}/loyalty/redeem', [PosIntegrationsController::class, 'redeemLoyalty'])->name('customers.loyalty.redeem');
+            Route::post('/orders/{order}/qr-payment', [PosIntegrationsController::class, 'initiateQrPayment'])->name('orders.qr_payment');
+            Route::post('/orders/{order}/fiscal-receipt', [PosIntegrationsController::class, 'printFiscalReceipt'])->name('orders.fiscal_receipt');
+            Route::get('/inventory/{product}', [PosIntegrationsController::class, 'getInventory'])->name('inventory.show');
+            Route::post('/inventory/{product}/adjust', [PosIntegrationsController::class, 'adjustInventory'])->name('inventory.adjust');
         });
 
         Route::get('/settings', [PosSettingController::class, 'show'])->name('settings.show');

@@ -3457,5 +3457,17 @@
     "LAN Mode Active": "LAN Mode Active",
     "LAN Hub": "LAN Hub",
     "Satellite Device": "Satellite Device",
-    "Connected Peers": "Connected Peers"
+    "Connected Peers": "Connected Peers",
+    "Incoming Orders": "Incoming Orders",
+    "Reservations": "Reservations",
+    "Waiter Calls": "Waiter Calls",
+    "Loyalty Points": "Loyalty Points",
+    "Redeem Points": "Redeem Points",
+    "Fiscal Receipt (HDM)": "Fiscal Receipt (HDM)",
+    "Print Fiscal Receipt": "Print Fiscal Receipt",
+    "Seat Reservation": "Seat Reservation",
+    "Accept Online Order": "Accept Online Order",
+    "Reject Online Order": "Reject Online Order",
+    "Resolve Call": "Resolve Call",
+    "Inventory & Stock": "Inventory & Stock"
 }

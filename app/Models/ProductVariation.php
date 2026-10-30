@@ -15,12 +15,16 @@ class ProductVariation extends Model
         'name_translations',
         'price',
         'is_default',
+        'tracks_inventory',
+        'stock_quantity',
     ];
 
     protected $casts = [
         'name_translations' => 'array',
         'price' => 'decimal:2',
         'is_default' => 'boolean',
+        'tracks_inventory' => 'boolean',
+        'stock_quantity' => 'decimal:2',
     ];
 
     public function product()

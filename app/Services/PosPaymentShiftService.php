@@ -11,8 +11,10 @@ use App\Models\PosShift;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Security\Permission;
+use App\Services\Fiscal\PosFiscalService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class PosPaymentShiftService
@@ -338,6 +340,34 @@ class PosPaymentShiftService
 
             // Recalculate shift
             $activeShift?->recalculateExpectedCash();
+
+            // Phase 9 Integrations: Stock deduction, Tip recording, Loyalty points, and Fiscalization
+            try {
+                // 1. Deduct stock for tracked inventory items
+                app(PosInventoryService::class)->deductStockForOrder($order);
+
+                // 2. Record tip entities linked to waiters
+                $integrationsService = app(PosIntegrationsService::class);
+                foreach ($createdPayments as $p) {
+                    if ((float) $p->tip_amount > 0) {
+                        $integrationsService->recordOrderTip($order, $p, (float) $p->tip_amount, $cashier);
+                    }
+                }
+
+                // 3. Award customer loyalty points
+                app(PosLoyaltyService::class)->awardPointsForOrder($order);
+
+                // 4. Fiscalize payment if enabled
+                $setting = PosSetting::where('vendor_id', $order->vendor_id)->first();
+                if ($setting?->fiscal_enabled) {
+                    $fiscalService = app(PosFiscalService::class);
+                    foreach ($createdPayments as $p) {
+                        $fiscalService->fiscalizePayment($order, $p);
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('POS payment post-processing warning: '.$e->getMessage());
+            }
 
             PosOperationLog::log(
                 vendor: $order->vendor,

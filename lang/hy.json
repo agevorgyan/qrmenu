@@ -3460,5 +3460,17 @@
     "LAN Mode Active": "Տեղային ցանցի (LAN) ռեժիմն ակտիվ է",
     "LAN Hub": "LAN Գլխավոր հանգույց (Hub)",
     "Satellite Device": "Երկրորդական սարք (Satellite)",
-    "Connected Peers": "Միացված սարքեր"
+    "Connected Peers": "Միացված սարքեր",
+    "Incoming Orders": "Մուտքային պատվերներ",
+    "Reservations": "Ամրագրումներ",
+    "Waiter Calls": "Մատուցողի կանչեր",
+    "Loyalty Points": "Լոյալության միավորներ",
+    "Redeem Points": "Կիրառել միավորներ",
+    "Fiscal Receipt (HDM)": "ՀԴՄ Ֆիսկալ կտրոն",
+    "Print Fiscal Receipt": "Տպել ՀԴՄ կտրոն",
+    "Seat Reservation": "Տեղավորել հյուրին",
+    "Accept Online Order": "Ընդունել պատվերը",
+    "Reject Online Order": "Մերժել պատվերը",
+    "Resolve Call": "Ավարտել կանչը",
+    "Inventory & Stock": "Պահեստ և մնացորդներ"
 }
