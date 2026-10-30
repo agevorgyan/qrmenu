@@ -51,6 +51,9 @@ class Order extends Model
         'lock_version',
         'parent_order_id',
         'split_type',
+        'pos_shift_id',
+        'paid_amount',
+        'change_amount',
     ];
 
     protected $casts = [
@@ -62,6 +65,8 @@ class Order extends Model
         'discount_amount' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
+        'change_amount' => 'decimal:2',
         'guest_count' => 'integer',
         'lock_version' => 'integer',
         'marketing_opt_in' => 'boolean',
@@ -186,6 +191,16 @@ class Order extends Model
     public function childOrders()
     {
         return $this->hasMany(Order::class, 'parent_order_id');
+    }
+
+    public function posShift()
+    {
+        return $this->belongsTo(PosShift::class, 'pos_shift_id');
+    }
+
+    public function posPayments()
+    {
+        return $this->hasMany(PosPayment::class, 'order_id');
     }
 
     public function activeSplitBill()

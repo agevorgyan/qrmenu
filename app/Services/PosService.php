@@ -26,6 +26,7 @@ class PosService
     public function __construct(
         protected CreateOrderAction $createOrderAction,
         protected PosDeviceService $posDeviceService,
+        protected PosPaymentShiftService $paymentShiftService,
     ) {}
 
     /**
@@ -135,6 +136,7 @@ class PosService
             ],
             'tables' => $this->getTablesPayload($vendor, $activeLocation?->id),
             'menu' => $this->getMenuPayload($vendor, $activeLocation?->id),
+            'current_shift' => $this->paymentShiftService->getCurrentShift($vendor, $activeLocation?->id, $device, $user)?->generateReportPayload(),
         ];
     }
 

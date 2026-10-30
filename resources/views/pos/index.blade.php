@@ -1342,6 +1342,46 @@
             <div style="display: flex; gap: 1.5rem; height: 100%;">
                 <!-- Left: Open Orders Grid -->
                 <div style="flex: 1; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto;">
+                    <!-- Cash Drawer Shift Status Banner -->
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;"
+                                 :style="currentShift ? 'background: rgba(16, 185, 129, 0.15); color: #10b981;' : 'background: rgba(239, 68, 68, 0.15); color: #ef4444;'">
+                                <i class="fa-solid fa-cash-register" style="font-size: 1.1rem;"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; gap: 6px;">
+                                    <span x-text="currentShift ? '{{ __('Shift Open') }} #' + currentShift.shift_id : '{{ __('Shift Closed') }}'"></span>
+                                    <template x-if="currentShift">
+                                        <span class="status-pill" style="font-size: 0.65rem;" x-text="'Float: ' + formatCurrency(currentShift.opening_float)"></span>
+                                    </template>
+                                </div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted);"
+                                     x-text="currentShift ? ('{{ __('Expected Cash') }}: ' + formatCurrency(currentShift.expected_cash) + ' • {{ __('Sales') }}: ' + formatCurrency(currentShift.gross_sales)) : '{{ __('Open a shift to start accepting cash payments') }}'"></div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <template x-if="!currentShift">
+                                <button type="button" class="cart-btn-primary" style="padding: 6px 14px; font-size: 0.8rem;" @click="openOpenShiftModal()">
+                                    <i class="fa-solid fa-play"></i>
+                                    <span>{{ __('Open Shift') }}</span>
+                                </button>
+                            </template>
+                            <template x-if="currentShift">
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button type="button" class="cart-btn-secondary" style="padding: 6px 12px; font-size: 0.78rem;" @click="openCashMovementModal()">
+                                        <i class="fa-solid fa-money-bill-transfer"></i>
+                                        <span>{{ __('Cash Movement') }}</span>
+                                    </button>
+                                    <button type="button" class="cart-btn-secondary" style="padding: 6px 12px; font-size: 0.78rem; border-color: rgba(239, 68, 68, 0.4); color: #ef4444;" @click="openCloseShiftModal()">
+                                        <i class="fa-solid fa-flag-checkered"></i>
+                                        <span>{{ __('Close Shift (Z-Report)') }}</span>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <h2 style="font-family: var(--font-display); font-size: 1.35rem; font-weight: 700;">
                             {{ __('Open Unpaid Orders') }}
@@ -1414,6 +1454,10 @@
                             <button type="button" class="cart-btn-secondary" style="flex: 1;" @click="processCardPayment()">
                                 <i class="fa-solid fa-credit-card"></i>
                                 <span>{{ __('Card Payment') }}</span>
+                            </button>
+                            <button type="button" class="cart-btn-secondary" style="flex: 1;" @click="openMixedPaymentModal()">
+                                <i class="fa-solid fa-layer-group"></i>
+                                <span>{{ __('Mixed Payment') }}</span>
                             </button>
                         </div>
                     </div>
@@ -1862,6 +1906,160 @@
             </div>
         </div>
 
+        <!-- 3.1 Mixed Payment Modal -->
+        <div class="pos-modal-overlay" x-show="showMixedPaymentModal" x-cloak>
+            <div class="pos-modal-card" style="max-width: 440px;" @click.away="showMixedPaymentModal = false">
+                <div class="pos-modal-header">
+                    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Mixed Payment') }}</h3>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showMixedPaymentModal = false">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="pos-modal-body" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem; text-align: center;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">{{ __('Total Due') }}</span>
+                        <div style="font-size: 1.5rem; font-weight: 800; color: #fff; font-family: var(--font-display);" x-text="formatCurrency(selectedCashierOrder?.total_amount || 0)"></div>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Cash Amount') }}</label>
+                        <input type="number" class="pos-input" x-model.number="mixedCashAmount">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Card Amount') }}</label>
+                        <input type="number" class="pos-input" x-model.number="mixedCardAmount">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Tip (Optional)') }}</label>
+                        <input type="number" class="pos-input" x-model.number="mixedTipAmount">
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700; padding: 6px 0;">
+                        <span>{{ __('Sum Entered') }}:</span>
+                        <span :style="(mixedCashAmount + mixedCardAmount) >= Number(selectedCashierOrder?.total_amount || 0) ? 'color: #10b981;' : 'color: var(--danger);'"
+                              x-text="formatCurrency(mixedCashAmount + mixedCardAmount)"></span>
+                    </div>
+                    <button type="button" class="cart-btn-primary" style="height: 48px;" @click="executeMixedPayment()">
+                        <span>{{ __('Confirm Mixed Payment') }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3.2 Open Shift Modal -->
+        <div class="pos-modal-overlay" x-show="showOpenShiftModal" x-cloak>
+            <div class="pos-modal-card" style="max-width: 420px;" @click.away="showOpenShiftModal = false">
+                <div class="pos-modal-header">
+                    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Open Shift') }}</h3>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showOpenShiftModal = false">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="pos-modal-body" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Opening Float') }}</label>
+                        <input type="number" class="pos-input" x-model.number="openingFloat" style="font-size: 1.25rem; font-weight: 700; text-align: center;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Opening Notes') }}</label>
+                        <input type="text" class="pos-input" x-model="openingNotes" placeholder="{{ __('Optional shift notes...') }}">
+                    </div>
+                    <button type="button" class="cart-btn-primary" style="height: 48px;" @click="executeOpenShift()">
+                        <i class="fa-solid fa-play"></i>
+                        <span>{{ __('Open Shift') }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3.3 Cash Movement Modal -->
+        <div class="pos-modal-overlay" x-show="showCashMovementModal" x-cloak>
+            <div class="pos-modal-card" style="max-width: 440px;" @click.away="showCashMovementModal = false">
+                <div class="pos-modal-header">
+                    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Cash Movement') }}</h3>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showCashMovementModal = false">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="pos-modal-body" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Movement Type') }}</label>
+                        <select class="pos-input" x-model="cashMovementType">
+                            <option value="cash_in">{{ __('Cash In') }}</option>
+                            <option value="cash_out">{{ __('Cash Out') }}</option>
+                            <option value="safe_drop">{{ __('Safe Drop') }}</option>
+                            <option value="expense">{{ __('Expense') }}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Amount') }}</label>
+                        <input type="number" class="pos-input" x-model.number="cashMovementAmount" style="font-size: 1.25rem; font-weight: 700; text-align: center;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Reason') }}</label>
+                        <input type="text" class="pos-input" x-model="cashMovementReason" placeholder="{{ __('e.g., Safe drop, petty cash expense...') }}">
+                    </div>
+                    <button type="button" class="cart-btn-primary" style="height: 48px;" @click="executeCashMovement()">
+                        <span>{{ __('Record Movement') }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3.4 Close Shift (Z-Report) Modal -->
+        <div class="pos-modal-overlay" x-show="showCloseShiftModal" x-cloak>
+            <div class="pos-modal-card" style="max-width: 520px;" @click.away="showCloseShiftModal = false">
+                <div class="pos-modal-header">
+                    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Close Shift (Z-Report)') }}</h3>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showCloseShiftModal = false">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="pos-modal-body" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                    <!-- Shift Summary Metrics -->
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.85rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.78rem;">
+                        <div>
+                            <span style="color: var(--text-muted);">{{ __('Opening Float') }}:</span>
+                            <div style="font-weight: 700; font-size: 0.95rem;" x-text="formatCurrency(currentShift?.opening_float || 0)"></div>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-muted);">{{ __('Cash Sales') }}:</span>
+                            <div style="font-weight: 700; font-size: 0.95rem; color: #10b981;" x-text="formatCurrency(currentShift?.total_cash_sales || 0)"></div>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-muted);">{{ __('Card Sales') }}:</span>
+                            <div style="font-weight: 700; font-size: 0.95rem;" x-text="formatCurrency(currentShift?.total_card_sales || 0)"></div>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-muted);">{{ __('Expected Cash') }}:</span>
+                            <div style="font-weight: 800; font-size: 1.05rem; color: var(--primary);" x-text="formatCurrency(currentShift?.expected_cash || 0)"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Counted Cash (Physical in Drawer)') }}</label>
+                        <input type="number" class="pos-input" x-model.number="countedCash" style="font-size: 1.35rem; font-weight: 800; text-align: center;">
+                    </div>
+
+                    <!-- Discrepancy Display -->
+                    <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.85rem; font-weight: 600;">{{ __('Discrepancy') }}:</span>
+                        <span style="font-size: 1.25rem; font-weight: 800; font-family: var(--font-display);"
+                              :style="(countedCash - (currentShift?.expected_cash || 0)) >= 0 ? 'color: #10b981;' : 'color: var(--danger);'"
+                              x-text="formatCurrency(countedCash - (currentShift?.expected_cash || 0))"></span>
+                    </div>
+
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Closing Notes') }}</label>
+                        <input type="text" class="pos-input" x-model="closingNotes" placeholder="{{ __('Optional closing explanation...') }}">
+                    </div>
+
+                    <button type="button" class="cart-btn-primary" style="height: 48px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);" @click="executeCloseShift()">
+                        <i class="fa-solid fa-lock"></i>
+                        <span>{{ __('Reconcile and Close Shift') }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- 4. Add Discount Modal -->
         <div class="pos-modal-overlay" x-show="showDiscountModal" x-cloak>
             <div class="pos-modal-card" style="max-width: 400px;">
@@ -2021,6 +2219,21 @@
                 showDiscountModal: false,
                 showCashModal: false,
                 cashReceived: 0,
+                currentShift: @json($bootstrapData['current_shift'] ?? null),
+                showOpenShiftModal: false,
+                openingFloat: 10000,
+                openingNotes: '',
+                showCashMovementModal: false,
+                cashMovementType: 'cash_in',
+                cashMovementAmount: 0,
+                cashMovementReason: '',
+                showCloseShiftModal: false,
+                countedCash: 0,
+                closingNotes: '',
+                showMixedPaymentModal: false,
+                mixedCashAmount: 0,
+                mixedCardAmount: 0,
+                mixedTipAmount: 0,
                 showEmployeeSwitcher: false,
                 showPinModal: false,
                 switchingTargetUser: null,
@@ -2592,6 +2805,125 @@
                     this.selectedCashierOrder = order;
                 },
 
+                async fetchCurrentShift() {
+                    try {
+                        const res = await fetch(`/pos/api/shifts/current?location_id=${this.activeLocationId || ''}`, {
+                            headers: { 'Accept': 'application/json' }
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.currentShift = data.shift;
+                        }
+                    } catch (e) {
+                        console.error('Failed to load current shift:', e);
+                    }
+                },
+
+                openOpenShiftModal() {
+                    this.openingFloat = 10000;
+                    this.openingNotes = '';
+                    this.showOpenShiftModal = true;
+                },
+
+                async executeOpenShift() {
+                    try {
+                        const res = await fetch('/pos/api/shifts/open', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({
+                                opening_float: this.openingFloat,
+                                opening_notes: this.openingNotes,
+                                location_id: this.activeLocationId
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.currentShift = data.shift;
+                            this.showOpenShiftModal = false;
+                            this.showToast('{{ __('Shift Opened Successfully') }}');
+                        } else {
+                            alert(data.message || 'Failed to open shift');
+                        }
+                    } catch (e) {
+                        alert('Error opening cash shift');
+                    }
+                },
+
+                openCashMovementModal() {
+                    this.cashMovementType = 'cash_in';
+                    this.cashMovementAmount = 0;
+                    this.cashMovementReason = '';
+                    this.showCashMovementModal = true;
+                },
+
+                async executeCashMovement() {
+                    if (!this.currentShift?.shift_id || this.cashMovementAmount <= 0) return;
+                    try {
+                        const res = await fetch('/pos/api/shifts/cash-movement', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({
+                                shift_id: this.currentShift.shift_id,
+                                type: this.cashMovementType,
+                                amount: this.cashMovementAmount,
+                                reason: this.cashMovementReason
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.currentShift = data.shift;
+                            this.showCashMovementModal = false;
+                            this.showToast('{{ __('Cash Movement Recorded') }}');
+                        } else {
+                            alert(data.message || 'Movement failed');
+                        }
+                    } catch (e) {
+                        alert('Error recording cash movement');
+                    }
+                },
+
+                openCloseShiftModal() {
+                    this.countedCash = Number(this.currentShift?.expected_cash || 0);
+                    this.closingNotes = '';
+                    this.showCloseShiftModal = true;
+                },
+
+                async executeCloseShift() {
+                    if (!this.currentShift?.shift_id) return;
+                    try {
+                        const res = await fetch(`/pos/api/shifts/${this.currentShift.shift_id}/close`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({
+                                counted_cash: this.countedCash,
+                                closing_notes: this.closingNotes
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.currentShift = null;
+                            this.showCloseShiftModal = false;
+                            this.showToast('{{ __('Shift Closed Successfully') }}');
+                        } else {
+                            alert(data.message || 'Failed to close shift');
+                        }
+                    } catch (e) {
+                        alert('Error closing shift');
+                    }
+                },
+
                 openCashPaymentModal() {
                     if (!this.selectedCashierOrder) return;
                     this.cashReceived = Number(this.selectedCashierOrder.total_amount);
@@ -2601,14 +2933,18 @@
                 async finalizeCashPayment() {
                     if (!this.selectedCashierOrder) return;
                     try {
-                        const res = await fetch(`/pos/api/orders/${this.selectedCashierOrder.id}/status`, {
+                        const res = await fetch(`/pos/api/orders/${this.selectedCashierOrder.id}/payment`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'Accept': 'application/json',
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                             },
-                            body: JSON.stringify({ status: 'completed', reason: 'Paid in Cash' })
+                            body: JSON.stringify({
+                                payment_method: 'cash',
+                                amount: this.selectedCashierOrder.total_amount,
+                                cash_tendered: this.cashReceived
+                            })
                         });
                         const data = await res.json();
                         if (data.success) {
@@ -2616,6 +2952,10 @@
                             this.selectedCashierOrder = null;
                             this.showToast('{{ __('Payment Confirmed!') }}');
                             this.fetchCashierOrders();
+                            this.fetchCurrentShift();
+                            this.loadTables();
+                        } else {
+                            alert(data.message || 'Cash payment failed');
                         }
                     } catch (e) {
                         console.error(e);
@@ -2626,23 +2966,80 @@
                     if (!this.selectedCashierOrder) return;
                     if (!confirm('{{ __('Confirm Card Payment?') }}')) return;
                     try {
-                        const res = await fetch(`/pos/api/orders/${this.selectedCashierOrder.id}/status`, {
+                        const res = await fetch(`/pos/api/orders/${this.selectedCashierOrder.id}/payment`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'Accept': 'application/json',
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                             },
-                            body: JSON.stringify({ status: 'completed', reason: 'Paid with Card' })
+                            body: JSON.stringify({
+                                payment_method: 'card',
+                                amount: this.selectedCashierOrder.total_amount
+                            })
                         });
                         const data = await res.json();
                         if (data.success) {
                             this.selectedCashierOrder = null;
                             this.showToast('{{ __('Payment Confirmed!') }}');
                             this.fetchCashierOrders();
+                            this.fetchCurrentShift();
+                            this.loadTables();
+                        } else {
+                            alert(data.message || 'Card payment failed');
                         }
                     } catch (e) {
                         console.error(e);
+                    }
+                },
+
+                openMixedPaymentModal() {
+                    if (!this.selectedCashierOrder) return;
+                    const half = Math.round(Number(this.selectedCashierOrder.total_amount) / 2);
+                    this.mixedCashAmount = half;
+                    this.mixedCardAmount = Number(this.selectedCashierOrder.total_amount) - half;
+                    this.mixedTipAmount = 0;
+                    this.showMixedPaymentModal = true;
+                },
+
+                async executeMixedPayment() {
+                    if (!this.selectedCashierOrder) return;
+                    const sum = this.mixedCashAmount + this.mixedCardAmount;
+                    if (sum < Number(this.selectedCashierOrder.total_amount)) {
+                        alert('{{ __('Sum of cash and card amounts is less than total due.') }}');
+                        return;
+                    }
+
+                    try {
+                        const res = await fetch(`/pos/api/orders/${this.selectedCashierOrder.id}/payment`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({
+                                payment_method: 'mixed',
+                                split_payments: [
+                                    { payment_method: 'cash', amount: this.mixedCashAmount, cash_tendered: this.mixedCashAmount },
+                                    { payment_method: 'card', amount: this.mixedCardAmount }
+                                ],
+                                tip_amount: this.mixedTipAmount
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.showMixedPaymentModal = false;
+                            this.selectedCashierOrder = null;
+                            this.showToast('{{ __('Payment Confirmed!') }}');
+                            this.fetchCashierOrders();
+                            this.fetchCurrentShift();
+                            this.loadTables();
+                        } else {
+                            alert(data.message || 'Mixed payment failed');
+                        }
+                    } catch (e) {
+                        alert('Error processing mixed payment');
                     }
                 },
 

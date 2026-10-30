@@ -24,6 +24,7 @@ use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\PosAuthController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\PosDeviceController;
+use App\Http\Controllers\PosPaymentShiftController;
 use App\Http\Controllers\PosSettingController;
 use App\Http\Controllers\ProfileSecurityController;
 use App\Http\Controllers\QrStudioController;
@@ -627,6 +628,17 @@ Route::middleware(['auth', EnsurePosAccess::class])->group(function () {
         // Tables & Floor Plan
         Route::get('/tables', [PosController::class, 'getTables'])->name('tables.index');
         Route::post('/tables/{table}/status', [PosController::class, 'updateTableStatus'])->name('tables.status');
+
+        // Shifts & Cash Drawer Management
+        Route::get('/shifts/current', [PosPaymentShiftController::class, 'getCurrentShift'])->name('shifts.current');
+        Route::post('/shifts/open', [PosPaymentShiftController::class, 'openShift'])->name('shifts.open');
+        Route::post('/shifts/cash-movement', [PosPaymentShiftController::class, 'recordCashMovement'])->name('shifts.cash_movement');
+        Route::post('/shifts/{shift}/close', [PosPaymentShiftController::class, 'closeShift'])->name('shifts.close');
+        Route::get('/shifts/{shift}/report', [PosPaymentShiftController::class, 'getShiftReport'])->name('shifts.report');
+
+        // Financial Operations (Payments & Refunds)
+        Route::post('/orders/{order}/payment', [PosPaymentShiftController::class, 'processPayment'])->name('orders.payment');
+        Route::post('/payments/{payment}/refund', [PosPaymentShiftController::class, 'refundPayment'])->name('payments.refund');
 
         Route::get('/settings', [PosSettingController::class, 'show'])->name('settings.show');
         Route::post('/settings', [PosSettingController::class, 'update'])->name('settings.update');
