@@ -26,6 +26,11 @@ class PosSetting extends Model
         'default_order_type',
         'default_payment_method',
         'allow_offline_orders',
+        'max_offline_hours',
+        'max_offline_orders',
+        'max_offline_amount',
+        'allow_offline_cash_payments',
+        'allow_offline_card_payments',
         'print_receipt_on_payment',
         'print_kitchen_ticket_on_order',
         'tax_rate',
@@ -45,6 +50,11 @@ class PosSetting extends Model
             'require_manager_approval_discount' => 'boolean',
             'require_manager_approval_void' => 'boolean',
             'allow_offline_orders' => 'boolean',
+            'max_offline_hours' => 'integer',
+            'max_offline_orders' => 'integer',
+            'max_offline_amount' => 'decimal:2',
+            'allow_offline_cash_payments' => 'boolean',
+            'allow_offline_card_payments' => 'boolean',
             'print_receipt_on_payment' => 'boolean',
             'print_kitchen_ticket_on_order' => 'boolean',
             'tax_rate' => 'decimal:2',
@@ -112,4 +122,3 @@ class PosSetting extends Model
         ]);
     }
 }
-

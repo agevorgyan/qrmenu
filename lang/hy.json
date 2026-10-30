@@ -3444,5 +3444,15 @@
     "Print Kitchen Ticket": "Տպել խոհանոցային կտրոնը",
     "Kitchen Ticket": "Խոհանոցային կտրոն",
     "Customer Receipt": "Հաճախորդի կտրոն",
-    "End of Shift Report": "Հերթափոխի փակման հաշվետվություն"
+    "End of Shift Report": "Հերթափոխի փակման հաշվետվություն",
+    "Offline Mode Active": "Անցանց ռեժիմն ակտիվ է",
+    "Connection Restored — Syncing...": "Կապը վերականգնված է — համաժամեցում...",
+    "Sync Offline Data": "Համաժամեցնել անցանց տվյալները",
+    "Order Saved Offline!": "Պատվերը պահպանվել է անցանց ռեժիմում",
+    "Payment Saved Offline!": "Վճարումը պահպանվել է անցանց ռեժիմում",
+    "Offline Mode Active — orders and payments are saved locally and will auto-sync when connection is restored.": "Անցանց ռեժիմն ակտիվ է — պատվերները և վճարումները պահպանվում են տեղում և ավտոմատ կհամաժամեցվեն կապի վերականգնումից հետո։",
+    "unsynced operations": "չհամաժամեցված գործողություն",
+    "Sync Now": "Համաժամեցնել հիմա",
+    "Synced": "Համաժամեցվել է",
+    "offline operations!": "անցանց գործողություն"
 }

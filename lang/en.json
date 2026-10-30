@@ -3441,5 +3441,15 @@
     "Print Kitchen Ticket": "Print Kitchen Ticket",
     "Kitchen Ticket": "Kitchen Ticket",
     "Customer Receipt": "Customer Receipt",
-    "End of Shift Report": "End of Shift Report"
+    "End of Shift Report": "End of Shift Report",
+    "Offline Mode Active": "Offline Mode Active",
+    "Connection Restored — Syncing...": "Connection Restored — Syncing...",
+    "Sync Offline Data": "Sync Offline Data",
+    "Order Saved Offline!": "Order Saved Offline!",
+    "Payment Saved Offline!": "Payment Saved Offline!",
+    "Offline Mode Active — orders and payments are saved locally and will auto-sync when connection is restored.": "Offline Mode Active — orders and payments are saved locally and will auto-sync when connection is restored.",
+    "unsynced operations": "unsynced operations",
+    "Sync Now": "Sync Now",
+    "Synced": "Synced",
+    "offline operations!": "offline operations!"
 }

@@ -1105,6 +1105,14 @@
                 <span x-text="isOnline ? '{{ __('Online') }}' : '{{ __('Offline') }}'"></span>
             </div>
 
+            <!-- Unsynced Operations Badge -->
+            <template x-if="offlineQueue && offlineQueue.length > 0">
+                <button type="button" class="status-pill" style="background: rgba(245, 158, 11, 0.2); border-color: rgba(245, 158, 11, 0.4); color: #fbbf24; cursor: pointer;" @click="syncOfflineQueue()" title="{{ __('Sync Offline Data') }}">
+                    <i class="fa-solid fa-cloud-arrow-up" :class="{ 'fa-spin': isSyncing }"></i>
+                    <span x-text="'Sync (' + offlineQueue.length + ')'"></span>
+                </button>
+            </template>
+
             <!-- Kitchen Display System (KDS) Button -->
             <a href="{{ route('pos.kds') }}" target="_blank" class="pos-tool-btn" title="{{ __('Kitchen Display System (KDS)') }}" style="text-decoration: none; color: #f59e0b;">
                 <i class="fa-solid fa-fire-burner"></i>
@@ -1147,6 +1155,20 @@
             </a>
         </div>
     </header>
+
+    <!-- Offline Status Warning Banner -->
+    <template x-if="!isOnline">
+        <div class="pos-offline-banner" style="background: linear-gradient(90deg, #ef4444 0%, #f59e0b 100%); color: #000; font-weight: 700; font-size: 0.78rem; padding: 0.35rem 1rem; display: flex; align-items: center; justify-content: space-between; z-index: 45;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>{{ __('Offline Mode Active — orders and payments are saved locally and will auto-sync when connection is restored.') }}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span x-text="offlineQueue.length + ' {{ __('unsynced operations') }}'"></span>
+                <button type="button" @click="syncOfflineQueue()" style="background: rgba(0,0,0,0.25); border: none; padding: 0.15rem 0.55rem; border-radius: 4px; font-weight: 800; cursor: pointer;">{{ __('Sync Now') }}</button>
+            </div>
+        </div>
+    </template>
 
     <!-- 2. Main POS Workspace Stage -->
     <main class="pos-stage">
@@ -2244,6 +2266,11 @@
                 switchingTargetUser: null,
                 newPin: '',
 
+                // Offline-first synchronization state
+                offlineQueue: [],
+                isSyncing: false,
+                offlineManifest: null,
+
                 // Cashier & Manager state
                 cashierOrders: [],
                 selectedCashierOrder: null,
@@ -2255,8 +2282,25 @@
                 },
 
                 initPos() {
-                    window.addEventListener('online', () => this.isOnline = true);
-                    window.addEventListener('offline', () => this.isOnline = false);
+                    this.offlineQueue = JSON.parse(localStorage.getItem('elam_pos_offline_queue') || '[]');
+                    this.offlineManifest = JSON.parse(localStorage.getItem('elam_pos_offline_manifest') || 'null');
+
+                    window.addEventListener('online', () => {
+                        this.isOnline = true;
+                        this.showToast('{{ __('Connection Restored — Syncing...') }}');
+                        this.syncOfflineQueue();
+                    });
+                    window.addEventListener('offline', () => {
+                        this.isOnline = false;
+                        this.showToast('{{ __('Offline Mode Active') }}');
+                    });
+
+                    if (this.isOnline) {
+                        this.loadOfflineManifest();
+                        if (this.offlineQueue.length > 0) {
+                            this.syncOfflineQueue();
+                        }
+                    }
 
                     this.loadTables();
                     this.loadDevices();
@@ -2774,6 +2818,11 @@
                         }))
                     };
 
+                    if (!this.isOnline) {
+                        this.enqueueOfflineOrder(payload);
+                        return;
+                    }
+
                     try {
                         const res = await fetch('/pos/api/orders', {
                             method: 'POST',
@@ -2795,8 +2844,8 @@
                             alert(data.message || 'Error submitting order');
                         }
                     } catch (e) {
-                        console.error('Submit order failed:', e);
-                        alert('Order failed to submit');
+                        console.warn('Network error submitting order, routing to offline storage:', e);
+                        this.enqueueOfflineOrder(payload);
                     }
                 },
 
@@ -2937,6 +2986,16 @@
 
                 async finalizeCashPayment() {
                     if (!this.selectedCashierOrder) return;
+                    if (!this.isOnline) {
+                        this.enqueueOfflinePayment(this.selectedCashierOrder, {
+                            payment_method: 'cash',
+                            amount: this.selectedCashierOrder.total_amount,
+                            cash_tendered: this.cashReceived
+                        });
+                        this.showCashModal = false;
+                        return;
+                    }
+
                     try {
                         const res = await fetch(`/pos/api/orders/${this.selectedCashierOrder.id}/payment`, {
                             method: 'POST',
@@ -2963,13 +3022,28 @@
                             alert(data.message || 'Cash payment failed');
                         }
                     } catch (e) {
-                        console.error(e);
+                        console.warn('Network error during cash payment, routing to offline storage:', e);
+                        this.enqueueOfflinePayment(this.selectedCashierOrder, {
+                            payment_method: 'cash',
+                            amount: this.selectedCashierOrder.total_amount,
+                            cash_tendered: this.cashReceived
+                        });
+                        this.showCashModal = false;
                     }
                 },
 
                 async processCardPayment() {
                     if (!this.selectedCashierOrder) return;
                     if (!confirm('{{ __('Confirm Card Payment?') }}')) return;
+
+                    if (!this.isOnline) {
+                        this.enqueueOfflinePayment(this.selectedCashierOrder, {
+                            payment_method: 'card',
+                            amount: this.selectedCashierOrder.total_amount
+                        });
+                        return;
+                    }
+
                     try {
                         const res = await fetch(`/pos/api/orders/${this.selectedCashierOrder.id}/payment`, {
                             method: 'POST',
@@ -2994,7 +3068,11 @@
                             alert(data.message || 'Card payment failed');
                         }
                     } catch (e) {
-                        console.error(e);
+                        console.warn('Network error during card payment, routing to offline storage:', e);
+                        this.enqueueOfflinePayment(this.selectedCashierOrder, {
+                            payment_method: 'card',
+                            amount: this.selectedCashierOrder.total_amount
+                        });
                     }
                 },
 
@@ -3189,6 +3267,119 @@
                     } else {
                         document.exitFullscreen().catch(() => {});
                         this.isFullscreen = false;
+                    }
+                },
+
+                // Offline-First Handlers
+                async loadOfflineManifest() {
+                    try {
+                        const res = await fetch(`/pos/api/offline/manifest?location_id=${this.activeLocationId || ''}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.success && data.manifest) {
+                                this.offlineManifest = data.manifest;
+                                localStorage.setItem('elam_pos_offline_manifest', JSON.stringify(data.manifest));
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Failed to refresh offline manifest:', e);
+                    }
+                },
+
+                enqueueOfflineOperation(entityType, action, payload) {
+                    const clientSyncId = 'OFF-' + Math.random().toString(36).substring(2, 10) + '-' + Date.now();
+                    const op = {
+                        client_sync_id: clientSyncId,
+                        entity_type: entityType,
+                        action: action,
+                        client_timestamp: new Date().toISOString(),
+                        payload: payload
+                    };
+                    this.offlineQueue.push(op);
+                    localStorage.setItem('elam_pos_offline_queue', JSON.stringify(this.offlineQueue));
+                    return op;
+                },
+
+                enqueueOfflineOrder(orderPayload) {
+                    const op = this.enqueueOfflineOperation('order', 'create', orderPayload);
+                    const tempOrderNum = 'OFF-' + Math.floor(1000 + Math.random() * 9000);
+
+                    const localOrder = {
+                        id: op.client_sync_id,
+                        order_number: tempOrderNum,
+                        order_type: orderPayload.type,
+                        status: 'confirmed',
+                        source: 'pos',
+                        table_number: orderPayload.table_number,
+                        restaurant_table_id: orderPayload.restaurant_table_id,
+                        total_amount: orderPayload.items.reduce((acc, i) => acc + (Number(i.unit_price || 0) * Number(i.quantity || 1)), 0),
+                        paid_amount: 0,
+                        items: orderPayload.items,
+                        is_offline_created: true,
+                        created_at: new Date().toISOString()
+                    };
+
+                    this.cashierOrders.unshift(localOrder);
+                    if (this.selectedTable) {
+                        this.selectedTable.status = 'occupied';
+                        this.selectedTable.current_order_id = localOrder.id;
+                    }
+
+                    this.clearCart();
+                    this.showToast('{{ __('Order Saved Offline!') }}');
+                },
+
+                enqueueOfflinePayment(order, paymentData) {
+                    this.enqueueOfflineOperation('payment', 'pay', {
+                        order_id: typeof order.id === 'number' ? order.id : null,
+                        order_client_sync_id: typeof order.id === 'string' ? order.id : (order.client_sync_id || null),
+                        payment_method: paymentData.payment_method,
+                        amount: paymentData.amount,
+                        cash_tendered: paymentData.cash_tendered || paymentData.amount,
+                        tip_amount: paymentData.tip_amount || 0,
+                        transaction_reference: 'OFFLINE-' + Date.now()
+                    });
+
+                    order.status = 'completed';
+                    order.paid_amount = Number(order.total_amount);
+                    this.selectedCashierOrder = null;
+                    this.showToast('{{ __('Payment Saved Offline!') }}');
+                },
+
+                async syncOfflineQueue() {
+                    if (this.isSyncing || this.offlineQueue.length === 0 || !navigator.onLine) return;
+                    this.isSyncing = true;
+                    try {
+                        const batchId = 'BATCH-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+                        const res = await fetch('/pos/api/offline/sync', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({
+                                batch_id: batchId,
+                                operations: this.offlineQueue,
+                                client_started_at: this.offlineQueue[0]?.client_timestamp || new Date().toISOString(),
+                                client_ended_at: new Date().toISOString()
+                            })
+                        });
+
+                        const data = await res.json();
+                        if (data.success) {
+                            const syncedIds = new Set((data.operations || []).filter(o => o.status === 'synced' || o.status === 'duplicate').map(o => o.client_sync_id));
+                            this.offlineQueue = this.offlineQueue.filter(o => !syncedIds.has(o.client_sync_id));
+                            localStorage.setItem('elam_pos_offline_queue', JSON.stringify(this.offlineQueue));
+                            this.showToast(`{{ __('Synced') }} ${syncedIds.size} {{ __('offline operations!') }}`);
+                            this.fetchCashierOrders();
+                            this.loadTables();
+                        }
+                    } catch (e) {
+                        console.error('Offline sync failed:', e);
+                    } finally {
+                        this.isSyncing = false;
                     }
                 },
 

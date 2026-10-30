@@ -3441,5 +3441,15 @@
     "Print Kitchen Ticket": "Печать кухонного чека",
     "Kitchen Ticket": "Кухонный чек",
     "Customer Receipt": "Чек покупателя",
-    "End of Shift Report": "Отчет закрытия смены"
+    "End of Shift Report": "Отчет закрытия смены",
+    "Offline Mode Active": "Автономный режим активен",
+    "Connection Restored — Syncing...": "Связь восстановлена — синхронизация...",
+    "Sync Offline Data": "Синхронизировать офлайн данные",
+    "Order Saved Offline!": "Заказ сохранен офлайн!",
+    "Payment Saved Offline!": "Оплата сохранена офлайн!",
+    "Offline Mode Active — orders and payments are saved locally and will auto-sync when connection is restored.": "Автономный режим активен — заказы и оплаты сохраняются локально и синхронизируются при восстановлении связи.",
+    "unsynced operations": "несинхронизированных операций",
+    "Sync Now": "Синхронизировать сейчас",
+    "Synced": "Синхронизировано",
+    "offline operations!": "офлайн операций!"
 }

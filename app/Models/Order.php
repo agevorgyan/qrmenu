@@ -54,9 +54,14 @@ class Order extends Model
         'pos_shift_id',
         'paid_amount',
         'change_amount',
+        'is_offline_created',
+        'client_sync_id',
+        'offline_synced_at',
     ];
 
     protected $casts = [
+        'is_offline_created' => 'boolean',
+        'offline_synced_at' => 'datetime',
         'subtotal' => 'decimal:2',
         'service_fee' => 'decimal:2',
         'delivery_fee' => 'decimal:2',

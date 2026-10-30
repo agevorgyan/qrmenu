@@ -25,6 +25,7 @@ use App\Http\Controllers\PosAuthController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\PosDeviceController;
 use App\Http\Controllers\PosKdsController;
+use App\Http\Controllers\PosOfflineSyncController;
 use App\Http\Controllers\PosPaymentShiftController;
 use App\Http\Controllers\PosSettingController;
 use App\Http\Controllers\ProfileSecurityController;
@@ -651,6 +652,14 @@ Route::middleware(['auth', EnsurePosAccess::class])->group(function () {
             Route::post('/orders/{order}/print', [PosKdsController::class, 'printKitchenTicket'])->name('orders.print');
             Route::get('/orders/{order}/receipt', [PosKdsController::class, 'printCustomerReceipt'])->name('orders.receipt');
             Route::post('/orders/{order}/receipt', [PosKdsController::class, 'printCustomerReceipt'])->name('orders.receipt.post');
+        });
+
+        // Offline-First Sync & Cache Management
+        Route::prefix('offline')->name('offline.')->group(function () {
+            Route::get('/manifest', [PosOfflineSyncController::class, 'manifest'])->name('manifest');
+            Route::post('/sync', [PosOfflineSyncController::class, 'sync'])->name('sync');
+            Route::get('/conflicts', [PosOfflineSyncController::class, 'getConflicts'])->name('conflicts');
+            Route::post('/conflicts/{conflict}/resolve', [PosOfflineSyncController::class, 'resolveConflict'])->name('conflicts.resolve');
         });
 
         Route::get('/settings', [PosSettingController::class, 'show'])->name('settings.show');

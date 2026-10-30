@@ -31,6 +31,9 @@ class PosPayment extends Model
         'transaction_reference',
         'refunded_amount',
         'notes',
+        'is_offline',
+        'client_sync_id',
+        'offline_synced_at',
     ];
 
     protected function casts(): array
@@ -41,6 +44,8 @@ class PosPayment extends Model
             'change_due' => 'decimal:2',
             'tip_amount' => 'decimal:2',
             'refunded_amount' => 'decimal:2',
+            'is_offline' => 'boolean',
+            'offline_synced_at' => 'datetime',
         ];
     }
 
