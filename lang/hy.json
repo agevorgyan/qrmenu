@@ -3454,5 +3454,11 @@
     "unsynced operations": "չհամաժամեցված գործողություն",
     "Sync Now": "Համաժամեցնել հիմա",
     "Synced": "Համաժամեցվել է",
-    "offline operations!": "անցանց գործողություն"
+    "offline operations!": "անցանց գործողություն",
+    "LAN: New order received!": "LAN. Նոր պատվեր է ստացվել",
+    "LAN: Kitchen updated order status": "LAN. Խոհանոցը թարմացրել է պատվերի կարգավիճակը",
+    "LAN Mode Active": "Տեղային ցանցի (LAN) ռեժիմն ակտիվ է",
+    "LAN Hub": "LAN Գլխավոր հանգույց (Hub)",
+    "Satellite Device": "Երկրորդական սարք (Satellite)",
+    "Connected Peers": "Միացված սարքեր"
 }

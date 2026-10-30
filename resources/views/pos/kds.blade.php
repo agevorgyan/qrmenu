@@ -724,6 +724,7 @@
 
                 initKds() {
                     this.fetchTickets(true);
+                    this.initLanBroadcast();
                     // Polling every 5 seconds
                     this.pollInterval = setInterval(() => {
                         this.fetchTickets(false);
@@ -925,6 +926,40 @@
                         osc2.stop(now + 0.55);
                     } catch (e) {
                         console.warn('Audio chime could not play:', e);
+                    }
+                },
+
+                initLanBroadcast() {
+                    const channelName = 'elam_pos_lan_{{ $vendor->id }}_{{ $device->location_id ?? 0 }}';
+                    if ('BroadcastChannel' in window) {
+                        this.lanChannel = new BroadcastChannel(channelName);
+                        this.lanChannel.onmessage = (event) => {
+                            const data = event.data || {};
+                            if (data.type === 'ORDER_CREATED' && data.order) {
+                                if (!this.tickets.some(t => t.order_id === data.order.id || t.order_number === data.order.order_number)) {
+                                    const newTicket = {
+                                        order_id: data.order.id,
+                                        order_number: data.order.order_number,
+                                        table_name: data.order.table_number || 'Takeaway',
+                                        waiter_name: 'POS Handheld',
+                                        elapsed_minutes: 0,
+                                        priority: 'normal',
+                                        all_ready: false,
+                                        items: (data.order.items || []).map(i => ({
+                                            id: Math.random().toString(),
+                                            product_name: i.product_name,
+                                            variation_name: i.variation_name,
+                                            quantity: i.quantity,
+                                            status: 'pending',
+                                            modifiers: i.modifiers || [],
+                                            notes: i.notes
+                                        }))
+                                    };
+                                    this.tickets.unshift(newTicket);
+                                    if (this.soundEnabled) this.playOrderChime();
+                                }
+                            }
+                        };
                     }
                 }
             };

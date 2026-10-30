@@ -2306,6 +2306,7 @@
                     this.loadDevices();
                     this.fetchEmployees();
                     this.fetchCashierOrders();
+                    this.initLanChannel();
 
                     const autoLockSec = this.bootstrapData.settings?.auto_lock_seconds || 120;
                     if (autoLockSec > 0) {
@@ -3327,6 +3328,16 @@
 
                     this.clearCart();
                     this.showToast('{{ __('Order Saved Offline!') }}');
+
+                    // Broadcast to LAN peers (KDS and Cashiers)
+                    if (this.lanChannel) {
+                        try {
+                            this.lanChannel.postMessage({
+                                type: 'ORDER_CREATED',
+                                order: localOrder
+                            });
+                        } catch (e) {}
+                    }
                 },
 
                 enqueueOfflinePayment(order, paymentData) {
@@ -3344,6 +3355,17 @@
                     order.paid_amount = Number(order.total_amount);
                     this.selectedCashierOrder = null;
                     this.showToast('{{ __('Payment Saved Offline!') }}');
+
+                    // Broadcast to LAN peers
+                    if (this.lanChannel) {
+                        try {
+                            this.lanChannel.postMessage({
+                                type: 'PAYMENT_RECORDED',
+                                orderId: order.id,
+                                amount: paymentData.amount
+                            });
+                        } catch (e) {}
+                    }
                 },
 
                 async syncOfflineQueue() {
@@ -3380,6 +3402,35 @@
                         console.error('Offline sync failed:', e);
                     } finally {
                         this.isSyncing = false;
+                    }
+                },
+
+                initLanChannel() {
+                    const channelName = 'elam_pos_lan_' + (this.bootstrapData.vendor?.id || 0) + '_' + (this.activeLocationId || 0);
+                    if ('BroadcastChannel' in window) {
+                        this.lanChannel = new BroadcastChannel(channelName);
+                        this.lanChannel.onmessage = (event) => {
+                            const data = event.data || {};
+                            if (data.type === 'ORDER_CREATED' && data.order) {
+                                if (!this.cashierOrders.some(o => o.id === data.order.id || o.order_number === data.order.order_number)) {
+                                    this.cashierOrders.unshift(data.order);
+                                    if (data.order.restaurant_table_id) {
+                                        const table = this.tables.find(t => t.id === data.order.restaurant_table_id);
+                                        if (table) {
+                                            table.status = 'occupied';
+                                            table.current_order_id = data.order.id;
+                                        }
+                                    }
+                                    this.showToast('{{ __('LAN: New order received!') }}');
+                                }
+                            } else if (data.type === 'PAYMENT_RECORDED' && data.orderId) {
+                                const target = this.cashierOrders.find(o => o.id === data.orderId);
+                                if (target) {
+                                    target.status = 'completed';
+                                    target.paid_amount = Number(target.total_amount);
+                                }
+                            }
+                        };
                     }
                 },
 

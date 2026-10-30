@@ -3451,5 +3451,11 @@
     "unsynced operations": "несинхронизированных операций",
     "Sync Now": "Синхронизировать сейчас",
     "Synced": "Синхронизировано",
-    "offline operations!": "офлайн операций!"
+    "offline operations!": "офлайн операций!",
+    "LAN: New order received!": "LAN: Получен новый заказ!",
+    "LAN: Kitchen updated order status": "LAN: Кухня обновила статус заказа",
+    "LAN Mode Active": "Режим локальной сети (LAN) активен",
+    "LAN Hub": "Главный узел LAN (Hub)",
+    "Satellite Device": "Клиентское устройство",
+    "Connected Peers": "Подключенные устройства"
 }

@@ -34,6 +34,12 @@ class PosDevice extends Model
         'app_version',
         'registered_by_user_id',
         'metadata',
+        'is_lan_hub',
+        'lan_ip_address',
+        'lan_port',
+        'lan_auth_token',
+        'lan_sync_priority',
+        'last_lan_heartbeat_at',
     ];
 
     protected function casts(): array
@@ -41,6 +47,10 @@ class PosDevice extends Model
         return [
             'is_active' => 'boolean',
             'is_paired' => 'boolean',
+            'is_lan_hub' => 'boolean',
+            'lan_port' => 'integer',
+            'lan_sync_priority' => 'integer',
+            'last_lan_heartbeat_at' => 'datetime',
             'paired_at' => 'datetime',
             'last_sync_at' => 'datetime',
             'last_seen_at' => 'datetime',
@@ -142,5 +152,30 @@ class PosDevice extends Model
 
         $this->update($updates);
     }
-}
 
+    public function markAsHub(?string $lanIp = null, int $lanPort = 8080): self
+    {
+        // Demote any other hub in this vendor/location
+        static::where('vendor_id', $this->vendor_id)
+            ->where('location_id', $this->location_id)
+            ->where('id', '!=', $this->id)
+            ->update(['is_lan_hub' => false]);
+
+        $this->update([
+            'is_lan_hub' => true,
+            'lan_ip_address' => $lanIp ?: $this->lan_ip_address,
+            'lan_port' => $lanPort,
+            'lan_auth_token' => $this->lan_auth_token ?: Str::random(64),
+            'last_lan_heartbeat_at' => Carbon::now(),
+        ]);
+
+        return $this;
+    }
+
+    public function stepDownHub(): self
+    {
+        $this->update(['is_lan_hub' => false]);
+
+        return $this;
+    }
+}

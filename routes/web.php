@@ -25,6 +25,7 @@ use App\Http\Controllers\PosAuthController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\PosDeviceController;
 use App\Http\Controllers\PosKdsController;
+use App\Http\Controllers\PosLanController;
 use App\Http\Controllers\PosOfflineSyncController;
 use App\Http\Controllers\PosPaymentShiftController;
 use App\Http\Controllers\PosSettingController;
@@ -660,6 +661,16 @@ Route::middleware(['auth', EnsurePosAccess::class])->group(function () {
             Route::post('/sync', [PosOfflineSyncController::class, 'sync'])->name('sync');
             Route::get('/conflicts', [PosOfflineSyncController::class, 'getConflicts'])->name('conflicts');
             Route::post('/conflicts/{conflict}/resolve', [PosOfflineSyncController::class, 'resolveConflict'])->name('conflicts.resolve');
+        });
+
+        // Local Network Mode (LAN Mode)
+        Route::prefix('lan')->name('lan.')->group(function () {
+            Route::get('/peers', [PosLanController::class, 'getPeers'])->name('peers');
+            Route::post('/heartbeat', [PosLanController::class, 'heartbeat'])->name('heartbeat');
+            Route::post('/hub/elect', [PosLanController::class, 'electHub'])->name('hub.elect');
+            Route::post('/dispatch', [PosLanController::class, 'dispatchEvent'])->name('dispatch');
+            Route::get('/dispatches/pending', [PosLanController::class, 'getPendingDispatches'])->name('dispatches.pending');
+            Route::post('/dispatches/{dispatch}/ack', [PosLanController::class, 'acknowledgeDispatch'])->name('dispatches.ack');
         });
 
         Route::get('/settings', [PosSettingController::class, 'show'])->name('settings.show');

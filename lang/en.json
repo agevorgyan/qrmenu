@@ -3451,5 +3451,11 @@
     "unsynced operations": "unsynced operations",
     "Sync Now": "Sync Now",
     "Synced": "Synced",
-    "offline operations!": "offline operations!"
+    "offline operations!": "offline operations!",
+    "LAN: New order received!": "LAN: New order received!",
+    "LAN: Kitchen updated order status": "LAN: Kitchen updated order status",
+    "LAN Mode Active": "LAN Mode Active",
+    "LAN Hub": "LAN Hub",
+    "Satellite Device": "Satellite Device",
+    "Connected Peers": "Connected Peers"
 }
