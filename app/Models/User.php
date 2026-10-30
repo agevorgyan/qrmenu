@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -42,10 +43,13 @@ class User extends Authenticatable implements MustVerifyEmail
         'two_factor_email_code',
         'two_factor_email_expires_at',
         'locale',
+        'pin_code',
+        'pos_mode',
     ];
 
     protected $hidden = [
         'password',
+        'pin_code',
         'remember_token',
         'two_factor_secret',
         'two_factor_email_code',
@@ -177,6 +181,27 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isCashier(): bool
     {
         return $this->role === 'cashier';
+    }
+
+    public function hasPin(): bool
+    {
+        return ! empty($this->pin_code);
+    }
+
+    public function verifyPin(string $pin): bool
+    {
+        if (empty($this->pin_code)) {
+            return false;
+        }
+
+        return Hash::check($pin, $this->pin_code);
+    }
+
+    public function setPin(string $pin): void
+    {
+        $this->update([
+            'pin_code' => Hash::make($pin),
+        ]);
     }
 
     /**

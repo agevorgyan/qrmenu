@@ -16,8 +16,11 @@ class Order extends Model
         'location_id',
         'customer_id',
         'order_number',
+        'source',
         'tracking_token',
         'table_number',
+        'restaurant_table_id',
+        'guest_count',
         'delivery_address',
         'type',
         'payment_method',
@@ -28,15 +31,23 @@ class Order extends Model
         'delivery_fee',
         'tip_amount',
         'birthday_discount_amount',
+        'discount_amount',
+        'discount_type',
+        'discount_reason',
+        'tax_amount',
         'total_amount',
         'status',
         'waiter_id',
+        'cashier_id',
+        'pos_device_id',
         'customer_name',
         'customer_phone',
         'customer_email',
         'customer_birthdate',
         'marketing_opt_in',
         'notes',
+        'opened_at',
+        'closed_at',
     ];
 
     protected $casts = [
@@ -45,8 +56,13 @@ class Order extends Model
         'delivery_fee' => 'decimal:2',
         'tip_amount' => 'decimal:2',
         'birthday_discount_amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'guest_count' => 'integer',
         'marketing_opt_in' => 'boolean',
+        'opened_at' => 'datetime',
+        'closed_at' => 'datetime',
     ];
 
     protected static function booted(): void
@@ -126,6 +142,21 @@ class Order extends Model
     public function waiter()
     {
         return $this->belongsTo(User::class, 'waiter_id');
+    }
+
+    public function cashier()
+    {
+        return $this->belongsTo(User::class, 'cashier_id');
+    }
+
+    public function restaurantTable()
+    {
+        return $this->belongsTo(RestaurantTable::class, 'restaurant_table_id');
+    }
+
+    public function posDevice()
+    {
+        return $this->belongsTo(PosDevice::class, 'pos_device_id');
     }
 
     public function tip()

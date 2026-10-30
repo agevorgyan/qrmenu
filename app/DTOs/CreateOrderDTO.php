@@ -27,6 +27,16 @@ class CreateOrderDTO
         public readonly ?string $tipType = null,
         public readonly ?float $tipValue = null,
         public readonly ?int $waiterId = null,
+        public readonly string $source = 'qr_menu',
+        public readonly ?int $cashierId = null,
+        public readonly ?int $restaurantTableId = null,
+        public readonly int $guestCount = 1,
+        public readonly float $discountAmount = 0.00,
+        public readonly ?string $discountType = null,
+        public readonly ?string $discountReason = null,
+        public readonly float $taxAmount = 0.00,
+        public readonly ?int $posDeviceId = null,
+        public readonly ?string $status = null,
     ) {}
 
     /**
@@ -63,6 +73,16 @@ class CreateOrderDTO
             tipType: ! empty($data['tip_type']) ? trim((string) $data['tip_type']) : null,
             tipValue: isset($data['tip_value']) ? (float) $data['tip_value'] : null,
             waiterId: ! empty($data['waiter_id']) ? (int) $data['waiter_id'] : null,
+            source: ! empty($data['source']) ? trim((string) $data['source']) : 'qr_menu',
+            cashierId: ! empty($data['cashier_id']) ? (int) $data['cashier_id'] : null,
+            restaurantTableId: ! empty($data['restaurant_table_id']) ? (int) $data['restaurant_table_id'] : null,
+            guestCount: max(1, (int) ($data['guest_count'] ?? 1)),
+            discountAmount: ! empty($data['discount_amount']) ? (float) $data['discount_amount'] : 0.00,
+            discountType: ! empty($data['discount_type']) ? trim((string) $data['discount_type']) : null,
+            discountReason: ! empty($data['discount_reason']) ? trim((string) $data['discount_reason']) : null,
+            taxAmount: ! empty($data['tax_amount']) ? (float) $data['tax_amount'] : 0.00,
+            posDeviceId: ! empty($data['pos_device_id']) ? (int) $data['pos_device_id'] : null,
+            status: ! empty($data['status']) ? trim((string) $data['status']) : null,
         );
     }
 
@@ -89,11 +109,21 @@ class CreateOrderDTO
             'tip_type' => $this->tipType,
             'tip_value' => $this->tipValue,
             'waiter_id' => $this->waiterId,
+            'source' => $this->source,
+            'cashier_id' => $this->cashierId,
+            'restaurant_table_id' => $this->restaurantTableId,
+            'guest_count' => $this->guestCount,
+            'discount_amount' => $this->discountAmount,
+            'discount_type' => $this->discountType,
+            'discount_reason' => $this->discountReason,
+            'tax_amount' => $this->taxAmount,
+            'pos_device_id' => $this->posDeviceId,
+            'status' => $this->status,
         ];
     }
 
     /**
-     * Instantiate from a validated SubmitOrderRequest.
+     * Factory method from a Form Request.
      */
     public static function fromRequest(SubmitOrderRequest $request): self
     {

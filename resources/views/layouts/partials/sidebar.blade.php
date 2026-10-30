@@ -183,6 +183,19 @@
             <!-- ========================================== -->
             <div class="menu-category">{{ __('Daily Operations') }}</div>
 
+            @if(Auth::user()?->hasPermission(\App\Security\Permission::POS_ACCESS) || Auth::user()?->isSuperAdmin())
+                <a href="{{ route('pos.index') }}" 
+                   class="nav-item {{ request()->routeIs('pos.*') || request()->routeIs('admin.pos.*') ? 'active' : '' }}" 
+                   style="justify-content: space-between;"
+                   title="{{ __('Restaurant POS Terminal') }}">
+                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        <i class="fa-solid fa-cash-register" style="color: #f59e0b;"></i>
+                        <span style="font-weight: 600;">{{ __('POS Terminal') }}</span>
+                    </span>
+                    <span style="font-size: 0.65rem; padding: 2px 6px; border-radius: 9999px; background: rgba(245, 158, 11, 0.15); color: #fbbf24; font-weight: 700; border: 1px solid rgba(245, 158, 11, 0.3);">POS</span>
+                </a>
+            @endif
+
             @can('orders.view')
                 <a href="{{ route('admin.orders.index') }}" 
                    class="nav-item {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}" 

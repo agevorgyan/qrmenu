@@ -39,10 +39,19 @@ class FeatureCatalog
 
     public const BILLS_SPLIT = 'bills.split';
 
+    public const POS_ACCESS = 'pos.access';
+
     /**
      * Map of legacy or abbreviated aliases to canonical feature keys.
      */
     protected const ALIASES = [
+        // POS aliases
+        'pos' => self::POS_ACCESS,
+        'pos_access' => self::POS_ACCESS,
+        'pos.access' => self::POS_ACCESS,
+        'pos_terminal' => self::POS_ACCESS,
+        'point_of_sale' => self::POS_ACCESS,
+
         // Split Bill aliases
         'split_bill' => self::BILLS_SPLIT,
         'split_bills' => self::BILLS_SPLIT,
@@ -158,6 +167,7 @@ class FeatureCatalog
             self::API_ACCESS,
             self::TIPS_RATINGS,
             self::BILLS_SPLIT,
+            self::POS_ACCESS,
         ];
     }
 
@@ -193,6 +203,7 @@ class FeatureCatalog
                 self::API_ACCESS,
                 self::TIPS_RATINGS,
                 self::BILLS_SPLIT,
+                self::POS_ACCESS,
             ],
             'pro' => [
                 self::MENU_BASE,
@@ -208,6 +219,7 @@ class FeatureCatalog
                 self::BRANDING_CUSTOM_DOMAIN,
                 self::TIPS_RATINGS,
                 self::BILLS_SPLIT,
+                self::POS_ACCESS,
             ],
             default => [
                 self::MENU_BASE,
@@ -276,6 +288,7 @@ class FeatureCatalog
             self::API_ACCESS => 'API Ինտեգրացիաներ',
             self::TIPS_RATINGS => 'Թեյավճար և Մատուցողի գնահատում',
             self::BILLS_SPLIT => 'Հաշվի բաժանում (Split Bill)',
+            self::POS_ACCESS => 'POS Տերմինալ և Գործառնություններ',
         ];
 
         $namesEn = [
@@ -296,6 +309,7 @@ class FeatureCatalog
             self::API_ACCESS => 'API Access',
             self::TIPS_RATINGS => 'Tips & Waiter Rating',
             self::BILLS_SPLIT => 'Split Bill',
+            self::POS_ACCESS => 'POS Terminal & Operations',
         ];
 
         if ($locale === 'en') {

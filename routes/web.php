@@ -21,6 +21,9 @@ use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\MenuBuilderController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentWebhookController;
+use App\Http\Controllers\PosController;
+use App\Http\Controllers\PosDeviceController;
+use App\Http\Controllers\PosSettingController;
 use App\Http\Controllers\ProfileSecurityController;
 use App\Http\Controllers\QrStudioController;
 use App\Http\Controllers\RegisterController;
@@ -35,6 +38,7 @@ use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\VendorAdminController;
 use App\Http\Controllers\VendorSettingsController;
 use App\Http\Middleware\EnsurePlanHasFeature;
+use App\Http\Middleware\EnsurePosAccess;
 use App\Http\Middleware\EnsureSubscriptionIsActive;
 use App\Services\Localization\LocaleManager;
 use App\Services\TenantContext;
@@ -585,7 +589,37 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cas
     Route::post('/profile/update', [ProfileSecurityController::class, 'updateProfile'])->name('profile.update');
 });
 
-// 5. Custom Domain Branch/Location Route (e.g. https://example.com/cascades)
+// 5. Point of Sale (POS) Module Routes
+Route::middleware(['auth', EnsurePosAccess::class])->group(function () {
+    Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
+    Route::get('/admin/pos', [PosController::class, 'index'])->name('admin.pos.index');
+
+    Route::prefix('pos/api')->name('pos.api.')->group(function () {
+        Route::get('/bootstrap', [PosController::class, 'bootstrap'])->name('bootstrap');
+        Route::get('/orders', [PosController::class, 'getOrders'])->name('orders.index');
+        Route::post('/orders', [PosController::class, 'storeOrder'])->name('orders.store');
+        Route::get('/orders/{order}', [PosController::class, 'showOrder'])->name('orders.show');
+        Route::post('/orders/{order}/status', [PosController::class, 'updateStatus'])->name('orders.status');
+        Route::post('/orders/{order}/hold', [PosController::class, 'holdOrder'])->name('orders.hold');
+        Route::post('/orders/{order}/resume', [PosController::class, 'resumeOrder'])->name('orders.resume');
+
+        Route::get('/settings', [PosSettingController::class, 'show'])->name('settings.show');
+        Route::post('/settings', [PosSettingController::class, 'update'])->name('settings.update');
+
+        Route::get('/devices', [PosDeviceController::class, 'index'])->name('devices.index');
+        Route::post('/devices/register', [PosDeviceController::class, 'register'])->name('devices.register');
+        Route::post('/devices/pair', [PosDeviceController::class, 'pair'])->name('devices.pair');
+        Route::post('/devices/heartbeat', [PosDeviceController::class, 'heartbeat'])->name('devices.heartbeat');
+        Route::post('/devices/{device}/toggle', [PosDeviceController::class, 'toggle'])->name('devices.toggle');
+        Route::delete('/devices/{device}', [PosDeviceController::class, 'destroy'])->name('devices.destroy');
+        Route::post('/devices/{device}/session', [PosDeviceController::class, 'createSession'])->name('devices.session.create');
+        Route::post('/sessions/{session}/lock', [PosDeviceController::class, 'lockSession'])->name('sessions.lock');
+        Route::post('/sessions/{session}/unlock', [PosDeviceController::class, 'unlockSession'])->name('sessions.unlock');
+        Route::post('/sessions/{session}/terminate', [PosDeviceController::class, 'terminateSession'])->name('sessions.terminate');
+    });
+});
+
+// 6. Custom Domain Branch/Location Route (e.g. https://example.com/cascades)
 Route::get('/{location_slug}', function (Request $request, string $location_slug, TenantContext $tenantContext) {
     $customDomainVendor = $tenantContext->getTenant();
     if ($customDomainVendor) {

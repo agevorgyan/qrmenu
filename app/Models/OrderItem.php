@@ -17,12 +17,22 @@ class OrderItem extends Model
         'unit_price',
         'quantity',
         'subtotal',
+        'status',
+        'variants',
+        'modifiers',
+        'tax_amount',
+        'discount_amount',
+        'kitchen_station',
         'notes',
     ];
 
     protected $casts = [
         'unit_price' => 'decimal:2',
         'subtotal' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'variants' => 'array',
+        'modifiers' => 'array',
     ];
 
     protected static function booted(): void

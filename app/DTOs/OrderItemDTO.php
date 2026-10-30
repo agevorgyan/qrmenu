@@ -9,6 +9,11 @@ class OrderItemDTO
         public readonly int $quantity,
         public readonly ?int $variationId = null,
         public readonly ?string $variationName = null,
+        public readonly ?string $notes = null,
+        public readonly array $modifiers = [],
+        public readonly array $variants = [],
+        public readonly string $status = 'pending',
+        public readonly ?string $kitchenStation = null,
     ) {}
 
     /**
@@ -21,6 +26,11 @@ class OrderItemDTO
             quantity: max(1, (int) ($data['quantity'] ?? 1)),
             variationId: ! empty($data['variation_id']) ? (int) $data['variation_id'] : null,
             variationName: ! empty($data['variation_name']) ? trim((string) $data['variation_name']) : null,
+            notes: ! empty($data['notes']) ? trim((string) $data['notes']) : null,
+            modifiers: is_array($data['modifiers'] ?? null) ? $data['modifiers'] : [],
+            variants: is_array($data['variants'] ?? null) ? $data['variants'] : [],
+            status: ! empty($data['status']) ? (string) $data['status'] : 'pending',
+            kitchenStation: ! empty($data['kitchen_station']) ? (string) $data['kitchen_station'] : null,
         );
     }
 
@@ -34,6 +44,11 @@ class OrderItemDTO
             'quantity' => $this->quantity,
             'variation_id' => $this->variationId,
             'variation_name' => $this->variationName,
+            'notes' => $this->notes,
+            'modifiers' => $this->modifiers,
+            'variants' => $this->variants,
+            'status' => $this->status,
+            'kitchen_station' => $this->kitchenStation,
         ];
     }
 }

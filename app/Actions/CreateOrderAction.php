@@ -140,6 +140,11 @@ class CreateOrderAction
                         'unit_price' => $pricing['unit_price'],
                         'quantity' => $item->quantity,
                         'subtotal' => $subtotal,
+                        'notes' => $item->notes,
+                        'variants' => $item->variants,
+                        'modifiers' => $item->modifiers,
+                        'status' => $item->status ?: 'pending',
+                        'kitchen_station' => $item->kitchenStation,
                     ]);
                     $orderItem->setRelation('order', $order);
                     $orderItem->setRelation('product', $product);
@@ -226,7 +231,7 @@ class CreateOrderAction
 
         DB::transaction(function () use ($vendor, $dto, &$order) {
             // Dine-in orders require a table number (scanned from table QR)
-            if ($dto->type === 'dine_in' && empty($dto->tableNumber)) {
+            if ($dto->source !== 'pos' && $dto->type === 'dine_in' && empty($dto->tableNumber)) {
                 throw ValidationException::withMessages([
                     'table_number' => 'Ռեստորանում պատվիրելու համար անհրաժեշտ է սկանավորել սեղանի QR կոդը:',
                 ]);
@@ -263,12 +268,17 @@ class CreateOrderAction
                 'location_id' => $dto->locationId,
                 'customer_id' => $customer?->id,
                 'order_number' => $orderNumber,
+                'source' => $dto->source,
                 'table_number' => in_array($dto->type, ['delivery', 'takeaway']) ? null : ($dto->tableNumber ?? 'Counter'),
+                'restaurant_table_id' => $dto->restaurantTableId,
+                'guest_count' => $dto->guestCount,
                 'delivery_address' => $dto->deliveryAddress,
                 'type' => $dto->type,
                 'total_amount' => 0,
-                'status' => 'pending',
+                'status' => $dto->status ?: 'pending',
                 'waiter_id' => $dto->waiterId,
+                'cashier_id' => $dto->cashierId,
+                'pos_device_id' => $dto->posDeviceId,
                 'customer_name' => $dto->customerName ?? 'Guest',
                 'customer_phone' => $dto->customerPhone,
                 'customer_email' => $dto->customerEmail,
@@ -278,7 +288,12 @@ class CreateOrderAction
                 'payment_method' => $paymentMethod,
                 'payment_status' => $paymentStatus,
                 'birthday_discount_amount' => 0,
+                'discount_amount' => $dto->discountAmount,
+                'discount_type' => $dto->discountType,
+                'discount_reason' => $dto->discountReason,
+                'tax_amount' => $dto->taxAmount,
                 'tip_amount' => 0,
+                'opened_at' => $dto->source === 'pos' ? now() : null,
             ]);
 
             $totalAmount = 0;
@@ -312,6 +327,11 @@ class CreateOrderAction
                     'unit_price' => $pricing['unit_price'],
                     'quantity' => $item->quantity,
                     'subtotal' => $subtotal,
+                    'notes' => $item->notes,
+                    'variants' => $item->variants,
+                    'modifiers' => $item->modifiers,
+                    'status' => $item->status ?: 'pending',
+                    'kitchen_station' => $item->kitchenStation,
                 ]);
                 $orderItem->setRelation('order', $order);
                 $orderItem->setRelation('product', $product);
@@ -359,11 +379,15 @@ class CreateOrderAction
             );
             $tipAmount = $tipResult['amount'];
 
-            $finalTotal = max(0, $fees['final_total'] - $birthdayDiscount + $tipAmount);
+            $finalTotal = max(0, $fees['final_total'] - $birthdayDiscount - $dto->discountAmount + $dto->taxAmount + $tipAmount);
 
             $order->update([
                 'subtotal' => $itemsSubtotal,
                 'birthday_discount_amount' => $birthdayDiscount,
+                'discount_amount' => $dto->discountAmount,
+                'discount_type' => $dto->discountType,
+                'discount_reason' => $dto->discountReason,
+                'tax_amount' => $dto->taxAmount,
                 'service_fee' => $fees['service_fee'],
                 'delivery_fee' => $fees['delivery_fee'],
                 'tip_amount' => $tipAmount,

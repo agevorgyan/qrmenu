@@ -90,6 +90,27 @@ class Permission
 
     public const TRANSLATIONS_PUBLISH = 'translations.publish';
 
+    // POS permissions
+    public const POS_ACCESS = 'pos.access';
+
+    public const POS_ORDERS = 'pos.orders';
+
+    public const POS_PAYMENTS = 'pos.payments';
+
+    public const POS_CASH_DRAWER = 'pos.cash_drawer';
+
+    public const POS_REFUNDS = 'pos.refunds';
+
+    public const POS_DISCOUNTS = 'pos.discounts';
+
+    public const POS_REPORTS = 'pos.reports';
+
+    public const POS_SETTINGS = 'pos.settings';
+
+    public const POS_DEVICES = 'pos.devices';
+
+    public const POS_KDS = 'pos.kds';
+
     // Platform (SuperAdmin) permissions
     public const PLATFORM_ACCESS = 'platform.access';
 
@@ -147,6 +168,16 @@ class Permission
             self::TRANSLATIONS_VIEW,
             self::TRANSLATIONS_MANAGE,
             self::TRANSLATIONS_PUBLISH,
+            self::POS_ACCESS,
+            self::POS_ORDERS,
+            self::POS_PAYMENTS,
+            self::POS_CASH_DRAWER,
+            self::POS_REFUNDS,
+            self::POS_DISCOUNTS,
+            self::POS_REPORTS,
+            self::POS_SETTINGS,
+            self::POS_DEVICES,
+            self::POS_KDS,
             self::PLATFORM_ACCESS,
             self::PLATFORM_VENDORS,
             self::PLATFORM_SUBSCRIPTIONS,
@@ -186,6 +217,16 @@ class Permission
                 self::SPLIT_BILL_MANAGE,
                 self::WAITERS_VIEW,
                 self::WAITERS_MANAGE,
+                self::POS_ACCESS,
+                self::POS_ORDERS,
+                self::POS_PAYMENTS,
+                self::POS_CASH_DRAWER,
+                self::POS_REFUNDS,
+                self::POS_DISCOUNTS,
+                self::POS_REPORTS,
+                self::POS_SETTINGS,
+                self::POS_DEVICES,
+                self::POS_KDS,
             ],
             'vendor_owner' => [
                 self::MENU_VIEW,
@@ -224,6 +265,16 @@ class Permission
                 self::SPLIT_BILL_MANAGE,
                 self::WAITERS_VIEW,
                 self::WAITERS_MANAGE,
+                self::POS_ACCESS,
+                self::POS_ORDERS,
+                self::POS_PAYMENTS,
+                self::POS_CASH_DRAWER,
+                self::POS_REFUNDS,
+                self::POS_DISCOUNTS,
+                self::POS_REPORTS,
+                self::POS_SETTINGS,
+                self::POS_DEVICES,
+                self::POS_KDS,
             ],
             'manager' => [
                 self::MENU_VIEW,
@@ -260,6 +311,16 @@ class Permission
                 self::SPLIT_BILL_MANAGE,
                 self::WAITERS_VIEW,
                 self::WAITERS_MANAGE,
+                self::POS_ACCESS,
+                self::POS_ORDERS,
+                self::POS_PAYMENTS,
+                self::POS_CASH_DRAWER,
+                self::POS_REFUNDS,
+                self::POS_DISCOUNTS,
+                self::POS_REPORTS,
+                self::POS_SETTINGS,
+                self::POS_DEVICES,
+                self::POS_KDS,
             ],
             'staff' => [
                 self::MENU_VIEW,
@@ -272,24 +333,30 @@ class Permission
                 self::RATINGS_VIEW,
                 self::SPLIT_BILL_VIEW,
                 self::WAITERS_VIEW,
-                // Staff CANNOT:
-                // modify billing
-                // modify AI credentials
-                // modify security settings
-                // manage users
-                // cancel/refund orders without supervisor
-                // access another location unless explicitly permitted
+                self::POS_ACCESS,
+                self::POS_ORDERS,
+            ],
+            'waiter' => [
+                self::MENU_VIEW,
+                self::ORDERS_VIEW,
+                self::ORDERS_UPDATE,
+                self::CUSTOMERS_VIEW,
+                self::LOCATIONS_VIEW,
+                self::STORAGE_VIEW,
+                self::TIPS_VIEW,
+                self::RATINGS_VIEW,
+                self::SPLIT_BILL_VIEW,
+                self::WAITERS_VIEW,
+                self::POS_ACCESS,
+                self::POS_ORDERS,
             ],
             'chef' => [
                 self::MENU_VIEW,
                 self::ORDERS_VIEW,
                 self::ORDERS_UPDATE, // For kitchen prep status transitions (e.g. preparing -> ready)
                 self::LOCATIONS_VIEW,
-                // Chef CANNOT:
-                // cancel/refund orders
-                // manage menu
-                // view/manage customers
-                // view/manage team, billing, AI, settings, reports
+                self::POS_ACCESS,
+                self::POS_KDS,
             ],
             'cashier' => [
                 self::MENU_VIEW,
@@ -301,6 +368,12 @@ class Permission
                 self::LOCATIONS_VIEW,
                 self::REPORTS_VIEW,
                 self::TIPS_VIEW,
+                self::POS_ACCESS,
+                self::POS_ORDERS,
+                self::POS_PAYMENTS,
+                self::POS_CASH_DRAWER,
+                self::POS_DISCOUNTS,
+                self::POS_REPORTS,
                 // Cashier CANNOT:
                 // manage menu items
                 // export customer data
@@ -333,6 +406,7 @@ class Permission
         return [
             'manager',
             'staff',
+            'waiter',
             'chef',
             'cashier',
         ];
