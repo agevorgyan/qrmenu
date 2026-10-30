@@ -325,3 +325,4 @@ class PosAuthController extends Controller
         ]);
     }
 }
+
