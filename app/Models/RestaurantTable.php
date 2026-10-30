@@ -50,6 +50,12 @@ class RestaurantTable extends Model
         'capacity',
         'min_capacity',
         'section',
+        'dining_area',
+        'status',
+        'current_order_id',
+        'current_waiter_id',
+        'occupied_at',
+        'lock_version',
         'shape',
         'x',
         'y',
@@ -76,6 +82,8 @@ class RestaurantTable extends Model
             'combined_capacity' => 'integer',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
+            'occupied_at' => 'datetime',
+            'lock_version' => 'integer',
         ];
     }
 
@@ -113,6 +121,55 @@ class RestaurantTable extends Model
                 $table->min_capacity = $table->capacity;
             }
         });
+    }
+
+    public function currentOrder(): BelongsTo
+    {
+        return $this->belongsTo(Order::class, 'current_order_id');
+    }
+
+    public function currentWaiter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'current_waiter_id');
+    }
+
+    public function markOccupied(Order $order, ?User $waiter = null): void
+    {
+        $this->update([
+            'status' => 'occupied',
+            'current_order_id' => $order->id,
+            'current_waiter_id' => $waiter?->id ?? $order->waiter_id,
+            'occupied_at' => $this->occupied_at ?? now(),
+        ]);
+    }
+
+    public function markAvailable(): void
+    {
+        $this->update([
+            'status' => 'available',
+            'current_order_id' => null,
+            'current_waiter_id' => null,
+            'occupied_at' => null,
+        ]);
+    }
+
+    public function markCleaning(): void
+    {
+        $this->update([
+            'status' => 'cleaning',
+            'current_order_id' => null,
+            'current_waiter_id' => null,
+            'occupied_at' => null,
+        ]);
+    }
+
+    public function getOccupancyMinutes(): ?int
+    {
+        if (! $this->occupied_at) {
+            return null;
+        }
+
+        return (int) $this->occupied_at->diffInMinutes(now());
     }
 
     public function vendor(): BelongsTo

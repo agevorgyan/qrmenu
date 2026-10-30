@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\PosDevice;
+use App\Models\RestaurantTable;
+use App\Models\User;
 use App\Services\PosDeviceService;
 use App\Services\PosService;
 use Illuminate\Http\JsonResponse;
@@ -244,6 +246,194 @@ class PosController extends Controller
             'success' => true,
             'message' => 'Order resumed successfully.',
             'order' => $resumed,
+        ]);
+    }
+
+    /**
+     * Get tables with floor plan, real-time statuses, and active orders.
+     */
+    public function getTables(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+        $locationId = $request->filled('location_id') ? (int) $request->get('location_id') : $user->location_id;
+        $data = $this->posService->getTablesPayload($user->vendor, $locationId);
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+        ]);
+    }
+
+    /**
+     * Update table status (e.g. cleaning, available).
+     */
+    public function updateTableStatus(Request $request, RestaurantTable $table): JsonResponse
+    {
+        $user = Auth::user();
+
+        if ((int) $table->vendor_id !== (int) $user->vendor_id) {
+            abort(403, 'Unauthorized table access.');
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|string|in:available,occupied,reserved,ordering,preparing,ready,awaiting_payment,cleaning',
+            'lock_version' => 'nullable|integer',
+        ]);
+
+        $updated = $this->posService->updateTableStatus(
+            table: $table,
+            status: $validated['status'],
+            user: $user,
+            expectedLockVersion: $validated['lock_version'] ?? null
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Table status updated successfully.',
+            'table' => $updated,
+        ]);
+    }
+
+    /**
+     * Transfer an active order to another table.
+     */
+    public function transferTable(Request $request, Order $order): JsonResponse
+    {
+        $user = Auth::user();
+
+        if ((int) $order->vendor_id !== (int) $user->vendor_id) {
+            abort(403, 'Unauthorized order transfer.');
+        }
+
+        $validated = $request->validate([
+            'destination_table_id' => 'required|integer',
+            'reason' => 'nullable|string|max:255',
+            'lock_version' => 'nullable|integer',
+        ]);
+
+        $destinationTable = RestaurantTable::where('vendor_id', $user->vendor_id)
+            ->findOrFail($validated['destination_table_id']);
+
+        $transferred = $this->posService->transferTable(
+            order: $order,
+            destinationTable: $destinationTable,
+            user: $user,
+            reason: $validated['reason'] ?? null,
+            expectedOrderLockVersion: $validated['lock_version'] ?? null
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order transferred to table '.$destinationTable->table_number.' successfully.',
+            'order' => $transferred,
+        ]);
+    }
+
+    /**
+     * Merge source order into target order.
+     */
+    public function mergeOrders(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'source_order_id' => 'required|integer',
+            'target_order_id' => 'required|integer|different:source_order_id',
+            'reason' => 'nullable|string|max:255',
+            'target_lock_version' => 'nullable|integer',
+        ]);
+
+        $sourceOrder = Order::where('vendor_id', $user->vendor_id)->findOrFail($validated['source_order_id']);
+        $targetOrder = Order::where('vendor_id', $user->vendor_id)->findOrFail($validated['target_order_id']);
+
+        $merged = $this->posService->mergeOrders(
+            sourceOrder: $sourceOrder,
+            targetOrder: $targetOrder,
+            user: $user,
+            reason: $validated['reason'] ?? null,
+            expectedTargetLockVersion: $validated['target_lock_version'] ?? null
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Orders merged successfully.',
+            'order' => $merged,
+        ]);
+    }
+
+    /**
+     * Split items from an order into a newly created split order.
+     */
+    public function splitOrder(Request $request, Order $order): JsonResponse
+    {
+        $user = Auth::user();
+
+        if ((int) $order->vendor_id !== (int) $user->vendor_id) {
+            abort(403, 'Unauthorized order split.');
+        }
+
+        $validated = $request->validate([
+            'items' => 'required|array|min:1',
+            'items.*.order_item_id' => 'required|integer',
+            'items.*.quantity' => 'required|integer|min:1',
+            'target_table_id' => 'nullable|integer',
+            'reason' => 'nullable|string|max:255',
+            'lock_version' => 'nullable|integer',
+        ]);
+
+        $targetTable = null;
+        if (! empty($validated['target_table_id'])) {
+            $targetTable = RestaurantTable::where('vendor_id', $user->vendor_id)->findOrFail($validated['target_table_id']);
+        }
+
+        $result = $this->posService->splitOrder(
+            sourceOrder: $order,
+            itemsToSplit: $validated['items'],
+            targetTable: $targetTable,
+            user: $user,
+            reason: $validated['reason'] ?? null,
+            expectedLockVersion: $validated['lock_version'] ?? null
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order split successfully.',
+            'source_order' => $result['source_order'],
+            'split_order' => $result['split_order'],
+        ]);
+    }
+
+    /**
+     * Assign / reassign designated waiter to an order.
+     */
+    public function assignWaiter(Request $request, Order $order): JsonResponse
+    {
+        $user = Auth::user();
+
+        if ((int) $order->vendor_id !== (int) $user->vendor_id) {
+            abort(403, 'Unauthorized waiter reassignment.');
+        }
+
+        $validated = $request->validate([
+            'waiter_id' => 'required|integer',
+            'reason' => 'nullable|string|max:255',
+            'lock_version' => 'nullable|integer',
+        ]);
+
+        $newWaiter = User::where('vendor_id', $user->vendor_id)->findOrFail($validated['waiter_id']);
+
+        $updated = $this->posService->assignWaiter(
+            order: $order,
+            newWaiter: $newWaiter,
+            actor: $user,
+            reason: $validated['reason'] ?? null,
+            expectedLockVersion: $validated['lock_version'] ?? null
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Waiter assigned successfully.',
+            'order' => $updated,
         ]);
     }
 }

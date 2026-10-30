@@ -619,6 +619,14 @@ Route::middleware(['auth', EnsurePosAccess::class])->group(function () {
         Route::post('/orders/{order}/status', [PosController::class, 'updateStatus'])->name('orders.status');
         Route::post('/orders/{order}/hold', [PosController::class, 'holdOrder'])->name('orders.hold');
         Route::post('/orders/{order}/resume', [PosController::class, 'resumeOrder'])->name('orders.resume');
+        Route::post('/orders/{order}/transfer-table', [PosController::class, 'transferTable'])->name('orders.transfer_table');
+        Route::post('/orders/merge', [PosController::class, 'mergeOrders'])->name('orders.merge');
+        Route::post('/orders/{order}/split', [PosController::class, 'splitOrder'])->name('orders.split');
+        Route::post('/orders/{order}/assign-waiter', [PosController::class, 'assignWaiter'])->name('orders.assign_waiter');
+
+        // Tables & Floor Plan
+        Route::get('/tables', [PosController::class, 'getTables'])->name('tables.index');
+        Route::post('/tables/{table}/status', [PosController::class, 'updateTableStatus'])->name('tables.status');
 
         Route::get('/settings', [PosSettingController::class, 'show'])->name('settings.show');
         Route::post('/settings', [PosSettingController::class, 'update'])->name('settings.update');

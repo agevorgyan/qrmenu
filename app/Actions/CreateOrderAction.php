@@ -8,6 +8,8 @@ use App\Models\Location;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\RestaurantTable;
+use App\Models\User;
 use App\Models\Vendor;
 use App\Security\QuotaCatalog;
 use App\Services\CrmAutomationService;
@@ -407,6 +409,25 @@ class CreateOrderAction
 
             if ($customer) {
                 $this->customerSyncService->recalculateStats($customer);
+            }
+
+            // Automatically link and occupy table if dine-in
+            if (! in_array($dto->type, ['delivery', 'takeaway']) && ($dto->restaurantTableId || $dto->tableNumber)) {
+                $table = $dto->restaurantTableId
+                    ? RestaurantTable::find($dto->restaurantTableId)
+                    : RestaurantTable::where('vendor_id', $vendor->id)
+                        ->when($dto->locationId, fn ($q) => $q->where('location_id', $dto->locationId))
+                        ->where(function ($q) use ($dto) {
+                            $q->where('table_number', $dto->tableNumber)
+                                ->orWhere('name', $dto->tableNumber);
+                        })->first();
+
+                if ($table) {
+                    if (! $order->restaurant_table_id) {
+                        $order->update(['restaurant_table_id' => $table->id]);
+                    }
+                    $table->markOccupied($order, $dto->waiterId ? User::find($dto->waiterId) : null);
+                }
             }
         });
 

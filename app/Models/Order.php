@@ -48,6 +48,9 @@ class Order extends Model
         'notes',
         'opened_at',
         'closed_at',
+        'lock_version',
+        'parent_order_id',
+        'split_type',
     ];
 
     protected $casts = [
@@ -60,6 +63,7 @@ class Order extends Model
         'tax_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'guest_count' => 'integer',
+        'lock_version' => 'integer',
         'marketing_opt_in' => 'boolean',
         'opened_at' => 'datetime',
         'closed_at' => 'datetime',
@@ -172,6 +176,16 @@ class Order extends Model
     public function splitBills()
     {
         return $this->hasMany(SplitBill::class);
+    }
+
+    public function parentOrder()
+    {
+        return $this->belongsTo(Order::class, 'parent_order_id');
+    }
+
+    public function childOrders()
+    {
+        return $this->hasMany(Order::class, 'parent_order_id');
     }
 
     public function activeSplitBill()
