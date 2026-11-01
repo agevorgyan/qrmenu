@@ -90,6 +90,9 @@ class RoleManagementService
             ]);
 
             if (! empty($permissionKeys)) {
+                if (Permission::whereIn('key', $permissionKeys)->count() < count($permissionKeys)) {
+                    PermissionCatalog::syncToDatabase();
+                }
                 $permissionIds = Permission::whereIn('key', $permissionKeys)->pluck('id')->all();
                 $role->permissions()->sync($permissionIds);
             }
@@ -149,6 +152,9 @@ class RoleManagementService
             ]);
 
             if ($permissionKeys !== null) {
+                if (! empty($permissionKeys) && Permission::whereIn('key', $permissionKeys)->count() < count($permissionKeys)) {
+                    PermissionCatalog::syncToDatabase();
+                }
                 $permissionIds = Permission::whereIn('key', $permissionKeys)->pluck('id')->all();
                 $role->permissions()->sync($permissionIds);
             }
@@ -267,7 +273,11 @@ class RoleManagementService
             throw new InvalidArgumentException(__('Invalid override effect: must be allow or deny.'));
         }
 
-        $permission = Permission::where('key', $permissionKey)->firstOrFail();
+        $permission = Permission::where('key', $permissionKey)->first();
+        if (! $permission) {
+            PermissionCatalog::syncToDatabase();
+            $permission = Permission::where('key', $permissionKey)->firstOrFail();
+        }
 
         return DB::transaction(function () use ($membership, $permission, $effect, $expiresAt, $reason, $actor) {
             $override = MembershipPermission::updateOrCreate(
@@ -315,7 +325,11 @@ class RoleManagementService
     ): bool {
         $this->ensureCanManageRoles($actor, $membership->vendor_id);
 
-        $permission = Permission::where('key', $permissionKey)->firstOrFail();
+        $permission = Permission::where('key', $permissionKey)->first();
+        if (! $permission) {
+            PermissionCatalog::syncToDatabase();
+            $permission = Permission::where('key', $permissionKey)->firstOrFail();
+        }
 
         return DB::transaction(function () use ($membership, $permission, $actor) {
             $deleted = MembershipPermission::where('membership_id', $membership->id)

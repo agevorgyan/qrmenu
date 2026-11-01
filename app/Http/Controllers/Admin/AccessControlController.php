@@ -16,6 +16,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -32,6 +33,11 @@ class AccessControlController extends Controller
     public function index(Request $request): View
     {
         $this->authorize('team.view');
+
+        // Self-heal: ensure canonical permissions and system roles exist
+        if (Permission::count() === 0 || Role::where('is_system', true)->count() === 0) {
+            PermissionCatalog::syncToDatabase();
+        }
 
         $user = Auth::user();
         $vendor = $user->vendor;
@@ -283,7 +289,7 @@ class AccessControlController extends Controller
         }
 
         $validated = $request->validate([
-            'permission_key' => 'required|string|exists:permissions,key',
+            'permission_key' => ['required', 'string', Rule::in(PermissionCatalog::validKeys())],
             'effect' => 'required|string|in:allow,deny',
             'expires_at' => 'nullable|date|after:now',
             'reason' => 'nullable|string|max:255',
@@ -382,7 +388,7 @@ class AccessControlController extends Controller
             'slug' => 'nullable|string|max:100',
             'description' => 'nullable|string|max:500',
             'permissions' => 'nullable|array',
-            'permissions.*' => 'string|exists:permissions,key',
+            'permissions.*' => ['string', Rule::in(PermissionCatalog::validKeys())],
         ]);
 
         $role = $this->roleService->createCustomRole($vendor, $actor, $validated);
@@ -415,7 +421,7 @@ class AccessControlController extends Controller
             'description' => 'nullable|string|max:500',
             'is_active' => 'nullable|boolean',
             'permissions' => 'nullable|array',
-            'permissions.*' => 'string|exists:permissions,key',
+            'permissions.*' => ['string', Rule::in(PermissionCatalog::validKeys())],
         ]);
 
         $updated = $this->roleService->updateCustomRole($role, $actor, $validated);

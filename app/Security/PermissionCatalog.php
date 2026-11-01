@@ -2,6 +2,8 @@
 
 namespace App\Security;
 
+use App\Models\Role;
+
 class PermissionCatalog
 {
     /**
@@ -1149,7 +1151,12 @@ class PermissionCatalog
                 'permissions' => [
                     Permission::POS_ACCESS,
                     Permission::POS_ORDERS,
+                    Permission::POS_PAYMENTS,
+                    Permission::POS_CASH_DRAWER,
+                    Permission::POS_DISCOUNTS,
                     'workspace.cashier.access',
+                    Permission::MENU_VIEW,
+                    Permission::ORDERS_VIEW,
                     Permission::ORDERS_SEARCH,
                     Permission::ORDERS_VIEW_DETAILS,
                     Permission::PAYMENTS_CREATE,
@@ -1284,5 +1291,62 @@ class PermissionCatalog
                 ],
             ],
         ];
+    }
+
+    /**
+     * Get all valid canonical permission keys.
+     *
+     * @return array<int, string>
+     */
+    public static function validKeys(): array
+    {
+        return array_column(self::all(), 'key');
+    }
+
+    /**
+     * Ensure all canonical permissions and system roles exist in the database.
+     */
+    public static function syncToDatabase(): void
+    {
+        $permissionModels = [];
+        foreach (self::all() as $item) {
+            $permission = \App\Models\Permission::updateOrCreate(
+                ['key' => $item['key']],
+                [
+                    'module' => $item['module'],
+                    'action' => $item['action'],
+                    'description' => $item['description'],
+                    'risk_level' => $item['risk_level'],
+                    'is_sensitive' => $item['is_sensitive'],
+                    'is_system' => $item['is_system'],
+                ]
+            );
+            $permissionModels[$item['key']] = $permission;
+        }
+
+        foreach (self::roleTemplates() as $slug => $data) {
+            $role = Role::updateOrCreate(
+                [
+                    'vendor_id' => null,
+                    'slug' => $slug,
+                ],
+                [
+                    'name' => $data['name'],
+                    'description' => $data['description'],
+                    'is_system' => true,
+                    'is_active' => true,
+                ]
+            );
+
+            if ($role->wasRecentlyCreated || $role->permissions()->count() === 0) {
+                $permissionIds = [];
+                foreach ($data['permissions'] as $permKey) {
+                    if (isset($permissionModels[$permKey])) {
+                        $permissionIds[] = $permissionModels[$permKey]->id;
+                    }
+                }
+                $role->permissions()->sync($permissionIds);
+            }
+        }
     }
 }
