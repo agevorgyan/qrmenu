@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Security\Permission;
+use App\Services\AuthorizationService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,7 +18,20 @@ class EnsureRole
             return redirect()->route('login');
         }
 
-        if (in_array($user->role, $roles, true) || ($user->isSuperAdmin() && $user->hasPermission(Permission::PLATFORM_ACCESS))) {
+        if ($user->isSuperAdmin() && $user->hasPermission(Permission::PLATFORM_ACCESS)) {
+            return $next($request);
+        }
+
+        $userRoles = app(AuthorizationService::class)->getUserRoles($user);
+        $userRoleSlugs = array_map(function ($r) {
+            return is_string($r) ? $r : $r->slug;
+        }, $userRoles);
+
+        if (! empty($user->role) && ! in_array($user->role, $userRoleSlugs, true)) {
+            $userRoleSlugs[] = $user->role;
+        }
+
+        if (! empty(array_intersect($roles, $userRoleSlugs))) {
             return $next($request);
         }
 

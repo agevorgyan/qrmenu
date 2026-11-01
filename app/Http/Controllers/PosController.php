@@ -61,13 +61,29 @@ class PosController extends Controller
         $user = Auth::user();
         $vendor = $user->vendor;
 
-        $allowedModes = match ($user->role) {
-            'waiter', 'staff' => ['waiter'],
-            'cashier' => ['cashier'],
-            'chef', 'kitchen' => ['kds'],
-            'manager', 'vendor_owner' => ['manager', 'cashier', 'waiter', 'kds'],
-            default => $user->isSuperAdmin() ? ['manager', 'cashier', 'waiter', 'kds'] : ['waiter'],
-        };
+        $allowedModes = [];
+
+        if ($user->hasPermission('workspace.waiter.access') || in_array($user->role, ['waiter', 'staff', 'manager', 'vendor_owner'], true)) {
+            $allowedModes[] = 'waiter';
+        }
+        if ($user->hasPermission('workspace.cashier.access') || in_array($user->role, ['cashier', 'head_cashier', 'manager', 'vendor_owner'], true)) {
+            $allowedModes[] = 'cashier';
+        }
+        if ($user->hasPermission('workspace.manager.access') || in_array($user->role, ['manager', 'vendor_owner'], true)) {
+            $allowedModes[] = 'manager';
+        }
+        if ($user->hasPermission('workspace.kitchen.access') || $user->hasPermission(Permission::POS_KDS) || in_array($user->role, ['chef', 'kitchen', 'kitchen_manager', 'manager', 'vendor_owner'], true)) {
+            $allowedModes[] = 'kds';
+        }
+
+        if ($user->isSuperAdmin()) {
+            $allowedModes = ['manager', 'cashier', 'waiter', 'kds'];
+        }
+
+        $allowedModes = array_values(array_unique($allowedModes));
+        if (empty($allowedModes)) {
+            abort(403, __('You are not authorized to access any POS workspace.'));
+        }
 
         if ($request->has('mode')) {
             $requestedMode = $request->get('mode');

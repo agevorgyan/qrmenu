@@ -1719,6 +1719,16 @@ class Vendor extends Model
         return $this->hasMany(User::class);
     }
 
+    public function memberships()
+    {
+        return $this->hasMany(VendorMembership::class);
+    }
+
+    public function customRoles()
+    {
+        return $this->hasMany(Role::class);
+    }
+
     public function analyticsLogs()
     {
         return $this->hasMany(AnalyticsLog::class);

@@ -417,7 +417,7 @@
 
             @can('team.view')
                 <a href="{{ route('admin.team.index') }}" 
-                   class="nav-item {{ request()->routeIs('admin.team.*') ? 'active' : '' }}" 
+                   class="nav-item {{ (request()->routeIs('admin.team.*') || request()->routeIs('admin.access_control.*')) ? 'active' : '' }}" 
                    style="justify-content: space-between;"
                    title="{{ __('Team & Employees') }}">
                     <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">

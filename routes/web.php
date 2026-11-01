@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AccessControlController;
 use App\Http\Controllers\AdminEventInquiryController;
 use App\Http\Controllers\AdminReservationController;
 use App\Http\Controllers\AdminSplitBillController;
@@ -401,8 +402,8 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
 // Provider Webhook Endpoint (No CSRF needed, signature verified)
 Route::post('/api/webhooks/email/{provider}', [EmailWebhookController::class, 'handle'])->name('webhooks.email');
 
-// 4. Vendor Admin Panel (/admin) - Strictly restricted to Vendor Owners & Managers
-Route::middleware(['auth', 'verified', 'role:vendor_owner,manager', EnsureSubscriptionIsActive::class])->prefix('admin')->name('admin.')->group(function () {
+// 4. Vendor Admin Panel (/admin) - Strictly restricted to Vendor Owners, Managers & authorized operational staff
+Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', EnsureSubscriptionIsActive::class])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [VendorAdminController::class, 'dashboard'])->name('dashboard');
 
     // Vendor Subscription Status & Payment History (Vendor Owner only)
@@ -433,8 +434,26 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager', EnsureSubscr
     });
 
     Route::middleware([EnsurePlanHasFeature::class.':team'])->group(function () {
-        Route::get('/team', [VendorAdminController::class, 'teamIndex'])->name('team.index');
+        Route::get('/team', [AccessControlController::class, 'index'])->name('team.index');
         Route::post('/team', [VendorAdminController::class, 'storeTeamMember'])->name('team.store');
+
+        Route::prefix('access-control')->name('access_control.')->group(function () {
+            Route::get('/', [AccessControlController::class, 'index'])->name('index');
+            Route::get('/users/{user}/effective-permissions', [AccessControlController::class, 'userEffectivePermissions'])->name('users.effective_permissions');
+            Route::post('/users/{user}/roles', [AccessControlController::class, 'updateUserRoles'])->name('users.roles.update');
+            Route::post('/users/{user}/locations', [AccessControlController::class, 'updateUserLocations'])->name('users.locations.update');
+            Route::post('/users/{user}/status', [AccessControlController::class, 'updateUserStatus'])->name('users.status.update');
+            Route::post('/users/{user}/overrides', [AccessControlController::class, 'storeUserOverride'])->name('users.overrides.store');
+            Route::delete('/users/{user}/overrides/{permissionKey}', [AccessControlController::class, 'destroyUserOverride'])->name('users.overrides.destroy');
+            Route::post('/users/{user}/revoke-sessions', [AccessControlController::class, 'revokeUserSessions'])->name('users.revoke_sessions');
+
+            Route::post('/roles', [AccessControlController::class, 'storeRole'])->name('roles.store');
+            Route::put('/roles/{role}', [AccessControlController::class, 'updateRole'])->name('roles.update');
+            Route::post('/roles/{role}/duplicate', [AccessControlController::class, 'duplicateRole'])->name('roles.duplicate');
+            Route::delete('/roles/{role}', [AccessControlController::class, 'destroyRole'])->name('roles.destroy');
+
+            Route::get('/audit-logs/export', [AccessControlController::class, 'exportAuditLogs'])->name('audit_logs.export');
+        });
     });
 
     // Menu Builder

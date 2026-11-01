@@ -22,7 +22,12 @@ class OrderPolicy
 
     public function viewAny(User $user): bool
     {
-        return ! empty($user->vendor_id) && $user->hasPermission(Permission::ORDERS_VIEW);
+        return ! empty($user->vendor_id) && (
+            $user->hasPermission(Permission::ORDERS_VIEW)
+            || $user->hasPermission(Permission::ORDERS_VIEW_ALL)
+            || $user->hasPermission(Permission::ORDERS_VIEW_OWN)
+            || $user->hasPermission(Permission::POS_ORDERS)
+        );
     }
 
     public function view(User $user, Order $order): bool

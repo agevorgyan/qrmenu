@@ -520,4 +520,20 @@ class FineGrainedRbacAuthorizationTest extends TestCase
             'location_id' => $this->locationA->id,
         ]);
     }
+
+    /**
+     * 12. Security: Explicit DENY must never be bypassed by parent/superset permissions.
+     */
+    public function test_explicit_deny_cannot_be_bypassed_by_superset_inheritance(): void
+    {
+        // Waiter role naturally inherits 'pos.orders', which is a superset for 'orders.view_own' and 'orders.create'.
+        $this->assertTrue($this->staff->hasPermission(Permission::ORDERS_VIEW_OWN));
+
+        // Explicitly deny 'orders.view_own'
+        $this->staff->revokePermission(Permission::ORDERS_VIEW_OWN);
+        $this->staff->save();
+
+        // Even though staff retains 'pos.orders' in role defaults, the explicit deny MUST prevail.
+        $this->assertFalse($this->staff->fresh()->hasPermission(Permission::ORDERS_VIEW_OWN));
+    }
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Security\Permission;
+use App\Services\AuthorizationService;
 use App\Services\EntitlementService;
 use App\Services\SecurityAuditService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -76,6 +77,36 @@ class User extends Authenticatable implements MustVerifyEmail
             if (! array_key_exists('email_verified_at', $user->getAttributes())) {
                 $user->email_verified_at = now();
             }
+            if (! array_key_exists('is_active', $user->getAttributes())) {
+                $user->is_active = true;
+            }
+        });
+
+        static::created(function (User $user) {
+            if ($user->vendor_id) {
+                $membership = VendorMembership::firstOrCreate(
+                    [
+                        'vendor_id' => $user->vendor_id,
+                        'user_id' => $user->id,
+                    ],
+                    [
+                        'status' => $user->is_active ? 'active' : 'inactive',
+                        'all_locations' => empty($user->location_id),
+                        'joined_at' => now(),
+                    ]
+                );
+
+                if (! empty($user->role)) {
+                    $roleModel = Role::whereNull('vendor_id')->where('slug', $user->role)->first();
+                    if ($roleModel) {
+                        $membership->roles()->syncWithoutDetaching([$roleModel->id]);
+                    }
+                }
+
+                if (! empty($user->location_id)) {
+                    $membership->locations()->syncWithoutDetaching([$user->location_id]);
+                }
+            }
         });
 
         static::saving(function (User $user) {
@@ -120,6 +151,31 @@ class User extends Authenticatable implements MustVerifyEmail
     public function vendor(): BelongsTo
     {
         return $this->belongsTo(Vendor::class);
+    }
+
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(VendorMembership::class);
+    }
+
+    public function activeMembership(?int $vendorId = null): ?VendorMembership
+    {
+        $vId = $vendorId ?? $this->vendor_id;
+        if (! $vId) {
+            return null;
+        }
+
+        if ($this->relationLoaded('memberships')) {
+            return $this->memberships
+                ->where('vendor_id', $vId)
+                ->where('status', 'active')
+                ->first();
+        }
+
+        return $this->memberships()
+            ->where('vendor_id', $vId)
+            ->where('status', 'active')
+            ->first();
     }
 
     public function location(): BelongsTo
@@ -245,74 +301,19 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get all active permissions for this user (role defaults + custom overrides).
+     * Get all active permissions for this user (delegated to AuthorizationService).
      */
     public function getPermissions(): array
     {
-        $roleDefaults = Permission::forRole($this->role ?? '');
-
-        $custom = $this->custom_permissions ?? [];
-        $granted = $custom['granted'] ?? [];
-        $denied = $custom['denied'] ?? [];
-
-        $effective = array_unique(array_merge($roleDefaults, $granted));
-
-        if (! empty($denied)) {
-            $effective = array_values(array_diff($effective, $denied));
-        }
-
-        return $effective;
+        return app(AuthorizationService::class)->getEffectivePermissions($this);
     }
 
     /**
-     * Check if user has a specific permission.
+     * Check if user has a specific permission (delegated to AuthorizationService).
      */
     public function hasPermission(string $permission): bool
     {
-        $perms = $this->getPermissions();
-
-        if (in_array($permission, $perms, true)) {
-            return true;
-        }
-
-        // Aliases and supersets
-        $supersets = [
-            'orders.view_own' => ['orders.view', 'orders.view_all', 'pos.orders'],
-            'orders.create' => ['pos.orders'],
-            'orders.update_own' => ['orders.update', 'orders.manage'],
-            'orders.view_details' => ['orders.view', 'orders.view_all', 'pos.orders'],
-            'orders.search' => ['orders.view', 'orders.view_all', 'pos.orders'],
-            'orders.view' => ['orders.view_all'],
-            'payments.create' => ['pos.payments'],
-            'payments.cash' => ['pos.payments'],
-            'payments.card' => ['pos.payments'],
-            'payments.split' => ['pos.payments'],
-            'shifts.open' => ['pos.cash_drawer'],
-            'shifts.close' => ['pos.cash_drawer'],
-            'shifts.view_own' => ['pos.cash_drawer', 'pos.reports', 'shifts.view_all'],
-            'shifts.view_all' => ['pos.reports'],
-            'discounts.approve' => ['pos.discounts'],
-            'refunds.approve' => ['pos.refunds'],
-            'tips.view_own' => ['tips.view', 'pos.reports'],
-            'employees.view' => ['team.view'],
-            'employees.manage' => ['team.manage'],
-            'tables.manage' => ['pos.settings'],
-            'audit_logs.view' => ['pos.settings', 'platform.logs'],
-            'profile.view_own' => ['pos.access'],
-            'profile.update_own' => ['pos.access'],
-            'password.change_own' => ['pos.access'],
-            'pin.manage_own' => ['pos.access'],
-        ];
-
-        if (isset($supersets[$permission])) {
-            foreach ($supersets[$permission] as $parent) {
-                if (in_array($parent, $perms, true)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        return app(AuthorizationService::class)->hasPermission($this, $permission);
     }
 
     /**
@@ -371,6 +372,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'denied' => $denied,
         ];
 
+        app(AuthorizationService::class)->invalidateCache($this->id, $this->vendor_id);
+
         return $this;
     }
 
@@ -394,6 +397,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'denied' => $denied,
         ];
 
+        app(AuthorizationService::class)->invalidateCache($this->id, $this->vendor_id);
+
         return $this;
     }
 
@@ -402,19 +407,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function canAccessLocation(?Location $location): bool
     {
-        if (! $location) {
-            return true;
-        }
-
-        if ((int) $this->vendor_id !== (int) $location->vendor_id) {
-            return false;
-        }
-
-        if ($this->location_id !== null) {
-            return (int) $this->location_id === (int) $location->id;
-        }
-
-        return true;
+        return app(AuthorizationService::class)->canAccessLocation($this, $location);
     }
 
     /**
@@ -422,15 +415,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function canAccessLocationId(?int $locationId): bool
     {
-        if ($locationId === null) {
-            return true;
-        }
-
-        if ($this->location_id !== null) {
-            return (int) $this->location_id === (int) $locationId;
-        }
-
-        return true;
+        return app(AuthorizationService::class)->canAccessLocationId($this, $locationId);
     }
 
     public function hasTwoFactorEnabled(): bool
