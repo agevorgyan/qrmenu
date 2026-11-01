@@ -1120,15 +1120,202 @@
             line-height: 1.1;
         }
 
-        @media (max-width: 900px) {
+        .pos-mode-pane {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        .pos-lang-switch {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 2px;
+            gap: 2px;
+        }
+
+        .pos-lang-btn {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 7px;
+            border-radius: 6px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+
+        .pos-lang-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .pos-lang-btn.active {
+            background: var(--primary);
+            color: #000;
+            font-weight: 800;
+        }
+
+        .status-pill.status-pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+        .status-pill.status-preparing {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+        .status-pill.status-ready {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+        .status-pill.status-served {
+            background: rgba(99, 102, 241, 0.15);
+            color: #a5b4fc;
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .mobile-cart-float-bar {
+            display: none;
+        }
+        .cart-mobile-backdrop {
+            display: none;
+        }
+        .waiter-mobile-cart-close {
+            display: none;
+        }
+        .cashier-mobile-back {
+            display: none;
+        }
+
+        @media (max-width: 991px) {
             .order-taking-layout {
                 flex-direction: column;
+                position: relative;
             }
-            .cart-pane {
-                width: 100%;
-                height: 45vh;
-                border-left: none;
-                border-top: 1px solid var(--border-color);
+            .catalog-pane {
+                width: 100% !important;
+                height: 100% !important;
+                flex: 1;
+            }
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+                gap: 0.65rem !important;
+                padding-bottom: 85px !important;
+            }
+            .dish-card {
+                min-height: 175px !important;
+            }
+            .dish-img-wrap {
+                height: 95px !important;
+            }
+
+            /* Waiter Cart Drawer Bottom Sheet */
+            .waiter-cart-pane {
+                position: fixed !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                top: auto !important;
+                width: 100% !important;
+                height: 84vh !important;
+                max-height: 84vh !important;
+                z-index: 100 !important;
+                border-radius: 20px 20px 0 0 !important;
+                box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.7) !important;
+                border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+                transform: translateY(100%);
+                transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+                display: flex !important;
+                flex-direction: column !important;
+                background: var(--bg-card) !important;
+            }
+            .waiter-cart-pane.mobile-open {
+                transform: translateY(0) !important;
+            }
+            .cart-mobile-backdrop {
+                position: fixed !important;
+                inset: 0 !important;
+                background: rgba(0, 0, 0, 0.65) !important;
+                backdrop-filter: blur(4px) !important;
+                z-index: 99 !important;
+                display: block !important;
+            }
+            .waiter-mobile-cart-close {
+                display: inline-flex !important;
+            }
+
+            /* Floating bottom bar */
+            .mobile-cart-float-bar {
+                display: flex !important;
+                align-items: center;
+                justify-content: space-between;
+                position: fixed;
+                bottom: 74px;
+                left: 12px;
+                right: 12px;
+                height: 52px;
+                background: var(--primary-gradient);
+                border-radius: 14px;
+                padding: 0 1.15rem;
+                color: #fff;
+                font-weight: 700;
+                box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
+                z-index: 60;
+                cursor: pointer;
+                transition: transform 0.15s ease;
+            }
+            .mobile-cart-float-bar:active {
+                transform: scale(0.98);
+            }
+            .cart-float-left {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .cart-float-badge {
+                background: #fff;
+                color: #000;
+                font-size: 0.75rem;
+                font-weight: 800;
+                padding: 2px 7px;
+                border-radius: 999px;
+            }
+            .cart-float-title {
+                font-size: 0.9rem;
+                font-weight: 700;
+            }
+            .cart-float-right {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-family: var(--font-display);
+                font-size: 1.05rem;
+                font-weight: 800;
+            }
+
+            /* Cashier Mobile Inspector */
+            .cashier-inspector-pane {
+                position: fixed !important;
+                inset: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                z-index: 100 !important;
+                border-radius: 0 !important;
+                border: none !important;
+                display: flex !important;
+                flex-direction: column !important;
+                background: var(--bg-card) !important;
+            }
+            .cashier-mobile-back {
+                display: inline-flex !important;
             }
         }
 
@@ -1139,15 +1326,41 @@
             .pos-stage {
                 padding-bottom: 70px !important;
             }
-            .pos-top-bar {
-                padding: 0.5rem 0.75rem;
+            .desktop-only-tool {
+                display: none !important;
+            }
+            .pos-header {
+                padding: 0.4rem 0.65rem !important;
+                height: 52px !important;
+            }
+            .pos-logo-badge {
+                width: 32px !important;
+                height: 32px !important;
+                font-size: 0.95rem !important;
+            }
+            .pos-vendor-name {
+                font-size: 0.85rem !important;
+                max-width: 120px !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+            }
+            .pos-branch-select {
+                max-width: 100px !important;
             }
             .pos-actions-group .pos-tool-btn {
-                min-width: 44px;
-                min-height: 44px;
+                min-width: 38px;
+                min-height: 38px;
             }
             .pos-mode-switcher {
                 display: none !important;
+            }
+            .pos-user-info {
+                display: none !important;
+            }
+            .pos-user-badge {
+                padding: 3px !important;
+                border-radius: 50% !important;
             }
         }
     </style>
@@ -1216,6 +1429,13 @@
 
         <!-- Right System Indicators & Tools -->
         <div class="pos-actions-group">
+            <!-- Language Switcher -->
+            <div class="pos-lang-switch" title="{{ __('Language') }}">
+                <a href="{{ route('lang.switch', 'hy') }}" class="pos-lang-btn {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">HY</a>
+                <a href="{{ route('lang.switch', 'ru') }}" class="pos-lang-btn {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">RU</a>
+                <a href="{{ route('lang.switch', 'en') }}" class="pos-lang-btn {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">EN</a>
+            </div>
+
             <!-- Online / Offline Status Badge -->
             <div class="status-pill" :class="{ 'offline': !isOnline }">
                 <span class="status-dot"></span>
@@ -1226,48 +1446,48 @@
             <template x-if="offlineQueue && offlineQueue.length > 0">
                 <button type="button" class="status-pill" style="background: rgba(245, 158, 11, 0.2); border-color: rgba(245, 158, 11, 0.4); color: #fbbf24; cursor: pointer;" @click="syncOfflineQueue()" title="{{ __('Sync Offline Data') }}">
                     <i class="fa-solid fa-cloud-arrow-up" :class="{ 'fa-spin': isSyncing }"></i>
-                    <span x-text="'Sync (' + offlineQueue.length + ')'"></span>
+                    <span x-text="'{{ __('Sync') }} (' + offlineQueue.length + ')'"></span>
                 </button>
             </template>
 
             <!-- Waiter Calls Indicator -->
-            <button type="button" class="pos-tool-btn" @click="openWaiterCallsModal()" :style="waiterCalls.length > 0 ? 'color: #ef4444;' : ''" title="{{ __('Waiter Calls') }}" style="position: relative;">
+            <button type="button" class="pos-tool-btn" :class="{ 'desktop-only-tool': waiterCalls.length === 0 }" @click="openWaiterCallsModal()" :style="waiterCalls.length > 0 ? 'color: #ef4444;' : ''" title="{{ __('Waiter Calls') }}" style="position: relative;">
                 <i class="fa-solid fa-bell"></i>
                 <span x-show="waiterCalls.length > 0" x-text="waiterCalls.length" style="position: absolute; top: 1px; right: 1px; background: #ef4444; color: #fff; font-size: 0.65rem; font-weight: 800; border-radius: 999px; padding: 0.05rem 0.35rem; line-height: 1;"></span>
             </button>
 
             <!-- Incoming External Orders (QR / Online) Indicator -->
-            <button type="button" class="pos-tool-btn" @click="openIncomingOrdersModal()" :style="incomingOrders.length > 0 ? 'color: #3b82f6;' : ''" title="{{ __('Incoming Orders') }}" style="position: relative;">
+            <button type="button" class="pos-tool-btn" :class="{ 'desktop-only-tool': incomingOrders.length === 0 }" @click="openIncomingOrdersModal()" :style="incomingOrders.length > 0 ? 'color: #3b82f6;' : ''" title="{{ __('Incoming Orders') }}" style="position: relative;">
                 <i class="fa-solid fa-cloud-arrow-down"></i>
                 <span x-show="incomingOrders.length > 0" x-text="incomingOrders.length" style="position: absolute; top: 1px; right: 1px; background: #3b82f6; color: #fff; font-size: 0.65rem; font-weight: 800; border-radius: 999px; padding: 0.05rem 0.35rem; line-height: 1;"></span>
             </button>
 
             <!-- Reservations Indicator -->
-            <button type="button" class="pos-tool-btn" @click="openReservationsModal()" :style="reservations.length > 0 ? 'color: #10b981;' : ''" title="{{ __('Reservations') }}" style="position: relative;">
+            <button type="button" class="pos-tool-btn" :class="{ 'desktop-only-tool': reservations.length === 0 }" @click="openReservationsModal()" :style="reservations.length > 0 ? 'color: #10b981;' : ''" title="{{ __('Reservations') }}" style="position: relative;">
                 <i class="fa-regular fa-calendar-check"></i>
                 <span x-show="reservations.length > 0" x-text="reservations.length" style="position: absolute; top: 1px; right: 1px; background: #10b981; color: #fff; font-size: 0.65rem; font-weight: 800; border-radius: 999px; padding: 0.05rem 0.35rem; line-height: 1;"></span>
             </button>
 
             <!-- Kitchen Display System (KDS) Button -->
             @if(Auth::user()->isVendorOwner() || Auth::user()->isManager() || Auth::user()->isChef())
-            <a href="{{ route('pos.kds') }}" target="_blank" class="pos-tool-btn" title="{{ __('Kitchen Display System (KDS)') }}" style="text-decoration: none; color: #f59e0b;">
+            <a href="{{ route('pos.kds') }}" target="_blank" class="pos-tool-btn desktop-only-tool" title="{{ __('Kitchen Display System (KDS)') }}" style="text-decoration: none; color: #f59e0b;">
                 <i class="fa-solid fa-fire-burner"></i>
             </a>
             @endif
 
             <!-- Fullscreen Toggle -->
-            <button type="button" class="pos-tool-btn" @click="toggleFullscreen()" title="{{ __('Toggle Fullscreen') }}">
+            <button type="button" class="pos-tool-btn desktop-only-tool" @click="toggleFullscreen()" title="{{ __('Toggle Fullscreen') }}">
                 <i class="fa-solid" :class="isFullscreen ? 'fa-compress' : 'fa-expand'"></i>
             </button>
 
             <!-- Quick Lock Screen -->
-            <button type="button" class="pos-tool-btn" @click="lockTerminal()" title="{{ __('Lock Terminal') }}">
+            <button type="button" class="pos-tool-btn desktop-only-tool" @click="lockTerminal()" title="{{ __('Lock Terminal') }}">
                 <i class="fa-solid fa-lock"></i>
             </button>
 
             <!-- Quick Employee Switcher Button -->
             @if(Auth::user()->isVendorOwner() || Auth::user()->isManager() || count($allowedModes ?? []) > 1)
-            <button type="button" class="pos-tool-btn" @click="openEmployeeSwitcher()" title="{{ __('Quick Switch Employee') }}" style="color: var(--primary);">
+            <button type="button" class="pos-tool-btn desktop-only-tool" @click="openEmployeeSwitcher()" title="{{ __('Quick Switch Employee') }}" style="color: var(--primary);">
                 <i class="fa-solid fa-users-gear"></i>
             </button>
             @endif
@@ -1290,11 +1510,11 @@
 
             <!-- Return to Admin or Logout -->
             @if(Auth::user()->isVendorOwner() || Auth::user()->isManager())
-            <a href="{{ route('admin.dashboard') }}" class="pos-tool-btn" title="{{ __('Back to Dashboard') }}">
+            <a href="{{ route('admin.dashboard') }}" class="pos-tool-btn desktop-only-tool" title="{{ __('Back to Dashboard') }}">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
             </a>
             @else
-            <button type="button" class="pos-tool-btn" @click="confirmLogout()" title="{{ __('Logout') }}" style="color: #ef4444;">
+            <button type="button" class="pos-tool-btn desktop-only-tool" @click="confirmLogout()" title="{{ __('Logout') }}" style="color: #ef4444;">
                 <i class="fa-solid fa-power-off"></i>
             </button>
             @endif
@@ -1430,7 +1650,7 @@
             </div>
 
             <!-- Right: Order Cart -->
-            <div class="cart-pane">
+            <div class="cart-pane waiter-cart-pane" :class="{ 'mobile-open': showMobileCart }">
                 <!-- Cart Header -->
                 <div class="cart-header">
                     <div class="cart-type-selector">
@@ -1445,9 +1665,14 @@
                         </button>
                     </div>
 
-                    <button type="button" class="pos-tool-btn" style="width: 32px; height: 32px; font-size: 0.8rem; color: var(--danger);" @click="clearCart()" title="{{ __('Clear Cart') }}">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <button type="button" class="pos-tool-btn" style="width: 32px; height: 32px; font-size: 0.8rem; color: var(--danger);" @click="clearCart()" title="{{ __('Clear Cart') }}">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                        <button type="button" class="pos-tool-btn waiter-mobile-cart-close" style="width: 32px; height: 32px; font-size: 0.9rem;" @click="showMobileCart = false" title="{{ __('Close') }}">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Cart Items List -->
@@ -1573,7 +1798,7 @@
                                         </div>
                                         <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;" x-text="'#' + ord.order_number"></div>
                                     </div>
-                                    <span class="badge" :class="'badge-' + (ord.status === 'ready' ? 'emerald' : (ord.status === 'preparing' ? 'amber' : 'indigo'))" style="text-transform: capitalize; font-weight: 700;" x-text="ord.status"></span>
+                                    <span class="badge" :class="'badge-' + (ord.status === 'ready' ? 'emerald' : (ord.status === 'preparing' ? 'amber' : 'indigo'))" style="text-transform: capitalize; font-weight: 700;" x-text="translateStatus(ord.status)"></span>
                                 </div>
 
                                 <!-- Pending Cancellation Warning Banner -->
@@ -1679,14 +1904,14 @@
         <!-- ========================================== -->
         <!-- MODE 2: CASHIER MODE (BILLS & PAYMENTS)     -->
         <!-- ========================================== -->
-        <div class="pos-mode-pane" x-show="activeMode === 'cashier'" x-cloak>
-            <div style="display: flex; gap: 1.5rem; height: 100%;">
+        <div class="pos-mode-pane" x-show="activeMode === 'cashier'" x-cloak style="flex: 1; width: 100%; height: 100%; display: flex; flex-direction: column; overflow: hidden; padding: 1rem;">
+            <div style="display: flex; gap: 1.5rem; height: 100%; width: 100%; min-width: 0;">
                 <!-- Left: Open Orders Grid -->
-                <div style="flex: 1; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto;">
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; min-width: 0;">
                     <!-- Cash Drawer Shift Status Banner -->
-                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
                         <div style="display: flex; align-items: center; gap: 0.75rem;">
-                            <div style="width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;"
+                            <div style="width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"
                                  :style="currentShift ? 'background: rgba(16, 185, 129, 0.15); color: #10b981;' : 'background: rgba(239, 68, 68, 0.15); color: #ef4444;'">
                                 <i class="fa-solid fa-cash-register" style="font-size: 1.1rem;"></i>
                             </div>
@@ -1694,14 +1919,14 @@
                                 <div style="font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; gap: 6px;">
                                     <span x-text="currentShift ? '{{ __('Shift Open') }} #' + currentShift.shift_id : '{{ __('Shift Closed') }}'"></span>
                                     <template x-if="currentShift">
-                                        <span class="status-pill" style="font-size: 0.65rem;" x-text="'Float: ' + formatCurrency(currentShift.opening_float)"></span>
+                                        <span class="status-pill" style="font-size: 0.65rem;" x-text="'{{ __('Float') }}: ' + formatCurrency(currentShift.opening_float)"></span>
                                     </template>
                                 </div>
                                 <div style="font-size: 0.72rem; color: var(--text-muted);"
                                      x-text="currentShift ? ('{{ __('Expected Cash') }}: ' + formatCurrency(currentShift.expected_cash) + ' • {{ __('Sales') }}: ' + formatCurrency(currentShift.gross_sales)) : '{{ __('Open a shift to start accepting cash payments') }}'"></div>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 0.5rem;">
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                             <template x-if="!currentShift">
                                 <button type="button" class="cart-btn-primary" style="padding: 6px 14px; font-size: 0.8rem;" @click="openOpenShiftModal()">
                                     <i class="fa-solid fa-play"></i>
@@ -1709,7 +1934,7 @@
                                 </button>
                             </template>
                             <template x-if="currentShift">
-                                <div style="display: flex; gap: 0.5rem;">
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                                     <button type="button" class="cart-btn-secondary" style="padding: 6px 12px; font-size: 0.78rem;" @click="openCashMovementModal()">
                                         <i class="fa-solid fa-money-bill-transfer"></i>
                                         <span>{{ __('Cash Movement') }}</span>
@@ -1724,30 +1949,53 @@
                     </div>
 
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h2 style="font-family: var(--font-display); font-size: 1.35rem; font-weight: 700;">
+                        <h2 style="font-family: var(--font-display); font-size: 1.35rem; font-weight: 700; color: #fff; margin: 0;">
                             {{ __('Open Unpaid Orders') }}
                         </h2>
-                        <button type="button" class="pos-tool-btn" @click="fetchCashierOrders()">
+                        <button type="button" class="pos-tool-btn" @click="fetchCashierOrders()" title="{{ __('Refresh') }}">
                             <i class="fa-solid fa-rotate"></i>
                         </button>
                     </div>
 
-                    <div class="cashier-orders-grid">
+                    <!-- Empty State for Cashier Orders -->
+                    <template x-if="cashierOrders.length === 0">
+                        <div style="background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: 16px; padding: 3rem 1.5rem; text-align: center; margin: 1rem 0;">
+                            <i class="fa-solid fa-circle-check" style="font-size: 2.5rem; color: #10b981; margin-bottom: 0.75rem;"></i>
+                            <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.5rem 0;">{{ __('All orders settled') }}</h3>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); max-width: 360px; margin: 0 auto 1.25rem auto;">
+                                {{ __('No open unpaid orders at the moment.') }}
+                            </p>
+                            <button type="button" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.45rem 1rem; border-radius: 8px;" @click="fetchCashierOrders()">
+                                <i class="fa-solid fa-rotate"></i> {{ __('Refresh') }}
+                            </button>
+                        </div>
+                    </template>
+
+                    <div class="cashier-orders-grid" x-show="cashierOrders.length > 0">
                         <template x-for="ord in cashierOrders" :key="ord.id">
                             <div class="cashier-order-card" 
                                  :class="{ 'selected': selectedCashierOrder && selectedCashierOrder.id === ord.id }"
                                  @click="selectOrderForCashier(ord)">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-weight: 800; color: var(--primary);" x-text="ord.order_number"></span>
-                                    <span class="status-pill" style="font-size: 0.65rem;" x-text="ord.status"></span>
+                                    <span style="font-weight: 800; color: var(--primary); font-size: 0.95rem;" x-text="ord.order_number"></span>
+                                    <span class="status-pill" 
+                                          :class="{
+                                              'status-pending': ord.status === 'pending',
+                                              'status-preparing': ord.status === 'preparing',
+                                              'status-ready': ord.status === 'ready',
+                                              'status-served': ord.status === 'served'
+                                          }"
+                                          style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase;"
+                                          x-text="translateStatus(ord.status)"></span>
                                 </div>
-                                <div style="font-size: 0.8rem; color: var(--text-muted);">
-                                    <span style="color: #fff; font-weight: 600;" x-text="ord.table_number || 'Counter'"></span> • 
-                                    <span x-text="ord.items ? ord.items.length + ' items' : ''"></span>
+                                <div style="font-size: 0.82rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
+                                    <span style="color: #fff; font-weight: 600;" x-text="ord.table_number ? ('{{ __('Table') }} ' + ord.table_number) : '{{ __('Counter') }}'"></span>
+                                    <span>•</span>
+                                    <span x-text="formatItemsCount(ord.items ? ord.items.length : 0)"></span>
                                 </div>
                                 <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 0.4rem;">
                                     <span style="font-size: 0.75rem; color: var(--text-subtle);" x-text="ord.waiter ? ord.waiter.name : ''"></span>
-                                    <span style="font-size: 1.1rem; font-weight: 800; color: #fff; font-family: var(--font-display);" x-text="formatCurrency(ord.total_amount)"></span>
+                                    <span style="font-size: 1.15rem; font-weight: 800; color: #fff; font-family: var(--font-display);" x-text="formatCurrency(ord.total_amount)"></span>
                                 </div>
                             </div>
                         </template>
@@ -1755,13 +2003,19 @@
                 </div>
 
                 <!-- Right: Bill Inspector / Settlement Panel -->
-                <div class="cart-pane" style="width: 420px; border-left: 1px solid var(--border-color); border-radius: 14px;" x-show="selectedCashierOrder">
+                <div class="cart-pane cashier-inspector-pane" style="width: 420px; border-left: 1px solid var(--border-color); border-radius: 14px;" x-show="selectedCashierOrder">
                     <div class="cart-header">
-                        <div>
-                            <div style="font-weight: 700; font-size: 0.95rem;" x-text="selectedCashierOrder?.order_number"></div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted);" x-text="'Table: ' + (selectedCashierOrder?.table_number || 'Counter')"></div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <button type="button" class="btn btn-secondary cashier-mobile-back" style="padding: 4px 10px; font-size: 0.8rem; border-radius: 8px;" @click="selectedCashierOrder = null">
+                                <i class="fa-solid fa-arrow-left"></i>
+                                <span>{{ __('Back to Orders') }}</span>
+                            </button>
+                            <div>
+                                <div style="font-weight: 700; font-size: 0.95rem; color: #fff;" x-text="'#' + (selectedCashierOrder?.order_number || '')"></div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);" x-text="selectedCashierOrder?.table_number ? ('{{ __('Table') }}: ' + selectedCashierOrder.table_number) : '{{ __('Counter') }}'"></div>
+                            </div>
                         </div>
-                        <button type="button" class="pos-tool-btn" style="width: 32px; height: 32px;" @click="selectedCashierOrder = null">
+                        <button type="button" class="pos-tool-btn" style="width: 32px; height: 32px;" @click="selectedCashierOrder = null" title="{{ __('Close') }}">
                             <i class="fa-solid fa-xmark"></i>
                         </button>
                     </div>
@@ -1808,7 +2062,7 @@
                             </button>
                             <button type="button" class="cart-btn-secondary" style="flex: 1;" @click="openQrPaymentModal('idram')" title="Idram / Telcell QR">
                                 <i class="fa-solid fa-qrcode" style="color: #06b6d4;"></i>
-                                <span>QR Pay</span>
+                                <span>{{ __('QR Payment') }}</span>
                             </button>
                             <button type="button" class="cart-btn-secondary" style="flex: 1;" @click="printOrderFiscalReceipt(selectedCashierOrder)" title="{{ __('Print Fiscal Receipt') }}">
                                 <i class="fa-solid fa-receipt" style="color: #10b981;"></i>
@@ -1823,10 +2077,10 @@
         <!-- ========================================== -->
         <!-- MODE 3: MANAGER MODE (OVERVIEW & DEVICES)   -->
         <!-- ========================================== -->
-        <div class="pos-mode-pane" x-show="activeMode === 'manager'" x-cloak>
+        <div class="pos-mode-pane" x-show="activeMode === 'manager'" x-cloak style="overflow-y: auto; padding: 1.25rem;">
             <div style="width: 100%; max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem;">
                 <!-- Manager Navigation Tabs -->
-                <div style="display: flex; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; flex-wrap: wrap;">
+                <div style="display: flex; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
                     <button type="button" class="pos-mode-btn" :class="{ 'active': managerTab === 'overview' }" @click="switchManagerTab('overview')">
                         <i class="fa-solid fa-chart-line"></i>
                         <span>{{ __('Overview') }}</span>
@@ -1928,22 +2182,42 @@
                 <!-- 1. TAB: OVERVIEW -->
                 <div x-show="managerTab === 'overview'" style="display: flex; flex-direction: column; gap: 1.5rem;">
                     <!-- KPI Bar -->
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
-                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
-                            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ __('Today\'s Sales') }}</div>
-                            <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: var(--primary); margin-top: 4px;" x-text="formatCurrency(managerStats.todaySales)"></div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ __("Today's Sales") }}</span>
+                                <span style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245, 158, 11, 0.15); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
+                                    <i class="fa-solid fa-coins"></i>
+                                </span>
+                            </div>
+                            <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: var(--primary); margin-top: 0.5rem;" x-text="formatCurrency(managerStats.todaySales)"></div>
                         </div>
-                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
-                            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ __('Active Orders') }}</div>
-                            <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: #fff; margin-top: 4px;" x-text="cashierOrders.length"></div>
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ __('Active Orders') }}</span>
+                                <span style="width: 32px; height: 32px; border-radius: 8px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
+                                    <i class="fa-solid fa-bell-concierge"></i>
+                                </span>
+                            </div>
+                            <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: #fff; margin-top: 0.5rem;" x-text="cashierOrders.length"></div>
                         </div>
-                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
-                            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ __('Occupied Tables') }}</div>
-                            <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: #34d399; margin-top: 4px;" x-text="managerStats.occupiedTables"></div>
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ __('Occupied Tables') }}</span>
+                                <span style="width: 32px; height: 32px; border-radius: 8px; background: rgba(16, 185, 129, 0.15); color: #34d399; display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
+                                    <i class="fa-solid fa-chair"></i>
+                                </span>
+                            </div>
+                            <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: #34d399; margin-top: 0.5rem;" x-text="managerStats.occupiedTables"></div>
                         </div>
-                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
-                            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ __('Connected Devices') }}</div>
-                            <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: #60a5fa; margin-top: 4px;" x-text="devices.length"></div>
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ __('Connected Devices') }}</span>
+                                <span style="width: 32px; height: 32px; border-radius: 8px; background: rgba(167, 139, 250, 0.15); color: #a78bfa; display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
+                                    <i class="fa-solid fa-desktop"></i>
+                                </span>
+                            </div>
+                            <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: #60a5fa; margin-top: 0.5rem;" x-text="devices.length"></div>
                         </div>
                     </div>
 
@@ -1978,7 +2252,7 @@
 
                     <template x-if="salesReport">
                         <div style="display: flex; flex-direction: column; gap: 1rem;">
-                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
                                 <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem;">
                                     <div style="font-size: 0.75rem; color: var(--text-muted);">{{ __('Net Sales') }}</div>
                                     <div style="font-size: 1.4rem; font-weight: 800; color: #10b981;" x-text="formatCurrency(salesReport.summary.net_sales)"></div>
@@ -2292,8 +2566,8 @@
             <div class="pos-modal-card" style="max-width: 440px;" @click.away="showTableActionModal = false">
                 <div class="pos-modal-header">
                     <div>
-                        <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;" x-text="'Table ' + (selectedTableForActions?.table_number || '')"></h3>
-                        <div style="font-size: 0.72rem; color: var(--text-muted);" x-text="'Status: ' + (selectedTableForActions?.status || 'available')"></div>
+                        <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;" x-text="'{{ __('Table') }} ' + (selectedTableForActions?.table_number || '')"></h3>
+                        <div style="font-size: 0.72rem; color: var(--text-muted);" x-text="'{{ __('Status') }}: ' + translateStatus(selectedTableForActions?.status || 'available')"></div>
                     </div>
                     <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showTableActionModal = false">
                         <i class="fa-solid fa-xmark"></i>
@@ -2304,10 +2578,10 @@
                         <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                                 <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary);" x-text="selectedTableForActions.order.order_number"></span>
-                                <span class="table-status-pill" :style="getTableStatusStyle(selectedTableForActions.order.status)" x-text="selectedTableForActions.order.status"></span>
+                                <span class="table-status-pill" :style="getTableStatusStyle(selectedTableForActions.order.status)" x-text="translateStatus(selectedTableForActions.order.status)"></span>
                             </div>
                             <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
-                                <span x-text="'Waiter: ' + (selectedTableForActions.order.waiter_name || 'Unassigned')"></span>
+                                <span x-text="'{{ __('Waiter') }}: ' + (selectedTableForActions.order.waiter_name || '{{ __('Unassigned') }}')"></span>
                                 <span style="font-weight: 700; color: #fff;" x-text="formatCurrency(selectedTableForActions.order.total_amount)"></span>
                             </div>
                             <template x-if="selectedTableForActions.order.source === 'qr_menu'">
@@ -3153,6 +3427,27 @@
             <i class="fa-solid fa-circle-check" style="color: #10b981;"></i>
             <span x-text="toastMessage"></span>
         </div>
+
+        <!-- Mobile Floating Cart Bar -->
+        <div class="mobile-cart-float-bar" 
+             x-show="activeMode === 'waiter' && waiterSubTab === 'home' && cart.length > 0 && !showMobileCart" 
+             @click="showMobileCart = true" 
+             x-cloak>
+            <div class="cart-float-left">
+                <span class="cart-float-badge" x-text="cartTotalQuantity"></span>
+                <span class="cart-float-title">{{ __('View Order') }}</span>
+            </div>
+            <div class="cart-float-right">
+                <span class="cart-float-total" x-text="formatCurrency(cartTotal)"></span>
+                <i class="fa-solid fa-chevron-up"></i>
+            </div>
+        </div>
+
+        <!-- Mobile Cart Drawer Backdrop -->
+        <div class="cart-mobile-backdrop" 
+             x-show="showMobileCart" 
+             @click="showMobileCart = false" 
+             x-cloak></div>
     </main>
 
     <!-- Mobile-First Dedicated Bottom Navigation Bar -->
@@ -3160,24 +3455,27 @@
         <!-- WAITER BOTTOM NAV -->
         <template x-if="activeMode === 'waiter'">
             <div class="pos-bottom-nav-inner">
-                <button type="button" class="pos-bottom-nav-item" :class="{ 'active': waiterSubTab === 'home' && !showTableModal }" @click="waiterSubTab = 'home'; showTableModal = false;">
+                <button type="button" class="pos-bottom-nav-item" :class="{ 'active': waiterSubTab === 'home' && !showTableModal && !showMobileCart }" @click="waiterSubTab = 'home'; showTableModal = false; showMobileCart = false;">
                     <i class="fa-solid fa-utensils"></i>
                     <span>{{ __('Menu & Order') }}</span>
                 </button>
-                <button type="button" class="pos-bottom-nav-item" :class="{ 'active': showTableModal }" @click="waiterSubTab = 'home'; showTableModal = true;">
+                <button type="button" class="pos-bottom-nav-item" :class="{ 'active': showTableModal }" @click="waiterSubTab = 'home'; showTableModal = true; showMobileCart = false;">
                     <i class="fa-solid fa-chair"></i>
                     <span>{{ __('Tables') }}</span>
                 </button>
-                <button type="button" class="pos-bottom-nav-item" :class="{ 'active': waiterSubTab === 'orders' && !showTableModal }" @click="waiterSubTab = 'orders'; showTableModal = false; fetchWaiterDashboard();">
+                <button type="button" class="pos-bottom-nav-item" :class="{ 'active': showMobileCart }" @click="showMobileCart = !showMobileCart; showTableModal = false;">
+                    <i class="fa-solid fa-basket-shopping"></i>
+                    <span style="position: relative;">
+                        {{ __('Cart') }}
+                        <span x-show="cartTotalQuantity > 0" class="pos-bottom-nav-badge" x-text="cartTotalQuantity"></span>
+                    </span>
+                </button>
+                <button type="button" class="pos-bottom-nav-item" :class="{ 'active': waiterSubTab === 'orders' && !showTableModal && !showMobileCart }" @click="waiterSubTab = 'orders'; showTableModal = false; showMobileCart = false; fetchWaiterDashboard();">
                     <i class="fa-solid fa-clock-rotate-left"></i>
                     <span style="position: relative;">
                         {{ __('My Orders') }}
                         <span x-show="waiterActiveOrdersCount > 0" class="pos-bottom-nav-badge" x-text="waiterActiveOrdersCount"></span>
                     </span>
-                </button>
-                <button type="button" class="pos-bottom-nav-item" :class="{ 'active': waiterSubTab === 'tips' && !showTableModal }" @click="waiterSubTab = 'tips'; showTableModal = false; fetchWaiterTips();">
-                    <i class="fa-solid fa-hand-holding-dollar"></i>
-                    <span>{{ __('My Tips') }}</span>
                 </button>
                 <button type="button" class="pos-bottom-nav-item" :class="{ 'active': showEmployeeProfileModal }" @click="openEmployeeProfileModal()">
                     <i class="fa-solid fa-user-circle"></i>
@@ -4011,6 +4309,34 @@
                     this.cart = [];
                     this.discountAmount = 0;
                     this.discountReason = '';
+                    this.showMobileCart = false;
+                },
+
+                get cartTotalQuantity() {
+                    return this.cart.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
+                },
+
+                translateStatus(status) {
+                    if (!status) return '';
+                    const s = String(status).toLowerCase();
+                    const map = {
+                        'pending': '{{ __('Pending') }}',
+                        'preparing': '{{ __('Preparing') }}',
+                        'ready': '{{ __('Ready') }}',
+                        'served': '{{ __('Served') }}',
+                        'completed': '{{ __('Completed') }}',
+                        'cancelled': '{{ __('Cancelled') }}',
+                        'available': '{{ __('Available') }}',
+                        'occupied': '{{ __('Occupied') }}',
+                        'reserved': '{{ __('Reserved') }}',
+                        'dirty': '{{ __('Dirty') }}',
+                    };
+                    return map[s] || status;
+                },
+
+                formatItemsCount(count) {
+                    const num = Number(count || 0);
+                    return num + ' ' + (num === 1 ? '{{ __('item') }}' : '{{ __('items') }}');
                 },
 
                 // Cart Financial Calculations
