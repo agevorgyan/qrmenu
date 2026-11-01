@@ -3709,5 +3709,13 @@
     "Are you sure you want to terminate all active sessions for this employee?": "Վստա՞հ եք, որ ցանկանում եք ընդհատել այս աշխատակցի բոլոր ակտիվ սեսիաները։",
     "Enter new custom role name (e.g. Sommelier Lead):": "Մուտքագրեք նոր անհատական դերի անվանումը (օր.՝ Գլխավոր Սոմելյե)՝",
     "Enter duplicated role name:": "Մուտքագրեք կրկնօրինակվող դերի անվանումը՝",
-    "Delete custom role": "Ջնջել անհատական դերը"
+    "Delete custom role": "Ջնջել անհատական դերը",
+    "Configure Location Access": "Կարգավորել մասնաճյուղերի հասանելիությունը",
+    "Save Roles": "Պահպանել դերերը",
+    "Employee can access orders and POS across all locations.": "Աշխատակիցը կարող է դիտել պատվերները և օգտվել POS-ից բոլոր մասնաճյուղերում։",
+    "Select Authorized Branches:": "Ընտրեք թույլատրված մասնաճյուղերը՝",
+    "Save Locations": "Պահպանել մասնաճյուղերը",
+    "Role Name": "Դերի անվանումը",
+    "selected": "ընտրված",
+    "Save Role": "Պահպանել դերը"
 }

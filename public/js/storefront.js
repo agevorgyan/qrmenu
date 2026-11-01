@@ -1198,6 +1198,8 @@
                                 tracking_token: data.tracking_token || null,
                                 order_number: data.order_number,
                                 status: data.status || 'pending',
+                                payment_status: data.payment_status || 'unpaid',
+                                payment_method: data.payment_method || 'cash',
                                 status_step: 1,
                                 status_percent: 25,
                                 status_label: data.status_label || translations.status_pending || 'Ընդունված է',

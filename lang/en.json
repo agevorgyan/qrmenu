@@ -3588,5 +3588,13 @@
     "Are you sure you want to terminate all active sessions for this employee?": "Are you sure you want to terminate all active sessions for this employee?",
     "Enter new custom role name (e.g. Sommelier Lead):": "Enter new custom role name (e.g. Sommelier Lead):",
     "Enter duplicated role name:": "Enter duplicated role name:",
-    "Delete custom role": "Delete custom role"
+    "Delete custom role": "Delete custom role",
+    "Configure Location Access": "Configure Location Access",
+    "Save Roles": "Save Roles",
+    "Employee can access orders and POS across all locations.": "Employee can access orders and POS across all locations.",
+    "Select Authorized Branches:": "Select Authorized Branches:",
+    "Save Locations": "Save Locations",
+    "Role Name": "Role Name",
+    "selected": "selected",
+    "Save Role": "Save Role"
 }

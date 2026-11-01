@@ -1821,7 +1821,7 @@
     "Rating service is currently disabled for this restaurant.": "Оценка обслуживания сейчас отключена для этого ресторана.",
     "RawBT": "RawBT",
     "RawBT (Android)": "RawBT (Android)",
-    "Ready": "Готов",
+    "Ready": "Готово",
     "Ready to launch your restaurant's digital menu?": "Готовы запустить цифровое меню для вашего заведения?",
     "Ready to launch your restaurant\\'s digital menu?": "Готовы запустить цифровое меню вашего ресторана?",
     "Real-Time": "В реальном времени",
@@ -2206,7 +2206,7 @@
     "Sort By": "Сортировать по",
     "Sort Order": "Порядок сортировки",
     "Sound Off": "Звук выключен",
-    "Sound On": "Звук вкл.",
+    "Sound On": "Звук включен",
     "Source": "Источник",
     "Source Term or Phrase": "Исходный термин или фраза",
     "Source Text": "Исходный текст",
@@ -3706,5 +3706,13 @@
     "Are you sure you want to terminate all active sessions for this employee?": "Вы уверены, что хотите завершить все активные сессии этого сотрудника?",
     "Enter new custom role name (e.g. Sommelier Lead):": "Введите название новой роли (например, Главный Сомелье):",
     "Enter duplicated role name:": "Введите название копии роли:",
-    "Delete custom role": "Удалить пользовательскую роль"
+    "Delete custom role": "Удалить пользовательскую роль",
+    "Configure Location Access": "Настроить доступ к филиалам",
+    "Save Roles": "Сохранить роли",
+    "Employee can access orders and POS across all locations.": "Сотрудник имеет доступ к заказам и POS во всех филиалах.",
+    "Select Authorized Branches:": "Выберите разрешенные филиалы:",
+    "Save Locations": "Сохранить филиалы",
+    "Role Name": "Название роли",
+    "selected": "выбрано",
+    "Save Role": "Сохранить роль"
 }

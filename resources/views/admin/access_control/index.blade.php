@@ -87,6 +87,9 @@
                                 $membership = $member->memberships->where('vendor_id', $vendor->id)->first();
                                 $memberStatus = $membership?->status ?? ($member->is_active ? 'active' : 'inactive');
                                 $memberRoles = $membership && $membership->roles->isNotEmpty() ? $membership->roles : collect([ (object)['name' => ucfirst(str_replace('_', ' ', $member->role)), 'slug' => $member->role] ]);
+                                $userRoleIds = $membership && $membership->roles->isNotEmpty()
+                                    ? $membership->roles->pluck('id')->all()
+                                    : ($roles->firstWhere('slug', $member->role)?->id ? [$roles->firstWhere('slug', $member->role)->id] : []);
                             @endphp
                             <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-main);">
                                 <td style="padding: 0.9rem 1.25rem;">
@@ -125,16 +128,20 @@
                                     </div>
                                 </td>
                                 <td style="padding: 0.9rem 1.25rem; white-space: nowrap;">
-                                    @if($membership && ! $membership->all_locations && $membership->locations->isNotEmpty())
-                                        <span style="background: var(--bg-body); border: 1px solid var(--border-color); padding: 0.25rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 600;">
-                                            <i class="fa-solid fa-location-dot" style="color: var(--primary);"></i>
-                                            {{ $membership->locations->pluck('name')->join(', ') }}
-                                        </span>
-                                    @else
-                                        <span style="background: rgba(59, 130, 246, 0.12); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.25); padding: 0.25rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 700;">
-                                            <i class="fa-solid fa-globe"></i> {{ __('All Branches') }}
-                                        </span>
-                                    @endif
+                                    <button type="button" @click="editUserLocations({{ $member->id }}, '{{ addslashes($member->name) }}', {{ $membership ? ($membership->all_locations ? 'true' : 'false') : 'true' }}, {{ json_encode($membership ? $membership->locations->pluck('id')->all() : []) }})" style="background: none; border: none; padding: 0; cursor: pointer; text-align: left;" title="{{ __('Configure Location Access') }}">
+                                        @if($membership && ! $membership->all_locations && $membership->locations->isNotEmpty())
+                                            <span style="background: var(--bg-body); border: 1px solid var(--border-color); padding: 0.25rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                                <i class="fa-solid fa-location-dot" style="color: var(--primary);"></i>
+                                                {{ $membership->locations->pluck('name')->join(', ') }}
+                                                <i class="fa-solid fa-pen" style="font-size: 0.65rem; color: var(--text-muted); margin-left: 0.2rem;"></i>
+                                            </span>
+                                        @else
+                                            <span style="background: rgba(59, 130, 246, 0.12); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.25); padding: 0.25rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                                <i class="fa-solid fa-globe"></i> {{ __('All Branches') }}
+                                                <i class="fa-solid fa-pen" style="font-size: 0.65rem; color: var(--text-muted); margin-left: 0.2rem;"></i>
+                                            </span>
+                                        @endif
+                                    </button>
                                 </td>
                                 <td style="padding: 0.9rem 1.25rem; white-space: nowrap;">
                                     <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 600;">
@@ -146,7 +153,7 @@
                                         <button type="button" @click="inspectUser({{ $member->id }})" class="btn btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.78rem; border-radius: 8px;" title="{{ __('Effective Permissions') }}">
                                             <i class="fa-solid fa-list-check"></i> {{ __('Permissions') }}
                                         </button>
-                                        <button type="button" @click="editUserRoles({{ $member->id }}, '{{ addslashes($member->name) }}', {{ json_encode($memberRoles->pluck('id')->filter()->values()) }})" class="btn btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.78rem; border-radius: 8px;" title="{{ __('Assign Roles') }}">
+                                        <button type="button" @click="editUserRoles({{ $member->id }}, '{{ addslashes($member->name) }}', {{ json_encode($userRoleIds) }})" class="btn btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.78rem; border-radius: 8px;" title="{{ __('Assign Roles') }}">
                                             <i class="fa-solid fa-user-gear"></i>
                                         </button>
                                         <button type="button" @click="revokeSessions({{ $member->id }})" class="btn btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.78rem; border-radius: 8px; color: #ef4444;" title="{{ __('Terminate Sessions') }}">
@@ -172,28 +179,26 @@
     <div x-show="currentTab === 'roles'" x-transition style="display: flex; flex-direction: column; gap: 1rem;">
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem;">
             @foreach($roles as $role)
-                <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; gap: 1rem; box-shadow: var(--shadow-sm);">
+                <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; gap: 1rem; position: relative;">
                     <div>
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
                             <div>
-                                <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin: 0;">
+                                <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin: 0;">
                                     {{ $role->name }}
                                 </h3>
-                                <code style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-body); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 0.25rem;">
-                                    {{ $role->slug }}
-                                </code>
+                                <code style="font-size: 0.75rem; color: var(--text-muted);">{{ $role->slug }}</code>
                             </div>
                             @if($role->is_system)
-                                <span style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.3); font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; white-space: nowrap;">
-                                    {{ __('System') }}
+                                <span style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.3); padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.72rem; font-weight: 700;">
+                                    <i class="fa-solid fa-lock"></i> {{ __('System') }}
                                 </span>
                             @else
-                                <span style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; white-space: nowrap;">
+                                <span style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.72rem; font-weight: 700;">
                                     {{ __('Custom') }}
                                 </span>
                             @endif
                         </div>
-                        <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0; line-height: 1.4;">
+                        <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0; line-height: 1.45;">
                             {{ $role->description ?: __('Standard operational restaurant role template.') }}
                         </p>
                     </div>
@@ -238,39 +243,36 @@
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 1rem;">
-                @foreach($permissionCatalog as $moduleName => $modulePermissions)
-                    <div class="permission-module-card" x-data="{ expanded: true }" style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden;">
-                        <div @click="expanded = !expanded" style="padding: 0.85rem 1.25rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
-                            <div style="display: flex; align-items: center; gap: 0.65rem;">
-                                <i class="fa-solid" :class="expanded ? 'fa-chevron-down' : 'fa-chevron-right'" style="color: var(--text-muted); font-size: 0.75rem;"></i>
-                                <span style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 0.95rem; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.04em;">
-                                    {{ ucfirst(str_replace('_', ' ', $moduleName)) }}
-                                </span>
-                                <span style="font-size: 0.72rem; padding: 2px 7px; border-radius: 999px; background: rgba(255,255,255,0.08); color: var(--text-muted);">
-                                    {{ count($modulePermissions) }}
-                                </span>
+                @foreach($permissionCatalog as $mod => $perms)
+                    <div x-data="{ expanded: true }" style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden;">
+                        <button type="button" @click="expanded = !expanded" style="width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1.25rem; background: transparent; border: none; color: var(--text-main); cursor: pointer; text-align: left;">
+                            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-folder" style="color: var(--primary);"></i>
+                                <span style="font-weight: 800; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.04em;">{{ ucfirst($mod) }}</span>
+                                <span style="font-size: 0.75rem; background: var(--bg-card); color: var(--text-muted); padding: 2px 7px; border-radius: 999px;">{{ count($perms) }}</span>
                             </div>
-                        </div>
+                            <i class="fa-solid fa-chevron-down" :style="expanded ? 'transform: rotate(180deg)' : ''" style="transition: transform 0.2s; font-size: 0.8rem; color: var(--text-muted);"></i>
+                        </button>
 
-                        <div x-show="expanded" style="border-top: 1px solid var(--border-color); padding: 0.75rem 1.25rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem;">
-                            @foreach($modulePermissions as $perm)
-                                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.75rem; display: flex; flex-direction: column; justify-content: space-between; gap: 0.5rem;"
-                                     x-show="matchesSearch('{{ $perm['key'] }}', '{{ addslashes($perm['description']) }}')">
-                                    <div>
-                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
-                                            <code style="font-weight: 800; font-size: 0.78rem; color: var(--primary);">{{ $perm['key'] }}</code>
-                                            @if($perm['is_sensitive'])
-                                                <span style="background: rgba(239, 68, 68, 0.15); color: #ef4444; font-size: 0.68rem; font-weight: 800; padding: 1px 6px; border-radius: 4px;">{{ __('SENSITIVE') }}</span>
+                        <div x-show="expanded" style="padding: 0 1.25rem 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                            @foreach($perms as $p)
+                                <div x-show="matchesSearch('{{ $p['key'] }}', '{{ addslashes($p['description']) }}')" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.75rem; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color);">
+                                    <div style="min-width: 0; flex: 1;">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <code style="font-size: 0.8rem; font-weight: 700; color: var(--primary);">{{ $p['key'] }}</code>
+                                            @if($p['is_sensitive'])
+                                                <span style="background: rgba(220, 38, 38, 0.15); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.3); font-size: 0.68rem; font-weight: 800; padding: 1px 5px; border-radius: 4px;">{{ __('SENSITIVE') }}</span>
                                             @endif
                                         </div>
-                                        <div style="color: var(--text-muted); font-size: 0.78rem; margin-top: 0.35rem; line-height: 1.35;">
-                                            {{ $perm['description'] }}
-                                        </div>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem;">{{ $p['description'] }}</div>
                                     </div>
-                                    <div style="font-size: 0.7rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 0.4rem;">
-                                        <span>{{ __('Risk') }}: <strong style="color: var(--text-main);">{{ ucfirst($perm['risk_level']) }}</strong></span>
-                                        <span>{{ ucfirst($perm['action']) }}</span>
-                                    </div>
+                                    <span style="font-size: 0.72rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+                                        @if($p['risk_level'] === 'critical') background: rgba(220, 38, 38, 0.15); color: #dc2626;
+                                        @elseif($p['risk_level'] === 'high') background: rgba(239, 68, 68, 0.15); color: #ef4444;
+                                        @elseif($p['risk_level'] === 'medium') background: rgba(245, 158, 11, 0.15); color: #f59e0b;
+                                        @else background: rgba(16, 185, 129, 0.15); color: #10b981; @endif">
+                                        {{ ucfirst($p['risk_level']) }}
+                                    </span>
                                 </div>
                             @endforeach
                         </div>
@@ -324,8 +326,8 @@
                     <tbody>
                         @forelse($auditLogs as $log)
                             <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-main);">
-                                <td style="padding: 0.85rem 1.25rem; white-space: nowrap; font-size: 0.78rem; color: var(--text-muted);">
-                                    {{ $log->created_at->format('Y-m-d H:i:s') }}
+                                <td style="padding: 0.85rem 1.25rem; white-space: nowrap; color: var(--text-muted);">
+                                    {{ $log->created_at->format('M d, Y H:i:s') }}
                                 </td>
                                 <td style="padding: 0.85rem 1.25rem; white-space: nowrap;">
                                     <div style="font-weight: 700; color: var(--text-main);">{{ $log->actor?->name ?? 'System' }}</div>
@@ -365,7 +367,248 @@
         </div>
     </div>
 
-    <!-- MODAL: EFFECTIVE PERMISSIONS INSPECTOR -->
+    <!-- MODAL 1: ASSIGN USER ROLES -->
+    <div x-show="showUserRolesModal"
+         x-cloak
+         style="position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 110; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+        <div @click.away="showUserRolesModal = false"
+             class="card modal-box-responsive"
+             style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; width: 100%; max-width: min(520px, 94vw); max-height: 90vh; overflow-y: auto; padding: 1.75rem; box-shadow: 0 25px 60px rgba(0,0,0,0.6);">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem;">
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <span style="color: var(--primary); width: 36px; height: 36px; border-radius: 10px; background: rgba(245, 158, 11, 0.15); display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                        <i class="fa-solid fa-user-gear"></i>
+                    </span>
+                    <div>
+                        <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin: 0;">{{ __('Assign Roles') }}</h3>
+                        <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;" x-text="roleModalUserName"></div>
+                    </div>
+                </div>
+                <button type="button" @click="showUserRolesModal = false" style="background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; padding: 0.25rem;">✕</button>
+            </div>
+
+            <div style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.6rem; max-height: 340px; overflow-y: auto; padding-right: 0.25rem;">
+                @foreach($roles as $r)
+                    <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 0.85rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px; cursor: pointer; transition: all 0.15s ease;">
+                        <input type="checkbox" :value="{{ $r->id }}" x-model="selectedRoleIds" style="margin-top: 0.2rem; accent-color: var(--primary); width: 18px; height: 18px; cursor: pointer;">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; justify-content: space-between;">
+                                <span style="font-weight: 700; font-size: 0.92rem; color: var(--text-main);">{{ $r->name }}</span>
+                                @if($r->is_system)
+                                    <span style="background: rgba(139, 92, 246, 0.15); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.3); font-size: 0.7rem; font-weight: 700; padding: 1px 7px; border-radius: 6px;">{{ __('System') }}</span>
+                                @else
+                                    <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.7rem; font-weight: 700; padding: 1px 7px; border-radius: 6px;">{{ __('Custom') }}</span>
+                                @endif
+                            </div>
+                            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.2rem 0 0; line-height: 1.4;">{{ $r->description }}</p>
+                        </div>
+                    </label>
+                @endforeach
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; align-items: center; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                <button type="button" @click="showUserRolesModal = false" class="btn btn-secondary" style="border-radius: 10px; font-weight: 600;">{{ __('Cancel') }}</button>
+                <button type="button" @click="saveUserRoles()" class="btn btn-primary" :disabled="isSavingRoles" style="border-radius: 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <span x-show="!isSavingRoles"><i class="fa-solid fa-check"></i> {{ __('Save Roles') }}</span>
+                    <span x-show="isSavingRoles"><i class="fa-solid fa-spinner fa-spin"></i> {{ __('Saving...') }}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: USER LOCATION SCOPING -->
+    <div x-show="showLocationModal"
+         x-cloak
+         style="position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 110; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+        <div @click.away="showLocationModal = false"
+             class="card modal-box-responsive"
+             style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; width: 100%; max-width: min(500px, 94vw); max-height: 90vh; overflow-y: auto; padding: 1.75rem; box-shadow: 0 25px 60px rgba(0,0,0,0.6);">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem;">
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <span style="color: #3b82f6; width: 36px; height: 36px; border-radius: 10px; background: rgba(59, 130, 246, 0.15); display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                        <i class="fa-solid fa-location-dot"></i>
+                    </span>
+                    <div>
+                        <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin: 0;">{{ __('Location Access') }}</h3>
+                        <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;" x-text="locModalUserName"></div>
+                    </div>
+                </div>
+                <button type="button" @click="showLocationModal = false" style="background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; padding: 0.25rem;">✕</button>
+            </div>
+
+            <div style="margin-bottom: 1rem; padding: 0.85rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px;">
+                <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                    <div>
+                        <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-main);">{{ __('All Branches') }}</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted);">{{ __('Employee can access orders and POS across all locations.') }}</div>
+                    </div>
+                    <input type="checkbox" x-model="locModalAll" style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+                </label>
+            </div>
+
+            <div x-show="!locModalAll" x-transition style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; max-height: 240px; overflow-y: auto;">
+                <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.25rem;">{{ __('Select Authorized Branches:') }}</div>
+                @foreach($locations as $loc)
+                    <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.85rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 10px; cursor: pointer;">
+                        <input type="checkbox" :value="{{ $loc->id }}" x-model="locModalIds" style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer;">
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-main);">{{ $loc->name }}</div>
+                            <div style="font-size: 0.74rem; color: var(--text-muted);">{{ $loc->address ?: __('No address specified') }}</div>
+                        </div>
+                    </label>
+                @endforeach
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; align-items: center; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                <button type="button" @click="showLocationModal = false" class="btn btn-secondary" style="border-radius: 10px; font-weight: 600;">{{ __('Cancel') }}</button>
+                <button type="button" @click="saveUserLocations()" class="btn btn-primary" :disabled="isSavingLoc" style="border-radius: 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <span x-show="!isSavingLoc"><i class="fa-solid fa-check"></i> {{ __('Save Locations') }}</span>
+                    <span x-show="isSavingLoc"><i class="fa-solid fa-spinner fa-spin"></i> {{ __('Saving...') }}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: CREATE & EDIT CUSTOM ROLE -->
+    <div x-show="showRoleModal"
+         x-cloak
+         style="position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 110; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+        <div @click.away="showRoleModal = false"
+             class="card modal-box-responsive"
+             style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; width: 100%; max-width: min(650px, 94vw); max-height: 90vh; overflow-y: auto; padding: 1.75rem; box-shadow: 0 25px 60px rgba(0,0,0,0.6);">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem;">
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <span style="color: var(--primary); width: 36px; height: 36px; border-radius: 10px; background: rgba(245, 158, 11, 0.15); display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                        <i class="fa-solid fa-id-badge"></i>
+                    </span>
+                    <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin: 0;" x-text="roleFormMode === 'create' ? '{{ __('Create Custom Role') }}' : '{{ __('Edit Role') }}: ' + roleFormName"></h3>
+                </div>
+                <button type="button" @click="showRoleModal = false" style="background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; padding: 0.25rem;">✕</button>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem;">{{ __('Role Name') }} <span style="color: #ef4444;">*</span></label>
+                    <input type="text" x-model="roleFormName" placeholder="e.g. Sommelier Lead" style="width: 100%; box-sizing: border-box; padding: 0.75rem 1rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 0.95rem; outline: none; font-weight: 600;">
+                </div>
+
+                <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem;">{{ __('Description') }}</label>
+                    <textarea x-model="roleFormDescription" rows="2" placeholder="Brief summary of duties and permissions..." style="width: 100%; box-sizing: border-box; padding: 0.75rem 1rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 0.88rem; outline: none; resize: vertical;"></textarea>
+                </div>
+
+                <div x-show="roleFormMode === 'edit'" style="padding: 0.65rem 0.85rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 10px;">
+                    <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                        <span style="font-weight: 700; font-size: 0.88rem; color: var(--text-main);">{{ __('Active') }}</span>
+                        <input type="checkbox" x-model="roleFormIsActive" style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+                    </label>
+                </div>
+
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                        <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">{{ __('Permissions') }} (<span x-text="roleFormPermissions.length"></span> {{ __('selected') }})</label>
+                        <input type="text" x-model="rolePermSearch" placeholder="{{ __('Search 21 modules & permissions...') }}" style="padding: 0.35rem 0.65rem; font-size: 0.75rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); outline: none;">
+                    </div>
+                    <div style="max-height: 250px; overflow-y: auto; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.75rem; display: flex; flex-direction: column; gap: 0.85rem;">
+                        @foreach($permissionCatalog as $mod => $perms)
+                            <div>
+                                <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--primary); margin-bottom: 0.35rem; letter-spacing: 0.05em;">{{ ucfirst($mod) }}</div>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.4rem;">
+                                    @foreach($perms as $p)
+                                        <label style="display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.35rem 0.5rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer;"
+                                               x-show="!rolePermSearch || '{{ strtolower($p['key'] . ' ' . $p['description']) }}'.includes(rolePermSearch.toLowerCase())">
+                                            <input type="checkbox" value="{{ $p['key'] }}" x-model="roleFormPermissions" style="margin-top: 0.15rem; width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer;">
+                                            <div style="min-width: 0;">
+                                                <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">{{ $p['action'] }}</div>
+                                                <div style="font-size: 0.7rem; color: var(--text-muted); font-family: monospace;">{{ $p['key'] }}</div>
+                                            </div>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; align-items: center; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                <button type="button" @click="showRoleModal = false" class="btn btn-secondary" style="border-radius: 10px; font-weight: 600;">{{ __('Cancel') }}</button>
+                <button type="button" @click="saveRoleForm()" class="btn btn-primary" :disabled="isSavingRole" style="border-radius: 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <span x-show="!isSavingRole"><i class="fa-solid fa-check"></i> {{ __('Save Role') }}</span>
+                    <span x-show="isSavingRole"><i class="fa-solid fa-spinner fa-spin"></i> {{ __('Saving...') }}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: INVITE TEAM MEMBER -->
+    <div id="newMemberModal"
+         x-show="showInviteModal"
+         x-cloak
+         style="position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 110; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+        <div @click.away="showInviteModal = false" class="card modal-box-responsive" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; width: 100%; max-width: min(500px, 94vw); max-height: 90vh; overflow-y: auto; box-sizing: border-box; padding: clamp(1.25rem, 3vw, 1.85rem); box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.35rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem;">
+                <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 0.6rem;">
+                    <span style="color: var(--primary);"><i class="fa-solid fa-user-plus"></i></span>
+                    <span>{{ __('Invite Employee') }}</span>
+                </h3>
+                <button type="button" @click="showInviteModal = false" style="background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; padding: 0.25rem;">✕</button>
+            </div>
+
+            <form action="{{ route('admin.team.store') }}" method="POST">
+                @csrf
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">{{ __('Full Name') }} <span style="color: #ef4444;">*</span></label>
+                    <input type="text" name="name" required placeholder="e.g. John Doe" style="width: 100%; box-sizing: border-box; padding: 0.75rem 1rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 0.95rem; outline: none; font-weight: 600;">
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">{{ __('Email Address') }} <span style="color: #ef4444;">*</span></label>
+                    <input type="email" name="email" required placeholder="john@example.com" style="width: 100%; box-sizing: border-box; padding: 0.75rem 1rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 0.95rem; outline: none; font-weight: 600;">
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 0.85rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">{{ __('Role') }} <span style="color: #ef4444;">*</span></label>
+                        <select name="role" required style="width: 100%; box-sizing: border-box; padding: 0.75rem 1rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 0.95rem; outline: none; font-weight: 600;">
+                            <option value="waiter">{{ __('Waiter') }}</option>
+                            <option value="cashier">{{ __('Cashier') }}</option>
+                            <option value="chef">{{ __('Chef') }}</option>
+                            <option value="manager">{{ __('Branch Manager') }}</option>
+                            <option value="staff">{{ __('Staff Member') }}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">{{ __('Branch') }}</label>
+                        <select name="location_id" style="width: 100%; box-sizing: border-box; padding: 0.75rem 1rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 0.95rem; outline: none; font-weight: 600;">
+                            <option value="">{{ __('All Branches') }}</option>
+                            @foreach($locations as $l)
+                                <option value="{{ $l->id }}">{{ $l->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">{{ __('Temporary Password') }} <span style="color: #ef4444;">*</span></label>
+                    <input type="password" name="password" required value="password" style="width: 100%; box-sizing: border-box; padding: 0.75rem 1rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 0.95rem; outline: none; font-weight: 600;">
+                    <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                        {{ __('Members can change their password after signing in.') }}
+                    </span>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-secondary" @click="showInviteModal = false" style="border-radius: 12px; font-weight: 600;">{{ __('Cancel') }}</button>
+                    <button type="submit" class="btn btn-primary" style="border-radius: 12px; font-weight: 700; padding: 0.7rem 1.6rem;">{{ __('Invite Member') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 5: EFFECTIVE PERMISSIONS INSPECTOR -->
     <div x-show="showPermissionsModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem;" x-cloak>
         <div class="card" @click.outside="showPermissionsModal = false" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; width: 100%; max-width: 640px; max-height: 85vh; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem;">
@@ -411,9 +654,40 @@ function accessControlApp() {
     return {
         currentTab: '{{ $tab }}',
         matrixSearch: '',
+        
+        // Modals state
         showPermissionsModal: false,
+        showUserRolesModal: false,
+        showLocationModal: false,
+        showRoleModal: false,
+        showInviteModal: false,
+
+        // Permissions Inspector state
         inspectedUser: {},
         inspectedEffectivePerms: [],
+
+        // User Roles Modal state
+        roleModalUserId: null,
+        roleModalUserName: '',
+        selectedRoleIds: [],
+        isSavingRoles: false,
+
+        // Location Modal state
+        locModalUserId: null,
+        locModalUserName: '',
+        locModalAll: true,
+        locModalIds: [],
+        isSavingLoc: false,
+
+        // Role Form state
+        roleFormMode: 'create', // 'create' or 'edit'
+        roleFormId: null,
+        roleFormName: '',
+        roleFormDescription: '',
+        roleFormIsActive: true,
+        roleFormPermissions: [],
+        rolePermSearch: '',
+        isSavingRole: false,
 
         activeTabStyle: 'background: var(--primary); color: #000; font-weight: 800; font-size: 0.88rem; border-radius: 10px; border: none; padding: 0.55rem 1rem; display: inline-flex; align-items: center; cursor: pointer; white-space: nowrap;',
         inactiveTabStyle: 'background: transparent; color: var(--text-muted); font-weight: 600; font-size: 0.88rem; border-radius: 10px; border: none; padding: 0.55rem 1rem; display: inline-flex; align-items: center; cursor: pointer; white-space: nowrap;',
@@ -422,6 +696,151 @@ function accessControlApp() {
             if (!this.matrixSearch) return true;
             const q = this.matrixSearch.toLowerCase();
             return key.toLowerCase().includes(q) || desc.toLowerCase().includes(q);
+        },
+
+        editUserRoles(userId, userName, currentRoleIds) {
+            this.roleModalUserId = userId;
+            this.roleModalUserName = userName;
+            this.selectedRoleIds = (currentRoleIds || []).map(id => Number(id));
+            this.showUserRolesModal = true;
+        },
+
+        async saveUserRoles() {
+            if (!this.roleModalUserId) return;
+            this.isSavingRoles = true;
+
+            try {
+                const res = await fetch(`{{ url('admin/access-control/users') }}/${this.roleModalUserId}/roles`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        role_ids: this.selectedRoleIds.map(id => Number(id))
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Error updating roles');
+                }
+            } catch (e) {
+                console.error('Role update error', e);
+                alert('Failed to update roles.');
+            } finally {
+                this.isSavingRoles = false;
+            }
+        },
+
+        editUserLocations(userId, userName, allLocations, assignedLocationIds) {
+            this.locModalUserId = userId;
+            this.locModalUserName = userName;
+            this.locModalAll = !!allLocations;
+            this.locModalIds = (assignedLocationIds || []).map(id => Number(id));
+            this.showLocationModal = true;
+        },
+
+        async saveUserLocations() {
+            if (!this.locModalUserId) return;
+            this.isSavingLoc = true;
+
+            try {
+                const res = await fetch(`{{ url('admin/access-control/users') }}/${this.locModalUserId}/locations`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        all_locations: this.locModalAll ? 1 : 0,
+                        location_ids: this.locModalAll ? [] : this.locModalIds.map(id => Number(id))
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Error updating locations');
+                }
+            } catch (e) {
+                console.error('Location update error', e);
+                alert('Failed to update locations.');
+            } finally {
+                this.isSavingLoc = false;
+            }
+        },
+
+        openCreateRoleModal() {
+            this.roleFormMode = 'create';
+            this.roleFormId = null;
+            this.roleFormName = '';
+            this.roleFormDescription = '';
+            this.roleFormIsActive = true;
+            this.roleFormPermissions = [];
+            this.rolePermSearch = '';
+            this.showRoleModal = true;
+        },
+
+        editCustomRole(role) {
+            this.roleFormMode = 'edit';
+            this.roleFormId = role.id;
+            this.roleFormName = role.name;
+            this.roleFormDescription = role.description || '';
+            this.roleFormIsActive = !!role.is_active;
+            this.roleFormPermissions = (role.permissions || []).map(p => p.key);
+            this.rolePermSearch = '';
+            this.showRoleModal = true;
+        },
+
+        async saveRoleForm() {
+            if (!this.roleFormName.trim()) {
+                alert('{{ __('Role Name') }} is required');
+                return;
+            }
+            this.isSavingRole = true;
+
+            const url = this.roleFormMode === 'create'
+                ? '{{ route('admin.access_control.roles.store') }}'
+                : `{{ url('admin/access-control/roles') }}/${this.roleFormId}`;
+            const method = this.roleFormMode === 'create' ? 'POST' : 'PUT';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: this.roleFormName,
+                        description: this.roleFormDescription,
+                        is_active: this.roleFormIsActive ? 1 : 0,
+                        permissions: this.roleFormPermissions
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Failed to save role');
+                }
+            } catch (e) {
+                console.error('Role form save error', e);
+                alert('Failed to save role.');
+            } finally {
+                this.isSavingRole = false;
+            }
+        },
+
+        openInviteModal() {
+            this.showInviteModal = true;
+            const modal = document.getElementById('newMemberModal');
+            if (modal) modal.style.display = 'flex';
         },
 
         async inspectUser(userId) {
@@ -458,32 +877,6 @@ function accessControlApp() {
             } catch (e) {
                 console.error('Session revoke error', e);
             }
-        },
-
-        openInviteModal() {
-            const modal = document.getElementById('newMemberModal');
-            if (modal) modal.style.display = 'flex';
-        },
-
-        openCreateRoleModal() {
-            const name = prompt('{{ __('Enter new custom role name (e.g. Sommelier Lead):') }}');
-            if (!name) return;
-
-            fetch('{{ route('admin.access_control.roles.store') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ name: name, permissions: [] })
-            }).then(r => r.json()).then(d => {
-                if (d.success) {
-                    window.location.reload();
-                } else {
-                    alert(d.message || 'Error creating role');
-                }
-            });
         },
 
         async duplicateRole(roleId, roleName) {
@@ -528,4 +921,3 @@ function accessControlApp() {
 }
 </script>
 @endsection
-

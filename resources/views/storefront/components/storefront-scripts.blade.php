@@ -311,4 +311,5 @@
     // Rule 3: Burger / Pizza without Fries -> French Fries / Onion rings
     // isTableFixed: {{ !empty($table) ? 'true' : 'false' }}
     // orderType: '{{ !empty($table) ? 'dine_in' : ($vendor->takeaway_enabled ? 'takeaway' : ($vendor->delivery_enabled ? 'delivery' : 'dine_in')) }}'
+    // changeLanguage($event.target.value)
 </script>
