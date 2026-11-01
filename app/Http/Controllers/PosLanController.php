@@ -9,6 +9,7 @@ use App\Security\Permission;
 use App\Services\PosLanService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class PosLanController extends Controller
 {
@@ -194,7 +195,7 @@ class PosLanController extends Controller
             ?: $request->input('device_uuid')
             ?: $request->cookie('pos_device_uuid');
 
-        if (! empty($deviceUuid)) {
+        if (! empty($deviceUuid) && Str::isUuid($deviceUuid)) {
             return PosDevice::where('vendor_id', $vendorId)
                 ->where('uuid', $deviceUuid)
                 ->where('is_active', true)

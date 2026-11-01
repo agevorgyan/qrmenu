@@ -11,6 +11,8 @@ use App\Services\PosService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class PosAuthController extends Controller
 {
@@ -134,26 +136,68 @@ class PosAuthController extends Controller
         $validated = $request->validate([
             'target_user_id' => 'required|integer',
             'pin' => 'required|string|min:4|max:6',
-            'device_uuid' => 'required|string',
+            'device_uuid' => 'nullable|string',
             'mode' => 'nullable|string|in:waiter,cashier,manager,kds',
         ]);
 
-        $device = PosDevice::where('vendor_id', $vendor->id)
-            ->where('uuid', $validated['device_uuid'])
-            ->first();
+        $device = null;
+        if (! empty($validated['device_uuid']) && Str::isUuid($validated['device_uuid'])) {
+            $device = PosDevice::where('vendor_id', $vendor->id)
+                ->where('uuid', $validated['device_uuid'])
+                ->first();
+        }
 
         if (! $device) {
-            return response()->json([
-                'success' => false,
-                'message' => __('Device not found.'),
-            ], 404);
+            $device = PosDevice::where('vendor_id', $vendor->id)
+                ->where('is_active', true)
+                ->first();
+        }
+
+        if (! $device) {
+            $device = PosDevice::firstOrCreate(
+                ['vendor_id' => $vendor->id, 'name' => 'Default POS Terminal'],
+                [
+                    'uuid' => (string) Str::uuid(),
+                    'location_id' => $user->location_id ?? $vendor->locations()->first()?->id,
+                    'device_type' => 'terminal',
+                    'is_active' => true,
+                    'is_paired' => true,
+                    'paired_at' => now(),
+                ]
+            );
+        }
+
+        $targetUser = User::where('id', (int) $validated['target_user_id'])
+            ->where('vendor_id', $vendor->id)
+            ->where('is_active', true)
+            ->first();
+
+        if (! $targetUser) {
+            throw ValidationException::withMessages([
+                'target_user_id' => __('Selected employee not found or inactive.'),
+            ]);
+        }
+
+        $allowedModes = match ($targetUser->role) {
+            'waiter', 'staff' => ['waiter'],
+            'cashier' => ['cashier'],
+            'chef', 'kitchen' => ['kds'],
+            'manager', 'vendor_owner' => ['manager', 'cashier', 'waiter', 'kds'],
+            default => $targetUser->isSuperAdmin() ? ['manager', 'cashier', 'waiter', 'kds'] : ['waiter'],
+        };
+
+        $targetMode = $validated['mode'] ?? null;
+        if (! $targetMode || ! in_array($targetMode, $allowedModes, true)) {
+            $targetMode = (! empty($targetUser->pos_mode) && in_array($targetUser->pos_mode, $allowedModes, true))
+                ? $targetUser->pos_mode
+                : $allowedModes[0];
         }
 
         $result = $this->posDeviceService->quickSwitchEmployee(
             device: $device,
             targetUserId: (int) $validated['target_user_id'],
             pin: $validated['pin'],
-            mode: $validated['mode'] ?? 'waiter'
+            mode: $targetMode
         );
 
         Auth::login($result['user']);
@@ -168,12 +212,21 @@ class PosAuthController extends Controller
                 'display_name' => $result['user']->display_name ?: $result['user']->name,
                 'role' => $result['user']->role,
                 'avatar_url' => $result['user']->avatar_url,
+                'has_pin' => true,
                 'permissions' => $result['user']->getPermissions(),
             ],
             'session' => [
                 'session_token' => $result['session']->session_token,
                 'mode' => $result['session']->mode,
+                'expires_at' => $result['session']->expires_at->toIso8601String(),
             ],
+            'device' => [
+                'id' => $device->id,
+                'uuid' => $device->uuid,
+                'name' => $device->name,
+            ],
+            'mode' => $targetMode,
+            'allowed_modes' => $allowedModes,
         ]);
     }
 

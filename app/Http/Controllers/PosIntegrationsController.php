@@ -17,6 +17,7 @@ use App\Services\PosInventoryService;
 use App\Services\PosLoyaltyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class PosIntegrationsController extends Controller
 {
@@ -151,7 +152,7 @@ class PosIntegrationsController extends Controller
     {
         $user = $request->user();
         $deviceUuid = $request->header('X-POS-Device-UUID');
-        $device = $deviceUuid ? PosDevice::where('vendor_id', $user->vendor_id)->where('uuid', $deviceUuid)->first() : null;
+        $device = ($deviceUuid && Str::isUuid($deviceUuid)) ? PosDevice::where('vendor_id', $user->vendor_id)->where('uuid', $deviceUuid)->first() : null;
 
         $resolved = $this->integrationsService->resolveWaiterCall($waiterCall, $user, $device);
 

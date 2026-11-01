@@ -14,6 +14,7 @@ use App\Services\PosPaymentShiftService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class PosPaymentShiftController extends Controller
 {
@@ -304,7 +305,7 @@ class PosPaymentShiftController extends Controller
     protected function resolveDevice(Request $request, int $vendorId): ?PosDevice
     {
         $deviceUuid = $request->header('X-POS-Device-UUID', $request->cookie('pos_device_uuid'));
-        if (! empty($deviceUuid)) {
+        if (! empty($deviceUuid) && Str::isUuid($deviceUuid)) {
             return PosDevice::where('vendor_id', $vendorId)
                 ->where('uuid', $deviceUuid)
                 ->where('is_active', true)

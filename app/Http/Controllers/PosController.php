@@ -14,6 +14,7 @@ use App\Services\PosService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class PosController extends Controller
@@ -205,7 +206,7 @@ class PosController extends Controller
 
         $device = null;
         $deviceUuid = $request->header('X-POS-Device-UUID', $request->cookie('pos_device_uuid'));
-        if ($deviceUuid) {
+        if ($deviceUuid && Str::isUuid($deviceUuid)) {
             $device = PosDevice::where('vendor_id', $vendor->id)->where('uuid', $deviceUuid)->first();
         }
 
@@ -267,7 +268,7 @@ class PosController extends Controller
 
         $device = null;
         $deviceUuid = $request->header('X-POS-Device-UUID');
-        if ($deviceUuid) {
+        if ($deviceUuid && Str::isUuid($deviceUuid)) {
             $device = PosDevice::where('vendor_id', $user->vendor_id)->where('uuid', $deviceUuid)->first();
         }
 

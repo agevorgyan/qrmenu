@@ -153,7 +153,7 @@ class PosDeviceService
         }
 
         $device = null;
-        if (! empty($deviceUuid)) {
+        if (! empty($deviceUuid) && Str::isUuid($deviceUuid)) {
             $device = PosDevice::where('uuid', $deviceUuid)->first();
             if ($device && (int) $device->vendor_id !== (int) $user->vendor_id) {
                 throw ValidationException::withMessages([
@@ -196,9 +196,9 @@ class PosDeviceService
     /**
      * Authenticate an employee using their PIN on a registered device.
      */
-    public function loginWithPin(int $userId, string $pin, string $deviceUuid, string $mode = 'waiter'): array
+    public function loginWithPin(int $userId, string $pin, ?string $deviceUuid = null, string $mode = 'waiter'): array
     {
-        $throttleKey = 'pos_pin_attempt:'.$deviceUuid.':'.$userId;
+        $throttleKey = 'pos_pin_attempt:'.($deviceUuid ?? 'unknown').':'.$userId;
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             $seconds = RateLimiter::availableIn($throttleKey);
             throw ValidationException::withMessages([
@@ -206,7 +206,31 @@ class PosDeviceService
             ]);
         }
 
-        $device = PosDevice::where('uuid', $deviceUuid)->first();
+        $device = null;
+        if (! empty($deviceUuid) && Str::isUuid($deviceUuid)) {
+            $device = PosDevice::where('uuid', $deviceUuid)->first();
+        }
+
+        if (! $device) {
+            $targetUser = User::find($userId);
+            if ($targetUser && $targetUser->vendor) {
+                $device = PosDevice::where('vendor_id', $targetUser->vendor_id)->where('is_active', true)->first();
+                if (! $device) {
+                    $device = PosDevice::firstOrCreate(
+                        ['vendor_id' => $targetUser->vendor_id, 'name' => 'Default POS Terminal'],
+                        [
+                            'uuid' => (string) Str::uuid(),
+                            'location_id' => $targetUser->location_id,
+                            'device_type' => 'terminal',
+                            'is_active' => true,
+                            'is_paired' => true,
+                            'paired_at' => now(),
+                        ]
+                    );
+                }
+            }
+        }
+
         if (! $device || ! $device->is_active) {
             throw ValidationException::withMessages([
                 'device' => __('POS device is unregistered, revoked, or inactive.'),

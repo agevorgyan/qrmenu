@@ -50,16 +50,36 @@ class PosService
         // Resolve device if UUID supplied
         $device = null;
         $activeSession = null;
-        if (! empty($deviceUuid)) {
+        if (! empty($deviceUuid) && Str::isUuid($deviceUuid)) {
             $device = PosDevice::where('vendor_id', $vendor->id)
                 ->where('uuid', $deviceUuid)
                 ->where('is_active', true)
                 ->first();
+        }
 
-            if ($device) {
-                $device->touchHeartbeat(request()?->ip(), null, false);
-                $activeSession = $device->activeSession();
-            }
+        if (! $device) {
+            $device = PosDevice::where('vendor_id', $vendor->id)
+                ->where('is_active', true)
+                ->first();
+        }
+
+        if (! $device) {
+            $device = PosDevice::firstOrCreate(
+                ['vendor_id' => $vendor->id, 'name' => 'Default POS Terminal'],
+                [
+                    'uuid' => (string) Str::uuid(),
+                    'location_id' => $activeLocation?->id ?? $user->location_id,
+                    'device_type' => 'terminal',
+                    'is_active' => true,
+                    'is_paired' => true,
+                    'paired_at' => now(),
+                ]
+            );
+        }
+
+        if ($device) {
+            $device->touchHeartbeat(request()?->ip(), null, false);
+            $activeSession = $device->activeSession();
         }
 
         $posSettings = PosSetting::forLocation($vendor, $activeLocation?->id);

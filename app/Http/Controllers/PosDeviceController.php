@@ -9,6 +9,7 @@ use App\Services\PosDeviceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class PosDeviceController extends Controller
 {
@@ -179,9 +180,9 @@ class PosDeviceController extends Controller
             'synced' => 'nullable|boolean',
         ]);
 
-        $device = PosDevice::where('vendor_id', $vendor->id)
-            ->where('uuid', $validated['device_uuid'])
-            ->first();
+        $device = (! empty($validated['device_uuid']) && Str::isUuid($validated['device_uuid']))
+            ? PosDevice::where('vendor_id', $vendor->id)->where('uuid', $validated['device_uuid'])->first()
+            : null;
 
         if (! $device) {
             return response()->json([

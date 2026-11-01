@@ -8,6 +8,7 @@ use App\Models\Vendor;
 use App\Services\PosOfflineSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class PosOfflineSyncController extends Controller
 {
@@ -128,7 +129,7 @@ class PosOfflineSyncController extends Controller
             ?: $request->input('device_uuid')
             ?: $request->cookie('pos_device_uuid');
 
-        if (! empty($deviceUuid)) {
+        if (! empty($deviceUuid) && Str::isUuid($deviceUuid)) {
             return PosDevice::where('vendor_id', $vendorId)
                 ->where('uuid', $deviceUuid)
                 ->where('is_active', true)

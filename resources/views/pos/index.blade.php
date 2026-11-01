@@ -5054,12 +5054,22 @@
                                 body: JSON.stringify({
                                     target_user_id: this.switchingTargetUser.id,
                                     pin: this.enteredPin,
-                                    device_uuid: this.bootstrapData.device?.uuid || 'default'
+                                    device_uuid: this.bootstrapData?.device?.uuid || null
                                 })
                             });
                             const data = await res.json();
                             if (data.success) {
                                 this.currentUser = data.user;
+                                if (data.device) {
+                                    if (!this.bootstrapData) this.bootstrapData = {};
+                                    this.bootstrapData.device = data.device;
+                                }
+                                if (data.allowed_modes) {
+                                    this.allowedModes = data.allowed_modes;
+                                }
+                                if (data.mode) {
+                                    this.setMode(data.mode);
+                                }
                                 this.switchingTargetUser = null;
                                 this.enteredPin = '';
                                 this.pinError = '';
