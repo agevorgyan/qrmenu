@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SecurityAuditLog;
+use App\Services\PinSecurityService;
 use App\Services\QrCodeService;
 use App\Services\SecurityAuditService;
 use App\Services\TwoFactorAuthService;
@@ -44,6 +45,7 @@ class ProfileSecurityController extends Controller
             'password' => 'A 6-digit security code for password change has been sent to your email.',
             'email' => 'A 6-digit security code for email change has been sent to your email.',
             'setup' => 'A 6-digit 2FA setup verification code has been sent to your email.',
+            'pin' => 'A 6-digit security code for PIN change has been sent to your email.',
             'default' => 'A 6-digit security code has been sent to your email.',
         ];
 
@@ -246,6 +248,102 @@ class ProfileSecurityController extends Controller
         $user->update($validated);
 
         return back()->with('success', __('Profile details have been saved successfully.'));
+    }
+
+    /**
+     * Update user's POS PIN code with rate limiting and verification.
+     */
+    public function updatePin(Request $request, PinSecurityService $pinService): RedirectResponse|JsonResponse
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'current_password' => 'required|string',
+            'pin' => 'required|string|min:4|max:6|confirmed',
+            'pin_confirmation' => 'required|string',
+            'email_code' => 'nullable|string',
+        ], [
+            'pin.confirmed' => __('The PIN confirmation does not match.'),
+            'pin.min' => __('PIN must be between 4 and 6 numeric digits.'),
+            'pin.max' => __('PIN must be between 4 and 6 numeric digits.'),
+        ]);
+
+        $pinService->setPin(
+            user: $user,
+            newPin: $validated['pin'],
+            currentPasswordOrPin: $validated['current_password'],
+            emailVerificationCode: $request->input('email_code'),
+            actor: $user,
+            requireCurrentAuth: true
+        );
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('Your PIN code has been updated successfully.'),
+            ]);
+        }
+
+        return back()->with('success', __('Your PIN code has been updated successfully.'))->with('active_tab', 'pin');
+    }
+
+    /**
+     * Send email verification code for PIN update.
+     */
+    public function sendPinVerificationCode(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+        TwoFactorAuthService::sendEmailCode($user, 'pin');
+
+        return response()->json([
+            'success' => true,
+            'message' => __('A 6-digit security code for PIN change has been sent to your email.'),
+            'masked_email' => $user->maskedEmail(),
+        ]);
+    }
+
+    /**
+     * Log out from all other devices/sessions.
+     */
+    public function logoutOtherDevices(Request $request): RedirectResponse|JsonResponse
+    {
+        $validated = $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        $user = Auth::user();
+
+        if (! Hash::check($validated['password'], $user->password)) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('Current password is incorrect.'),
+                ], 422);
+            }
+
+            return back()->withErrors(['password' => __('Current password is incorrect.')])->with('active_tab', 'sessions');
+        }
+
+        Auth::logoutOtherDevices($validated['password']);
+
+        app(SecurityAuditService::class)->record(
+            event: SecurityAuditLog::EVENT_LOGOUT,
+            action: 'logout_other_devices',
+            vendor: $user->vendor,
+            actor: $user,
+            targetType: 'User',
+            targetId: $user->id,
+            metadata: ['description' => 'User logged out all other browser and POS sessions.']
+        );
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('Successfully logged out of all other active sessions.'),
+            ]);
+        }
+
+        return back()->with('success', __('Successfully logged out of all other active sessions.'))->with('active_tab', 'sessions');
     }
 
     /**

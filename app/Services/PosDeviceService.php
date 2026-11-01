@@ -231,7 +231,8 @@ class PosDeviceService
             ]);
         }
 
-        if (! $user->verifyPin($pin)) {
+        $pinService = app(PinSecurityService::class);
+        if (! $pinService->verifyPin($user, $pin, 'pin_login')) {
             RateLimiter::hit($throttleKey, 60);
 
             PosOperationLog::log(
@@ -289,7 +290,8 @@ class PosDeviceService
             ]);
         }
 
-        if (! $targetUser->verifyPin($pin)) {
+        $pinService = app(PinSecurityService::class);
+        if (! $pinService->verifyPin($targetUser, $pin, 'quick_switch')) {
             RateLimiter::hit($throttleKey, 60);
 
             PosOperationLog::log(
@@ -341,22 +343,11 @@ class PosDeviceService
      */
     public function setUserPin(User $user, string $newPin, ?User $actor = null): void
     {
-        if (! preg_match('/^\d{4,6}$/', $newPin)) {
-            throw ValidationException::withMessages([
-                'pin' => __('PIN must be between 4 and 6 numeric digits.'),
-            ]);
-        }
-
-        $user->setPin($newPin);
-
-        PosOperationLog::log(
-            vendor: $user->vendor,
-            action: 'pin_change',
+        app(PinSecurityService::class)->setPin(
             user: $user,
-            entity: $user,
-            details: [
-                'updated_by' => $actor?->id ?? $user->id,
-            ]
+            newPin: $newPin,
+            actor: $actor,
+            requireCurrentAuth: false
         );
     }
 

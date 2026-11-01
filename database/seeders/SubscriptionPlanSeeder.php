@@ -28,6 +28,7 @@ class SubscriptionPlanSeeder extends Seeder
                     'Բազմալեզու մենյու',
                     'QR կոդերի ստեղծում',
                     'Հիմնական վիճակագրություն',
+                    'POS Տերմինալ և Գործառնություններ',
                 ],
                 'is_active' => true,
                 'is_custom' => false,

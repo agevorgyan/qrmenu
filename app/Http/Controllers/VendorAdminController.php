@@ -150,7 +150,7 @@ class VendorAdminController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'role' => 'required|string|in:manager,staff,chef,cashier',
+            'role' => 'required|string|in:manager,waiter,cashier,chef,staff',
             'location_id' => 'nullable|integer',
             'password' => 'required|string|min:6',
         ]);

@@ -111,6 +111,73 @@ class Permission
 
     public const POS_KDS = 'pos.kds';
 
+    // Fine-grained Waiter permissions
+    public const ORDERS_VIEW_OWN = 'orders.view_own';
+
+    public const ORDERS_CREATE = 'orders.create';
+
+    public const ORDERS_UPDATE_OWN = 'orders.update_own';
+
+    public const ORDERS_SEND_TO_KITCHEN = 'orders.send_to_kitchen';
+
+    public const ORDERS_CANCEL_REQUEST = 'orders.cancel_request';
+
+    public const TABLES_VIEW_ASSIGNED = 'tables.view_assigned';
+
+    public const TIPS_VIEW_OWN = 'tips.view_own';
+
+    public const PROFILE_VIEW_OWN = 'profile.view_own';
+
+    public const PROFILE_UPDATE_OWN = 'profile.update_own';
+
+    public const PASSWORD_CHANGE_OWN = 'password.change_own';
+
+    public const PIN_MANAGE_OWN = 'pin.manage_own';
+
+    // Fine-grained Cashier permissions
+    public const ORDERS_SEARCH = 'orders.search';
+
+    public const ORDERS_VIEW_DETAILS = 'orders.view_details';
+
+    public const PAYMENTS_CREATE = 'payments.create';
+
+    public const PAYMENTS_CASH = 'payments.cash';
+
+    public const PAYMENTS_CARD = 'payments.card';
+
+    public const PAYMENTS_SPLIT = 'payments.split';
+
+    public const RECEIPTS_PRINT = 'receipts.print';
+
+    public const SHIFTS_OPEN = 'shifts.open';
+
+    public const SHIFTS_CLOSE = 'shifts.close';
+
+    public const SHIFTS_VIEW_OWN = 'shifts.view_own';
+
+    public const REFUNDS_REQUEST = 'refunds.request';
+
+    // Fine-grained Manager permissions
+    public const ORDERS_VIEW_ALL = 'orders.view_all';
+
+    public const ORDERS_MANAGE = 'orders.manage';
+
+    public const ORDERS_APPROVE_CANCELLATION = 'orders.approve_cancellation';
+
+    public const DISCOUNTS_APPROVE = 'discounts.approve';
+
+    public const REFUNDS_APPROVE = 'refunds.approve';
+
+    public const EMPLOYEES_VIEW = 'employees.view';
+
+    public const EMPLOYEES_MANAGE = 'employees.manage';
+
+    public const TABLES_MANAGE = 'tables.manage';
+
+    public const SHIFTS_VIEW_ALL = 'shifts.view_all';
+
+    public const AUDIT_LOGS_VIEW = 'audit_logs.view';
+
     // Platform (SuperAdmin) permissions
     public const PLATFORM_ACCESS = 'platform.access';
 
@@ -178,6 +245,38 @@ class Permission
             self::POS_SETTINGS,
             self::POS_DEVICES,
             self::POS_KDS,
+            self::ORDERS_VIEW_OWN,
+            self::ORDERS_CREATE,
+            self::ORDERS_UPDATE_OWN,
+            self::ORDERS_SEND_TO_KITCHEN,
+            self::ORDERS_CANCEL_REQUEST,
+            self::TABLES_VIEW_ASSIGNED,
+            self::TIPS_VIEW_OWN,
+            self::PROFILE_VIEW_OWN,
+            self::PROFILE_UPDATE_OWN,
+            self::PASSWORD_CHANGE_OWN,
+            self::PIN_MANAGE_OWN,
+            self::ORDERS_SEARCH,
+            self::ORDERS_VIEW_DETAILS,
+            self::PAYMENTS_CREATE,
+            self::PAYMENTS_CASH,
+            self::PAYMENTS_CARD,
+            self::PAYMENTS_SPLIT,
+            self::RECEIPTS_PRINT,
+            self::SHIFTS_OPEN,
+            self::SHIFTS_CLOSE,
+            self::SHIFTS_VIEW_OWN,
+            self::REFUNDS_REQUEST,
+            self::ORDERS_VIEW_ALL,
+            self::ORDERS_MANAGE,
+            self::ORDERS_APPROVE_CANCELLATION,
+            self::DISCOUNTS_APPROVE,
+            self::REFUNDS_APPROVE,
+            self::EMPLOYEES_VIEW,
+            self::EMPLOYEES_MANAGE,
+            self::TABLES_MANAGE,
+            self::SHIFTS_VIEW_ALL,
+            self::AUDIT_LOGS_VIEW,
             self::PLATFORM_ACCESS,
             self::PLATFORM_VENDORS,
             self::PLATFORM_SUBSCRIPTIONS,
@@ -227,6 +326,38 @@ class Permission
                 self::POS_SETTINGS,
                 self::POS_DEVICES,
                 self::POS_KDS,
+                self::ORDERS_VIEW_ALL,
+                self::ORDERS_MANAGE,
+                self::ORDERS_APPROVE_CANCELLATION,
+                self::DISCOUNTS_APPROVE,
+                self::REFUNDS_APPROVE,
+                self::EMPLOYEES_VIEW,
+                self::EMPLOYEES_MANAGE,
+                self::TABLES_MANAGE,
+                self::SHIFTS_VIEW_ALL,
+                self::AUDIT_LOGS_VIEW,
+                self::ORDERS_SEARCH,
+                self::ORDERS_VIEW_DETAILS,
+                self::PAYMENTS_CREATE,
+                self::PAYMENTS_CASH,
+                self::PAYMENTS_CARD,
+                self::PAYMENTS_SPLIT,
+                self::RECEIPTS_PRINT,
+                self::SHIFTS_OPEN,
+                self::SHIFTS_CLOSE,
+                self::SHIFTS_VIEW_OWN,
+                self::REFUNDS_REQUEST,
+                self::ORDERS_VIEW_OWN,
+                self::ORDERS_CREATE,
+                self::ORDERS_UPDATE_OWN,
+                self::ORDERS_SEND_TO_KITCHEN,
+                self::ORDERS_CANCEL_REQUEST,
+                self::TABLES_VIEW_ASSIGNED,
+                self::TIPS_VIEW_OWN,
+                self::PROFILE_VIEW_OWN,
+                self::PROFILE_UPDATE_OWN,
+                self::PASSWORD_CHANGE_OWN,
+                self::PIN_MANAGE_OWN,
             ],
             'vendor_owner' => [
                 self::MENU_VIEW,
@@ -275,6 +406,38 @@ class Permission
                 self::POS_SETTINGS,
                 self::POS_DEVICES,
                 self::POS_KDS,
+                self::ORDERS_VIEW_ALL,
+                self::ORDERS_MANAGE,
+                self::ORDERS_APPROVE_CANCELLATION,
+                self::DISCOUNTS_APPROVE,
+                self::REFUNDS_APPROVE,
+                self::EMPLOYEES_VIEW,
+                self::EMPLOYEES_MANAGE,
+                self::TABLES_MANAGE,
+                self::SHIFTS_VIEW_ALL,
+                self::AUDIT_LOGS_VIEW,
+                self::ORDERS_SEARCH,
+                self::ORDERS_VIEW_DETAILS,
+                self::PAYMENTS_CREATE,
+                self::PAYMENTS_CASH,
+                self::PAYMENTS_CARD,
+                self::PAYMENTS_SPLIT,
+                self::RECEIPTS_PRINT,
+                self::SHIFTS_OPEN,
+                self::SHIFTS_CLOSE,
+                self::SHIFTS_VIEW_OWN,
+                self::REFUNDS_REQUEST,
+                self::ORDERS_VIEW_OWN,
+                self::ORDERS_CREATE,
+                self::ORDERS_UPDATE_OWN,
+                self::ORDERS_SEND_TO_KITCHEN,
+                self::ORDERS_CANCEL_REQUEST,
+                self::TABLES_VIEW_ASSIGNED,
+                self::TIPS_VIEW_OWN,
+                self::PROFILE_VIEW_OWN,
+                self::PROFILE_UPDATE_OWN,
+                self::PASSWORD_CHANGE_OWN,
+                self::PIN_MANAGE_OWN,
             ],
             'manager' => [
                 self::MENU_VIEW,
@@ -293,12 +456,8 @@ class Permission
                 self::LOCATIONS_VIEW,
                 self::LOCATIONS_MANAGE,
                 self::TEAM_VIEW,
-                // Managers do NOT get team.manage (cannot invite/fire team members)
-                // Managers do NOT get billing.view or billing.manage
                 self::AI_VIEW,
-                // Managers do NOT get ai.manage (cannot change API keys)
                 self::SETTINGS_VIEW,
-                // Managers do NOT get settings.manage (cannot change payment secrets or credentials)
                 self::STORAGE_VIEW,
                 self::STORAGE_MANAGE,
                 self::REPORTS_VIEW,
@@ -321,71 +480,93 @@ class Permission
                 self::POS_SETTINGS,
                 self::POS_DEVICES,
                 self::POS_KDS,
+                self::ORDERS_VIEW_ALL,
+                self::ORDERS_MANAGE,
+                self::ORDERS_APPROVE_CANCELLATION,
+                self::DISCOUNTS_APPROVE,
+                self::REFUNDS_APPROVE,
+                self::EMPLOYEES_VIEW,
+                self::TABLES_MANAGE,
+                self::SHIFTS_VIEW_ALL,
+                self::AUDIT_LOGS_VIEW,
+                self::PROFILE_VIEW_OWN,
+                self::PROFILE_UPDATE_OWN,
+                self::PASSWORD_CHANGE_OWN,
+                self::PIN_MANAGE_OWN,
             ],
             'staff' => [
-                self::MENU_VIEW,
-                self::ORDERS_VIEW,
-                self::ORDERS_UPDATE,
-                self::CUSTOMERS_VIEW,
-                self::LOCATIONS_VIEW,
-                self::STORAGE_VIEW,
-                self::TIPS_VIEW,
-                self::RATINGS_VIEW,
-                self::SPLIT_BILL_VIEW,
-                self::WAITERS_VIEW,
                 self::POS_ACCESS,
                 self::POS_ORDERS,
+                self::MENU_VIEW,
+                self::ORDERS_VIEW_OWN,
+                self::ORDERS_CREATE,
+                self::ORDERS_UPDATE_OWN,
+                self::TABLES_VIEW_ASSIGNED,
+                self::TIPS_VIEW_OWN,
+                self::PROFILE_VIEW_OWN,
+                self::PROFILE_UPDATE_OWN,
+                self::PASSWORD_CHANGE_OWN,
+                self::PIN_MANAGE_OWN,
             ],
             'waiter' => [
-                self::MENU_VIEW,
-                self::ORDERS_VIEW,
-                self::ORDERS_UPDATE,
-                self::CUSTOMERS_VIEW,
-                self::LOCATIONS_VIEW,
-                self::STORAGE_VIEW,
-                self::TIPS_VIEW,
-                self::RATINGS_VIEW,
-                self::SPLIT_BILL_VIEW,
-                self::WAITERS_VIEW,
                 self::POS_ACCESS,
                 self::POS_ORDERS,
+                self::MENU_VIEW,
+                self::ORDERS_VIEW_OWN,
+                self::ORDERS_CREATE,
+                self::ORDERS_UPDATE_OWN,
+                self::ORDERS_SEND_TO_KITCHEN,
+                self::ORDERS_CANCEL_REQUEST,
+                self::TABLES_VIEW_ASSIGNED,
+                self::TIPS_VIEW_OWN,
+                self::PROFILE_VIEW_OWN,
+                self::PROFILE_UPDATE_OWN,
+                self::PASSWORD_CHANGE_OWN,
+                self::PIN_MANAGE_OWN,
             ],
             'chef' => [
+                self::POS_ACCESS,
+                self::POS_KDS,
                 self::MENU_VIEW,
                 self::ORDERS_VIEW,
                 self::ORDERS_UPDATE, // For kitchen prep status transitions (e.g. preparing -> ready)
-                self::LOCATIONS_VIEW,
-                self::POS_ACCESS,
-                self::POS_KDS,
+                self::PROFILE_VIEW_OWN,
+                self::PASSWORD_CHANGE_OWN,
+                self::PIN_MANAGE_OWN,
             ],
             'kitchen' => [
-                self::MENU_VIEW,
-                self::ORDERS_VIEW,
-                self::ORDERS_UPDATE,
-                self::LOCATIONS_VIEW,
                 self::POS_ACCESS,
                 self::POS_KDS,
-            ],
-            'cashier' => [
                 self::MENU_VIEW,
                 self::ORDERS_VIEW,
                 self::ORDERS_UPDATE,
-                self::ORDERS_CANCEL,
-                self::ORDERS_REFUND,
-                self::CUSTOMERS_VIEW,
-                self::LOCATIONS_VIEW,
-                self::REPORTS_VIEW,
-                self::TIPS_VIEW,
+                self::PROFILE_VIEW_OWN,
+                self::PASSWORD_CHANGE_OWN,
+                self::PIN_MANAGE_OWN,
+            ],
+            'cashier' => [
                 self::POS_ACCESS,
                 self::POS_ORDERS,
                 self::POS_PAYMENTS,
                 self::POS_CASH_DRAWER,
                 self::POS_DISCOUNTS,
-                self::POS_REPORTS,
-                // Cashier CANNOT:
-                // manage menu items
-                // export customer data
-                // manage locations, team, billing, AI, settings
+                self::MENU_VIEW,
+                self::ORDERS_VIEW,
+                self::ORDERS_SEARCH,
+                self::ORDERS_VIEW_DETAILS,
+                self::PAYMENTS_CREATE,
+                self::PAYMENTS_CASH,
+                self::PAYMENTS_CARD,
+                self::PAYMENTS_SPLIT,
+                self::RECEIPTS_PRINT,
+                self::SHIFTS_OPEN,
+                self::SHIFTS_CLOSE,
+                self::SHIFTS_VIEW_OWN,
+                self::REFUNDS_REQUEST,
+                self::PROFILE_VIEW_OWN,
+                self::PROFILE_UPDATE_OWN,
+                self::PASSWORD_CHANGE_OWN,
+                self::PIN_MANAGE_OWN,
             ],
         ];
     }

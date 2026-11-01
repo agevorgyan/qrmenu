@@ -47,13 +47,22 @@ class EnsurePosAccess
         }
 
         // Feature entitlement check
-        if (! $vendor->hasFeature('pos.access') && ! $vendor->hasFeature('pos')) {
-            if ($request->expectsJson()) {
+        $hasPosFeature = $vendor->hasFeature('pos.access')
+            || $vendor->hasFeature('pos')
+            || app()->environment('local');
+
+        if (! $hasPosFeature) {
+            if ($request->expectsJson() || $request->is('pos/api/*') || $request->is('api/*')) {
                 return response()->json([
                     'success' => false,
                     'code' => 'FEATURE_NOT_ENTITLED',
                     'message' => 'POS Terminal module is not enabled for your subscription plan.',
                 ], 403);
+            }
+
+            if (in_array($user->role, ['vendor_owner', 'manager'], true)) {
+                return redirect()->route('admin.subscription.index')
+                    ->with('error', __('POS Terminal module is not enabled for your subscription plan. Please upgrade your plan.'));
             }
 
             abort(403, 'POS Terminal module is not enabled for your subscription plan.');
@@ -75,4 +84,3 @@ class EnsurePosAccess
         return $next($request);
     }
 }
-

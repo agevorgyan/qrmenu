@@ -21,7 +21,7 @@ class PosReportingController extends Controller
     {
         $user = $request->user();
 
-        if (! in_array($user->role, ['vendor_owner', 'manager', 'cashier'], true) && ! $user->hasPermission(Permission::POS_REPORTS)) {
+        if (! in_array($user->role, ['vendor_owner', 'manager'], true) && ! $user->hasPermission(Permission::POS_REPORTS)) {
             abort(403, 'Unauthorized access to POS reports.');
         }
 

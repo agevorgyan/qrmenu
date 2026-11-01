@@ -126,6 +126,6 @@ class TwoFactorController extends Controller
             return redirect()->route('verification.notice');
         }
 
-        return redirect()->route('admin.dashboard');
+        return redirect()->to($user->getWorkspaceRedirectUrl());
     }
 }

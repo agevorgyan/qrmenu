@@ -17,10 +17,18 @@ class EnsureRole
             return redirect()->route('login');
         }
 
-        if (in_array($user->role, $roles) || ($user->isSuperAdmin() && $user->hasPermission(Permission::PLATFORM_ACCESS))) {
+        if (in_array($user->role, $roles, true) || ($user->isSuperAdmin() && $user->hasPermission(Permission::PLATFORM_ACCESS))) {
             return $next($request);
         }
 
-        abort(403, 'Unauthorized action for your role.');
+        if ($request->expectsJson() || $request->is('api/*') || $request->is('pos/api/*')) {
+            return response()->json([
+                'success' => false,
+                'code' => 'UNAUTHORIZED_ROLE',
+                'message' => __('Unauthorized action for your assigned role.'),
+            ], 403);
+        }
+
+        abort(403, __('Unauthorized action for your assigned role.'));
     }
 }

@@ -34,6 +34,7 @@ class TwoFactorCodeMail extends Mailable
             'password' => __('password change', [], $targetLocale),
             'email' => __('email address change', [], $targetLocale),
             'setup' => __('two-factor authentication setup', [], $targetLocale),
+            'pin' => __('PIN security change', [], $targetLocale),
             default => __('account login', [], $targetLocale),
         };
 
@@ -58,6 +59,7 @@ class TwoFactorCodeMail extends Mailable
                 'password' => __('Password Change 2FA Code — :site_name', ['site_name' => $siteName], $targetLocale),
                 'email' => __('Email Change 2FA Code — :site_name', ['site_name' => $siteName], $targetLocale),
                 'setup' => __('2FA Activation Verification Code — :site_name', ['site_name' => $siteName], $targetLocale),
+                'pin' => __('PIN Security Verification Code — :site_name', ['site_name' => $siteName], $targetLocale),
                 default => __('Your Two-Factor Authentication (2FA) Code — :site_name', ['site_name' => $siteName], $targetLocale),
             };
         }

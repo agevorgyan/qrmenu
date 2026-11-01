@@ -1047,7 +1047,79 @@
             border-color: var(--primary);
         }
 
-        /* Responsive Breakpoints */
+        /* Responsive Breakpoints & Mobile Navigation */
+        .pos-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: #11141c;
+            border-top: 1px solid var(--border-color);
+            z-index: 1000;
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        .pos-bottom-nav-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            height: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0 0.5rem;
+        }
+
+        .pos-bottom-nav-item {
+            flex: 1;
+            min-height: 48px;
+            min-width: 48px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+            position: relative;
+            padding: 4px;
+        }
+
+        .pos-bottom-nav-item i {
+            font-size: 1.15rem;
+            transition: transform 0.15s ease;
+        }
+
+        .pos-bottom-nav-item.active {
+            color: var(--primary);
+        }
+
+        .pos-bottom-nav-item.active i {
+            transform: scale(1.15);
+            color: var(--primary);
+        }
+
+        .pos-bottom-nav-badge {
+            position: absolute;
+            top: 2px;
+            right: 18%;
+            background: #ef4444;
+            color: #ffffff;
+            font-size: 0.65rem;
+            font-weight: 800;
+            border-radius: 999px;
+            padding: 0.05rem 0.35rem;
+            line-height: 1.1;
+        }
+
         @media (max-width: 900px) {
             .order-taking-layout {
                 flex-direction: column;
@@ -1057,6 +1129,25 @@
                 height: 45vh;
                 border-left: none;
                 border-top: 1px solid var(--border-color);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .pos-bottom-nav {
+                display: block;
+            }
+            .pos-stage {
+                padding-bottom: 70px !important;
+            }
+            .pos-top-bar {
+                padding: 0.5rem 0.75rem;
+            }
+            .pos-actions-group .pos-tool-btn {
+                min-width: 44px;
+                min-height: 44px;
+            }
+            .pos-mode-switcher {
+                display: none !important;
             }
         }
     </style>
@@ -1085,8 +1176,10 @@
             </div>
         </div>
 
-        <!-- Mode Switcher -->
+        <!-- Mode Switcher (Backend Enforced & Strictly Role-Restricted) -->
+        @if(count($allowedModes ?? []) > 1)
         <div class="pos-mode-switcher">
+            @if(in_array('waiter', $allowedModes ?? []))
             <button type="button" 
                     class="pos-mode-btn" 
                     :class="{ 'active': activeMode === 'waiter' }"
@@ -1094,6 +1187,8 @@
                 <i class="fa-solid fa-user-tie"></i>
                 <span>{{ __('Waiter Mode') }}</span>
             </button>
+            @endif
+            @if(in_array('cashier', $allowedModes ?? []))
             <button type="button" 
                     class="pos-mode-btn" 
                     :class="{ 'active': activeMode === 'cashier' }"
@@ -1101,6 +1196,8 @@
                 <i class="fa-solid fa-receipt"></i>
                 <span>{{ __('Cashier Mode') }}</span>
             </button>
+            @endif
+            @if(in_array('manager', $allowedModes ?? []))
             <button type="button" 
                     class="pos-mode-btn" 
                     :class="{ 'active': activeMode === 'manager' }"
@@ -1108,7 +1205,14 @@
                 <i class="fa-solid fa-chart-line"></i>
                 <span>{{ __('Manager Mode') }}</span>
             </button>
+            @endif
         </div>
+        @else
+        <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); padding: 0.4rem 0.9rem; border-radius: 12px;">
+            <i class="fa-solid" :class="activeMode === 'waiter' ? 'fa-user-tie' : (activeMode === 'cashier' ? 'fa-receipt' : 'fa-chart-line')" :style="activeMode === 'waiter' ? 'color: #10b981;' : (activeMode === 'cashier' ? 'color: #6366f1;' : 'color: #f59e0b;')"></i>
+            <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-main);" x-text="activeMode === 'waiter' ? '{{ __('Waiter Mode') }}' : (activeMode === 'cashier' ? '{{ __('Cashier Mode') }}' : '{{ __('Manager Mode') }}')"></span>
+        </div>
+        @endif
 
         <!-- Right System Indicators & Tools -->
         <div class="pos-actions-group">
@@ -1145,9 +1249,11 @@
             </button>
 
             <!-- Kitchen Display System (KDS) Button -->
+            @if(Auth::user()->isVendorOwner() || Auth::user()->isManager() || Auth::user()->isChef())
             <a href="{{ route('pos.kds') }}" target="_blank" class="pos-tool-btn" title="{{ __('Kitchen Display System (KDS)') }}" style="text-decoration: none; color: #f59e0b;">
                 <i class="fa-solid fa-fire-burner"></i>
             </a>
+            @endif
 
             <!-- Fullscreen Toggle -->
             <button type="button" class="pos-tool-btn" @click="toggleFullscreen()" title="{{ __('Toggle Fullscreen') }}">
@@ -1160,12 +1266,14 @@
             </button>
 
             <!-- Quick Employee Switcher Button -->
+            @if(Auth::user()->isVendorOwner() || Auth::user()->isManager() || count($allowedModes ?? []) > 1)
             <button type="button" class="pos-tool-btn" @click="openEmployeeSwitcher()" title="{{ __('Quick Switch Employee') }}" style="color: var(--primary);">
                 <i class="fa-solid fa-users-gear"></i>
             </button>
+            @endif
 
             <!-- Employee Profile Badge & Modal Trigger -->
-            <div class="pos-user-badge" @click="openSetPinModal()">
+            <div class="pos-user-badge" @click="openEmployeeProfileModal()" title="{{ __('My Profile & Security') }}">
                 <div class="pos-user-avatar">
                     <template x-if="currentUser.avatar_url">
                         <img :src="currentUser.avatar_url" style="width: 100%; height: 100%; object-fit: cover;">
@@ -1180,10 +1288,16 @@
                 </div>
             </div>
 
-            <!-- Return to Admin -->
+            <!-- Return to Admin or Logout -->
+            @if(Auth::user()->isVendorOwner() || Auth::user()->isManager())
             <a href="{{ route('admin.dashboard') }}" class="pos-tool-btn" title="{{ __('Back to Dashboard') }}">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
             </a>
+            @else
+            <button type="button" class="pos-tool-btn" @click="confirmLogout()" title="{{ __('Logout') }}" style="color: #ef4444;">
+                <i class="fa-solid fa-power-off"></i>
+            </button>
+            @endif
         </div>
     </header>
 
@@ -1206,7 +1320,33 @@
         <!-- ========================================== -->
         <!-- MODE 1: WAITER MODE (TOUCHSCREEN ORDERING)  -->
         <!-- ========================================== -->
-        <div class="order-taking-layout" x-show="activeMode === 'waiter'">
+        <div class="pos-mode-pane" x-show="activeMode === 'waiter'" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
+            <!-- Sub-tab Navigation for Waiter (Desktop & Mobile) -->
+            <div style="display: flex; gap: 0.5rem; padding: 0.45rem 1rem; border-bottom: 1px solid var(--border-color); background: rgba(255,255,255,0.02); align-items: center; justify-content: space-between; flex-shrink: 0; flex-wrap: wrap;">
+                <div style="display: flex; gap: 0.4rem; align-items: center;">
+                    <button type="button" class="pos-mode-btn" :class="{ 'active': waiterSubTab === 'home' }" @click="waiterSubTab = 'home'">
+                        <i class="fa-solid fa-utensils"></i>
+                        <span>{{ __('Menu & Order') }}</span>
+                    </button>
+                    <button type="button" class="pos-mode-btn" :class="{ 'active': waiterSubTab === 'orders' }" @click="waiterSubTab = 'orders'; fetchWaiterDashboard();">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>{{ __('My Orders') }}</span>
+                        <span x-show="waiterActiveOrdersCount > 0" class="badge badge-emerald" style="font-size: 0.7rem; padding: 0.1rem 0.4rem; margin-left: 4px;" x-text="waiterActiveOrdersCount"></span>
+                    </button>
+                    <button type="button" class="pos-mode-btn" :class="{ 'active': waiterSubTab === 'tips' }" @click="waiterSubTab = 'tips'; fetchWaiterTips();">
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                        <span>{{ __('My Tips') }}</span>
+                    </button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <button type="button" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.35rem 0.75rem; border-radius: 8px;" @click="openTableModal()">
+                        <i class="fa-solid fa-chair text-emerald"></i> <span x-text="selectedTable ? ('{{ __('Table') }} ' + selectedTable.table_number) : '{{ __('Floor Plan') }}'"></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Waiter SubTab 1: Home (Catalog & Order taking) -->
+            <div class="order-taking-layout" x-show="waiterSubTab === 'home'" style="flex: 1; height: 100%;">
             <!-- Left: Catalog & Product Grid -->
             <div class="catalog-pane">
                 <!-- Top Filter / Search Bar -->
@@ -1393,6 +1533,149 @@
             </div>
         </div>
 
+            <!-- Waiter SubTab 2: My Active Orders & Cancellation Requests -->
+            <div x-show="waiterSubTab === 'orders'" x-cloak style="flex: 1; overflow-y: auto; padding: 1.25rem; max-width: 1050px; margin: 0 auto; width: 100%; box-sizing: border-box;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+                    <div>
+                        <h2 style="font-family: var(--font-display); font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin: 0;">
+                            {{ __('My Active Orders') }}
+                        </h2>
+                        <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">
+                            {{ __('Live orders currently assigned to you and their kitchen preparation status') }}
+                        </p>
+                    </div>
+                    <button type="button" class="btn btn-secondary" style="font-size: 0.82rem; padding: 0.4rem 0.85rem; border-radius: 10px;" @click="fetchWaiterDashboard()">
+                        <i class="fa-solid fa-arrows-rotate"></i> {{ __('Refresh') }}
+                    </button>
+                </div>
+
+                <!-- Empty state -->
+                <div x-show="waiterActiveOrders.length === 0" style="background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: 16px; padding: 3rem 1.5rem; text-align: center;">
+                    <i class="fa-solid fa-clipboard-check" style="font-size: 2.5rem; color: var(--text-muted); margin-bottom: 0.75rem;"></i>
+                    <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.5rem 0;">{{ __('No Active Orders') }}</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); max-width: 400px; margin: 0 auto 1.25rem auto;">
+                        {{ __('You currently have no active orders in progress. Open a table from the Floor Plan or Menu tab to begin.') }}
+                    </p>
+                    <button type="button" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.5rem 1.25rem; border-radius: 10px;" @click="waiterSubTab = 'home'">
+                        <i class="fa-solid fa-plus"></i> {{ __('Take an Order') }}
+                    </button>
+                </div>
+
+                <!-- Active Orders Grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem;">
+                    <template x-for="ord in waiterActiveOrders" :key="ord.id">
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.15rem; display: flex; flex-direction: column; justify-content: space-between; gap: 0.85rem;">
+                            <div>
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                                    <div>
+                                        <div style="font-weight: 800; font-size: 1.1rem; color: var(--text-main);">
+                                            <span x-text="ord.table_number ? ('{{ __('Table') }} ' + ord.table_number) : '{{ __('Counter') }}'"></span>
+                                        </div>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;" x-text="'#' + ord.order_number"></div>
+                                    </div>
+                                    <span class="badge" :class="'badge-' + (ord.status === 'ready' ? 'emerald' : (ord.status === 'preparing' ? 'amber' : 'indigo'))" style="text-transform: capitalize; font-weight: 700;" x-text="ord.status"></span>
+                                </div>
+
+                                <!-- Pending Cancellation Warning Banner -->
+                                <template x-if="ord.payment_intent_data?.cancellation_request?.status === 'pending_approval'">
+                                    <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 10px; padding: 0.45rem 0.65rem; margin-bottom: 0.65rem; font-size: 0.75rem; color: #f59e0b; display: flex; align-items: center; gap: 0.4rem;">
+                                        <i class="fa-solid fa-hourglass-half"></i>
+                                        <span>{{ __('Cancellation request pending manager approval') }}</span>
+                                    </div>
+                                </template>
+
+                                <!-- Items Preview -->
+                                <div style="background: rgba(255,255,255,0.02); border-radius: 10px; padding: 0.65rem; max-height: 120px; overflow-y: auto; font-size: 0.8rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                                    <template x-for="item in ord.items" :key="item.id">
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <span style="color: var(--text-main);" x-text="item.quantity + 'x ' + item.item_name"></span>
+                                            <span style="font-weight: 600; color: var(--text-secondary);" x-text="formatCurrency(item.total_price)"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.65rem; border-top: 1px solid var(--border-color); margin-bottom: 0.65rem;">
+                                    <span style="font-size: 0.8rem; color: var(--text-muted);">{{ __('Total') }}</span>
+                                    <span style="font-size: 1.15rem; font-weight: 800; color: var(--primary);" x-text="formatCurrency(ord.total_amount)"></span>
+                                </div>
+
+                                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                                    <template x-if="!ord.payment_intent_data?.cancellation_request || ord.payment_intent_data?.cancellation_request?.status !== 'pending_approval'">
+                                        <button type="button" class="btn btn-secondary" style="font-size: 0.78rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.3); padding: 0.35rem 0.65rem; border-radius: 8px;" @click="openCancelRequestModal(ord)">
+                                            <i class="fa-solid fa-ban"></i> {{ __('Request Cancel') }}
+                                        </button>
+                                    </template>
+                                    <button type="button" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.35rem 0.65rem; border-radius: 8px;" @click="printKitchenTicketForOrder(ord.id)">
+                                        <i class="fa-solid fa-print"></i> {{ __('Kitchen Ticket') }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Waiter SubTab 3: My Tips Tracker -->
+            <div x-show="waiterSubTab === 'tips'" x-cloak style="flex: 1; overflow-y: auto; padding: 1.25rem; max-width: 900px; margin: 0 auto; width: 100%; box-sizing: border-box;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;">
+                    <div>
+                        <h2 style="font-family: var(--font-display); font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin: 0;">
+                            {{ __('My Tips Tracker') }}
+                        </h2>
+                        <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">
+                            {{ __('Personal tips collected across your served orders') }}
+                        </p>
+                    </div>
+                    <button type="button" class="btn btn-secondary" style="font-size: 0.82rem; padding: 0.4rem 0.85rem; border-radius: 10px;" @click="fetchWaiterTips()">
+                        <i class="fa-solid fa-arrows-rotate"></i> {{ __('Refresh') }}
+                    </button>
+                </div>
+
+                <!-- KPI Metric Cards -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem;">
+                        <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">{{ __('Today\'s Tips') }}</div>
+                        <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: #10b981; margin-top: 4px;" x-text="formatCurrency(waiterTips.today)"></div>
+                    </div>
+                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem;">
+                        <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">{{ __('This Week') }}</div>
+                        <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: #3b82f6; margin-top: 4px;" x-text="formatCurrency(waiterTips.week)"></div>
+                    </div>
+                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem;">
+                        <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">{{ __('This Month') }}</div>
+                        <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: #f59e0b; margin-top: 4px;" x-text="formatCurrency(waiterTips.month)"></div>
+                    </div>
+                </div>
+
+                <!-- Recent Tips Feed -->
+                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem;">
+                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0 0 1rem 0;">{{ __('Recent Tipped Orders') }}</h3>
+                    <div x-show="waiterTips.recent.length === 0" style="padding: 2rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+                        {{ __('No recent tips recorded yet.') }}
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;" x-show="waiterTips.recent.length > 0">
+                        <template x-for="t in waiterTips.recent" :key="t.order_id">
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0.85rem; background: rgba(255,255,255,0.02); border-radius: 10px;">
+                                <div>
+                                    <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-main);">
+                                        <span x-text="t.table_number ? ('{{ __('Table') }} ' + t.table_number) : '{{ __('Counter') }}'"></span>
+                                        <span style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;" x-text="' #' + t.order_number"></span>
+                                    </div>
+                                    <div style="font-size: 0.72rem; color: var(--text-muted);" x-text="formatTime(t.created_at) + ' • ' + t.payment_method"></div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 1.1rem; font-weight: 800; color: #10b981;" x-text="'+' + formatCurrency(t.tip_amount)"></div>
+                                    <div style="font-size: 0.72rem; color: var(--text-muted);" x-text="'Total: ' + formatCurrency(t.order_total)"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- ========================================== -->
         <!-- MODE 2: CASHIER MODE (BILLS & PAYMENTS)     -->
         <!-- ========================================== -->
@@ -1548,6 +1831,11 @@
                         <i class="fa-solid fa-chart-line"></i>
                         <span>{{ __('Overview') }}</span>
                     </button>
+                    <button type="button" class="pos-mode-btn" :class="{ 'active': managerTab === 'operations' }" @click="switchManagerTab('operations')">
+                        <i class="fa-solid fa-tasks"></i>
+                        <span>{{ __('Operations & Approvals') }}</span>
+                        <span x-show="pendingExceptionsCount > 0" class="badge badge-amber" style="font-size: 0.7rem; padding: 0.1rem 0.4rem; margin-left: 4px;" x-text="pendingExceptionsCount"></span>
+                    </button>
                     <button type="button" class="pos-mode-btn" :class="{ 'active': managerTab === 'sales' }" @click="switchManagerTab('sales')">
                         <i class="fa-solid fa-receipt"></i>
                         <span>{{ __('Sales Analytics') }}</span>
@@ -1568,6 +1856,73 @@
                         <i class="fa-solid fa-desktop"></i>
                         <span>{{ __('Devices') }}</span>
                     </button>
+                </div>
+
+                <!-- 0. TAB: OPERATIONS & EXCEPTIONS (CANCELLATION APPROVALS) -->
+                <div x-show="managerTab === 'operations'" style="display: flex; flex-direction: column; gap: 1.5rem;" x-cloak>
+                    <!-- Pending Cancellation Requests Section -->
+                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.65rem;">
+                                <span style="width: 36px; height: 36px; border-radius: 10px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                </span>
+                                <div>
+                                    <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin: 0;">{{ __('Pending Cancellation Requests') }}</h3>
+                                    <p style="font-size: 0.78rem; color: var(--text-muted); margin: 2px 0 0 0;">{{ __('Waiter cancellation requests requiring manager approval before voiding') }}</p>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.35rem 0.75rem; border-radius: 8px;" @click="fetchManagerExceptions()">
+                                <i class="fa-solid fa-arrows-rotate"></i> {{ __('Refresh') }}
+                            </button>
+                        </div>
+
+                        <!-- Empty state -->
+                        <div x-show="pendingExceptions.length === 0" style="padding: 2.5rem 1rem; text-align: center; color: var(--text-muted);">
+                            <i class="fa-solid fa-circle-check" style="font-size: 2rem; color: #10b981; margin-bottom: 0.5rem;"></i>
+                            <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">{{ __('All Clear!') }}</div>
+                            <div style="font-size: 0.82rem; margin-top: 2px;">{{ __('There are no pending order cancellation requests.') }}</div>
+                        </div>
+
+                        <!-- Exceptions Grid -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem;" x-show="pendingExceptions.length > 0">
+                            <template x-for="exc in pendingExceptions" :key="exc.order_id">
+                                <div style="background: rgba(255,255,255,0.02); border: 1.5px solid rgba(245, 158, 11, 0.3); border-radius: 14px; padding: 1.15rem; display: flex; flex-direction: column; justify-content: space-between; gap: 0.85rem;">
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                                            <div>
+                                                <div style="font-weight: 800; font-size: 1.1rem; color: var(--text-main);">
+                                                    <span x-text="exc.table_number ? ('{{ __('Table') }} ' + exc.table_number) : '{{ __('Counter') }}'"></span>
+                                                </div>
+                                                <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;" x-text="'#' + exc.order_number"></div>
+                                            </div>
+                                            <span class="badge badge-amber" style="font-size: 0.72rem; font-weight: 700;">{{ __('Pending Approval') }}</span>
+                                        </div>
+
+                                        <div style="background: rgba(245, 158, 11, 0.08); border-radius: 8px; padding: 0.65rem; margin-bottom: 0.5rem;">
+                                            <div style="font-size: 0.72rem; color: #f59e0b; font-weight: 700; text-transform: uppercase;">{{ __('Reason') }}:</div>
+                                            <div style="font-size: 0.85rem; color: var(--text-main); margin-top: 2px;" x-text="exc.request.reason"></div>
+                                            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;" x-text="'Requested by: ' + (exc.waiter_name || exc.request.requested_by_name) + ' at ' + formatTime(exc.request.requested_at)"></div>
+                                        </div>
+
+                                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+                                            <span style="color: var(--text-muted);">{{ __('Order Amount') }}:</span>
+                                            <span style="font-weight: 800; color: var(--primary);" x-text="formatCurrency(exc.total_amount)"></span>
+                                        </div>
+                                    </div>
+
+                                    <div style="display: flex; gap: 0.5rem; justify-content: flex-end; padding-top: 0.5rem; border-top: 1px solid var(--border-color);">
+                                        <button type="button" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem; border-radius: 8px;" @click="rejectCancellation(exc.order_id)">
+                                            <i class="fa-solid fa-xmark"></i> {{ __('Reject') }}
+                                        </button>
+                                        <button type="button" class="btn btn-primary" style="background: #10b981; border-color: #10b981; font-weight: 700; font-size: 0.8rem; padding: 0.4rem 0.9rem; border-radius: 8px;" @click="approveCancellation(exc.order_id)">
+                                            <i class="fa-solid fa-check"></i> {{ __('Approve Cancellation') }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 1. TAB: OVERVIEW -->
@@ -1669,7 +2024,7 @@
                             <thead>
                                 <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
                                     <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Staff Member') }}</th>
-                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Orders') }}</th>
+                                    <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Order Count') }}</th>
                                     <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Guests Served') }}</th>
                                     <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem;">{{ __('Tips Collected') }}</th>
                                     <th style="padding: 10px 14px; color: var(--text-muted); font-size: 0.75rem; text-align: right;">{{ __('Sales Generated') }}</th>
@@ -2378,21 +2733,197 @@
             </div>
         </div>
 
-        <!-- 6. PIN Change Modal -->
-        <div class="pos-modal-overlay" x-show="showPinModal" x-cloak>
-            <div class="pos-modal-card" style="max-width: 380px;">
+        <!-- 6. Order Cancellation Request Modal (Waiter Mode) -->
+        <div class="pos-modal-overlay" x-show="showCancelRequestModal" x-cloak>
+            <div class="pos-modal-card" style="max-width: 440px;" @click.away="showCancelRequestModal = false">
                 <div class="pos-modal-header">
-                    <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Change PIN') }}</h3>
-                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showPinModal = false">
+                    <div>
+                        <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; color: #ef4444; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fa-solid fa-ban"></i> {{ __('Request Order Cancellation') }}
+                        </h3>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;" x-text="'Order #' + (cancelRequestOrder?.order_number || '')"></div>
+                    </div>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showCancelRequestModal = false">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
-                <div class="pos-modal-body">
-                    <label style="font-size: 0.8rem; color: var(--text-muted);">{{ __('Set New 4-Digit PIN') }}</label>
-                    <input type="password" maxlength="6" class="pos-input" x-model="newPin" placeholder="••••" style="text-align: center; font-size: 1.5rem; letter-spacing: 6px;">
-                    <button type="button" class="cart-btn-primary" style="width: 100%;" @click="submitNewPin()">
-                        <span>{{ __('Save PIN') }}</span>
+                <div class="pos-modal-body" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <p style="font-size: 0.84rem; color: var(--text-muted); line-height: 1.45; margin: 0;">
+                        {{ __('Waiters cannot directly cancel orders. Submitting this request sends an exception alert to the manager for review and approval.') }}
+                    </p>
+
+                    <div>
+                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Reason for Cancellation') }} *</label>
+                        <select class="pos-input" x-model="cancelRequestReason" style="margin-bottom: 0.5rem;">
+                            <option value="">-- {{ __('Select a reason') }} --</option>
+                            <option value="Customer changed mind / Left">{{ __('Customer changed mind / Left') }}</option>
+                            <option value="Accidental order / duplicate entry">{{ __('Accidental order / duplicate entry') }}</option>
+                            <option value="Item unavailable in kitchen">{{ __('Item unavailable in kitchen') }}</option>
+                            <option value="Customer dissatisfied">{{ __('Customer dissatisfied') }}</option>
+                            <option value="Other">{{ __('Other (specify below)') }}</option>
+                        </select>
+                        <input type="text" class="pos-input" x-model="cancelRequestCustomReason" placeholder="{{ __('Provide additional details...') }}">
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem;">
+                        <button type="button" class="btn btn-secondary" @click="showCancelRequestModal = false">{{ __('Cancel') }}</button>
+                        <button type="button" class="btn btn-primary" style="background: #ef4444; border-color: #ef4444; font-weight: 700;" @click="submitCancelRequest()">
+                            <i class="fa-solid fa-paper-plane"></i> {{ __('Submit Request') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. Comprehensive Employee Profile & Security Modal -->
+        <div class="pos-modal-overlay" x-show="showEmployeeProfileModal" x-cloak>
+            <div class="pos-modal-card" style="max-width: 540px; max-height: 90vh; overflow-y: auto;">
+                <div class="pos-modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div class="pos-user-avatar" style="width: 44px; height: 44px; font-size: 1.15rem;">
+                            <template x-if="currentUser.avatar_url">
+                                <img :src="currentUser.avatar_url" style="width: 100%; height: 100%; object-fit: cover;">
+                            </template>
+                            <template x-if="!currentUser.avatar_url">
+                                <span x-text="currentUser.display_name.charAt(0).toUpperCase()"></span>
+                            </template>
+                        </div>
+                        <div>
+                            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 800; margin: 0;" x-text="currentUser.display_name"></h3>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 2px;">
+                                <span class="badge badge-indigo" style="font-size: 0.7rem; text-transform: uppercase;" x-text="currentUser.role"></span>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);" x-text="'ID: #' + (currentUser.employee_id || currentUser.id)"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showEmployeeProfileModal = false">
+                        <i class="fa-solid fa-xmark"></i>
                     </button>
+                </div>
+
+                <!-- Tabs: Profile Details, Change PIN, Change Password, Active Sessions -->
+                <div style="display: flex; gap: 0.35rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color); overflow-x: auto;">
+                    <button type="button" class="pos-mode-btn" :class="{ 'active': profileTab === 'info' }" @click="profileTab = 'info'" style="font-size: 0.78rem; padding: 0.35rem 0.75rem;">
+                        <i class="fa-solid fa-user"></i> {{ __('Profile') }}
+                    </button>
+                    <button type="button" class="pos-mode-btn" :class="{ 'active': profileTab === 'pin' }" @click="profileTab = 'pin'" style="font-size: 0.78rem; padding: 0.35rem 0.75rem;">
+                        <i class="fa-solid fa-key"></i> {{ __('Change PIN') }}
+                    </button>
+                    <button type="button" class="pos-mode-btn" :class="{ 'active': profileTab === 'password' }" @click="profileTab = 'password'" style="font-size: 0.78rem; padding: 0.35rem 0.75rem;">
+                        <i class="fa-solid fa-lock"></i> {{ __('Password') }}
+                    </button>
+                    <button type="button" class="pos-mode-btn" :class="{ 'active': profileTab === 'sessions' }" @click="profileTab = 'sessions'" style="font-size: 0.78rem; padding: 0.35rem 0.75rem;">
+                        <i class="fa-solid fa-shield-halved"></i> {{ __('Sessions') }}
+                    </button>
+                </div>
+
+                <div class="pos-modal-body" style="padding-top: 1rem;">
+                    <!-- TAB 1: Profile Information -->
+                    <div x-show="profileTab === 'info'" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Full Name') }}</label>
+                            <input type="text" class="pos-input" x-model="profileName">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Display / Callout Name') }}</label>
+                            <input type="text" class="pos-input" x-model="profileDisplayName" placeholder="{{ __('Short name displayed on receipts') }}">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Phone Number') }}</label>
+                            <input type="text" class="pos-input" x-model="profilePhone" placeholder="+374 99 000000">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Assigned Role') }}</label>
+                                <input type="text" class="pos-input" :value="currentUser.role" disabled style="opacity: 0.6; cursor: not-allowed;">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Email Address') }}</label>
+                                <input type="text" class="pos-input" :value="currentUser.email" disabled style="opacity: 0.6; cursor: not-allowed;">
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
+                            <button type="button" class="btn btn-primary" :disabled="isUpdatingProfile" @click="updateEmployeeProfile()">
+                                <i class="fa-solid fa-floppy-disk"></i> {{ __('Save Details') }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: Set / Change PIN -->
+                    <div x-show="profileTab === 'pin'" style="display: flex; flex-direction: column; gap: 0.85rem;" x-cloak>
+                        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.75rem; font-size: 0.82rem; color: var(--text-muted); line-height: 1.45;">
+                            {{ __('PIN code must be 4–6 numeric digits. Cannot be simple sequences like 0000, 1111, or 1234.') }}
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Current Password or Existing PIN') }} *</label>
+                            <input type="password" class="pos-input" x-model="pinCurrentAuth" placeholder="••••••••">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('New PIN Code') }} * (4–6 {{ __('digits') }})</label>
+                            <input type="password" maxlength="6" class="pos-input" x-model="pinNew" placeholder="••••" style="letter-spacing: 0.2em; font-family: monospace; font-size: 1.15rem; text-align: center;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Confirm New PIN') }} *</label>
+                            <input type="password" maxlength="6" class="pos-input" x-model="pinConfirm" placeholder="••••" style="letter-spacing: 0.2em; font-family: monospace; font-size: 1.15rem; text-align: center;">
+                        </div>
+
+                        <!-- Optional Email Verification Code -->
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <label style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">{{ __('Email Verification Code') }} ({{ __('Optional') }})</label>
+                                <button type="button" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.2rem 0.5rem; border-radius: 6px;" @click="sendEmployeePinCode()">
+                                    <i class="fa-solid fa-paper-plane" style="color: #f59e0b;"></i> <span x-text="pinCountdown > 0 ? 'Wait ' + pinCountdown + 's' : '{{ __('Send Code') }}'">{{ __('Send Code') }}</span>
+                                </button>
+                            </div>
+                            <input type="text" class="pos-input" x-model="pinEmailCode" placeholder="6-digit code">
+                        </div>
+
+                        <div x-show="pinError" style="color: #ef4444; font-size: 0.8rem; font-weight: 600;" x-text="pinError"></div>
+
+                        <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
+                            <button type="button" class="btn btn-primary" :disabled="isUpdatingPin" @click="updateEmployeePin()">
+                                <i class="fa-solid fa-shield-check"></i> {{ __('Save PIN Code') }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: Change Password -->
+                    <div x-show="profileTab === 'password'" style="display: flex; flex-direction: column; gap: 0.85rem;" x-cloak>
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Current Password') }} *</label>
+                            <input type="password" class="pos-input" x-model="pwdCurrent" placeholder="••••••••">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('New Password') }} * ({{ __('minimum 6 characters') }})</label>
+                            <input type="password" class="pos-input" x-model="pwdNew" placeholder="••••••••">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Confirm New Password') }} *</label>
+                            <input type="password" class="pos-input" x-model="pwdConfirm" placeholder="••••••••">
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
+                            <button type="button" class="btn btn-primary" :disabled="isUpdatingPassword" @click="updateEmployeePassword()">
+                                <i class="fa-solid fa-key"></i> {{ __('Update Password') }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: Active Sessions & Logout Other Devices -->
+                    <div x-show="profileTab === 'sessions'" style="display: flex; flex-direction: column; gap: 1rem;" x-cloak>
+                        <p style="font-size: 0.84rem; color: var(--text-muted); margin: 0; line-height: 1.45;">
+                            {{ __('Sign out from all other active browser and POS terminal sessions. Requires current account password.') }}
+                        </p>
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Enter Current Password to Confirm') }} *</label>
+                            <input type="password" class="pos-input" x-model="logoutDevicesPwd" placeholder="••••••••">
+                        </div>
+                        <div style="display: flex; justify-content: flex-end;">
+                            <button type="button" class="btn btn-secondary" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" :disabled="isLoggingOutDevices" @click="logoutOtherSessions()">
+                                <i class="fa-solid fa-right-from-bracket"></i> {{ __('Log Out All Other Devices') }}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2624,10 +3155,128 @@
         </div>
     </main>
 
+    <!-- Mobile-First Dedicated Bottom Navigation Bar -->
+    <nav class="pos-bottom-nav" x-cloak>
+        <!-- WAITER BOTTOM NAV -->
+        <template x-if="activeMode === 'waiter'">
+            <div class="pos-bottom-nav-inner">
+                <button type="button" class="pos-bottom-nav-item" :class="{ 'active': waiterSubTab === 'home' && !showTableModal }" @click="waiterSubTab = 'home'; showTableModal = false;">
+                    <i class="fa-solid fa-utensils"></i>
+                    <span>{{ __('Menu & Order') }}</span>
+                </button>
+                <button type="button" class="pos-bottom-nav-item" :class="{ 'active': showTableModal }" @click="waiterSubTab = 'home'; showTableModal = true;">
+                    <i class="fa-solid fa-chair"></i>
+                    <span>{{ __('Tables') }}</span>
+                </button>
+                <button type="button" class="pos-bottom-nav-item" :class="{ 'active': waiterSubTab === 'orders' && !showTableModal }" @click="waiterSubTab = 'orders'; showTableModal = false; fetchWaiterDashboard();">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span style="position: relative;">
+                        {{ __('My Orders') }}
+                        <span x-show="waiterActiveOrdersCount > 0" class="pos-bottom-nav-badge" x-text="waiterActiveOrdersCount"></span>
+                    </span>
+                </button>
+                <button type="button" class="pos-bottom-nav-item" :class="{ 'active': waiterSubTab === 'tips' && !showTableModal }" @click="waiterSubTab = 'tips'; showTableModal = false; fetchWaiterTips();">
+                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                    <span>{{ __('My Tips') }}</span>
+                </button>
+                <button type="button" class="pos-bottom-nav-item" :class="{ 'active': showEmployeeProfileModal }" @click="openEmployeeProfileModal()">
+                    <i class="fa-solid fa-user-circle"></i>
+                    <span>{{ __('Profile') }}</span>
+                </button>
+            </div>
+        </template>
+
+        <!-- CASHIER BOTTOM NAV -->
+        <template x-if="activeMode === 'cashier'">
+            <div class="pos-bottom-nav-inner">
+                <button type="button" class="pos-bottom-nav-item" :class="{ 'active': !showOpenShiftModal && !showCloseShiftModal }" @click="fetchCashierOrders()">
+                    <i class="fa-solid fa-receipt"></i>
+                    <span>{{ __('All Orders') }}</span>
+                </button>
+                <button type="button" class="pos-bottom-nav-item" @click="if (cashierOrders.length > 0) selectOrderForCashier(cashierOrders[0])">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>{{ __('Billing') }}</span>
+                </button>
+                <button type="button" class="pos-bottom-nav-item" @click="currentShift ? openCloseShiftModal() : openOpenShiftModal()">
+                    <i class="fa-solid fa-cash-register"></i>
+                    <span>{{ __('Shift') }}</span>
+                </button>
+                <button type="button" class="pos-bottom-nav-item" @click="openCustomerLoyaltyModal()">
+                    <i class="fa-solid fa-award"></i>
+                    <span>{{ __('Loyalty') }}</span>
+                </button>
+                <button type="button" class="pos-bottom-nav-item" :class="{ 'active': showEmployeeProfileModal }" @click="openEmployeeProfileModal()">
+                    <i class="fa-solid fa-user-circle"></i>
+                    <span>{{ __('Profile') }}</span>
+                </button>
+            </div>
+        </template>
+
+        <!-- MANAGER BOTTOM NAV -->
+        <template x-if="activeMode === 'manager'">
+            <div class="pos-bottom-nav-inner">
+                <button type="button" class="pos-bottom-nav-item" :class="{ 'active': managerTab === 'overview' }" @click="switchManagerTab('overview')">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>{{ __('Home') }}</span>
+                </button>
+                <button type="button" class="pos-bottom-nav-item" :class="{ 'active': managerTab === 'operations' }" @click="switchManagerTab('operations')">
+                    <i class="fa-solid fa-tasks"></i>
+                    <span style="position: relative;">
+                        {{ __('Ops') }}
+                        <span x-show="pendingExceptionsCount > 0" class="pos-bottom-nav-badge" x-text="pendingExceptionsCount"></span>
+                    </span>
+                </button>
+                <button type="button" class="pos-bottom-nav-item" :class="{ 'active': managerTab === 'sales' }" @click="switchManagerTab('sales')">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>{{ __('Reports') }}</span>
+                </button>
+                <button type="button" class="pos-bottom-nav-item" :class="{ 'active': managerTab === 'employees' }" @click="switchManagerTab('employees')">
+                    <i class="fa-solid fa-users"></i>
+                    <span>{{ __('Staff') }}</span>
+                </button>
+                <button type="button" class="pos-bottom-nav-item" :class="{ 'active': showEmployeeProfileModal }" @click="openEmployeeProfileModal()">
+                    <i class="fa-solid fa-user-circle"></i>
+                    <span>{{ __('Profile') }}</span>
+                </button>
+            </div>
+        </template>
+    </nav>
+
     <script>
         function posApp() {
             return {
                 activeMode: '{{ $mode }}',
+                allowedModes: @json($allowedModes ?? [$mode]),
+                waiterSubTab: 'home',
+                cashierSubTab: 'home',
+                waiterActiveOrders: [],
+                waiterActiveOrdersCount: 0,
+                waiterTips: { today: 0, week: 0, month: 0, recent: [] },
+                showCancelRequestModal: false,
+                cancelRequestOrder: null,
+                cancelRequestReason: '',
+                cancelRequestCustomReason: '',
+                showEmployeeProfileModal: false,
+                profileTab: 'info',
+                profileName: '',
+                profileDisplayName: '',
+                profilePhone: '',
+                isUpdatingProfile: false,
+                pinCurrentAuth: '',
+                pinNew: '',
+                pinConfirm: '',
+                pinEmailCode: '',
+                pinCountdown: 0,
+                pinError: '',
+                isUpdatingPin: false,
+                pwdCurrent: '',
+                pwdNew: '',
+                pwdConfirm: '',
+                isUpdatingPassword: false,
+                logoutDevicesPwd: '',
+                isLoggingOutDevices: false,
+                pendingExceptions: [],
+                pendingExceptionsCount: 0,
                 activeLocationId: {{ $bootstrapData['active_location_id'] ?? 'null' }},
                 isOnline: navigator.onLine,
                 isFullscreen: false,
@@ -2755,19 +3404,36 @@
                     }
 
                     this.loadTables();
-                    this.loadDevices();
-                    this.fetchEmployees();
-                    this.fetchCashierOrders();
-                    this.fetchWaiterCalls();
-                    this.fetchIncomingOrders();
-                    this.fetchReservations();
+                    if (this.activeMode === 'manager') {
+                        this.loadDevices();
+                        this.fetchEmployees();
+                        this.fetchManagerExceptions();
+                        this.fetchCashierOrders();
+                        this.fetchWaiterCalls();
+                        this.fetchIncomingOrders();
+                        this.fetchReservations();
+                    } else if (this.activeMode === 'cashier') {
+                        this.fetchCashierOrders();
+                    } else if (this.activeMode === 'waiter') {
+                        this.fetchWaiterCalls();
+                        this.fetchIncomingOrders();
+                        this.fetchReservations();
+                        this.fetchWaiterDashboard();
+                    }
                     this.initLanChannel();
 
                     setInterval(() => {
                         if (this.isOnline) {
-                            this.fetchWaiterCalls();
-                            this.fetchIncomingOrders();
-                            this.fetchReservations();
+                            if (this.activeMode === 'waiter') {
+                                this.fetchWaiterCalls();
+                                this.fetchIncomingOrders();
+                                this.fetchReservations();
+                                this.fetchWaiterDashboard();
+                            } else if (this.activeMode === 'cashier') {
+                                this.fetchCashierOrders();
+                            } else if (this.activeMode === 'manager') {
+                                this.fetchManagerExceptions();
+                            }
                         }
                     }, 25000);
 
@@ -2784,12 +3450,372 @@
                 },
 
                 setMode(mode) {
+                    if (!this.allowedModes || !this.allowedModes.includes(mode)) {
+                        this.showToast('{{ __('Unauthorized workspace mode for this role.') }}', 'error');
+                        return;
+                    }
                     this.activeMode = mode;
-                    if (mode === 'cashier') {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('mode', mode);
+                    window.history.replaceState({}, '', url.toString());
+
+                    if (mode === 'waiter') {
+                        this.fetchWaiterDashboard();
+                    } else if (mode === 'cashier') {
                         this.fetchCashierOrders();
                     } else if (mode === 'manager') {
                         this.loadDevices();
                         this.fetchManagerDashboard();
+                        this.fetchManagerExceptions();
+                    }
+                },
+
+                // --- Waiter Workspace Methods ---
+                async fetchWaiterDashboard() {
+                    try {
+                        const res = await fetch('/pos/api/workspace/waiter/dashboard');
+                        const data = await res.json();
+                        if (data.success) {
+                            this.waiterActiveOrders = data.active_orders || [];
+                            this.waiterActiveOrdersCount = data.summary?.active_orders_count || 0;
+                        }
+                    } catch (e) {
+                        console.error('Failed to load waiter dashboard:', e);
+                    }
+                },
+
+                async fetchWaiterTips() {
+                    try {
+                        const res = await fetch('/pos/api/workspace/waiter/tips');
+                        const data = await res.json();
+                        if (data.success) {
+                            this.waiterTips = {
+                                today: data.today_total || 0,
+                                week: data.week_total || 0,
+                                month: data.month_total || 0,
+                                recent: data.recent_tips || []
+                            };
+                        }
+                    } catch (e) {
+                        console.error('Failed to load waiter tips:', e);
+                    }
+                },
+
+                openCancelRequestModal(order) {
+                    this.cancelRequestOrder = order;
+                    this.cancelRequestReason = '';
+                    this.cancelRequestCustomReason = '';
+                    this.showCancelRequestModal = true;
+                },
+
+                async submitCancelRequest() {
+                    if (!this.cancelRequestOrder) return;
+                    const reason = this.cancelRequestReason === 'Other'
+                        ? this.cancelRequestCustomReason
+                        : (this.cancelRequestReason || this.cancelRequestCustomReason);
+
+                    if (!reason) {
+                        alert('{{ __('Please specify a cancellation reason.') }}');
+                        return;
+                    }
+
+                    try {
+                        const res = await fetch(`/pos/api/workspace/orders/${this.cancelRequestOrder.id}/cancel-request`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({ reason: reason })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.showCancelRequestModal = false;
+                            this.showToast('{{ __('Cancellation request submitted to manager.') }}');
+                            this.fetchWaiterDashboard();
+                        } else {
+                            alert(data.message || '{{ __('Failed to submit cancellation request.') }}');
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+                },
+
+                // --- Manager Exceptions & Cancellation Approvals ---
+                async fetchManagerExceptions() {
+                    try {
+                        const res = await fetch('/pos/api/workspace/manager/dashboard');
+                        const data = await res.json();
+                        if (data.success) {
+                            this.pendingExceptions = data.pending_exceptions || [];
+                            this.pendingExceptionsCount = data.metrics?.pending_exceptions_count || 0;
+                        }
+                    } catch (e) {
+                        console.error('Failed to load manager exceptions:', e);
+                    }
+                },
+
+                async approveCancellation(orderId) {
+                    if (!confirm('{{ __('Are you sure you want to approve this order cancellation?') }}')) return;
+                    try {
+                        const res = await fetch(`/pos/api/workspace/orders/${orderId}/approve-cancellation`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            }
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.showToast('{{ __('Order cancellation approved.') }}');
+                            this.fetchManagerExceptions();
+                            this.fetchCashierOrders();
+                            this.loadTables();
+                        } else {
+                            alert(data.message || '{{ __('Failed to approve cancellation.') }}');
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+                },
+
+                async rejectCancellation(orderId) {
+                    const reason = prompt('{{ __('Enter reason for rejecting cancellation:') }}', 'Order already prepared');
+                    if (reason === null) return;
+                    try {
+                        const res = await fetch(`/pos/api/workspace/orders/${orderId}/reject-cancellation`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({ reason: reason })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.showToast('{{ __('Cancellation request rejected.') }}');
+                            this.fetchManagerExceptions();
+                        } else {
+                            alert(data.message || '{{ __('Failed to reject cancellation.') }}');
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+                },
+
+                // --- Employee Profile & Security Modal Methods ---
+                openEmployeeProfileModal() {
+                    this.profileName = this.currentUser.name;
+                    this.profileDisplayName = this.currentUser.display_name || this.currentUser.name;
+                    this.profilePhone = this.currentUser.phone || '';
+                    this.pinCurrentAuth = '';
+                    this.pinNew = '';
+                    this.pinConfirm = '';
+                    this.pinEmailCode = '';
+                    this.pinError = '';
+                    this.pwdCurrent = '';
+                    this.pwdNew = '';
+                    this.pwdConfirm = '';
+                    this.logoutDevicesPwd = '';
+                    this.profileTab = 'info';
+                    this.showEmployeeProfileModal = true;
+                },
+
+                async updateEmployeeProfile() {
+                    this.isUpdatingProfile = true;
+                    try {
+                        const res = await fetch('/pos/api/workspace/profile', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({
+                                name: this.profileName,
+                                display_name: this.profileDisplayName,
+                                phone: this.profilePhone
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.currentUser.name = this.profileName;
+                            this.currentUser.display_name = this.profileDisplayName;
+                            this.currentUser.phone = this.profilePhone;
+                            this.showToast('{{ __('Profile details updated successfully.') }}');
+                        } else {
+                            alert(data.message || '{{ __('Failed to update profile.') }}');
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    } finally {
+                        this.isUpdatingProfile = false;
+                    }
+                },
+
+                async updateEmployeePin() {
+                    this.pinError = '';
+                    if (!this.pinCurrentAuth) {
+                        this.pinError = '{{ __('Current password or existing PIN is required.') }}';
+                        return;
+                    }
+                    if (!/^\d{4,6}$/.test(this.pinNew)) {
+                        this.pinError = '{{ __('The PIN code must be between 4 and 6 numeric digits.') }}';
+                        return;
+                    }
+                    if (this.pinNew !== this.pinConfirm) {
+                        this.pinError = '{{ __('The PIN confirmation does not match.') }}';
+                        return;
+                    }
+
+                    // Client-side trivial sequence check
+                    const trivialList = ['0000', '1111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '9999', '1234', '4321', '12345', '54321', '123456', '654321'];
+                    if (trivialList.includes(this.pinNew) || /^(\d)\1+$/.test(this.pinNew)) {
+                        this.pinError = '{{ __('This PIN code is too simple or common. Please choose a stronger PIN.') }}';
+                        return;
+                    }
+
+                    this.isUpdatingPin = true;
+                    try {
+                        const res = await fetch('/pos/api/workspace/pin', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({
+                                current_auth: this.pinCurrentAuth,
+                                pin: this.pinNew,
+                                pin_confirmation: this.pinConfirm,
+                                email_code: this.pinEmailCode
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.currentUser.has_pin = true;
+                            this.showEmployeeProfileModal = false;
+                            this.showToast('{{ __('Your PIN code has been updated successfully.') }}');
+                        } else {
+                            this.pinError = data.message || '{{ __('Failed to update PIN code.') }}';
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        this.pinError = '{{ __('Error updating PIN.') }}';
+                    } finally {
+                        this.isUpdatingPin = false;
+                    }
+                },
+
+                async sendEmployeePinCode() {
+                    try {
+                        const res = await fetch('/pos/api/workspace/pin/send-code', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            }
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.showToast(data.message);
+                            this.pinCountdown = 60;
+                            const t = setInterval(() => {
+                                this.pinCountdown--;
+                                if (this.pinCountdown <= 0) clearInterval(t);
+                            }, 1000);
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+                },
+
+                async updateEmployeePassword() {
+                    if (!this.pwdCurrent || !this.pwdNew) {
+                        alert('{{ __('Please fill in current and new password.') }}');
+                        return;
+                    }
+                    if (this.pwdNew !== this.pwdConfirm) {
+                        alert('{{ __('The new password confirmation does not match.') }}');
+                        return;
+                    }
+                    this.isUpdatingPassword = true;
+                    try {
+                        const res = await fetch('/pos/api/workspace/password', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({
+                                current_password: this.pwdCurrent,
+                                password: this.pwdNew,
+                                password_confirmation: this.pwdConfirm
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.pwdCurrent = '';
+                            this.pwdNew = '';
+                            this.pwdConfirm = '';
+                            this.showToast('{{ __('Your password has been changed successfully.') }}');
+                        } else {
+                            alert(data.message || '{{ __('Failed to change password.') }}');
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    } finally {
+                        this.isUpdatingPassword = false;
+                    }
+                },
+
+                async logoutOtherSessions() {
+                    if (!this.logoutDevicesPwd) {
+                        alert('{{ __('Please enter your current password.') }}');
+                        return;
+                    }
+                    this.isLoggingOutDevices = true;
+                    try {
+                        const res = await fetch('/pos/api/workspace/logout-other-devices', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({ password: this.logoutDevicesPwd })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.logoutDevicesPwd = '';
+                            this.showToast('{{ __('Successfully logged out of all other active sessions.') }}');
+                        } else {
+                            alert(data.message || '{{ __('Failed to log out other devices.') }}');
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    } finally {
+                        this.isLoggingOutDevices = false;
+                    }
+                },
+
+                confirmLogout() {
+                    if (confirm('{{ __('Are you sure you want to log out?') }}')) {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '{{ route('logout') }}';
+                        const csrf = document.createElement('input');
+                        csrf.type = 'hidden';
+                        csrf.name = '_token';
+                        csrf.value = document.querySelector('meta[name="csrf-token"]').content;
+                        form.appendChild(csrf);
+                        document.body.appendChild(form);
+                        form.submit();
                     }
                 },
 
@@ -4090,8 +5116,10 @@
                 },
 
                 async switchManagerTab(tab) {
+                    if (this.activeMode !== 'manager') return;
                     this.managerTab = tab;
                     if (tab === 'overview') this.fetchManagerDashboard();
+                    else if (tab === 'operations') this.fetchManagerExceptions();
                     else if (tab === 'sales') this.fetchSalesReport();
                     else if (tab === 'employees') this.fetchEmployeeReport();
                     else if (tab === 'products') this.fetchProductReport();

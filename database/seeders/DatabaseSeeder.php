@@ -171,6 +171,7 @@ class DatabaseSeeder extends Seeder
                 'vendor_id' => $vendor1->id,
                 'name' => 'Arman Petrosyan (Owner)',
                 'password' => Hash::make('password'),
+                'pin_code' => Hash::make('1470'),
                 'role' => 'vendor_owner',
                 'phone' => '+37491111222',
                 'email_verified_at' => now(),
@@ -184,8 +185,37 @@ class DatabaseSeeder extends Seeder
                 'location_id' => $loc1->id,
                 'name' => 'Anahit Sargsyan (Cascades Manager)',
                 'password' => Hash::make('password'),
+                'pin_code' => Hash::make('3690'),
                 'role' => 'manager',
                 'phone' => '+37493333444',
+                'email_verified_at' => now(),
+            ]
+        );
+
+        User::firstOrCreate(
+            ['email' => 'waiter@bistro.am'],
+            [
+                'vendor_id' => $vendor1->id,
+                'location_id' => $loc1->id,
+                'name' => 'Davit Manukyan (Waiter)',
+                'password' => Hash::make('password'),
+                'pin_code' => Hash::make('1379'),
+                'role' => 'waiter',
+                'phone' => '+37494444555',
+                'email_verified_at' => now(),
+            ]
+        );
+
+        User::firstOrCreate(
+            ['email' => 'cashier@bistro.am'],
+            [
+                'vendor_id' => $vendor1->id,
+                'location_id' => $loc1->id,
+                'name' => 'Mariam Hakobyan (Cashier)',
+                'password' => Hash::make('password'),
+                'pin_code' => Hash::make('2580'),
+                'role' => 'cashier',
+                'phone' => '+37495555666',
                 'email_verified_at' => now(),
             ]
         );

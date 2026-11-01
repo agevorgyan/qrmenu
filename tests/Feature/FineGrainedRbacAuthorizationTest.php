@@ -334,23 +334,24 @@ class FineGrainedRbacAuthorizationTest extends TestCase
     public function test_cashier_permissions_and_boundaries(): void
     {
         $this->assertTrue($this->cashier->hasPermission(Permission::ORDERS_VIEW));
-        $this->assertTrue($this->cashier->hasPermission(Permission::ORDERS_UPDATE));
-        $this->assertTrue($this->cashier->hasPermission(Permission::ORDERS_CANCEL));
-        $this->assertTrue($this->cashier->hasPermission(Permission::ORDERS_REFUND));
-        $this->assertTrue($this->cashier->hasPermission(Permission::CUSTOMERS_VIEW));
+        $this->assertTrue($this->cashier->hasPermission(Permission::POS_PAYMENTS));
+        $this->assertTrue($this->cashier->hasPermission(Permission::REFUNDS_REQUEST));
+        $this->assertTrue($this->cashier->hasPermission(Permission::SHIFTS_OPEN));
 
+        $this->assertFalse($this->cashier->hasPermission(Permission::ORDERS_CANCEL));
+        $this->assertFalse($this->cashier->hasPermission(Permission::ORDERS_REFUND));
+        $this->assertFalse($this->cashier->hasPermission(Permission::CUSTOMERS_VIEW));
         $this->assertFalse($this->cashier->hasPermission(Permission::CUSTOMERS_EXPORT));
         $this->assertFalse($this->cashier->hasPermission(Permission::MENU_CREATE));
         $this->assertFalse($this->cashier->hasPermission(Permission::MENU_UPDATE));
         $this->assertFalse($this->cashier->hasPermission(Permission::MENU_DELETE));
         $this->assertFalse($this->cashier->hasPermission(Permission::SETTINGS_MANAGE));
 
-        // Cashier successfully cancels an order
+        // Cashier cannot access administrative orders endpoint (403 Forbidden)
         $response = $this->actingAs($this->cashier)->post(route('admin.orders.status', $this->orderA), [
             'status' => 'cancelled',
         ]);
-        $response->assertRedirect();
-        $this->assertEquals('cancelled', $this->orderA->fresh()->status);
+        $response->assertStatus(403);
 
         // Cashier is forbidden from exporting customers CRM
         $exportResponse = $this->actingAs($this->cashier)->get(route('admin.customers.export'));
@@ -366,7 +367,7 @@ class FineGrainedRbacAuthorizationTest extends TestCase
     }
 
     /**
-     * 6. Chef can update order preparation status, but cannot access customers or settings.
+     * 6. Chef can update order preparation status via KDS, but cannot access admin console, customers or settings.
      */
     public function test_chef_can_update_kitchen_order_status_but_cannot_access_customers_or_settings(): void
     {
@@ -375,11 +376,11 @@ class FineGrainedRbacAuthorizationTest extends TestCase
         $this->assertFalse($this->chef->hasPermission(Permission::CUSTOMERS_VIEW));
         $this->assertFalse($this->chef->hasPermission(Permission::SETTINGS_VIEW));
 
-        // Chef updates preparation status
-        $response = $this->actingAs($this->chef)->post(route('admin.orders.status', $this->orderA), [
+        // Chef updates preparation status via POS KDS status endpoint
+        $response = $this->actingAs($this->chef)->post(route('pos.api.orders.status', $this->orderA), [
             'status' => 'preparing',
         ]);
-        $response->assertRedirect();
+        $response->assertSuccessful();
         $this->assertEquals('preparing', $this->orderA->fresh()->status);
 
         // Chef is forbidden from viewing customers CRM

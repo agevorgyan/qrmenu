@@ -213,6 +213,27 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get the default workspace landing URL after authentication based on assigned role.
+     */
+    public function getWorkspaceRedirectUrl(): string
+    {
+        if ($this->isSuperAdmin()) {
+            return route('superadmin.dashboard');
+        }
+
+        return match ($this->role) {
+            'waiter', 'staff' => route('pos.index', ['mode' => 'waiter']),
+            'cashier' => route('pos.index', ['mode' => 'cashier']),
+            'chef', 'kitchen' => route('pos.kds'),
+            'manager' => route('pos.index', ['mode' => 'manager']),
+            'vendor_owner' => route('admin.dashboard'),
+            default => (! empty($this->pos_mode) && in_array($this->pos_mode, ['waiter', 'cashier', 'manager'], true))
+                ? route('pos.index', ['mode' => $this->pos_mode])
+                : route('admin.dashboard'),
+        };
+    }
+
+    /**
      * Scope query to active waiters for a vendor.
      */
     public function scopeActiveWaiters(Builder $query): Builder
@@ -248,14 +269,50 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function hasPermission(string $permission): bool
     {
-        // Explicit platform permissions for superadmin
-        if ($this->isSuperAdmin()) {
-            $perms = $this->getPermissions();
+        $perms = $this->getPermissions();
 
-            return in_array($permission, $perms, true);
+        if (in_array($permission, $perms, true)) {
+            return true;
         }
 
-        return in_array($permission, $this->getPermissions(), true);
+        // Aliases and supersets
+        $supersets = [
+            'orders.view_own' => ['orders.view', 'orders.view_all', 'pos.orders'],
+            'orders.create' => ['pos.orders'],
+            'orders.update_own' => ['orders.update', 'orders.manage'],
+            'orders.view_details' => ['orders.view', 'orders.view_all', 'pos.orders'],
+            'orders.search' => ['orders.view', 'orders.view_all', 'pos.orders'],
+            'orders.view' => ['orders.view_all'],
+            'payments.create' => ['pos.payments'],
+            'payments.cash' => ['pos.payments'],
+            'payments.card' => ['pos.payments'],
+            'payments.split' => ['pos.payments'],
+            'shifts.open' => ['pos.cash_drawer'],
+            'shifts.close' => ['pos.cash_drawer'],
+            'shifts.view_own' => ['pos.cash_drawer', 'pos.reports', 'shifts.view_all'],
+            'shifts.view_all' => ['pos.reports'],
+            'discounts.approve' => ['pos.discounts'],
+            'refunds.approve' => ['pos.refunds'],
+            'tips.view_own' => ['tips.view', 'pos.reports'],
+            'employees.view' => ['team.view'],
+            'employees.manage' => ['team.manage'],
+            'tables.manage' => ['pos.settings'],
+            'audit_logs.view' => ['pos.settings', 'platform.logs'],
+            'profile.view_own' => ['pos.access'],
+            'profile.update_own' => ['pos.access'],
+            'password.change_own' => ['pos.access'],
+            'pin.manage_own' => ['pos.access'],
+        ];
+
+        if (isset($supersets[$permission])) {
+            foreach ($supersets[$permission] as $parent) {
+                if (in_array($parent, $perms, true)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

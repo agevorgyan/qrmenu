@@ -34,6 +34,8 @@ class Order extends Model
         'discount_amount',
         'discount_type',
         'discount_reason',
+        'cancellation_status',
+        'cancellation_reason',
         'tax_amount',
         'total_amount',
         'status',

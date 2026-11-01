@@ -194,6 +194,75 @@
                 </div>
             </form>
         </div>
+
+        <!-- 3.1 EMPLOYEE PIN MANAGEMENT CARD -->
+        <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="width: 38px; height: 38px; border-radius: 10px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                        <i class="fa-solid fa-key"></i>
+                    </span>
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit';">
+                            {{ __('Employee PIN Code') }}
+                        </h3>
+                    </div>
+                </div>
+                @if($user->hasPin())
+                    <span class="badge badge-emerald" style="font-size: 0.75rem; font-weight: 700;">
+                        <i class="fa-solid fa-check-circle"></i> {{ __('Configured') }}
+                    </span>
+                @else
+                    <span class="badge badge-amber" style="font-size: 0.75rem; font-weight: 700;">
+                        <i class="fa-solid fa-circle-exclamation"></i> {{ __('Not Set') }}
+                    </span>
+                @endif
+            </div>
+
+            <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.45;">
+                {{ __('4–6 digit numeric code used for fast terminal unlocking and quick employee switching. Cannot be simple sequences like 0000 or 1234.') }}
+            </p>
+
+            <form action="{{ route('security.pin.update') }}" method="POST">
+                @csrf
+                <div style="display: flex; flex-direction: column; gap: 1.15rem;">
+                    <div class="form-group">
+                        <label class="form-label">{{ __('Current Password or Existing PIN') }} *</label>
+                        <input type="password" name="current_password" required class="form-control" placeholder="••••••••" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem;">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">{{ __('New PIN Code') }} * (4–6 {{ __('digits') }})</label>
+                        <input type="password" name="pin" required maxlength="6" pattern="[0-9]{4,6}" class="form-control" placeholder="••••" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem; font-family: monospace; font-size: 1.1rem; letter-spacing: 0.2em;">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">{{ __('Confirm New PIN') }} *</label>
+                        <input type="password" name="pin_confirmation" required maxlength="6" pattern="[0-9]{4,6}" class="form-control" placeholder="••••" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem; font-family: monospace; font-size: 1.1rem; letter-spacing: 0.2em;">
+                    </div>
+
+                    <!-- Optional Email Verification Code Input -->
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <label class="form-label" style="margin-bottom: 0;">
+                                {{ __('Email Verification Code') }} ({{ __('Optional') }})
+                            </label>
+                            <button type="button" @click="sendCode('pin', $event)" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 8px;">
+                                <i class="fa-solid fa-paper-plane" style="color: #f59e0b;"></i> <span x-text="countdownPin > 0 ? 'Wait ' + countdownPin + 's' : '{{ __('Send Code') }}'">{{ __('Send Code') }}</span>
+                            </button>
+                        </div>
+                        <input type="text" name="email_code" class="form-control" placeholder="6-digit email code" maxlength="8" autocomplete="one-time-code" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem; font-family: monospace; font-size: 1.05rem;">
+                        <div x-show="msgPin" x-text="msgPin" style="font-size: 0.78rem; color: #10b981; margin-top: 0.35rem; font-weight: 600;"></div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
+                        <button type="submit" class="btn btn-primary" style="border-radius: 12px; font-weight: 700; padding: 0.65rem 1.4rem;">
+                            <i class="fa-solid fa-shield-check"></i> {{ __('Save PIN Code') }}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- 4. BASIC PROFILE INFORMATION CARD -->
@@ -237,6 +306,40 @@
                 <button type="submit" class="btn btn-primary" style="border-radius: 12px; font-weight: 700; padding: 0.65rem 1.4rem;">
                     <i class="fa-solid fa-floppy-disk"></i> {{ __('Save Changes') }}
                 </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 5. ACTIVE SESSIONS & DEVICE SECURITY CARD -->
+    <div class="card settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.2rem, 3vw, 1.85rem); margin-bottom: 2rem; box-shadow: var(--shadow-card);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span style="width: 38px; height: 38px; border-radius: 10px; background: rgba(239, 68, 68, 0.15); color: #ef4444; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </span>
+                <div>
+                    <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit';">
+                        {{ __('Active Sessions & Device Security') }}
+                    </h3>
+                    <p style="margin: 0.25rem 0 0 0; font-size: 0.84rem; color: var(--text-muted);">
+                        {{ __('Manage other connected devices and sign out of other active sessions across browsers and POS terminals.') }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <form action="{{ route('security.logout_other_devices') }}" method="POST" style="margin-top: 1rem;">
+            @csrf
+            <div style="display: flex; flex-direction: column; gap: 1rem; max-width: 480px;">
+                <div class="form-group">
+                    <label class="form-label">{{ __('Enter Current Password to Confirm') }} *</label>
+                    <input type="password" name="password" required class="form-control" placeholder="••••••••" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 0.75rem 1rem;">
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700; color: #ef4444; border-color: rgba(239, 68, 68, 0.3); padding: 0.65rem 1.25rem;">
+                        <i class="fa-solid fa-right-from-bracket"></i> {{ __('Log Out All Other Devices') }}
+                    </button>
+                </div>
             </div>
         </form>
     </div>
@@ -360,13 +463,16 @@ function profileSecurityModule() {
         countdownEmail: 0,
         countdownPass: 0,
         countdownSetup: 0,
+        countdownPin: 0,
         msgEmail: '',
         msgPass: '',
         msgSetup: '',
+        msgPin: '',
 
         async sendCode(action, event) {
             try {
-                const res = await fetch('{{ route('security.2fa.send_code') }}', {
+                const endpoint = action === 'pin' ? '{{ route('security.pin.send_code') }}' : '{{ route('security.2fa.send_code') }}';
+                const res = await fetch(endpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -385,6 +491,9 @@ function profileSecurityModule() {
                     } else if (action === 'setup') {
                         this.msgSetup = data.message;
                         this.startTimer('setup');
+                    } else if (action === 'pin') {
+                        this.msgPin = data.message;
+                        this.startTimer('pin');
                     }
                 }
             } catch (err) {
@@ -397,12 +506,14 @@ function profileSecurityModule() {
             if (type === 'email') this.countdownEmail = count;
             if (type === 'pass') this.countdownPass = count;
             if (type === 'setup') this.countdownSetup = count;
+            if (type === 'pin') this.countdownPin = count;
 
             const timer = setInterval(() => {
                 count--;
                 if (type === 'email') this.countdownEmail = count;
                 if (type === 'pass') this.countdownPass = count;
                 if (type === 'setup') this.countdownSetup = count;
+                if (type === 'pin') this.countdownPin = count;
 
                 if (count <= 0) {
                     clearInterval(timer);

@@ -194,6 +194,11 @@ class PosPaymentShiftController extends Controller
             abort(403, 'Unauthorized shift access.');
         }
 
+        // Cashiers can only view their own shift report unless granted shifts.view_all
+        if ($user->role === 'cashier' && (int) $shift->user_id !== (int) $user->id && ! $user->hasPermission(Permission::SHIFTS_VIEW_ALL)) {
+            abort(403, 'Unauthorized. Cashiers can only view their own shift reports.');
+        }
+
         return response()->json([
             'success' => true,
             'report' => $shift->generateReportPayload(),

@@ -60,15 +60,30 @@ class PosController extends Controller
         $user = Auth::user();
         $vendor = $user->vendor;
 
-        $mode = $request->get('mode', $user->pos_mode ?: 'waiter');
-        if (! in_array($mode, ['waiter', 'cashier', 'manager', 'kds'], true)) {
-            $mode = 'waiter';
+        $allowedModes = match ($user->role) {
+            'waiter', 'staff' => ['waiter'],
+            'cashier' => ['cashier'],
+            'chef', 'kitchen' => ['kds'],
+            'manager', 'vendor_owner' => ['manager', 'cashier', 'waiter', 'kds'],
+            default => $user->isSuperAdmin() ? ['manager', 'cashier', 'waiter', 'kds'] : ['waiter'],
+        };
+
+        if ($request->has('mode')) {
+            $requestedMode = $request->get('mode');
+            if (! in_array($requestedMode, $allowedModes, true)) {
+                abort(403, __('You are not authorized to access this workspace mode.'));
+            }
+            $mode = $requestedMode;
+        } else {
+            $mode = (! empty($user->pos_mode) && in_array($user->pos_mode, $allowedModes, true))
+                ? $user->pos_mode
+                : $allowedModes[0];
         }
 
         $deviceUuid = $request->header('X-POS-Device-UUID', $request->cookie('pos_device_uuid'));
         $bootstrapData = $this->posService->getBootstrapPayload($user, $deviceUuid);
 
-        return view('pos.index', compact('vendor', 'user', 'mode', 'bootstrapData'));
+        return view('pos.index', compact('vendor', 'user', 'mode', 'bootstrapData', 'allowedModes'));
     }
 
     /**
@@ -115,6 +130,11 @@ class PosController extends Controller
         $status = $request->get('status');
         $tableNumber = $request->get('table_number');
         $waiterId = $request->filled('waiter_id') ? (int) $request->get('waiter_id') : null;
+
+        // Backend RBAC: waiters only see their own orders unless granted orders.view_all
+        if (in_array($user->role, ['waiter', 'staff'], true) && ! $user->hasPermission(Permission::ORDERS_VIEW_ALL)) {
+            $waiterId = $user->id;
+        }
 
         $orders = $this->posService->getPosOrders(
             vendor: $vendor,
@@ -236,7 +256,7 @@ class PosController extends Controller
         ]);
 
         if ($validated['status'] === 'cancelled') {
-            if (! $user->hasPermission(Permission::ORDERS_CANCEL) && ! in_array($user->role, ['vendor_owner', 'manager', 'cashier'], true)) {
+            if (! $user->hasPermission(Permission::ORDERS_CANCEL) && ! in_array($user->role, ['vendor_owner', 'manager'], true)) {
                 if ($request->filled('manager_pin')) {
                     $this->verifyManagerPin($order->vendor, (string) $request->input('manager_pin'), 'cancellation');
                 } else {

@@ -31,6 +31,7 @@ use App\Http\Controllers\PosOfflineSyncController;
 use App\Http\Controllers\PosPaymentShiftController;
 use App\Http\Controllers\PosReportingController;
 use App\Http\Controllers\PosSettingController;
+use App\Http\Controllers\PosWorkspaceController;
 use App\Http\Controllers\ProfileSecurityController;
 use App\Http\Controllers\QrStudioController;
 use App\Http\Controllers\RegisterController;
@@ -279,6 +280,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/security/2fa/disable', [ProfileSecurityController::class, 'disableTwoFactor'])->name('security.2fa.disable');
     Route::post('/security/password', [ProfileSecurityController::class, 'updatePassword'])->name('security.password.update');
     Route::post('/security/email', [ProfileSecurityController::class, 'updateEmail'])->name('security.email.update');
+    Route::post('/security/pin', [ProfileSecurityController::class, 'updatePin'])->name('security.pin.update');
+    Route::post('/security/pin/send-code', [ProfileSecurityController::class, 'sendPinVerificationCode'])->name('security.pin.send_code');
+    Route::post('/security/logout-other-devices', [ProfileSecurityController::class, 'logoutOtherDevices'])->name('security.logout_other_devices');
     Route::get('/security/audit-logs', [ProfileSecurityController::class, 'auditLogs'])->name('security.audit_logs');
 });
 
@@ -397,17 +401,19 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
 // Provider Webhook Endpoint (No CSRF needed, signature verified)
 Route::post('/api/webhooks/email/{provider}', [EmailWebhookController::class, 'handle'])->name('webhooks.email');
 
-// 4. Vendor Admin Panel (/admin)
-Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cashier', EnsureSubscriptionIsActive::class])->prefix('admin')->name('admin.')->group(function () {
+// 4. Vendor Admin Panel (/admin) - Strictly restricted to Vendor Owners & Managers
+Route::middleware(['auth', 'verified', 'role:vendor_owner,manager', EnsureSubscriptionIsActive::class])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [VendorAdminController::class, 'dashboard'])->name('dashboard');
 
-    // Vendor Subscription Status & Payment History
-    Route::get('/subscription', [VendorAdminController::class, 'subscriptionIndex'])->name('subscription');
-    Route::get('/subscription/overview', [VendorAdminController::class, 'subscriptionIndex'])->name('subscription.index');
-    Route::post('/subscription/renew', [VendorAdminController::class, 'renewSubscription'])->name('subscription.renew');
-    Route::post('/subscription/cancel', [VendorAdminController::class, 'cancelSubscription'])->name('subscription.cancel');
-    Route::post('/subscription/resume', [VendorAdminController::class, 'resumeSubscription'])->name('subscription.resume');
-    Route::get('/subscription/invoices/{invoice}', [VendorAdminController::class, 'showInvoice'])->name('subscription.invoices.show');
+    // Vendor Subscription Status & Payment History (Vendor Owner only)
+    Route::middleware(['role:vendor_owner'])->group(function () {
+        Route::get('/subscription', [VendorAdminController::class, 'subscriptionIndex'])->name('subscription');
+        Route::get('/subscription/overview', [VendorAdminController::class, 'subscriptionIndex'])->name('subscription.index');
+        Route::post('/subscription/renew', [VendorAdminController::class, 'renewSubscription'])->name('subscription.renew');
+        Route::post('/subscription/cancel', [VendorAdminController::class, 'cancelSubscription'])->name('subscription.cancel');
+        Route::post('/subscription/resume', [VendorAdminController::class, 'resumeSubscription'])->name('subscription.resume');
+        Route::get('/subscription/invoices/{invoice}', [VendorAdminController::class, 'showInvoice'])->name('subscription.invoices.show');
+    });
 
     // Translation Management & AI Localization Studio
     Route::get('/translations', [TranslationController::class, 'index'])->name('translations.index');
@@ -594,6 +600,8 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,staff,chef,cas
     // User Profile & 2FA Security
     Route::get('/profile', [ProfileSecurityController::class, 'index'])->name('profile');
     Route::post('/profile/update', [ProfileSecurityController::class, 'updateProfile'])->name('profile.update');
+    Route::post('/profile/pin', [ProfileSecurityController::class, 'updatePin'])->name('profile.pin.update');
+    Route::post('/profile/logout-other-devices', [ProfileSecurityController::class, 'logoutOtherDevices'])->name('profile.logout_other_devices');
 });
 
 // 5. Point of Sale (POS) Module Routes
@@ -616,6 +624,29 @@ Route::middleware(['auth', EnsurePosAccess::class])->group(function () {
             Route::post('/lock', [PosAuthController::class, 'lock'])->name('lock');
             Route::post('/unlock', [PosAuthController::class, 'unlock'])->name('unlock');
             Route::post('/logout', [PosAuthController::class, 'logout'])->name('logout');
+        });
+
+        // Dedicated Role-Based Workspaces & Employee Profile
+        Route::prefix('workspace')->name('workspace.')->group(function () {
+            Route::get('/profile', [PosWorkspaceController::class, 'getProfile'])->name('profile');
+            Route::post('/profile', [PosWorkspaceController::class, 'updateProfile'])->name('profile.update');
+            Route::post('/password', [PosWorkspaceController::class, 'changePassword'])->name('password.change');
+            Route::post('/pin', [PosWorkspaceController::class, 'updatePin'])->name('pin.update');
+            Route::post('/pin/send-code', [PosWorkspaceController::class, 'sendPinCode'])->name('pin.send_code');
+            Route::post('/logout-other-devices', [PosWorkspaceController::class, 'logoutOtherDevices'])->name('logout_other_devices');
+
+            // Waiter Workspace
+            Route::get('/waiter/dashboard', [PosWorkspaceController::class, 'getWaiterDashboard'])->name('waiter.dashboard');
+            Route::get('/waiter/tips', [PosWorkspaceController::class, 'getWaiterTips'])->name('waiter.tips');
+            Route::post('/orders/{order}/cancel-request', [PosWorkspaceController::class, 'requestOrderCancellation'])->name('orders.cancel_request');
+
+            // Cashier Workspace
+            Route::get('/cashier/dashboard', [PosWorkspaceController::class, 'getCashierDashboard'])->name('cashier.dashboard');
+
+            // Manager Workspace
+            Route::get('/manager/dashboard', [PosWorkspaceController::class, 'getManagerDashboard'])->name('manager.dashboard');
+            Route::post('/orders/{order}/approve-cancellation', [PosWorkspaceController::class, 'approveOrderCancellation'])->name('orders.approve_cancellation');
+            Route::post('/orders/{order}/reject-cancellation', [PosWorkspaceController::class, 'rejectOrderCancellation'])->name('orders.reject_cancellation');
         });
 
         Route::get('/bootstrap', [PosController::class, 'bootstrap'])->name('bootstrap');
@@ -692,8 +723,8 @@ Route::middleware(['auth', EnsurePosAccess::class])->group(function () {
             Route::post('/inventory/{product}/adjust', [PosIntegrationsController::class, 'adjustInventory'])->name('inventory.adjust');
         });
 
-        // Reports & Analytics (Sales, Employees, Products, Categories, Cash, Tips, Discounts, Dashboard)
-        Route::prefix('reports')->name('reports.')->group(function () {
+        // Reports & Analytics (Sales, Employees, Products, Categories, Cash, Tips, Discounts, Dashboard) - Manager & Owner Only
+        Route::prefix('reports')->middleware('role:vendor_owner,manager')->name('reports.')->group(function () {
             Route::get('/sales', [PosReportingController::class, 'sales'])->name('sales');
             Route::get('/employees', [PosReportingController::class, 'employees'])->name('employees');
             Route::get('/products', [PosReportingController::class, 'products'])->name('products');

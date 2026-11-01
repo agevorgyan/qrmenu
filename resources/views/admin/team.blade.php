@@ -122,10 +122,11 @@
                 <div>
                     <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">{{ __('Role') }} <span style="color: #ef4444;">*</span></label>
                     <select name="role" required style="width: 100%; box-sizing: border-box; padding: 0.75rem 1rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 0.95rem; outline: none; font-weight: 600;">
+                        <option value="waiter">{{ __('Waiter') }}</option>
+                        <option value="cashier">{{ __('Cashier') }}</option>
+                        <option value="chef">{{ __('Chef') }}</option>
                         <option value="manager">{{ __('Branch Manager') }}</option>
                         <option value="staff">{{ __('Staff Member') }}</option>
-                        <option value="chef">{{ __('Chef') }}</option>
-                        <option value="cashier">{{ __('Cashier') }}</option>
                     </select>
                 </div>
                 <div>

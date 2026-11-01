@@ -225,6 +225,7 @@ class FeatureCatalog
                 self::MENU_BASE,
                 self::MENU_TRANSLATIONS,
                 self::ANALYTICS_BASIC,
+                self::POS_ACCESS,
             ],
         };
     }

@@ -29,19 +29,25 @@ class OrderPolicy
     {
         return (int) $user->vendor_id === (int) $order->vendor_id
             && $user->canAccessLocationId($order->location_id)
-            && $user->hasPermission(Permission::ORDERS_VIEW);
+            && ($user->hasPermission(Permission::ORDERS_VIEW)
+                || $user->hasPermission(Permission::ORDERS_VIEW_ALL)
+                || ($user->hasPermission(Permission::ORDERS_VIEW_OWN) && (empty($order->user_id) || (int) $order->user_id === (int) $user->id))
+                || $user->hasPermission(Permission::POS_ORDERS));
     }
 
     public function create(User $user): bool
     {
-        return ! empty($user->vendor_id) && $user->hasPermission(Permission::ORDERS_UPDATE);
+        return ! empty($user->vendor_id) && ($user->hasPermission(Permission::ORDERS_UPDATE) || $user->hasPermission(Permission::ORDERS_CREATE) || $user->hasPermission(Permission::POS_ORDERS));
     }
 
     public function update(User $user, Order $order): bool
     {
         return (int) $user->vendor_id === (int) $order->vendor_id
             && $user->canAccessLocationId($order->location_id)
-            && $user->hasPermission(Permission::ORDERS_UPDATE);
+            && ($user->hasPermission(Permission::ORDERS_UPDATE)
+                || $user->hasPermission(Permission::ORDERS_MANAGE)
+                || ($user->hasPermission(Permission::ORDERS_UPDATE_OWN) && (empty($order->user_id) || (int) $order->user_id === (int) $user->id))
+                || $user->hasPermission(Permission::POS_ORDERS));
     }
 
     public function cancel(User $user, Order $order): bool
