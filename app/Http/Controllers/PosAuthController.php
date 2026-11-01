@@ -157,6 +157,7 @@ class PosAuthController extends Controller
         );
 
         Auth::login($result['user']);
+        session(['pos_terminal_locked' => false]);
 
         return response()->json([
             'success' => true,
@@ -231,6 +232,8 @@ class PosAuthController extends Controller
     public function lock(Request $request): JsonResponse
     {
         $user = Auth::user();
+        session(['pos_terminal_locked' => true]);
+
         $token = $request->header('X-POS-Session-Token', $request->get('session_token'));
 
         if ($token) {
@@ -275,6 +278,8 @@ class PosAuthController extends Controller
                     ], 422);
                 }
 
+                session(['pos_terminal_locked' => false]);
+
                 return response()->json([
                     'success' => true,
                     'message' => __('Terminal unlocked.'),
@@ -285,6 +290,8 @@ class PosAuthController extends Controller
 
         // Direct PIN check on current auth user
         if ($user->hasPin() && $user->verifyPin($validated['pin'])) {
+            session(['pos_terminal_locked' => false]);
+
             return response()->json([
                 'success' => true,
                 'message' => __('Terminal unlocked.'),
@@ -325,4 +332,3 @@ class PosAuthController extends Controller
         ]);
     }
 }
-

@@ -25,7 +25,7 @@ class PinSecurityService
             return true;
         }
 
-        // All identical digits (e.g. 0000, 1111, 888888)
+        // All identical digits (e.g. 1111, 888888)
         if (preg_match('/^(\d)\1+$/', $pin)) {
             return true;
         }

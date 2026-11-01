@@ -110,9 +110,10 @@ class PosService
             'session' => $activeSession ? [
                 'session_token' => $activeSession->session_token,
                 'mode' => $activeSession->mode,
-                'is_locked' => $activeSession->isLocked(),
+                'is_locked' => (bool) (session('pos_terminal_locked', false) || $activeSession->isLocked()),
                 'expires_at' => $activeSession->expires_at->toIso8601String(),
             ] : null,
+            'is_terminal_locked' => (bool) (session('pos_terminal_locked', false) || ($activeSession && $activeSession->isLocked())),
             'settings' => [
                 'enable_quick_pin' => (bool) $posSettings->enable_quick_pin,
                 'require_table_selection' => (bool) $posSettings->require_table_selection,

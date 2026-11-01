@@ -1481,7 +1481,7 @@
             </button>
 
             <!-- Quick Lock Screen -->
-            <button type="button" class="pos-tool-btn desktop-only-tool" @click="lockTerminal()" title="{{ __('Lock Terminal') }}">
+            <button type="button" class="pos-tool-btn" @click="lockTerminal()" title="{{ __('Lock Terminal') }}">
                 <i class="fa-solid fa-lock"></i>
             </button>
 
@@ -3578,7 +3578,7 @@
                 activeLocationId: {{ $bootstrapData['active_location_id'] ?? 'null' }},
                 isOnline: navigator.onLine,
                 isFullscreen: false,
-                isLocked: false,
+                isLocked: Boolean(localStorage.getItem('elam_pos_locked') === '1' || @json((bool)(session('pos_terminal_locked', false) || ($bootstrapData['is_terminal_locked'] ?? false)))),
                 enteredPin: '',
                 pinError: '',
                 toastMessage: '',
@@ -3681,6 +3681,22 @@
                 reportPeriod: 'today',
 
                 initPos() {
+                    if (localStorage.getItem('elam_pos_locked') === '1' || this.bootstrapData?.is_terminal_locked) {
+                        this.isLocked = true;
+                    }
+
+                    window.addEventListener('keydown', (e) => {
+                        if (this.isLocked || this.switchingTargetUser) {
+                            if (e.key >= '0' && e.key <= '9') {
+                                this.pressPin(e.key);
+                            } else if (e.key === 'Backspace') {
+                                this.backspacePin();
+                            } else if (e.key === 'Escape' && this.switchingTargetUser && !this.isLocked) {
+                                this.cancelPinAction();
+                            }
+                        }
+                    });
+
                     this.offlineQueue = JSON.parse(localStorage.getItem('elam_pos_offline_queue') || '[]');
                     this.offlineManifest = JSON.parse(localStorage.getItem('elam_pos_offline_manifest') || 'null');
 
@@ -4104,6 +4120,9 @@
 
                 confirmLogout() {
                     if (confirm('{{ __('Are you sure you want to log out?') }}')) {
+                        try {
+                            localStorage.removeItem('elam_pos_locked');
+                        } catch (e) {}
                         const form = document.createElement('form');
                         form.method = 'POST';
                         form.action = '{{ route('logout') }}';
@@ -4990,6 +5009,17 @@
                     this.enteredPin = '';
                     this.pinError = '';
                     this.switchingTargetUser = null;
+                    try {
+                        localStorage.setItem('elam_pos_locked', '1');
+                        fetch('/pos/api/auth/lock', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            }
+                        }).catch(() => {});
+                    } catch (e) {}
                 },
 
                 pressPin(digit) {
@@ -5033,6 +5063,10 @@
                                 this.switchingTargetUser = null;
                                 this.enteredPin = '';
                                 this.pinError = '';
+                                this.isLocked = false;
+                                try {
+                                    localStorage.removeItem('elam_pos_locked');
+                                } catch (e) {}
                                 this.showToast('{{ __('Switched employee successfully.') }}');
                                 this.fetchBootstrap();
                             } else {
@@ -5059,6 +5093,9 @@
                                 this.isLocked = false;
                                 this.enteredPin = '';
                                 this.pinError = '';
+                                try {
+                                    localStorage.removeItem('elam_pos_locked');
+                                } catch (e) {}
                                 this.showToast('{{ __('Terminal unlocked.') }}');
                             } else {
                                 this.pinError = data.message || '{{ __('Incorrect PIN code.') }}';
