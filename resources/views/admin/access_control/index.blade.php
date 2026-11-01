@@ -128,7 +128,7 @@
                                     </div>
                                 </td>
                                 <td style="padding: 0.9rem 1.25rem; white-space: nowrap;">
-                                    <button type="button" @click="editUserLocations({{ $member->id }}, '{{ addslashes($member->name) }}', {{ $membership ? ($membership->all_locations ? 'true' : 'false') : 'true' }}, {{ json_encode($membership ? $membership->locations->pluck('id')->all() : []) }})" style="background: none; border: none; padding: 0; cursor: pointer; text-align: left;" title="{{ __('Configure Location Access') }}">
+                                    <button type="button" @click="editUserLocations({{ $member->id }}, {{ Js::from($member->name) }}, {{ $membership ? ($membership->all_locations ? 'true' : 'false') : 'true' }}, {{ Js::from($membership ? $membership->locations->pluck('id')->all() : []) }})" style="background: none; border: none; padding: 0; cursor: pointer; text-align: left;" title="{{ __('Configure Location Access') }}">
                                         @if($membership && ! $membership->all_locations && $membership->locations->isNotEmpty())
                                             <span style="background: var(--bg-body); border: 1px solid var(--border-color); padding: 0.25rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
                                                 <i class="fa-solid fa-location-dot" style="color: var(--primary);"></i>
@@ -153,7 +153,7 @@
                                         <button type="button" @click="inspectUser({{ $member->id }})" class="btn btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.78rem; border-radius: 8px;" title="{{ __('Effective Permissions') }}">
                                             <i class="fa-solid fa-list-check"></i> {{ __('Permissions') }}
                                         </button>
-                                        <button type="button" @click="editUserRoles({{ $member->id }}, '{{ addslashes($member->name) }}', {{ json_encode($userRoleIds) }})" class="btn btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.78rem; border-radius: 8px;" title="{{ __('Assign Roles') }}">
+                                        <button type="button" @click="editUserRoles({{ $member->id }}, {{ Js::from($member->name) }}, {{ Js::from($userRoleIds) }})" class="btn btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.78rem; border-radius: 8px;" title="{{ __('Assign Roles') }}">
                                             <i class="fa-solid fa-user-gear"></i>
                                         </button>
                                         <button type="button" @click="revokeSessions({{ $member->id }})" class="btn btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.78rem; border-radius: 8px; color: #ef4444;" title="{{ __('Terminate Sessions') }}">
@@ -209,14 +209,14 @@
                             <span><strong style="color: var(--text-main);">{{ $role->memberships_count }}</strong> {{ __('users') }}</span>
                         </div>
                         <div style="display: inline-flex; gap: 0.35rem;">
-                            <button type="button" @click="duplicateRole({{ $role->id }}, '{{ addslashes($role->name) }}')" class="btn btn-secondary" style="padding: 0.3rem 0.55rem; font-size: 0.76rem; border-radius: 6px;" title="{{ __('Duplicate Role') }}">
+                            <button type="button" @click="duplicateRole({{ $role->id }}, {{ Js::from($role->name) }})" class="btn btn-secondary" style="padding: 0.3rem 0.55rem; font-size: 0.76rem; border-radius: 6px;" title="{{ __('Duplicate Role') }}">
                                 <i class="fa-solid fa-copy"></i>
                             </button>
                             @if(! $role->is_system && ! in_array($role->slug, ['owner', 'vendor_owner']))
-                                <button type="button" @click="editCustomRole({{ json_encode($role) }})" class="btn btn-secondary" style="padding: 0.3rem 0.55rem; font-size: 0.76rem; border-radius: 6px;" title="{{ __('Edit Role') }}">
+                                <button type="button" @click="editCustomRole({{ Js::from($role) }})" class="btn btn-secondary" style="padding: 0.3rem 0.55rem; font-size: 0.76rem; border-radius: 6px;" title="{{ __('Edit Role') }}">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
-                                <button type="button" @click="deleteCustomRole({{ $role->id }}, '{{ addslashes($role->name) }}')" class="btn btn-secondary" style="padding: 0.3rem 0.55rem; font-size: 0.76rem; border-radius: 6px; color: #ef4444;" title="{{ __('Delete Role') }}">
+                                <button type="button" @click="deleteCustomRole({{ $role->id }}, {{ Js::from($role->name) }})" class="btn btn-secondary" style="padding: 0.3rem 0.55rem; font-size: 0.76rem; border-radius: 6px; color: #ef4444;" title="{{ __('Delete Role') }}">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             @endif
@@ -725,7 +725,11 @@ function accessControlApp() {
                 if (data.success) {
                     window.location.reload();
                 } else {
-                    alert(data.message || 'Error updating roles');
+                    let errMsg = data.message || 'Error updating roles';
+                    if (data.errors) {
+                        errMsg = Object.values(data.errors).flat().join('\n');
+                    }
+                    alert(errMsg);
                 }
             } catch (e) {
                 console.error('Role update error', e);
@@ -764,7 +768,11 @@ function accessControlApp() {
                 if (data.success) {
                     window.location.reload();
                 } else {
-                    alert(data.message || 'Error updating locations');
+                    let errMsg = data.message || 'Error updating locations';
+                    if (data.errors) {
+                        errMsg = Object.values(data.errors).flat().join('\n');
+                    }
+                    alert(errMsg);
                 }
             } catch (e) {
                 console.error('Location update error', e);
@@ -827,7 +835,11 @@ function accessControlApp() {
                 if (data.success) {
                     window.location.reload();
                 } else {
-                    alert(data.message || 'Failed to save role');
+                    let errMsg = data.message || 'Failed to save role';
+                    if (data.errors) {
+                        errMsg = Object.values(data.errors).flat().join('\n');
+                    }
+                    alert(errMsg);
                 }
             } catch (e) {
                 console.error('Role form save error', e);

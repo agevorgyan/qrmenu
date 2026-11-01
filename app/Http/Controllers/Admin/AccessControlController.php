@@ -8,10 +8,12 @@ use App\Models\Location;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\VendorMembership;
 use App\Security\PermissionCatalog;
 use App\Services\AuthorizationService;
 use App\Services\RoleManagementService;
 use Carbon\Carbon;
+use Database\Seeders\EnterpriseAuthorizationSeeder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,12 +37,25 @@ class AccessControlController extends Controller
         $this->authorize('team.view');
 
         // Self-heal: ensure canonical permissions and system roles exist
-        if (Permission::count() === 0 || Role::where('is_system', true)->count() === 0) {
+        $canonicalPermsCount = count(PermissionCatalog::all());
+        $canonicalRolesCount = count(PermissionCatalog::roleTemplates());
+        if (Permission::count() < $canonicalPermsCount || Role::where('is_system', true)->count() < $canonicalRolesCount) {
             PermissionCatalog::syncToDatabase();
+            (new EnterpriseAuthorizationSeeder)->run();
         }
 
         $user = Auth::user();
         $vendor = $user->vendor;
+
+        // Self-heal: ensure all vendor users have VendorMembership records
+        $hasUnmigrated = User::where('vendor_id', $vendor->id)
+            ->whereDoesntHave('memberships', function ($q) use ($vendor) {
+                $q->where('vendor_id', $vendor->id);
+            })->exists();
+
+        if ($hasUnmigrated) {
+            (new EnterpriseAuthorizationSeeder)->run();
+        }
 
         $tab = $request->get('tab', 'users');
         $search = $request->get('search');
@@ -114,6 +129,36 @@ class AccessControlController extends Controller
     }
 
     /**
+     * Resolve existing membership or auto-provision for a valid vendor member.
+     */
+    protected function resolveOrCreateMembership(User $user, int $vendorId): VendorMembership
+    {
+        $membership = $this->authService->resolveMembership($user, $vendorId);
+        if (! $membership) {
+            $membership = VendorMembership::firstOrCreate(
+                [
+                    'vendor_id' => $vendorId,
+                    'user_id' => $user->id,
+                ],
+                [
+                    'status' => $user->is_active ? 'active' : 'inactive',
+                    'all_locations' => empty($user->location_id),
+                    'joined_at' => $user->created_at ?? now(),
+                ]
+            );
+
+            if ($user->role) {
+                $role = Role::forVendor($vendorId)->where('slug', $user->role)->first();
+                if ($role) {
+                    $membership->roles()->syncWithoutDetaching([$role->id]);
+                }
+            }
+        }
+
+        return $membership;
+    }
+
+    /**
      * Inspect effective permissions for a specific user.
      */
     public function userEffectivePermissions(User $user): JsonResponse
@@ -125,11 +170,11 @@ class AccessControlController extends Controller
             abort(403, 'Cross-restaurant access denied.');
         }
 
-        $membership = $this->authService->resolveMembership($user, $vendor->id);
+        $membership = $this->resolveOrCreateMembership($user, $vendor->id);
         $effective = $this->authService->getEffectivePermissions($user, $vendor->id);
         $roles = $this->authService->getUserRoles($user, $vendor->id);
 
-        $overrides = $membership ? $membership->permissions()->with('permission')->get() : collect();
+        $overrides = $membership->permissions()->with('permission')->get();
 
         $allowedOverrides = $overrides->where('effect', 'allow')->map(fn ($o) => [
             'key' => $o->permission?->key,
@@ -151,9 +196,9 @@ class AccessControlController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'status' => $membership?->status ?? ($user->is_active ? 'active' : 'inactive'),
-                'all_locations' => $membership?->all_locations ?? true,
-                'locations' => $membership?->locations->pluck('name', 'id') ?? [],
+                'status' => $membership->status ?? ($user->is_active ? 'active' : 'inactive'),
+                'all_locations' => $membership->all_locations ?? true,
+                'locations' => $membership->locations->pluck('name', 'id') ?? [],
                 'roles' => collect($roles)->map(fn ($r) => is_string($r) ? $r : $r->name)->values()->all(),
             ],
             'effective_permissions' => $effective,
@@ -178,16 +223,13 @@ class AccessControlController extends Controller
         $request->merge(['role_ids' => $roleIds]);
 
         $validated = $request->validate([
-            'role_ids' => 'required|array',
+            'role_ids' => 'nullable|array',
             'role_ids.*' => 'integer|exists:roles,id',
         ]);
 
-        $membership = $this->authService->resolveMembership($user, $vendor->id);
-        if (! $membership) {
-            abort(404, 'User membership not found.');
-        }
+        $membership = $this->resolveOrCreateMembership($user, $vendor->id);
 
-        $this->roleService->assignRolesToMembership($membership, $validated['role_ids'], $actor);
+        $this->roleService->assignRolesToMembership($membership, $validated['role_ids'] ?? [], $actor);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -218,13 +260,15 @@ class AccessControlController extends Controller
         $validated = $request->validate([
             'all_locations' => 'required|boolean',
             'location_ids' => 'nullable|array',
-            'location_ids.*' => 'integer|exists:locations,id',
+            'location_ids.*' => [
+                'integer',
+                Rule::exists('locations', 'id')->where(function ($q) use ($vendor) {
+                    $q->where('vendor_id', $vendor->id);
+                }),
+            ],
         ]);
 
-        $membership = $this->authService->resolveMembership($user, $vendor->id);
-        if (! $membership) {
-            abort(404, 'User membership not found.');
-        }
+        $membership = $this->resolveOrCreateMembership($user, $vendor->id);
 
         $allLocations = (bool) $validated['all_locations'];
         $locationIds = $allLocations ? [] : ($validated['location_ids'] ?? []);
@@ -257,10 +301,7 @@ class AccessControlController extends Controller
             'status' => 'required|string|in:active,inactive,suspended',
         ]);
 
-        $membership = $this->authService->resolveMembership($user, $vendor->id);
-        if (! $membership) {
-            abort(404, 'User membership not found.');
-        }
+        $membership = $this->resolveOrCreateMembership($user, $vendor->id);
 
         $this->roleService->setMembershipStatus($membership, $validated['status'], $actor);
         $user->update(['is_active' => $validated['status'] === 'active']);
@@ -295,10 +336,7 @@ class AccessControlController extends Controller
             'reason' => 'nullable|string|max:255',
         ]);
 
-        $membership = $this->authService->resolveMembership($user, $vendor->id);
-        if (! $membership) {
-            abort(404, 'User membership not found.');
-        }
+        $membership = $this->resolveOrCreateMembership($user, $vendor->id);
 
         $expiresAt = ! empty($validated['expires_at']) ? Carbon::parse($validated['expires_at']) : null;
 
@@ -334,10 +372,7 @@ class AccessControlController extends Controller
             abort(403, 'Cross-restaurant permission override prohibited.');
         }
 
-        $membership = $this->authService->resolveMembership($user, $vendor->id);
-        if (! $membership) {
-            abort(404, 'User membership not found.');
-        }
+        $membership = $this->resolveOrCreateMembership($user, $vendor->id);
 
         $this->roleService->removeUserPermissionOverride($membership, $permissionKey, $actor);
 
@@ -383,6 +418,11 @@ class AccessControlController extends Controller
         $actor = Auth::user();
         $vendor = $actor->vendor;
 
+        // Ensure canonical permissions exist in database
+        if (Permission::count() < count(PermissionCatalog::all())) {
+            PermissionCatalog::syncToDatabase();
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:100',
             'slug' => 'nullable|string|max:100',
@@ -414,6 +454,11 @@ class AccessControlController extends Controller
 
         if ((int) $role->vendor_id !== (int) $vendor->id) {
             abort(403, 'Cross-restaurant role modification prohibited.');
+        }
+
+        // Ensure canonical permissions exist in database
+        if (Permission::count() < count(PermissionCatalog::all())) {
+            PermissionCatalog::syncToDatabase();
         }
 
         $validated = $request->validate([
@@ -491,6 +536,8 @@ class AccessControlController extends Controller
      */
     public function exportAuditLogs(Request $request): StreamedResponse
     {
+        $this->authorize('audit_logs.view');
+
         $vendor = Auth::user()->vendor;
 
         $query = AuthorizationAuditLog::where('vendor_id', $vendor->id)

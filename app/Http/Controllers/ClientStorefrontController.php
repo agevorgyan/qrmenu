@@ -326,14 +326,6 @@ class ClientStorefrontController extends Controller
         } elseif ($savedSessionLang && in_array($savedSessionLang, $allowedCodes, true)) {
             $lang = $savedSessionLang;
             $needsLanguageSelection = false;
-        } elseif (($cookieLocale = strtolower((string) ($request->cookie('app_locale') ?? $request->cookie('locale')))) && in_array($cookieLocale, $allowedCodes, true)) {
-            $lang = $cookieLocale;
-            session(['storefront_lang_'.$vendor->slug => $lang]);
-            $needsLanguageSelection = false;
-        } elseif (($sessionLocale = strtolower((string) (session('app_locale') ?? session('locale')))) && in_array($sessionLocale, $allowedCodes, true)) {
-            $lang = $sessionLocale;
-            session(['storefront_lang_'.$vendor->slug => $lang]);
-            $needsLanguageSelection = false;
         } else {
             $lang = $defaultCode;
             $needsLanguageSelection = true;
@@ -404,12 +396,15 @@ class ClientStorefrontController extends Controller
                 $entryContext = 'general_menu';
             }
         } else {
-            // Preserve table session if customer already entered via QR
+            // Preserve table session if customer entered via verified physical RestaurantTable
             $savedTable = session('storefront_table_'.$vendor->slug);
-            if ($savedTable) {
+            if ($savedTable && RestaurantTable::where('vendor_id', $vendor->id)->where('table_number', (string) $savedTable)->where('is_active', true)->exists()) {
                 $table = (string) $savedTable;
                 $entryContext = 'table_qr';
             } else {
+                // Direct visit without table query parameter clears stale/unverified table from session
+                session()->forget('storefront_table_'.$vendor->slug);
+                session()->forget('storefront_entry_context_'.$vendor->slug);
                 $table = null;
                 $entryContext = 'general_menu';
             }

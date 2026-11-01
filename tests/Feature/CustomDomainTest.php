@@ -205,7 +205,7 @@ class CustomDomainTest extends TestCase
 
     public function test_custom_domain_login_renders_whitelabel_branding(): void
     {
-        $response = $this->get('http://menu.parkside.rest/login');
+        $response = $this->withSession(['app_locale' => 'hy', 'locale' => 'hy'])->get('http://menu.parkside.rest/login');
 
         $response->assertOk();
         $response->assertSee('Parkside Restaurant');

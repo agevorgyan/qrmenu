@@ -28,6 +28,7 @@
     </script>
 
     <style>
+        [x-cloak] { display: none !important; }
         /* Theme Variables - Dark Mode (Default Obsidian Slate) */
         html[data-theme="dark"] {
             --bg-body: #0a0e1a;

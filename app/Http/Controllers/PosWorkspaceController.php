@@ -38,16 +38,16 @@ class PosWorkspaceController extends Controller
 
         $allowedModes = [];
 
-        if ($user->hasPermission('workspace.waiter.access') || in_array($user->role, ['waiter', 'staff', 'manager', 'vendor_owner'], true)) {
+        if ($user->hasPermission('workspace.waiter.access')) {
             $allowedModes[] = 'waiter';
         }
-        if ($user->hasPermission('workspace.cashier.access') || in_array($user->role, ['cashier', 'head_cashier', 'manager', 'vendor_owner'], true)) {
+        if ($user->hasPermission('workspace.cashier.access')) {
             $allowedModes[] = 'cashier';
         }
-        if ($user->hasPermission('workspace.manager.access') || in_array($user->role, ['manager', 'vendor_owner'], true)) {
+        if ($user->hasPermission('workspace.manager.access')) {
             $allowedModes[] = 'manager';
         }
-        if ($user->hasPermission('workspace.kitchen.access') || $user->hasPermission(Permission::POS_KDS) || in_array($user->role, ['chef', 'kitchen', 'kitchen_manager', 'manager', 'vendor_owner'], true)) {
+        if ($user->hasPermission('workspace.kitchen.access') || $user->hasPermission(Permission::POS_KDS)) {
             $allowedModes[] = 'kds';
         }
 
@@ -56,9 +56,6 @@ class PosWorkspaceController extends Controller
         }
 
         $allowedModes = array_values(array_unique($allowedModes));
-        if (empty($allowedModes)) {
-            $allowedModes = ['waiter'];
-        }
 
         return response()->json([
             'success' => true,
@@ -249,8 +246,8 @@ class PosWorkspaceController extends Controller
         $user = Auth::user();
         $vendor = $user->vendor;
 
-        if (! in_array($user->role, ['waiter', 'staff', 'manager', 'vendor_owner'], true) && ! $user->hasPermission(Permission::ORDERS_VIEW_OWN)) {
-            abort(403, 'Unauthorized. Waiter permission required.');
+        if (! $user->isSuperAdmin() && ! $user->hasPermission('workspace.waiter.access') && ! $user->hasPermission(Permission::ORDERS_VIEW_OWN)) {
+            abort(403, 'Unauthorized. Waiter workspace permission required.');
         }
 
         $startOfDay = Carbon::today();
@@ -328,7 +325,7 @@ class PosWorkspaceController extends Controller
         $user = Auth::user();
         $vendor = $user->vendor;
 
-        if (! in_array($user->role, ['waiter', 'staff', 'manager', 'vendor_owner'], true) && ! $user->hasPermission(Permission::TIPS_VIEW_OWN)) {
+        if (! $user->isSuperAdmin() && ! $user->hasPermission(Permission::TIPS_VIEW_OWN) && ! $user->hasPermission('workspace.waiter.access')) {
             abort(403, 'Unauthorized. Waiter permission required.');
         }
 
@@ -382,7 +379,7 @@ class PosWorkspaceController extends Controller
         }
 
         // Waiter can only request cancellation for their own order unless they have orders.manage
-        if ($user->role === 'waiter' && (int) $order->waiter_id !== (int) $user->id && ! $user->hasPermission(Permission::ORDERS_MANAGE)) {
+        if (! $user->isSuperAdmin() && ! $user->hasPermission(Permission::ORDERS_MANAGE) && (int) $order->waiter_id !== (int) $user->id) {
             abort(403, 'You may only request cancellation for your own assigned orders.');
         }
 
@@ -431,8 +428,8 @@ class PosWorkspaceController extends Controller
         $user = Auth::user();
         $vendor = $user->vendor;
 
-        if (! in_array($user->role, ['cashier', 'manager', 'vendor_owner'], true) && ! $user->hasPermission(Permission::POS_PAYMENTS)) {
-            abort(403, 'Unauthorized. Cashier permission required.');
+        if (! $user->isSuperAdmin() && ! $user->hasPermission('workspace.cashier.access') && ! $user->hasPermission(Permission::POS_PAYMENTS)) {
+            abort(403, 'Unauthorized. Cashier workspace permission required.');
         }
 
         $startOfDay = Carbon::today();
@@ -523,8 +520,8 @@ class PosWorkspaceController extends Controller
         $user = Auth::user();
         $vendor = $user->vendor;
 
-        if (! in_array($user->role, ['manager', 'vendor_owner'], true) && ! $user->hasPermission(Permission::ORDERS_VIEW_ALL)) {
-            abort(403, 'Unauthorized. Manager access required.');
+        if (! $user->isSuperAdmin() && ! $user->hasPermission('workspace.manager.access') && ! $user->hasPermission(Permission::ORDERS_VIEW_ALL)) {
+            abort(403, 'Unauthorized. Manager workspace permission required.');
         }
 
         $startOfDay = Carbon::today();
@@ -613,7 +610,7 @@ class PosWorkspaceController extends Controller
             abort(403, 'Unauthorized order access.');
         }
 
-        if (! $user->hasPermission(Permission::ORDERS_APPROVE_CANCELLATION) && ! in_array($user->role, ['manager', 'vendor_owner'], true)) {
+        if (! $user->isSuperAdmin() && ! $user->hasPermission(Permission::ORDERS_APPROVE_CANCELLATION) && ! $user->hasPermission('workspace.manager.access')) {
             abort(403, 'Unauthorized. Manager cancellation approval permission required.');
         }
 
@@ -680,7 +677,7 @@ class PosWorkspaceController extends Controller
             abort(403, 'Unauthorized order access.');
         }
 
-        if (! $user->hasPermission(Permission::ORDERS_APPROVE_CANCELLATION) && ! in_array($user->role, ['manager', 'vendor_owner'], true)) {
+        if (! $user->isSuperAdmin() && ! $user->hasPermission(Permission::ORDERS_APPROVE_CANCELLATION) && ! $user->hasPermission('workspace.manager.access')) {
             abort(403, 'Unauthorized. Manager permission required.');
         }
 

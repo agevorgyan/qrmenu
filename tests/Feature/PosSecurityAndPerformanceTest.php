@@ -538,6 +538,11 @@ class PosSecurityAndPerformanceTest extends TestCase
             ]);
         }
 
+        // Warm up session, auth, and permissions cache
+        $this->actingAs($this->managerA)
+            ->withHeader('X-POS-Device-UUID', $this->deviceA->uuid)
+            ->getJson('/pos/api/orders');
+
         DB::flushQueryLog();
         DB::enableQueryLog();
 

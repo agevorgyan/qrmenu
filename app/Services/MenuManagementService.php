@@ -978,4 +978,13 @@ class MenuManagementService
             return $newCat;
         });
     }
+
+    /**
+     * Invalidate tenant menu cache for vendor.
+     */
+    public function invalidateVendorMenuCache(Vendor|int $vendor): void
+    {
+        $vendorId = is_int($vendor) ? $vendor : $vendor->id;
+        TenantCache::invalidateMenu($vendorId);
+    }
 }

@@ -643,6 +643,24 @@ class PermissionCatalog
                 'is_sensitive' => false,
                 'is_system' => true,
             ],
+            [
+                'key' => Permission::SPLIT_BILL_VIEW,
+                'module' => 'pos',
+                'action' => 'split_bill_view',
+                'description' => 'View split bill transactions and status.',
+                'risk_level' => 'low',
+                'is_sensitive' => false,
+                'is_system' => true,
+            ],
+            [
+                'key' => Permission::SPLIT_BILL_MANAGE,
+                'module' => 'pos',
+                'action' => 'split_bill_manage',
+                'description' => 'Split orders, bills, and configure split payment policies.',
+                'risk_level' => 'medium',
+                'is_sensitive' => false,
+                'is_system' => true,
+            ],
 
             // 15. Billing
             [

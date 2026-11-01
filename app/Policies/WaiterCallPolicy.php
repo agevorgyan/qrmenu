@@ -41,7 +41,7 @@ class WaiterCallPolicy
     {
         return (int) $user->vendor_id === (int) $waiterCall->vendor_id
             && $user->canAccessLocationId($waiterCall->location_id)
-            && $user->hasPermission(Permission::ORDERS_UPDATE);
+            && ($user->hasPermission(Permission::ORDERS_UPDATE) || $user->hasPermission(Permission::ORDERS_UPDATE_OWN) || $user->hasPermission(Permission::POS_ORDERS) || $user->hasPermission(Permission::WAITERS_MANAGE));
     }
 
     public function delete(User $user, WaiterCall $waiterCall): bool

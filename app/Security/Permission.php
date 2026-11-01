@@ -112,6 +112,34 @@ class Permission
     public const POS_KDS = 'pos.kds';
 
     // Fine-grained Waiter permissions
+    public const WORKSPACE_WAITER_ACCESS = 'workspace.waiter.access';
+
+    public const WORKSPACE_CASHIER_ACCESS = 'workspace.cashier.access';
+
+    public const WORKSPACE_MANAGER_ACCESS = 'workspace.manager.access';
+
+    public const WORKSPACE_KITCHEN_ACCESS = 'workspace.kitchen.access';
+
+    public const DASHBOARD_VIEW = 'dashboard.view';
+
+    public const RESERVATIONS_VIEW = 'reservations.view';
+
+    public const RESERVATIONS_MANAGE = 'reservations.manage';
+
+    public const CUSTOMERS_MANAGE = 'customers.manage';
+
+    public const ROLES_VIEW = 'roles.view';
+
+    public const ROLES_MANAGE = 'roles.manage';
+
+    public const SECURITY_VIEW = 'security.view';
+
+    public const SECURITY_MANAGE = 'security.manage';
+
+    public const AI_MENU_BUILDER = 'ai.menu_builder';
+
+    public const PLATFORM_SECURITY = 'platform.security';
+
     public const ORDERS_VIEW_OWN = 'orders.view_own';
 
     public const ORDERS_CREATE = 'orders.create';
@@ -284,6 +312,20 @@ class Permission
             self::PLATFORM_LOGS,
             self::PLATFORM_LANGUAGES,
             self::PLATFORM_EMAILS,
+            self::PLATFORM_SECURITY,
+            self::DASHBOARD_VIEW,
+            self::WORKSPACE_WAITER_ACCESS,
+            self::WORKSPACE_CASHIER_ACCESS,
+            self::WORKSPACE_MANAGER_ACCESS,
+            self::WORKSPACE_KITCHEN_ACCESS,
+            self::RESERVATIONS_VIEW,
+            self::RESERVATIONS_MANAGE,
+            self::CUSTOMERS_MANAGE,
+            self::ROLES_VIEW,
+            self::ROLES_MANAGE,
+            self::SECURITY_VIEW,
+            self::SECURITY_MANAGE,
+            self::AI_MENU_BUILDER,
         ];
     }
 

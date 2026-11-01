@@ -32,12 +32,7 @@ class OrderPolicy
 
     public function view(User $user, Order $order): bool
     {
-        return (int) $user->vendor_id === (int) $order->vendor_id
-            && $user->canAccessLocationId($order->location_id)
-            && ($user->hasPermission(Permission::ORDERS_VIEW)
-                || $user->hasPermission(Permission::ORDERS_VIEW_ALL)
-                || ($user->hasPermission(Permission::ORDERS_VIEW_OWN) && (empty($order->user_id) || (int) $order->user_id === (int) $user->id))
-                || $user->hasPermission(Permission::POS_ORDERS));
+        return $user->canAccessOrder($order);
     }
 
     public function create(User $user): bool
@@ -47,12 +42,22 @@ class OrderPolicy
 
     public function update(User $user, Order $order): bool
     {
-        return (int) $user->vendor_id === (int) $order->vendor_id
-            && $user->canAccessLocationId($order->location_id)
-            && ($user->hasPermission(Permission::ORDERS_UPDATE)
-                || $user->hasPermission(Permission::ORDERS_MANAGE)
-                || ($user->hasPermission(Permission::ORDERS_UPDATE_OWN) && (empty($order->user_id) || (int) $order->user_id === (int) $user->id))
-                || $user->hasPermission(Permission::POS_ORDERS));
+        if ((int) $user->vendor_id !== (int) $order->vendor_id || ! $user->canAccessLocationId($order->location_id)) {
+            return false;
+        }
+
+        if ($user->hasPermission(Permission::ORDERS_UPDATE) || $user->hasPermission(Permission::ORDERS_MANAGE) || $user->hasPermission(Permission::POS_ORDERS)) {
+            return true;
+        }
+
+        if ($user->hasPermission(Permission::ORDERS_UPDATE_OWN)) {
+            $isAssignedWaiter = ! empty($order->waiter_id) && (int) $order->waiter_id === (int) $user->id;
+            $isOrderCreator = ! empty($order->user_id) && (int) $order->user_id === (int) $user->id;
+
+            return $isAssignedWaiter || $isOrderCreator;
+        }
+
+        return false;
     }
 
     public function cancel(User $user, Order $order): bool

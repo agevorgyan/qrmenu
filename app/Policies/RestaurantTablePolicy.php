@@ -28,9 +28,7 @@ class RestaurantTablePolicy
 
     public function view(User $user, RestaurantTable $table): bool
     {
-        return (int) $user->vendor_id === (int) $table->vendor_id
-            && $user->canAccessLocationId($table->location_id)
-            && ($user->hasPermission(Permission::LOCATIONS_VIEW) || $user->hasPermission(Permission::ORDERS_VIEW) || $user->hasPermission(Permission::MENU_VIEW));
+        return $user->canAccessTable($table);
     }
 
     public function create(User $user): bool

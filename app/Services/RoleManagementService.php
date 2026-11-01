@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\AuthorizationAuditLog;
+use App\Models\Location;
 use App\Models\MembershipPermission;
 use App\Models\Permission;
 use App\Models\Role;
@@ -464,6 +465,17 @@ class RoleManagementService
         User $actor
     ): void {
         $this->ensureCanManageRoles($actor, $membership->vendor_id);
+
+        if (! $allLocations && ! empty($locationIds)) {
+            $validLocations = Location::where('vendor_id', $membership->vendor_id)
+                ->whereIn('id', $locationIds)
+                ->pluck('id')
+                ->all();
+
+            if (count($validLocations) !== count(array_unique($locationIds))) {
+                throw new AccessDeniedHttpException(__('Invalid location assignment: cross-restaurant locations prohibited.'));
+            }
+        }
 
         DB::transaction(function () use ($membership, $allLocations, $locationIds, $actor) {
             $oldLocations = [

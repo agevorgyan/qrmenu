@@ -418,6 +418,22 @@ class User extends Authenticatable implements MustVerifyEmail
         return app(AuthorizationService::class)->canAccessLocationId($this, $locationId);
     }
 
+    /**
+     * Check if the user is authorized to access a given Order model (ReBAC).
+     */
+    public function canAccessOrder(Order $order): bool
+    {
+        return app(AuthorizationService::class)->canAccessOrder($this, $order);
+    }
+
+    /**
+     * Check if the user is authorized to access a given RestaurantTable model (ReBAC).
+     */
+    public function canAccessTable(RestaurantTable $table): bool
+    {
+        return app(AuthorizationService::class)->canAccessTable($this, $table);
+    }
+
     public function hasTwoFactorEnabled(): bool
     {
         return (bool) $this->two_factor_enabled;

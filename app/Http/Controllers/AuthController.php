@@ -81,9 +81,7 @@ class AuthController extends Controller
             cookie()->queue('locale', $activeLocale, 525600);
         }
 
-        $customVendor = $tenantContext->getTenant();
-
-        return $this->redirectUser($user, $customVendor);
+        return redirect()->route('admin.dashboard');
     }
 
     public function login(Request $request, TenantContext $tenantContext)

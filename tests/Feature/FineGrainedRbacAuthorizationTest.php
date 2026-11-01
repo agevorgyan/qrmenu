@@ -395,6 +395,9 @@ class FineGrainedRbacAuthorizationTest extends TestCase
      */
     public function test_location_isolation_prevents_cross_branch_order_access(): void
     {
+        $this->orderA->update(['waiter_id' => $this->staff->id]);
+        $this->orderB->update(['waiter_id' => $this->staff->id]);
+
         // Staff at Location A can view Order A
         $this->assertTrue($this->staff->canAccessLocationId($this->orderA->location_id));
         $this->assertTrue(Gate::forUser($this->staff)->allows('view', $this->orderA));

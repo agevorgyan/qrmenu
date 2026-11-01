@@ -9,6 +9,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\VendorMembership;
 use App\Security\Permission as SecurityPermission;
+use App\Security\PermissionCatalog;
 use Illuminate\Support\Facades\Cache;
 
 class AuthorizationService
@@ -28,55 +29,51 @@ class AuthorizationService
             return false;
         }
 
-        // 2. Resolve target vendor ID
-        $vId = $vendorId ?? $user->vendor_id;
-
-        // 3. Resolve vendor membership (if vendor context is present)
-        $membership = $vId ? $this->resolveMembership($user, $vId) : null;
-
-        // 4. SuperAdmin handling
-        if ($user->isSuperAdmin()) {
-            // Check if SuperAdmin has an explicit DENY override
-            if ($this->isExplicitlyDenied($user, $permission, $membership)) {
-                return false;
-            }
-
-            // Platform permissions or standard abilities are granted
-            return true;
+        // 2. Permission Key Validation: Unknown permissions always return DENY
+        if (! in_array($permission, PermissionCatalog::validKeys(), true)) {
+            return false;
         }
 
-        // 5. Tenant isolation & Membership status
+        // 3. Resolve target vendor ID
+        $vId = $vendorId ?? $user->vendor_id;
+
+        // 4. Resolve vendor membership (if vendor context is present)
+        $membership = $vId ? $this->resolveMembership($user, $vId) : null;
+
+        $state = $this->getPermissionState($user, $vId);
+
+        // 5. Explicit DENY always takes highest precedence (even for SuperAdmin)
+        if (in_array($permission, $state['denied'], true)) {
+            return false;
+        }
+
+        // 6. SuperAdmin handling: remove unrestricted grants, restrict to platform and superadmin permissions
+        if ($user->isSuperAdmin()) {
+            return str_starts_with($permission, 'platform.')
+                || in_array($permission, SecurityPermission::forRole('superadmin'), true);
+        }
+
+        // 7. Tenant isolation & Membership status
         if ($membership && ! $membership->isActive()) {
             return false;
         }
 
         if ($vId && ! $membership && ! empty($user->vendor_id) && (int) $user->vendor_id !== (int) $vId) {
-            // Attempting to act on a foreign vendor without membership
+            // Foreign vendor access attempt without membership
             return false;
         }
 
-        // 6. Explicit DENY always takes highest precedence
-        if ($this->isExplicitlyDenied($user, $permission, $membership)) {
-            return false;
-        }
-
-        // 7. Explicit ALLOW takes precedence over role defaults
-        if ($this->isExplicitlyAllowed($user, $permission, $membership)) {
+        // 8. Explicit ALLOW takes precedence over role defaults
+        if (in_array($permission, $state['allowed'], true)) {
             return true;
         }
 
-        // 8. Role-based permissions
-        $effective = $this->getEffectivePermissions($user, $vId);
-        if (in_array($permission, $effective, true)) {
+        // 9. Role-based permissions
+        if (in_array($permission, $state['effective'], true)) {
             return true;
         }
 
-        // 9. Safe hierarchical aliases (only if child is NOT explicitly denied)
-        if ($this->matchesPermissionHierarchy($effective, $permission)) {
-            return true;
-        }
-
-        // 10. Default DENY
+        // 10. Default DENY: No implicit hierarchy bypass
         return false;
     }
 
@@ -109,29 +106,50 @@ class AuthorizationService
     }
 
     /**
-     * Get the list of all effective permissions for a user within a vendor context.
+     * Get the full permission state (effective, allowed overrides, denied overrides) for a user.
      *
-     * @return array<int, string>
+     * @return array{effective: array<int, string>, allowed: array<int, string>, denied: array<int, string>}
      */
-    public function getEffectivePermissions(User $user, ?int $vendorId = null): array
+    public function getPermissionState(User $user, ?int $vendorId = null): array
     {
         if ($user->is_active === false) {
-            return [];
+            return ['effective' => [], 'allowed' => [], 'denied' => []];
         }
 
         $vId = $vendorId ?? $user->vendor_id;
         $userId = (int) ($user->id ?? 0);
         $cacheKey = $this->getCacheKey($userId, $vId);
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($user, $vId) {
+        $cached = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($user, $vId) {
             return $this->resolveEffectivePermissionsFromDb($user, $vId);
         });
+
+        // Ensure array shape compatibility
+        if (is_array($cached) && isset($cached['effective'])) {
+            return $cached;
+        }
+
+        return [
+            'effective' => is_array($cached) ? $cached : [],
+            'allowed' => [],
+            'denied' => [],
+        ];
+    }
+
+    /**
+     * Get the list of all effective permissions for a user within a vendor context.
+     *
+     * @return array<int, string>
+     */
+    public function getEffectivePermissions(User $user, ?int $vendorId = null): array
+    {
+        return $this->getPermissionState($user, $vendorId)['effective'];
     }
 
     /**
      * Internal resolution of effective permissions from Database.
      *
-     * @return array<int, string>
+     * @return array{effective: array<int, string>, allowed: array<int, string>, denied: array<int, string>}
      */
     protected function resolveEffectivePermissionsFromDb(User $user, ?int $vendorId = null): array
     {
@@ -139,7 +157,7 @@ class AuthorizationService
         $membership = $vId ? $this->resolveMembership($user, $vId) : null;
 
         if ($membership && ! $membership->isActive()) {
-            return [];
+            return ['effective' => [], 'allowed' => [], 'denied' => []];
         }
 
         $rolePermissions = [];
@@ -148,19 +166,21 @@ class AuthorizationService
 
         if ($membership) {
             // Load roles attached to membership
-            $roles = $membership->roles()
-                ->where('is_active', true)
-                ->with(['permissions:id,key'])
-                ->get();
+            $hasRoles = $membership->roles()->exists();
+            if ($hasRoles) {
+                // Inactive roles check: only active roles grant permissions
+                $roles = $membership->roles()
+                    ->where('is_active', true)
+                    ->with(['permissions:id,key'])
+                    ->get();
 
-            if ($roles->isNotEmpty()) {
                 foreach ($roles as $role) {
                     foreach ($role->permissions as $p) {
                         $rolePermissions[] = $p->key;
                     }
                 }
             } else {
-                // If membership has no roles attached, fall back to user's assigned role
+                // Legacy fallback only if NO roles are attached to the membership
                 $roleSlug = $user->role ?? '';
                 $rolePermissions = SecurityPermission::forRole($roleSlug);
             }
@@ -204,7 +224,11 @@ class AuthorizationService
             $effective = array_values(array_diff($effective, $deniedOverrides));
         }
 
-        return $effective;
+        return [
+            'effective' => array_values($effective),
+            'allowed' => array_values(array_unique($allowedOverrides)),
+            'denied' => array_values(array_unique($deniedOverrides)),
+        ];
     }
 
     /**
@@ -212,32 +236,10 @@ class AuthorizationService
      */
     protected function isExplicitlyDenied(User $user, string $permission, ?VendorMembership $membership): bool
     {
-        // Check membership overrides
-        if ($membership) {
-            $hasDenyOverride = $membership->permissions()
-                ->whereHas('permission', function ($q) use ($permission) {
-                    $q->where('key', $permission);
-                })
-                ->where('effect', 'deny')
-                ->where(function ($q) {
-                    $q->whereNull('expires_at')
-                        ->orWhere('expires_at', '>', now());
-                })
-                ->exists();
+        $vId = $membership?->vendor_id ?? $user->vendor_id;
+        $state = $this->getPermissionState($user, $vId);
 
-            if ($hasDenyOverride) {
-                return true;
-            }
-        }
-
-        // Check user custom_permissions
-        if (! empty($user->custom_permissions['denied']) && is_array($user->custom_permissions['denied'])) {
-            if (in_array($permission, $user->custom_permissions['denied'], true)) {
-                return true;
-            }
-        }
-
-        return false;
+        return in_array($permission, $state['denied'], true);
     }
 
     /**
@@ -245,73 +247,17 @@ class AuthorizationService
      */
     protected function isExplicitlyAllowed(User $user, string $permission, ?VendorMembership $membership): bool
     {
-        if ($membership) {
-            $hasAllowOverride = $membership->permissions()
-                ->whereHas('permission', function ($q) use ($permission) {
-                    $q->where('key', $permission);
-                })
-                ->where('effect', 'allow')
-                ->where(function ($q) {
-                    $q->whereNull('expires_at')
-                        ->orWhere('expires_at', '>', now());
-                })
-                ->exists();
+        $vId = $membership?->vendor_id ?? $user->vendor_id;
+        $state = $this->getPermissionState($user, $vId);
 
-            if ($hasAllowOverride) {
-                return true;
-            }
-        }
-
-        if (! empty($user->custom_permissions['granted']) && is_array($user->custom_permissions['granted'])) {
-            if (in_array($permission, $user->custom_permissions['granted'], true)) {
-                return true;
-            }
-        }
-
-        return false;
+        return in_array($permission, $state['allowed'], true);
     }
 
     /**
-     * Check safe hierarchical aliases for permissions.
+     * Implicit permission inheritance is prohibited to prevent privilege escalation.
      */
     protected function matchesPermissionHierarchy(array $effectivePermissions, string $permission): bool
     {
-        $supersets = [
-            'orders.view_own' => ['orders.view', 'orders.view_all', 'pos.orders'],
-            'orders.create' => ['pos.orders'],
-            'orders.update_own' => ['orders.update', 'orders.manage'],
-            'orders.view_details' => ['orders.view', 'orders.view_all', 'pos.orders'],
-            'orders.search' => ['orders.view', 'orders.view_all', 'pos.orders'],
-            'orders.view' => ['orders.view_all'],
-            'payments.create' => ['pos.payments'],
-            'payments.cash' => ['pos.payments'],
-            'payments.card' => ['pos.payments'],
-            'payments.split' => ['pos.payments'],
-            'shifts.open' => ['pos.cash_drawer'],
-            'shifts.close' => ['pos.cash_drawer'],
-            'shifts.view_own' => ['pos.cash_drawer', 'pos.reports', 'shifts.view_all'],
-            'shifts.view_all' => ['pos.reports'],
-            'discounts.approve' => ['pos.discounts'],
-            'refunds.approve' => ['pos.refunds'],
-            'tips.view_own' => ['tips.view', 'pos.reports'],
-            'employees.view' => ['team.view'],
-            'employees.manage' => ['team.manage'],
-            'tables.manage' => ['pos.settings'],
-            'audit_logs.view' => ['pos.settings', 'platform.logs'],
-            'profile.view_own' => ['pos.access'],
-            'profile.update_own' => ['pos.access'],
-            'password.change_own' => ['pos.access'],
-            'pin.manage_own' => ['pos.access'],
-        ];
-
-        if (isset($supersets[$permission])) {
-            foreach ($supersets[$permission] as $parent) {
-                if (in_array($parent, $effectivePermissions, true)) {
-                    return true;
-                }
-            }
-        }
-
         return false;
     }
 
@@ -354,8 +300,8 @@ class AuthorizationService
      */
     public function canAccessLocation(User $user, ?Location $location, ?int $vendorId = null): bool
     {
-        if (! $location) {
-            return true;
+        if ($user->is_active === false) {
+            return false;
         }
 
         if ($user->isSuperAdmin()) {
@@ -363,6 +309,17 @@ class AuthorizationService
         }
 
         $vId = $vendorId ?? $user->vendor_id;
+
+        // Null location handling: only accessible if user has all-locations access or is vendor owner
+        if (! $location) {
+            $membership = $vId ? $this->resolveActiveMembership($user, $vId) : null;
+            if ($membership) {
+                return (bool) $membership->all_locations;
+            }
+
+            return $user->location_id === null && (int) $user->vendor_id === (int) $vId;
+        }
+
         if ((int) $location->vendor_id !== (int) $vId) {
             return false;
         }
@@ -376,12 +333,21 @@ class AuthorizationService
             return $membership->locations()->where('locations.id', $location->id)->exists();
         }
 
-        // Legacy single location_id fallback
-        if ($user->location_id !== null) {
-            return (int) $user->location_id === (int) $location->id;
+        // If user has a membership that is inactive, deny
+        if ($vId && $this->resolveMembership($user, $vId)) {
+            return false;
         }
 
-        return true;
+        // Legacy fallback only if user belongs to vendor
+        if ((int) $user->vendor_id === (int) $vId) {
+            if ($user->location_id !== null) {
+                return (int) $user->location_id === (int) $location->id;
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -389,8 +355,8 @@ class AuthorizationService
      */
     public function canAccessLocationId(User $user, ?int $locationId, ?int $vendorId = null): bool
     {
-        if ($locationId === null) {
-            return true;
+        if ($user->is_active === false) {
+            return false;
         }
 
         if ($user->isSuperAdmin()) {
@@ -398,20 +364,22 @@ class AuthorizationService
         }
 
         $vId = $vendorId ?? $user->vendor_id;
-        $membership = $vId ? $this->resolveActiveMembership($user, $vId) : null;
-        if ($membership) {
-            if ($membership->all_locations) {
-                return true;
+
+        if ($locationId === null) {
+            $membership = $vId ? $this->resolveActiveMembership($user, $vId) : null;
+            if ($membership) {
+                return (bool) $membership->all_locations;
             }
 
-            return $membership->locations()->where('locations.id', $locationId)->exists();
+            return $user->location_id === null && (int) $user->vendor_id === (int) $vId;
         }
 
-        if ($user->location_id !== null) {
-            return (int) $user->location_id === (int) $locationId;
+        $location = Location::find($locationId);
+        if (! $location || (int) $location->vendor_id !== (int) $vId) {
+            return false;
         }
 
-        return true;
+        return $this->canAccessLocation($user, $location, $vId);
     }
 
     /**
@@ -419,6 +387,10 @@ class AuthorizationService
      */
     public function canAccessOrder(User $user, Order $order): bool
     {
+        if ($user->is_active === false) {
+            return false;
+        }
+
         if ($user->isSuperAdmin()) {
             return true;
         }
@@ -433,16 +405,26 @@ class AuthorizationService
             return false;
         }
 
-        // Permission & ownership check
+        // Permission & ownership check: broad view / manage permissions grant access
         if ($this->hasPermission($user, 'orders.view_all') || $this->hasPermission($user, 'orders.manage')) {
             return true;
         }
 
-        if ($this->hasPermission($user, 'orders.view_own')) {
-            return empty($order->waiter_id) || (int) $order->waiter_id === (int) $user->id || (int) ($order->user_id ?? 0) === (int) $user->id;
+        if ($this->hasPermission($user, 'orders.view')) {
+            return true;
         }
 
-        return $this->hasPermission($user, 'orders.view') || $this->hasPermission($user, 'pos.orders');
+        // Fine-grained view_own: MUST verify assigned waiter / owner relationship.
+        // Orders with missing/unverified ownership MUST be denied!
+        if ($this->hasPermission($user, 'orders.view_own')) {
+            $isAssignedWaiter = ! empty($order->waiter_id) && (int) $order->waiter_id === (int) $user->id;
+            $isOrderCreator = ! empty($order->user_id) && (int) $order->user_id === (int) $user->id;
+
+            return $isAssignedWaiter || $isOrderCreator;
+        }
+
+        // Default to DENY
+        return false;
     }
 
     /**
@@ -450,6 +432,10 @@ class AuthorizationService
      */
     public function canAccessTable(User $user, RestaurantTable $table): bool
     {
+        if ($user->is_active === false) {
+            return false;
+        }
+
         if ($user->isSuperAdmin()) {
             return true;
         }
@@ -466,6 +452,12 @@ class AuthorizationService
             return true;
         }
 
+        if ($this->hasPermission($user, 'tables.view') || $this->hasPermission($user, 'tables.view_all')) {
+            return true;
+        }
+
+        // Assigned tables: user must be explicitly assigned to this table.
+        // Unassigned tables must be denied unless explicitly authorized above.
         if ($this->hasPermission($user, 'tables.view_assigned')) {
             if ($user->relationLoaded('assignedTables')) {
                 return $user->assignedTables->contains('id', $table->id);
@@ -474,7 +466,8 @@ class AuthorizationService
             return $user->assignedTables()->where('restaurant_tables.id', $table->id)->exists();
         }
 
-        return true;
+        // Default to DENY: No implicit allow
+        return false;
     }
 
     /**
