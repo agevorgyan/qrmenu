@@ -42,15 +42,16 @@ class OrderPolicy
 
     public function update(User $user, Order $order): bool
     {
-        if ((int) $user->vendor_id !== (int) $order->vendor_id || ! $user->canAccessLocationId($order->location_id)) {
+        $vId = (int) $order->vendor_id;
+        if (! $user->canAccessLocationId($order->location_id, $vId)) {
             return false;
         }
 
-        if ($user->hasPermission(Permission::ORDERS_UPDATE) || $user->hasPermission(Permission::ORDERS_MANAGE) || $user->hasPermission(Permission::POS_ORDERS)) {
+        if ($user->hasPermission(Permission::ORDERS_UPDATE, $vId) || $user->hasPermission(Permission::ORDERS_MANAGE, $vId) || $user->hasPermission(Permission::POS_ORDERS, $vId)) {
             return true;
         }
 
-        if ($user->hasPermission(Permission::ORDERS_UPDATE_OWN)) {
+        if ($user->hasPermission(Permission::ORDERS_UPDATE_OWN, $vId)) {
             $isAssignedWaiter = ! empty($order->waiter_id) && (int) $order->waiter_id === (int) $user->id;
             $isOrderCreator = ! empty($order->user_id) && (int) $order->user_id === (int) $user->id;
 
@@ -62,23 +63,26 @@ class OrderPolicy
 
     public function cancel(User $user, Order $order): bool
     {
-        return (int) $user->vendor_id === (int) $order->vendor_id
-            && $user->canAccessLocationId($order->location_id)
-            && $user->hasPermission(Permission::ORDERS_CANCEL);
+        $vId = (int) $order->vendor_id;
+
+        return $user->canAccessLocationId($order->location_id, $vId)
+            && $user->hasPermission(Permission::ORDERS_CANCEL, $vId);
     }
 
     public function refund(User $user, Order $order): bool
     {
-        return (int) $user->vendor_id === (int) $order->vendor_id
-            && $user->canAccessLocationId($order->location_id)
-            && $user->hasPermission(Permission::ORDERS_REFUND);
+        $vId = (int) $order->vendor_id;
+
+        return $user->canAccessLocationId($order->location_id, $vId)
+            && $user->hasPermission(Permission::ORDERS_REFUND, $vId);
     }
 
     public function delete(User $user, Order $order): bool
     {
-        return (int) $user->vendor_id === (int) $order->vendor_id
-            && $user->canAccessLocationId($order->location_id)
-            && $user->hasPermission(Permission::ORDERS_CANCEL);
+        $vId = (int) $order->vendor_id;
+
+        return $user->canAccessLocationId($order->location_id, $vId)
+            && $user->hasPermission(Permission::ORDERS_CANCEL, $vId);
     }
 
     public function export(User $user): bool

@@ -27,9 +27,10 @@ class EventInquiryPolicy
 
     public function view(User $user, EventInquiry $inquiry): bool
     {
-        return (int) $user->vendor_id === (int) $inquiry->vendor_id
-            && $user->canAccessLocationId($inquiry->location_id)
-            && $user->hasPermission(Permission::ORDERS_VIEW);
+        $vId = (int) $inquiry->vendor_id;
+
+        return $user->canAccessLocationId($inquiry->location_id, $vId)
+            && $user->hasPermission(Permission::ORDERS_VIEW, $vId);
     }
 
     public function create(User $user): bool
@@ -39,15 +40,17 @@ class EventInquiryPolicy
 
     public function update(User $user, EventInquiry $inquiry): bool
     {
-        return (int) $user->vendor_id === (int) $inquiry->vendor_id
-            && $user->canAccessLocationId($inquiry->location_id)
-            && $user->hasPermission(Permission::ORDERS_UPDATE);
+        $vId = (int) $inquiry->vendor_id;
+
+        return $user->canAccessLocationId($inquiry->location_id, $vId)
+            && $user->hasPermission(Permission::ORDERS_UPDATE, $vId);
     }
 
     public function delete(User $user, EventInquiry $inquiry): bool
     {
-        return (int) $user->vendor_id === (int) $inquiry->vendor_id
-            && $user->canAccessLocationId($inquiry->location_id)
-            && ($user->hasPermission(Permission::ORDERS_CANCEL) || $user->hasPermission(Permission::ORDERS_UPDATE));
+        $vId = (int) $inquiry->vendor_id;
+
+        return $user->canAccessLocationId($inquiry->location_id, $vId)
+            && ($user->hasPermission(Permission::ORDERS_CANCEL, $vId) || $user->hasPermission(Permission::ORDERS_UPDATE, $vId));
     }
 }

@@ -18,6 +18,7 @@ class VendorMembership extends Model
         'user_id',
         'status',
         'all_locations',
+        'roles_migrated',
         'joined_at',
     ];
 
@@ -25,6 +26,7 @@ class VendorMembership extends Model
     {
         return [
             'all_locations' => 'boolean',
+            'roles_migrated' => 'boolean',
             'joined_at' => 'datetime',
         ];
     }
@@ -81,5 +83,31 @@ class VendorMembership extends Model
         }
 
         return $this->locations->contains('id', $locationId);
+    }
+
+    public function hasRole(string $slug): bool
+    {
+        if (! $this->isActive()) {
+            return false;
+        }
+
+        if ($this->relationLoaded('roles')) {
+            return $this->roles->where('is_active', true)->contains('slug', $slug);
+        }
+
+        return $this->roles()->where('is_active', true)->where('slug', $slug)->exists();
+    }
+
+    public function hasAnyRole(array $slugs): bool
+    {
+        if (! $this->isActive()) {
+            return false;
+        }
+
+        if ($this->relationLoaded('roles')) {
+            return $this->roles->where('is_active', true)->whereIn('slug', $slugs)->isNotEmpty();
+        }
+
+        return $this->roles()->where('is_active', true)->whereIn('slug', $slugs)->exists();
     }
 }

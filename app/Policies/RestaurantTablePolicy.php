@@ -39,15 +39,17 @@ class RestaurantTablePolicy
 
     public function update(User $user, RestaurantTable $table): bool
     {
-        return (int) $user->vendor_id === (int) $table->vendor_id
-            && $user->canAccessLocationId($table->location_id)
-            && ($user->hasPermission(Permission::LOCATIONS_MANAGE) || $user->hasPermission(Permission::MENU_UPDATE) || $user->hasPermission(Permission::SETTINGS_MANAGE));
+        $vId = (int) $table->vendor_id;
+
+        return $user->canAccessLocationId($table->location_id, $vId)
+            && ($user->hasPermission(Permission::LOCATIONS_MANAGE, $vId) || $user->hasPermission(Permission::MENU_UPDATE, $vId) || $user->hasPermission(Permission::SETTINGS_MANAGE, $vId) || $user->hasPermission(Permission::TABLES_MANAGE, $vId));
     }
 
     public function delete(User $user, RestaurantTable $table): bool
     {
-        return (int) $user->vendor_id === (int) $table->vendor_id
-            && $user->canAccessLocationId($table->location_id)
-            && ($user->hasPermission(Permission::LOCATIONS_MANAGE) || $user->hasPermission(Permission::MENU_DELETE) || $user->hasPermission(Permission::SETTINGS_MANAGE));
+        $vId = (int) $table->vendor_id;
+
+        return $user->canAccessLocationId($table->location_id, $vId)
+            && ($user->hasPermission(Permission::LOCATIONS_MANAGE, $vId) || $user->hasPermission(Permission::MENU_DELETE, $vId) || $user->hasPermission(Permission::SETTINGS_MANAGE, $vId) || $user->hasPermission(Permission::TABLES_MANAGE, $vId));
     }
 }

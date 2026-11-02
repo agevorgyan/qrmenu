@@ -74,7 +74,7 @@ class ServiceRating extends Model
 
             if ($rating->waiter_id && $rating->vendor_id) {
                 $waiter = User::find($rating->waiter_id);
-                if ($waiter && (int) $waiter->vendor_id !== (int) $rating->vendor_id) {
+                if ($waiter && (int) $waiter->vendor_id !== (int) $rating->vendor_id && ! $waiter->activeMembership((int) $rating->vendor_id)) {
                     throw new \InvalidArgumentException('Cross-vendor waiter attached to service rating.');
                 }
             }

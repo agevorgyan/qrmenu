@@ -110,7 +110,7 @@ class Order extends Model
 
             if ($order->waiter_id && $order->vendor_id) {
                 $waiter = User::find($order->waiter_id);
-                if ($waiter && (int) $waiter->vendor_id !== (int) $order->vendor_id) {
+                if ($waiter && (int) $waiter->vendor_id !== (int) $order->vendor_id && ! $waiter->activeMembership((int) $order->vendor_id)) {
                     throw new \InvalidArgumentException('Cross-vendor waiter attached to order.');
                 }
             }

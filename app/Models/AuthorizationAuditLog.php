@@ -13,6 +13,17 @@ class AuthorizationAuditLog extends Model
 
     public $timestamps = false;
 
+    protected static function booted(): void
+    {
+        static::updating(function () {
+            throw new \RuntimeException('Authorization audit logs are append-only and cannot be modified.');
+        });
+
+        static::deleting(function () {
+            throw new \RuntimeException('Authorization audit logs are immutable and cannot be deleted.');
+        });
+    }
+
     protected $fillable = [
         'vendor_id',
         'actor_id',

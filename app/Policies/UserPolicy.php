@@ -24,8 +24,12 @@ class UserPolicy
             return $user->hasPermission(Permission::PLATFORM_VENDORS);
         }
 
-        return (int) $user->vendor_id === (int) $target->vendor_id
-            && $user->hasPermission(Permission::TEAM_VIEW);
+        $targetVendorId = (int) $target->vendor_id;
+        if (! $targetVendorId) {
+            return false;
+        }
+
+        return $user->hasPermission(Permission::TEAM_VIEW, $targetVendorId);
     }
 
     /**
@@ -45,16 +49,21 @@ class UserPolicy
             return $user->hasPermission(Permission::PLATFORM_VENDORS);
         }
 
-        if ((int) $user->vendor_id !== (int) $target->vendor_id) {
+        $targetVendorId = (int) $target->vendor_id;
+        if (! $targetVendorId) {
+            return false;
+        }
+
+        if (! $user->hasPermission(Permission::TEAM_MANAGE, $targetVendorId)) {
             return false;
         }
 
         // Only vendor owner can edit other owners
-        if ($target->isVendorOwner() && ! $user->isVendorOwner()) {
+        if ($target->isVendorOwner($targetVendorId) && ! $user->isVendorOwner($targetVendorId)) {
             return false;
         }
 
-        return $user->hasPermission(Permission::TEAM_MANAGE);
+        return true;
     }
 
     /**
@@ -66,7 +75,8 @@ class UserPolicy
             return $user->hasPermission(Permission::PLATFORM_VENDORS);
         }
 
-        if ((int) $user->vendor_id !== (int) $target->vendor_id) {
+        $targetVendorId = (int) $target->vendor_id;
+        if (! $targetVendorId) {
             return false;
         }
 
@@ -75,11 +85,15 @@ class UserPolicy
             return false;
         }
 
-        // Cannot delete vendor owner
-        if ($target->isVendorOwner()) {
+        if (! $user->hasPermission(Permission::TEAM_MANAGE, $targetVendorId)) {
             return false;
         }
 
-        return $user->hasPermission(Permission::TEAM_MANAGE);
+        // Cannot delete vendor owner
+        if ($target->isVendorOwner($targetVendorId)) {
+            return false;
+        }
+
+        return true;
     }
 }

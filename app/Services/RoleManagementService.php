@@ -425,7 +425,7 @@ class RoleManagementService
         }
 
         // Prevent manager from assigning roles with permissions they don't possess
-        if (! $actor->isSuperAdmin() && ! $actor->isVendorOwner()) {
+        if (! $actor->isSuperAdmin() && ! $actor->isVendorOwner($membership->vendor_id)) {
             foreach ($roles as $role) {
                 $permKeys = $role->permissions()->pluck('key')->all();
                 $this->validatePrivilegeEscalation($actor, $membership->vendor_id, $permKeys);
@@ -618,7 +618,7 @@ class RoleManagementService
      */
     protected function validatePrivilegeEscalation(User $actor, ?int $vendorId, array $permissionKeys): void
     {
-        if ($actor->isSuperAdmin() || $actor->isVendorOwner()) {
+        if ($actor->isSuperAdmin() || $actor->isVendorOwner($vendorId)) {
             return;
         }
 
@@ -646,6 +646,31 @@ class RoleManagementService
     }
 
     /**
+     * Sanitize sensitive keys from audit log payloads to prevent credential leakage.
+     */
+    protected function sanitizeAuditData(?array $data): ?array
+    {
+        if ($data === null) {
+            return null;
+        }
+
+        $sensitiveKeys = ['password', 'password_confirmation', 'pin', 'pin_code', 'token', 'secret', 'api_key', 'authorization'];
+
+        $sanitized = [];
+        foreach ($data as $key => $value) {
+            if (is_string($key) && in_array(strtolower($key), $sensitiveKeys, true)) {
+                $sanitized[$key] = '[REDACTED]';
+            } elseif (is_array($value)) {
+                $sanitized[$key] = $this->sanitizeAuditData($value);
+            } else {
+                $sanitized[$key] = $value;
+            }
+        }
+
+        return $sanitized;
+    }
+
+    /**
      * Append immutable entry to authorization audit log.
      */
     protected function logAudit(
@@ -659,6 +684,19 @@ class RoleManagementService
         ?array $newValues = null,
         ?array $metadata = null
     ): AuthorizationAuditLog {
+        $meta = $metadata ?? [];
+        if (! isset($meta['actor_email']) && ! empty($actor->email)) {
+            $meta['actor_email'] = $actor->email;
+        }
+
+        if ($targetUserId && ! isset($meta['target_user_email'])) {
+            $targetUser = User::find($targetUserId);
+            if ($targetUser) {
+                $meta['target_user_email'] = $targetUser->email;
+                $meta['target_user_name'] = $targetUser->name;
+            }
+        }
+
         return AuthorizationAuditLog::create([
             'vendor_id' => $vendorId,
             'actor_id' => $actor->id,
@@ -666,9 +704,9 @@ class RoleManagementService
             'action' => $action,
             'resource_type' => $resourceType,
             'resource_id' => $resourceId,
-            'old_values' => $oldValues,
-            'new_values' => $newValues,
-            'metadata' => $metadata,
+            'old_values' => $this->sanitizeAuditData($oldValues),
+            'new_values' => $this->sanitizeAuditData($newValues),
+            'metadata' => $this->sanitizeAuditData($meta),
             'ip_address' => request()?->ip() ?? '127.0.0.1',
             'user_agent' => request()?->userAgent(),
             'created_at' => now(),

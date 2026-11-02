@@ -13,7 +13,6 @@ use App\Security\PermissionCatalog;
 use App\Services\AuthorizationService;
 use App\Services\RoleManagementService;
 use Carbon\Carbon;
-use Database\Seeders\EnterpriseAuthorizationSeeder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,26 +35,8 @@ class AccessControlController extends Controller
     {
         $this->authorize('team.view');
 
-        // Self-heal: ensure canonical permissions and system roles exist
-        $canonicalPermsCount = count(PermissionCatalog::all());
-        $canonicalRolesCount = count(PermissionCatalog::roleTemplates());
-        if (Permission::count() < $canonicalPermsCount || Role::where('is_system', true)->count() < $canonicalRolesCount) {
-            PermissionCatalog::syncToDatabase();
-            (new EnterpriseAuthorizationSeeder)->run();
-        }
-
         $user = Auth::user();
         $vendor = $user->vendor;
-
-        // Self-heal: ensure all vendor users have VendorMembership records
-        $hasUnmigrated = User::where('vendor_id', $vendor->id)
-            ->whereDoesntHave('memberships', function ($q) use ($vendor) {
-                $q->where('vendor_id', $vendor->id);
-            })->exists();
-
-        if ($hasUnmigrated) {
-            (new EnterpriseAuthorizationSeeder)->run();
-        }
 
         $tab = $request->get('tab', 'users');
         $search = $request->get('search');
@@ -143,6 +124,7 @@ class AccessControlController extends Controller
                 [
                     'status' => $user->is_active ? 'active' : 'inactive',
                     'all_locations' => empty($user->location_id),
+                    'roles_migrated' => true,
                     'joined_at' => $user->created_at ?? now(),
                 ]
             );
@@ -170,25 +152,30 @@ class AccessControlController extends Controller
             abort(403, 'Cross-restaurant access denied.');
         }
 
-        $membership = $this->resolveOrCreateMembership($user, $vendor->id);
+        $membership = $this->authService->resolveMembership($user, $vendor->id);
         $effective = $this->authService->getEffectivePermissions($user, $vendor->id);
         $roles = $this->authService->getUserRoles($user, $vendor->id);
 
-        $overrides = $membership->permissions()->with('permission')->get();
+        $allowedOverrides = [];
+        $deniedOverrides = [];
 
-        $allowedOverrides = $overrides->where('effect', 'allow')->map(fn ($o) => [
-            'key' => $o->permission?->key,
-            'expires_at' => $o->expires_at?->toIso8601String(),
-            'is_expired' => $o->isExpired(),
-            'reason' => $o->reason,
-        ])->values()->all();
+        if ($membership) {
+            $overrides = $membership->permissions()->with('permission')->get();
 
-        $deniedOverrides = $overrides->where('effect', 'deny')->map(fn ($o) => [
-            'key' => $o->permission?->key,
-            'expires_at' => $o->expires_at?->toIso8601String(),
-            'is_expired' => $o->isExpired(),
-            'reason' => $o->reason,
-        ])->values()->all();
+            $allowedOverrides = $overrides->where('effect', 'allow')->map(fn ($o) => [
+                'key' => $o->permission?->key,
+                'expires_at' => $o->expires_at?->toIso8601String(),
+                'is_expired' => $o->isExpired(),
+                'reason' => $o->reason,
+            ])->values()->all();
+
+            $deniedOverrides = $overrides->where('effect', 'deny')->map(fn ($o) => [
+                'key' => $o->permission?->key,
+                'expires_at' => $o->expires_at?->toIso8601String(),
+                'is_expired' => $o->isExpired(),
+                'reason' => $o->reason,
+            ])->values()->all();
+        }
 
         return response()->json([
             'success' => true,
@@ -198,7 +185,7 @@ class AccessControlController extends Controller
                 'email' => $user->email,
                 'status' => $membership->status ?? ($user->is_active ? 'active' : 'inactive'),
                 'all_locations' => $membership->all_locations ?? true,
-                'locations' => $membership->locations->pluck('name', 'id') ?? [],
+                'locations' => $membership?->locations?->pluck('name', 'id') ?? [],
                 'roles' => collect($roles)->map(fn ($r) => is_string($r) ? $r : $r->name)->values()->all(),
             ],
             'effective_permissions' => $effective,

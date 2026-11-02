@@ -27,9 +27,10 @@ class ReservationPolicy
 
     public function view(User $user, Reservation $reservation): bool
     {
-        return (int) $user->vendor_id === (int) $reservation->vendor_id
-            && $user->canAccessLocationId($reservation->location_id)
-            && $user->hasPermission(Permission::ORDERS_VIEW);
+        $vId = (int) $reservation->vendor_id;
+
+        return $user->canAccessLocationId($reservation->location_id, $vId)
+            && $user->hasPermission(Permission::ORDERS_VIEW, $vId);
     }
 
     public function create(User $user): bool
@@ -39,22 +40,25 @@ class ReservationPolicy
 
     public function update(User $user, Reservation $reservation): bool
     {
-        return (int) $user->vendor_id === (int) $reservation->vendor_id
-            && $user->canAccessLocationId($reservation->location_id)
-            && $user->hasPermission(Permission::ORDERS_UPDATE);
+        $vId = (int) $reservation->vendor_id;
+
+        return $user->canAccessLocationId($reservation->location_id, $vId)
+            && $user->hasPermission(Permission::ORDERS_UPDATE, $vId);
     }
 
     public function cancel(User $user, Reservation $reservation): bool
     {
-        return (int) $user->vendor_id === (int) $reservation->vendor_id
-            && $user->canAccessLocationId($reservation->location_id)
-            && ($user->hasPermission(Permission::ORDERS_CANCEL) || $user->hasPermission(Permission::ORDERS_UPDATE));
+        $vId = (int) $reservation->vendor_id;
+
+        return $user->canAccessLocationId($reservation->location_id, $vId)
+            && ($user->hasPermission(Permission::ORDERS_CANCEL, $vId) || $user->hasPermission(Permission::ORDERS_UPDATE, $vId));
     }
 
     public function delete(User $user, Reservation $reservation): bool
     {
-        return (int) $user->vendor_id === (int) $reservation->vendor_id
-            && $user->canAccessLocationId($reservation->location_id)
-            && ($user->hasPermission(Permission::ORDERS_CANCEL) || $user->hasPermission(Permission::ORDERS_UPDATE));
+        $vId = (int) $reservation->vendor_id;
+
+        return $user->canAccessLocationId($reservation->location_id, $vId)
+            && ($user->hasPermission(Permission::ORDERS_CANCEL, $vId) || $user->hasPermission(Permission::ORDERS_UPDATE, $vId));
     }
 }

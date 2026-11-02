@@ -179,8 +179,12 @@ class AuthorizationService
                         $rolePermissions[] = $p->key;
                     }
                 }
+            } elseif ($membership->roles_migrated) {
+                // Intentionally role-less membership: receives ZERO role permissions.
+                // Must NOT fall back to legacy users.role!
+                $rolePermissions = [];
             } else {
-                // Legacy fallback only if NO roles are attached to the membership
+                // Legacy fallback only if NO roles are attached to an unmigrated membership
                 $roleSlug = $user->role ?? '';
                 $rolePermissions = SecurityPermission::forRole($roleSlug);
             }
@@ -203,8 +207,15 @@ class AuthorizationService
                     }
                 }
             }
+        } elseif (! empty($vId) && ! empty($user->vendor_id) && (int) $user->vendor_id === (int) $vId) {
+            // Legacy fallback using user->role only if matching primary vendor and no membership exists
+            $roleSlug = $user->role ?? '';
+            $rolePermissions = SecurityPermission::forRole($roleSlug);
+        } elseif (! empty($vId) && (empty($user->vendor_id) || (int) $user->vendor_id !== (int) $vId)) {
+            // Foreign vendor access attempt without membership: receives ZERO permissions
+            return ['effective' => [], 'allowed' => [], 'denied' => []];
         } else {
-            // Legacy fallback using user->role
+            // No vendor context (e.g. SuperAdmin platform access or standalone user)
             $roleSlug = $user->role ?? '';
             $rolePermissions = SecurityPermission::forRole($roleSlug);
         }
@@ -308,11 +319,19 @@ class AuthorizationService
             return true;
         }
 
-        $vId = $vendorId ?? $user->vendor_id;
+        $vId = $vendorId ?? $location?->vendor_id ?? $user->vendor_id;
+        if (! $vId) {
+            return false;
+        }
+
+        if ($location && (int) $location->vendor_id !== (int) $vId) {
+            return false;
+        }
+
+        $membership = $this->resolveActiveMembership($user, $vId);
 
         // Null location handling: only accessible if user has all-locations access or is vendor owner
         if (! $location) {
-            $membership = $vId ? $this->resolveActiveMembership($user, $vId) : null;
             if ($membership) {
                 return (bool) $membership->all_locations;
             }
@@ -320,11 +339,6 @@ class AuthorizationService
             return $user->location_id === null && (int) $user->vendor_id === (int) $vId;
         }
 
-        if ((int) $location->vendor_id !== (int) $vId) {
-            return false;
-        }
-
-        $membership = $vId ? $this->resolveActiveMembership($user, $vId) : null;
         if ($membership) {
             if ($membership->all_locations) {
                 return true;
@@ -334,7 +348,7 @@ class AuthorizationService
         }
 
         // If user has a membership that is inactive, deny
-        if ($vId && $this->resolveMembership($user, $vId)) {
+        if ($this->resolveMembership($user, $vId)) {
             return false;
         }
 
@@ -363,19 +377,22 @@ class AuthorizationService
             return true;
         }
 
-        $vId = $vendorId ?? $user->vendor_id;
-
         if ($locationId === null) {
-            $membership = $vId ? $this->resolveActiveMembership($user, $vId) : null;
-            if ($membership) {
-                return (bool) $membership->all_locations;
+            $vId = $vendorId ?? $user->vendor_id;
+            if (! $vId) {
+                return false;
             }
 
-            return $user->location_id === null && (int) $user->vendor_id === (int) $vId;
+            return $this->canAccessLocation($user, null, $vId);
         }
 
         $location = Location::find($locationId);
-        if (! $location || (int) $location->vendor_id !== (int) $vId) {
+        if (! $location) {
+            return false;
+        }
+
+        $vId = $vendorId ?? $location->vendor_id;
+        if ((int) $location->vendor_id !== (int) $vId) {
             return false;
         }
 
@@ -395,28 +412,36 @@ class AuthorizationService
             return true;
         }
 
-        // Tenant isolation
-        if ((int) $user->vendor_id !== (int) $order->vendor_id) {
-            return false;
+        $resourceVendorId = (int) $order->vendor_id;
+
+        // Resolve active membership for the resource's actual vendor
+        $membership = $this->resolveActiveMembership($user, $resourceVendorId);
+        if (! $membership) {
+            // Transitional legacy check only if user has no membership record for this vendor
+            if (! empty($user->vendor_id) && (int) $user->vendor_id === $resourceVendorId && ! $this->resolveMembership($user, $resourceVendorId)) {
+                // allow fallback check below
+            } else {
+                return false;
+            }
         }
 
         // Location isolation
-        if (! $this->canAccessLocationId($user, $order->location_id)) {
+        if (! $this->canAccessLocationId($user, $order->location_id, $resourceVendorId)) {
             return false;
         }
 
         // Permission & ownership check: broad view / manage permissions grant access
-        if ($this->hasPermission($user, 'orders.view_all') || $this->hasPermission($user, 'orders.manage')) {
+        if ($this->hasPermission($user, 'orders.view_all', $resourceVendorId) || $this->hasPermission($user, 'orders.manage', $resourceVendorId)) {
             return true;
         }
 
-        if ($this->hasPermission($user, 'orders.view')) {
+        if ($this->hasPermission($user, 'orders.view', $resourceVendorId)) {
             return true;
         }
 
         // Fine-grained view_own: MUST verify assigned waiter / owner relationship.
         // Orders with missing/unverified ownership MUST be denied!
-        if ($this->hasPermission($user, 'orders.view_own')) {
+        if ($this->hasPermission($user, 'orders.view_own', $resourceVendorId)) {
             $isAssignedWaiter = ! empty($order->waiter_id) && (int) $order->waiter_id === (int) $user->id;
             $isOrderCreator = ! empty($order->user_id) && (int) $order->user_id === (int) $user->id;
 
@@ -440,25 +465,34 @@ class AuthorizationService
             return true;
         }
 
-        if ((int) $user->vendor_id !== (int) $table->vendor_id) {
+        $resourceVendorId = (int) $table->vendor_id;
+
+        // Resolve active membership for the resource's actual vendor
+        $membership = $this->resolveActiveMembership($user, $resourceVendorId);
+        if (! $membership) {
+            // Transitional legacy check only if user has no membership record for this vendor
+            if (! empty($user->vendor_id) && (int) $user->vendor_id === $resourceVendorId && ! $this->resolveMembership($user, $resourceVendorId)) {
+                // allow fallback check below
+            } else {
+                return false;
+            }
+        }
+
+        if (! $this->canAccessLocationId($user, $table->location_id, $resourceVendorId)) {
             return false;
         }
 
-        if (! $this->canAccessLocationId($user, $table->location_id)) {
-            return false;
-        }
-
-        if ($this->hasPermission($user, 'tables.manage') || $this->hasPermission($user, 'pos.settings')) {
+        if ($this->hasPermission($user, 'tables.manage', $resourceVendorId) || $this->hasPermission($user, 'pos.settings', $resourceVendorId)) {
             return true;
         }
 
-        if ($this->hasPermission($user, 'tables.view') || $this->hasPermission($user, 'tables.view_all')) {
+        if ($this->hasPermission($user, 'tables.view', $resourceVendorId) || $this->hasPermission($user, 'tables.view_all', $resourceVendorId)) {
             return true;
         }
 
         // Assigned tables: user must be explicitly assigned to this table.
         // Unassigned tables must be denied unless explicitly authorized above.
-        if ($this->hasPermission($user, 'tables.view_assigned')) {
+        if ($this->hasPermission($user, 'tables.view_assigned', $resourceVendorId)) {
             if ($user->relationLoaded('assignedTables')) {
                 return $user->assignedTables->contains('id', $table->id);
             }
@@ -484,7 +518,7 @@ class AuthorizationService
             return $membership->roles()->where('is_active', true)->get()->all();
         }
 
-        if (! empty($user->role)) {
+        if (! empty($user->role) && (! $vId || (int) $user->vendor_id === (int) $vId)) {
             return [$user->role];
         }
 

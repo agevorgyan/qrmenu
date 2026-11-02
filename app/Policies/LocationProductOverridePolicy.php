@@ -27,9 +27,10 @@ class LocationProductOverridePolicy
 
     public function view(User $user, LocationProductOverride $override): bool
     {
-        return (int) $user->vendor_id === (int) $override->vendor_id
-            && $user->canAccessLocationId($override->location_id)
-            && $user->hasPermission(Permission::MENU_VIEW);
+        $vId = (int) $override->vendor_id;
+
+        return $user->canAccessLocationId($override->location_id, $vId)
+            && $user->hasPermission(Permission::MENU_VIEW, $vId);
     }
 
     public function create(User $user): bool
@@ -39,15 +40,17 @@ class LocationProductOverridePolicy
 
     public function update(User $user, LocationProductOverride $override): bool
     {
-        return (int) $user->vendor_id === (int) $override->vendor_id
-            && $user->canAccessLocationId($override->location_id)
-            && $user->hasPermission(Permission::MENU_UPDATE);
+        $vId = (int) $override->vendor_id;
+
+        return $user->canAccessLocationId($override->location_id, $vId)
+            && $user->hasPermission(Permission::MENU_UPDATE, $vId);
     }
 
     public function delete(User $user, LocationProductOverride $override): bool
     {
-        return (int) $user->vendor_id === (int) $override->vendor_id
-            && $user->canAccessLocationId($override->location_id)
-            && $user->hasPermission(Permission::MENU_UPDATE);
+        $vId = (int) $override->vendor_id;
+
+        return $user->canAccessLocationId($override->location_id, $vId)
+            && $user->hasPermission(Permission::MENU_UPDATE, $vId);
     }
 }

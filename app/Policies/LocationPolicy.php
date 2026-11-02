@@ -27,9 +27,10 @@ class LocationPolicy
 
     public function view(User $user, Location $location): bool
     {
-        return (int) $user->vendor_id === (int) $location->vendor_id
-            && $user->canAccessLocationId($location->id)
-            && $user->hasPermission(Permission::LOCATIONS_VIEW);
+        $vId = (int) $location->vendor_id;
+
+        return $user->canAccessLocation($location, $vId)
+            && $user->hasPermission(Permission::LOCATIONS_VIEW, $vId);
     }
 
     public function create(User $user): bool
@@ -39,13 +40,17 @@ class LocationPolicy
 
     public function update(User $user, Location $location): bool
     {
-        return (int) $user->vendor_id === (int) $location->vendor_id
-            && $user->hasPermission(Permission::LOCATIONS_MANAGE);
+        $vId = (int) $location->vendor_id;
+
+        return $user->canAccessLocation($location, $vId)
+            && $user->hasPermission(Permission::LOCATIONS_MANAGE, $vId);
     }
 
     public function delete(User $user, Location $location): bool
     {
-        return (int) $user->vendor_id === (int) $location->vendor_id
-            && $user->hasPermission(Permission::LOCATIONS_MANAGE);
+        $vId = (int) $location->vendor_id;
+
+        return $user->canAccessLocation($location, $vId)
+            && $user->hasPermission(Permission::LOCATIONS_MANAGE, $vId);
     }
 }

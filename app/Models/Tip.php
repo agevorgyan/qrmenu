@@ -79,7 +79,7 @@ class Tip extends Model
 
             if ($tip->waiter_id && $tip->vendor_id) {
                 $waiter = User::find($tip->waiter_id);
-                if ($waiter && (int) $waiter->vendor_id !== (int) $tip->vendor_id) {
+                if ($waiter && (int) $waiter->vendor_id !== (int) $tip->vendor_id && ! $waiter->activeMembership((int) $tip->vendor_id)) {
                     throw new \InvalidArgumentException('Cross-vendor waiter attached to tip.');
                 }
             }

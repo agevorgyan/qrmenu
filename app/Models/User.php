@@ -92,6 +92,7 @@ class User extends Authenticatable implements MustVerifyEmail
                     [
                         'status' => $user->is_active ? 'active' : 'inactive',
                         'all_locations' => empty($user->location_id),
+                        'roles_migrated' => true,
                         'joined_at' => now(),
                     ]
                 );
@@ -209,33 +210,99 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role === 'superadmin';
     }
 
-    public function isVendorOwner(): bool
+    public function isVendorOwner(?int $vendorId = null): bool
     {
+        $vId = $vendorId ?? $this->vendor_id;
+        if ($vId) {
+            $membership = app(AuthorizationService::class)->resolveActiveMembership($this, $vId);
+            if ($membership) {
+                return $membership->hasRole('vendor_owner');
+            }
+            if ($this->relationLoaded('memberships') ? $this->memberships->where('vendor_id', $vId)->isNotEmpty() : $this->memberships()->where('vendor_id', $vId)->exists()) {
+                return false;
+            }
+        }
+
         return $this->role === 'vendor_owner';
     }
 
-    public function isManager(): bool
+    public function isManager(?int $vendorId = null): bool
     {
-        return in_array($this->role, ['vendor_owner', 'manager']);
+        $vId = $vendorId ?? $this->vendor_id;
+        if ($vId) {
+            $membership = app(AuthorizationService::class)->resolveActiveMembership($this, $vId);
+            if ($membership) {
+                return $membership->hasAnyRole(['vendor_owner', 'manager']);
+            }
+            if ($this->relationLoaded('memberships') ? $this->memberships->where('vendor_id', $vId)->isNotEmpty() : $this->memberships()->where('vendor_id', $vId)->exists()) {
+                return false;
+            }
+        }
+
+        return in_array($this->role, ['vendor_owner', 'manager'], true);
     }
 
-    public function isStaff(): bool
+    public function isStaff(?int $vendorId = null): bool
     {
-        return in_array($this->role, ['staff', 'waiter']);
+        $vId = $vendorId ?? $this->vendor_id;
+        if ($vId) {
+            $membership = app(AuthorizationService::class)->resolveActiveMembership($this, $vId);
+            if ($membership) {
+                return $membership->hasAnyRole(['staff', 'waiter']);
+            }
+            if ($this->relationLoaded('memberships') ? $this->memberships->where('vendor_id', $vId)->isNotEmpty() : $this->memberships()->where('vendor_id', $vId)->exists()) {
+                return false;
+            }
+        }
+
+        return in_array($this->role, ['staff', 'waiter'], true);
     }
 
-    public function isWaiter(): bool
+    public function isWaiter(?int $vendorId = null): bool
     {
-        return in_array($this->role, ['waiter', 'staff']);
+        $vId = $vendorId ?? $this->vendor_id;
+        if ($vId) {
+            $membership = app(AuthorizationService::class)->resolveActiveMembership($this, $vId);
+            if ($membership) {
+                return $membership->hasAnyRole(['waiter', 'staff']);
+            }
+            if ($this->relationLoaded('memberships') ? $this->memberships->where('vendor_id', $vId)->isNotEmpty() : $this->memberships()->where('vendor_id', $vId)->exists()) {
+                return false;
+            }
+        }
+
+        return in_array($this->role, ['waiter', 'staff'], true);
     }
 
-    public function isChef(): bool
+    public function isChef(?int $vendorId = null): bool
     {
+        $vId = $vendorId ?? $this->vendor_id;
+        if ($vId) {
+            $membership = app(AuthorizationService::class)->resolveActiveMembership($this, $vId);
+            if ($membership) {
+                return $membership->hasRole('chef');
+            }
+            if ($this->relationLoaded('memberships') ? $this->memberships->where('vendor_id', $vId)->isNotEmpty() : $this->memberships()->where('vendor_id', $vId)->exists()) {
+                return false;
+            }
+        }
+
         return $this->role === 'chef';
     }
 
-    public function isCashier(): bool
+    public function isCashier(?int $vendorId = null): bool
     {
+        $vId = $vendorId ?? $this->vendor_id;
+        if ($vId) {
+            $membership = app(AuthorizationService::class)->resolveActiveMembership($this, $vId);
+            if ($membership) {
+                return $membership->hasRole('cashier');
+            }
+            if ($this->relationLoaded('memberships') ? $this->memberships->where('vendor_id', $vId)->isNotEmpty() : $this->memberships()->where('vendor_id', $vId)->exists()) {
+                return false;
+            }
+        }
+
         return $this->role === 'cashier';
     }
 
@@ -311,23 +378,17 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Check if user has a specific permission (delegated to AuthorizationService).
      */
-    public function hasPermission(string $permission): bool
+    public function hasPermission(string $permission, ?int $vendorId = null): bool
     {
-        return app(AuthorizationService::class)->hasPermission($this, $permission);
+        return app(AuthorizationService::class)->hasPermission($this, $permission, $vendorId);
     }
 
     /**
      * Check if user has any of the given permissions.
      */
-    public function hasAnyPermission(array $permissions): bool
+    public function hasAnyPermission(array $permissions, ?int $vendorId = null): bool
     {
-        foreach ($permissions as $permission) {
-            if ($this->hasPermission($permission)) {
-                return true;
-            }
-        }
-
-        return false;
+        return app(AuthorizationService::class)->hasAnyPermission($this, $permissions, $vendorId);
     }
 
     /**
@@ -341,15 +402,9 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Check if user has all of the given permissions.
      */
-    public function hasAllPermissions(array $permissions): bool
+    public function hasAllPermissions(array $permissions, ?int $vendorId = null): bool
     {
-        foreach ($permissions as $permission) {
-            if (! $this->hasPermission($permission)) {
-                return false;
-            }
-        }
-
-        return true;
+        return app(AuthorizationService::class)->hasAllPermissions($this, $permissions, $vendorId);
     }
 
     /**
@@ -405,17 +460,17 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Check if the user is authorized to access a given Location model.
      */
-    public function canAccessLocation(?Location $location): bool
+    public function canAccessLocation(?Location $location, ?int $vendorId = null): bool
     {
-        return app(AuthorizationService::class)->canAccessLocation($this, $location);
+        return app(AuthorizationService::class)->canAccessLocation($this, $location, $vendorId);
     }
 
     /**
      * Check if the user is authorized to access a given location ID.
      */
-    public function canAccessLocationId(?int $locationId): bool
+    public function canAccessLocationId(?int $locationId, ?int $vendorId = null): bool
     {
-        return app(AuthorizationService::class)->canAccessLocationId($this, $locationId);
+        return app(AuthorizationService::class)->canAccessLocationId($this, $locationId, $vendorId);
     }
 
     /**

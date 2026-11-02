@@ -27,9 +27,10 @@ class CustomerPolicy
 
     public function view(User $user, Customer $customer): bool
     {
-        return (int) $user->vendor_id === (int) $customer->vendor_id
-            && $user->canAccessLocationId($customer->location_id)
-            && $user->hasPermission(Permission::CUSTOMERS_VIEW);
+        $vId = (int) $customer->vendor_id;
+
+        return $user->canAccessLocationId($customer->location_id, $vId)
+            && $user->hasPermission(Permission::CUSTOMERS_VIEW, $vId);
     }
 
     public function create(User $user): bool
@@ -39,15 +40,17 @@ class CustomerPolicy
 
     public function update(User $user, Customer $customer): bool
     {
-        return (int) $user->vendor_id === (int) $customer->vendor_id
-            && $user->canAccessLocationId($customer->location_id)
-            && $user->hasPermission(Permission::CUSTOMERS_VIEW);
+        $vId = (int) $customer->vendor_id;
+
+        return $user->canAccessLocationId($customer->location_id, $vId)
+            && $user->hasPermission(Permission::CUSTOMERS_VIEW, $vId);
     }
 
     public function delete(User $user, Customer $customer): bool
     {
-        return (int) $user->vendor_id === (int) $customer->vendor_id
-            && $user->hasPermission(Permission::CUSTOMERS_EXPORT);
+        $vId = (int) $customer->vendor_id;
+
+        return $user->hasPermission(Permission::CUSTOMERS_EXPORT, $vId);
     }
 
     public function export(User $user): bool

@@ -77,9 +77,12 @@ class EnterpriseAuthorizationSeeder extends Seeder
                         [
                             'status' => $user->is_active ? 'active' : 'inactive',
                             'all_locations' => ! $hasLocation,
+                            'roles_migrated' => true,
                             'joined_at' => $user->created_at ?? now(),
                         ]
                     );
+
+                    $membership->update(['roles_migrated' => true]);
 
                     // Sync role
                     $targetRoleSlug = $user->role ?? 'staff';

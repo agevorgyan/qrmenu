@@ -27,9 +27,10 @@ class WaiterCallPolicy
 
     public function view(User $user, WaiterCall $waiterCall): bool
     {
-        return (int) $user->vendor_id === (int) $waiterCall->vendor_id
-            && $user->canAccessLocationId($waiterCall->location_id)
-            && $user->hasPermission(Permission::ORDERS_VIEW);
+        $vId = (int) $waiterCall->vendor_id;
+
+        return $user->canAccessLocationId($waiterCall->location_id, $vId)
+            && $user->hasPermission(Permission::ORDERS_VIEW, $vId);
     }
 
     public function create(User $user): bool
@@ -39,15 +40,17 @@ class WaiterCallPolicy
 
     public function update(User $user, WaiterCall $waiterCall): bool
     {
-        return (int) $user->vendor_id === (int) $waiterCall->vendor_id
-            && $user->canAccessLocationId($waiterCall->location_id)
-            && ($user->hasPermission(Permission::ORDERS_UPDATE) || $user->hasPermission(Permission::ORDERS_UPDATE_OWN) || $user->hasPermission(Permission::POS_ORDERS) || $user->hasPermission(Permission::WAITERS_MANAGE));
+        $vId = (int) $waiterCall->vendor_id;
+
+        return $user->canAccessLocationId($waiterCall->location_id, $vId)
+            && ($user->hasPermission(Permission::ORDERS_UPDATE, $vId) || $user->hasPermission(Permission::ORDERS_UPDATE_OWN, $vId) || $user->hasPermission(Permission::POS_ORDERS, $vId) || $user->hasPermission(Permission::WAITERS_MANAGE, $vId));
     }
 
     public function delete(User $user, WaiterCall $waiterCall): bool
     {
-        return (int) $user->vendor_id === (int) $waiterCall->vendor_id
-            && $user->canAccessLocationId($waiterCall->location_id)
-            && $user->hasPermission(Permission::ORDERS_CANCEL);
+        $vId = (int) $waiterCall->vendor_id;
+
+        return $user->canAccessLocationId($waiterCall->location_id, $vId)
+            && $user->hasPermission(Permission::ORDERS_CANCEL, $vId);
     }
 }
