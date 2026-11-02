@@ -6,26 +6,46 @@ use App\DTOs\QuotaStatus;
 use App\Exceptions\QuotaExceededException;
 use App\Models\Category;
 use App\Models\Location;
+use App\Models\PlanFeature;
 use App\Models\Product;
 use App\Models\SubscriptionPlan;
+use App\Models\SubscriptionPlanVersion;
+use App\Models\TenantFeatureOverride;
 use App\Models\TenantQuotaOverride;
 use App\Models\TenantUsageEvent;
 use App\Models\TenantUsageMeter;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Models\VendorLanguage;
 use App\Security\QuotaCatalog;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 
 class QuotaService
 {
     /**
+     * Map canonical QuotaCatalog keys to Feature Catalog codes.
+     */
+    protected const QUOTA_TO_FEATURE_MAP = [
+        QuotaCatalog::KEY_PRODUCTS_COUNT => 'menu.products.limit',
+        QuotaCatalog::KEY_CATEGORIES_COUNT => 'menu.categories.limit',
+        QuotaCatalog::KEY_BRANCHES_COUNT => 'locations.limit',
+        QuotaCatalog::KEY_TEAM_MEMBERS_COUNT => 'staff.users.limit',
+        QuotaCatalog::KEY_ORDERS_PERIOD => 'orders.monthly_limit',
+        QuotaCatalog::KEY_AI_REQUESTS_PERIOD => 'ai.monthly_credits',
+        QuotaCatalog::KEY_LANGUAGES_COUNT => 'menu.languages.limit',
+        QuotaCatalog::KEY_DELIVERY_ZONES_COUNT => 'delivery.zones.limit',
+        QuotaCatalog::KEY_CURRENCIES_COUNT => 'currency.max_additional',
+    ];
+
+    /**
      * Resolve effective quota limit for a vendor.
      *
      * Precedence:
-     * 1. Active, unexpired TenantQuotaOverride.
-     * 2. Active Subscription plan configured quota_limits.
+     * 1. Active, unexpired TenantQuotaOverride or TenantFeatureOverride (limit_value / usage_quota).
+     * 2. Active Subscription pinned PlanVersion / PlanFeature / quota_limits + Active Add-ons.
      * 3. Plan default from QuotaCatalog.
      * 4. Basic plan default fallback.
      */
@@ -33,41 +53,132 @@ class QuotaService
     {
         $resolvedVendor = $this->resolveVendor($vendor);
         $canonicalKey = QuotaCatalog::normalize($quotaKey);
+        $mappedFeatureCode = self::QUOTA_TO_FEATURE_MAP[$canonicalKey] ?? $quotaKey;
 
-        // 1. Check administrative override
+        // 1. Check administrative quota override
         $override = TenantQuotaOverride::where('vendor_id', $resolvedVendor->id)
-            ->where('quota_key', $canonicalKey)
+            ->whereIn('quota_key', array_unique([$canonicalKey, $quotaKey, $mappedFeatureCode]))
             ->active()
+            ->latest('id')
             ->first();
 
         if ($override !== null) {
             return (int) $override->quota_limit;
         }
 
-        // 2. Check active subscription plan
-        $subscription = $resolvedVendor->currentSubscription
-            ?? $resolvedVendor->subscriptions()->latest('id')->first();
+        // Also check TenantFeatureOverride if it carries a limit_value or usage_quota
+        if (Schema::hasColumn('tenant_feature_overrides', 'limit_value')) {
+            $featureOverride = TenantFeatureOverride::withoutGlobalScopes()
+                ->where('vendor_id', $resolvedVendor->id)
+                ->whereIn('feature_key', array_unique([$canonicalKey, $quotaKey, $mappedFeatureCode]))
+                ->valid()
+                ->latest('id')
+                ->first();
 
-        if ($subscription && $subscription->isActive() && $subscription->plan) {
-            $planLimits = $subscription->plan->quota_limits ?? [];
-            if (array_key_exists($canonicalKey, $planLimits) && $planLimits[$canonicalKey] !== null) {
-                return (int) $planLimits[$canonicalKey];
+            if ($featureOverride !== null) {
+                if (! $featureOverride->is_enabled) {
+                    return 0;
+                }
+                if ($featureOverride->limit_value !== null) {
+                    return (int) $featureOverride->limit_value;
+                }
+                if ($featureOverride->usage_quota !== null) {
+                    return (int) $featureOverride->usage_quota;
+                }
             }
-
-            return QuotaCatalog::getDefaultLimit($subscription->plan->slug, $canonicalKey);
         }
 
-        // 3. Fallback to vendor legacy subscription_plan column
-        if (! empty($resolvedVendor->subscription_plan)) {
-            $plan = SubscriptionPlan::where('slug', $resolvedVendor->subscription_plan)->first();
-            if ($plan && ! empty($plan->quota_limits) && array_key_exists($canonicalKey, $plan->quota_limits)) {
+        $baseLimit = $this->resolveBasePlanLimit($resolvedVendor, $canonicalKey, $mappedFeatureCode);
+
+        if ($baseLimit === QuotaCatalog::UNLIMITED) {
+            return QuotaCatalog::UNLIMITED;
+        }
+
+        // Add any active add-on bonuses
+        $addonBonus = app(SubscriptionAddonService::class)->getAdditiveBonus($resolvedVendor, $canonicalKey);
+
+        return $baseLimit + $addonBonus;
+    }
+
+    protected function resolveBasePlanLimit(Vendor $resolvedVendor, string $canonicalKey, string $mappedFeatureCode): int
+    {
+        $subscription = $resolvedVendor->currentSubscription
+            ?? $resolvedVendor->subscription
+            ?? $resolvedVendor->subscriptions()->latest('id')->first();
+
+        // Check pinned plan version first if subscription is active/trialing/grace
+        if ($subscription && $subscription->allowsAccess()) {
+            if (! empty($subscription->plan_version_id) && Schema::hasTable('subscription_plan_versions')) {
+                $version = SubscriptionPlanVersion::find($subscription->plan_version_id);
+                if ($version && is_array($version->limits_snapshot) && array_key_exists($mappedFeatureCode, $version->limits_snapshot)) {
+                    return (int) $version->limits_snapshot[$mappedFeatureCode];
+                }
+            }
+
+            if ($subscription->plan) {
+                $plan = $subscription->plan;
+                $planLimits = $plan->quota_limits ?? [];
+                if (array_key_exists($canonicalKey, $planLimits) && $planLimits[$canonicalKey] !== null) {
+                    return (int) $planLimits[$canonicalKey];
+                }
+
+                if (Schema::hasTable('plan_features')) {
+                    $pf = PlanFeature::where('subscription_plan_id', $plan->id)
+                        ->where('feature_code', $mappedFeatureCode)
+                        ->latest('id')
+                        ->first();
+                    if ($pf) {
+                        if (! $pf->is_enabled) {
+                            return 0;
+                        }
+                        if ($pf->limit_value !== null) {
+                            return (int) $pf->limit_value;
+                        }
+                        if ($pf->usage_quota !== null) {
+                            return (int) $pf->usage_quota;
+                        }
+                    }
+                }
+
+                return QuotaCatalog::getDefaultLimit($plan->slug, $canonicalKey);
+            }
+        }
+
+        // Fallback to vendor plan relation or subscription_plan column
+        $plan = $resolvedVendor->plan
+            ?? (! empty($resolvedVendor->subscription_plan_id) ? SubscriptionPlan::find($resolvedVendor->subscription_plan_id) : null)
+            ?? (! empty($resolvedVendor->subscription_plan) ? SubscriptionPlan::where('slug', $resolvedVendor->subscription_plan)->first() : null);
+
+        if ($plan) {
+            if (! empty($plan->quota_limits) && array_key_exists($canonicalKey, $plan->quota_limits)) {
                 return (int) $plan->quota_limits[$canonicalKey];
             }
 
+            if (Schema::hasTable('plan_features')) {
+                $pf = PlanFeature::where('subscription_plan_id', $plan->id)
+                    ->where('feature_code', $mappedFeatureCode)
+                    ->latest('id')
+                    ->first();
+                if ($pf) {
+                    if (! $pf->is_enabled) {
+                        return 0;
+                    }
+                    if ($pf->limit_value !== null) {
+                        return (int) $pf->limit_value;
+                    }
+                    if ($pf->usage_quota !== null) {
+                        return (int) $pf->usage_quota;
+                    }
+                }
+            }
+
+            return QuotaCatalog::getDefaultLimit($plan->slug, $canonicalKey);
+        }
+
+        if (! empty($resolvedVendor->subscription_plan)) {
             return QuotaCatalog::getDefaultLimit($resolvedVendor->subscription_plan, $canonicalKey);
         }
 
-        // 4. Default to basic tier limit
         return QuotaCatalog::getDefaultLimit('basic', $canonicalKey);
     }
 
@@ -111,8 +222,41 @@ class QuotaService
 
             QuotaCatalog::KEY_STORAGE_BYTES => (int) ($vendor->storage_used_bytes ?? 0),
 
+            QuotaCatalog::KEY_LANGUAGES_COUNT => $this->countVendorLanguages($vendor),
+
+            QuotaCatalog::KEY_DELIVERY_ZONES_COUNT => $this->countVendorDeliveryZones($vendor),
+
+            QuotaCatalog::KEY_CURRENCIES_COUNT => $vendor->secondary_currency_enabled ? 1 : 0,
+
             default => 0,
         };
+    }
+
+    protected function countVendorLanguages(Vendor $vendor): int
+    {
+        try {
+            if (Schema::hasTable('vendor_languages')) {
+                $count = VendorLanguage::where('vendor_id', $vendor->id)->where('is_active', true)->count();
+                if ($count > 0) {
+                    return (int) $count;
+                }
+            }
+        } catch (\Throwable) {
+            // Fallback
+        }
+
+        if (is_array($vendor->supported_languages) && ! empty($vendor->supported_languages)) {
+            return count($vendor->supported_languages);
+        }
+
+        return 1;
+    }
+
+    protected function countVendorDeliveryZones(Vendor $vendor): int
+    {
+        $zones = $vendor->ai_settings['delivery_zones'] ?? ($vendor->payment_settings['delivery_zones'] ?? []);
+
+        return is_array($zones) ? count($zones) : 0;
     }
 
     /**
@@ -152,7 +296,6 @@ class QuotaService
                 ];
             }
 
-            // If past period end, calculate aligned window
             if ($pointInTime->greaterThan($subscription->current_period_end)) {
                 return [
                     $subscription->current_period_start->copy(),
@@ -161,7 +304,6 @@ class QuotaService
             }
         }
 
-        // Default calendar month window
         return [
             $pointInTime->copy()->startOfMonth(),
             $pointInTime->copy()->endOfMonth(),
@@ -230,7 +372,6 @@ class QuotaService
 
     /**
      * Atomically execute a callback under a resource-count quota lock.
-     * Prevents race conditions between counting records and inserting new ones.
      *
      * @template T
      *
@@ -249,7 +390,6 @@ class QuotaService
         $canonicalKey = QuotaCatalog::normalize($quotaKey);
 
         return DB::transaction(function () use ($vendorId, $canonicalKey, $callback, $quantity) {
-            // Lock vendor row exclusively in PostgreSQL to serialize resource creation for this tenant
             $lockedVendor = Vendor::where('id', $vendorId)->lockForUpdate()->firstOrFail();
 
             $limit = $this->getLimit($lockedVendor, $canonicalKey);
@@ -284,7 +424,6 @@ class QuotaService
         $canonicalKey = QuotaCatalog::normalize($quotaKey);
 
         return DB::transaction(function () use ($resolvedVendor, $canonicalKey, $quantity, $idempotencyKey, $metadata) {
-            // 1. Idempotency check: if event already processed, do not double-increment
             if (! empty($idempotencyKey)) {
                 $existingEvent = TenantUsageEvent::where('vendor_id', $resolvedVendor->id)
                     ->where('quota_key', $canonicalKey)
@@ -298,7 +437,6 @@ class QuotaService
 
             [$periodStart, $periodEnd] = $this->resolvePeriodWindow($resolvedVendor);
 
-            // 2. Fetch or create meter record and lock row
             $meter = TenantUsageMeter::firstOrCreate(
                 [
                     'vendor_id' => $resolvedVendor->id,
@@ -312,20 +450,16 @@ class QuotaService
                 ]
             );
 
-            // Lock meter row for update
             $meter = TenantUsageMeter::where('id', $meter->id)->lockForUpdate()->first();
 
-            // 3. Quota capacity check
             $limit = $this->getLimit($resolvedVendor, $canonicalKey);
             if ($limit !== QuotaCatalog::UNLIMITED && ($meter->used_count + $quantity > $limit)) {
                 $status = QuotaStatus::make($canonicalKey, $limit, $meter->used_count, $periodEnd);
                 throw new QuotaExceededException($status);
             }
 
-            // 4. Atomic increment
             $meter->increment('used_count', $quantity);
 
-            // 5. Append audit ledger event
             TenantUsageEvent::create([
                 'vendor_id' => $resolvedVendor->id,
                 'quota_key' => $canonicalKey,
@@ -361,7 +495,7 @@ class QuotaService
         $resolvedVendor = $this->resolveVendor($vendor);
         $canonicalKey = QuotaCatalog::normalize($quotaKey);
 
-        return TenantQuotaOverride::updateOrCreate(
+        $override = TenantQuotaOverride::updateOrCreate(
             [
                 'vendor_id' => $resolvedVendor->id,
                 'quota_key' => $canonicalKey,
@@ -374,6 +508,10 @@ class QuotaService
                 'updated_by' => $actor?->id ?? auth()->id(),
             ]
         );
+
+        app(EntitlementService::class)->clearCache($resolvedVendor);
+
+        return $override;
     }
 
     /**
@@ -384,9 +522,13 @@ class QuotaService
         $resolvedVendor = $this->resolveVendor($vendor);
         $canonicalKey = QuotaCatalog::normalize($quotaKey);
 
-        return (bool) TenantQuotaOverride::where('vendor_id', $resolvedVendor->id)
+        $deleted = (bool) TenantQuotaOverride::where('vendor_id', $resolvedVendor->id)
             ->where('quota_key', $canonicalKey)
             ->delete();
+
+        app(EntitlementService::class)->clearCache($resolvedVendor);
+
+        return $deleted;
     }
 
     /**

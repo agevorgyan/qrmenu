@@ -90,6 +90,17 @@
                 {{ __('Partner Subscriptions & Payments') }}
             </h1>
         </div>
+        <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+            <a href="{{ route('superadmin.plans.index') }}" class="btn btn-secondary" style="border-radius: 10px; font-size: 0.82rem;">
+                <i class="fa-solid fa-sliders"></i> {{ __('Plan Builder & Catalog') }}
+            </a>
+            <a href="{{ route('superadmin.subscriptions.payments.index') }}" class="btn btn-secondary" style="border-radius: 10px; font-size: 0.82rem;">
+                <i class="fa-solid fa-file-invoice-dollar"></i> {{ __('Billing & Payments') }}
+            </a>
+            <a href="{{ route('superadmin.subscriptions.audit_logs') }}" class="btn btn-secondary" style="border-radius: 10px; font-size: 0.82rem;">
+                <i class="fa-solid fa-shield-halved"></i> {{ __('Audit Logs') }}
+            </a>
+        </div>
     </div>
 
     <!-- Stats KPI Row -->
@@ -249,7 +260,16 @@
 
                             <!-- Actions -->
                             <td style="text-align: right;">
-                                <div style="display: inline-flex; gap: 0.4rem; justify-content: flex-end;">
+                                <div style="display: inline-flex; gap: 0.4rem; justify-content: flex-end; flex-wrap: wrap;">
+                                    <a href="{{ route('superadmin.subscriptions.usage', $v->id) }}" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem; border-radius: 8px;" title="{{ __('Usage & Limits') }}">
+                                        <i class="fa-solid fa-chart-pie"></i> {{ __('Usage') }}
+                                    </a>
+                                    <a href="{{ route('superadmin.subscriptions.lifecycle', $v->id) }}" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem; border-radius: 8px;" title="{{ __('Subscription History') }}">
+                                        <i class="fa-solid fa-clock-rotate-left"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem; border-radius: 8px;" title="{{ __('Vendor Overrides & Add-ons') }}" onclick="openOverrideAddonModal({{ json_encode($v) }})">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i> {{ __('Overrides') }}
+                                    </button>
                                     <button class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.4rem 0.65rem; border-radius: 8px;" title="{{ __('Adjust Subscription') }}" onclick="openSubModal({{ json_encode($v) }})">
                                         <i class="fa-solid fa-pen-to-square"></i> {{ __('Modify') }}
                                     </button>
@@ -445,11 +465,147 @@
             </form>
         </div>
     </div>
+
+    <!-- Vendor Overrides & Add-ons Modal -->
+    <div id="overrideAddonModal" class="modern-modal-overlay" style="display: none;">
+        <div class="modern-modal-box" style="max-width: 680px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--border-color);">
+                <h3 style="font-family: 'Outfit'; font-weight: 800; font-size: 1.25rem; color: var(--text-main); margin: 0;" id="overrideAddonModalTitle">
+                    {{ __('Vendor Overrides & Add-ons') }}
+                </h3>
+                <button onclick="document.getElementById('overrideAddonModal').style.display='none'" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.25rem;">✕</button>
+            </div>
+
+            <!-- Section A: Individual Feature / Limit / Quota Override -->
+            <form id="overrideForm" method="POST" style="margin-bottom: 1.5rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border-color);">
+                @csrf
+                <h4 style="font-size: 0.95rem; font-weight: 800; margin: 0 0 0.75rem;">
+                    <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--primary);"></i> {{ __('Grant Individual Feature / Limit Override') }}
+                </h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+                    <div>
+                        <label class="form-label">{{ __('Feature Code') }} *</label>
+                        <select name="feature_key" class="form-select" required>
+                            @foreach(($catalogFeatures ?? collect()) as $f)
+                                <option value="{{ $f->code }}">{{ $f->localizedName() }} ({{ $f->code }})</option>
+                            @endforeach
+                            @foreach($availableFeatures as $fc)
+                                <option value="{{ $fc }}">{{ $fc }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">{{ __('Access State') }} *</label>
+                        <select name="is_enabled" class="form-select">
+                            <option value="1">{{ __('Enabled (Grant Access)') }}</option>
+                            <option value="0">{{ __('Disabled (Restrict Access)') }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+                    <div>
+                        <label class="form-label">{{ __('Limit Override (-1 = Unlimited)') }}</label>
+                        <input type="number" name="limit_value" min="-1" class="form-input" placeholder="{{ __('Optional limit') }}">
+                    </div>
+                    <div>
+                        <label class="form-label">{{ __('Usage Quota Override') }}</label>
+                        <input type="number" name="usage_quota" min="-1" class="form-input" placeholder="{{ __('Optional quota') }}">
+                    </div>
+                    <div>
+                        <label class="form-label">{{ __('Expires At (Temporary)') }}</label>
+                        <input type="date" name="expires_at" class="form-input">
+                    </div>
+                </div>
+                <div style="margin-bottom: 0.85rem;">
+                    <label class="form-label">{{ __('Mandatory Reason') }} *</label>
+                    <input type="text" name="reason" class="form-input" required minlength="3" placeholder="{{ __('e.g. Promotional 30-day POS trial approved by sales...') }}">
+                </div>
+                <button type="submit" class="btn btn-primary" style="border-radius: 10px; font-size: 0.82rem;">
+                    <i class="fa-solid fa-check"></i> {{ __('Apply Override') }}
+                </button>
+            </form>
+
+            <!-- Section B: Assign Subscription Add-on -->
+            <form id="addonAssignForm" method="POST">
+                @csrf
+                <h4 style="font-size: 0.95rem; font-weight: 800; margin: 0 0 0.75rem;">
+                    <i class="fa-solid fa-puzzle-piece" style="color: #6366f1;"></i> {{ __('Assign Subscription Add-on') }}
+                </h4>
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+                    <div>
+                        <label class="form-label">{{ __('Add-on Package') }} *</label>
+                        <select name="subscription_addon_id" class="form-select" required>
+                            @foreach(($subscriptionAddons ?? collect()) as $addon)
+                                <option value="{{ $addon->id }}">{{ $addon->localizedName() }} (+{{ $addon->value_increment }} {{ $addon->feature_code }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">{{ __('Quantity') }}</label>
+                        <input type="number" name="quantity" value="1" min="1" max="100" class="form-input" required>
+                    </div>
+                    <div>
+                        <label class="form-label">{{ __('Expires At') }}</label>
+                        <input type="date" name="expires_at" class="form-input">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-secondary" style="border-radius: 10px; font-size: 0.82rem;">
+                    <i class="fa-solid fa-plus"></i> {{ __('Assign Add-on to Vendor') }}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Recent Subscription & Entitlement Audit History -->
+    @if(!empty($recentAuditLogs) && $recentAuditLogs->count() > 0)
+        <div class="glass-card" style="padding: 1.5rem; margin-top: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="font-family: 'Outfit'; font-size: 1.2rem; font-weight: 800; margin: 0;">
+                    <i class="fa-solid fa-shield-halved" style="color: var(--primary);"></i> {{ __('Subscription & Entitlement Audit History') }}
+                </h3>
+                <a href="{{ route('superadmin.subscriptions.audit_logs') }}" style="font-size: 0.8rem; color: var(--primary); font-weight: 700;">
+                    {{ __('View Full Audit Logs') }} →
+                </a>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>{{ __('Action') }}</th>
+                            <th>{{ __('Partner') }}</th>
+                            <th>{{ __('Actor') }}</th>
+                            <th>{{ __('Reason') }}</th>
+                            <th>{{ __('Timestamp') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($recentAuditLogs->take(10) as $log)
+                            <tr>
+                                <td><code>{{ $log->action_type }}</code></td>
+                                <td>{{ $log->vendor?->name ?? 'Platform' }}</td>
+                                <td>{{ $log->actor?->name ?? 'System' }}</td>
+                                <td>{{ $log->reason ?? '—' }}</td>
+                                <td style="font-size: 0.75rem; color: var(--text-muted);">{{ $log->created_at?->format('d.m.Y H:i') }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
 </div>
 
 <script>
     const i18nConfig = '{{ __('Configure:') }}';
     const i18nPay = '{{ __('Payment:') }}';
+    const i18nOverride = '{{ __('Overrides & Add-ons:') }}';
+
+    function openOverrideAddonModal(vendor) {
+        document.getElementById('overrideAddonModalTitle').innerText = i18nOverride + ' ' + vendor.name;
+        document.getElementById('overrideForm').action = '/superadmin/subscriptions/' + vendor.id + '/overrides';
+        document.getElementById('addonAssignForm').action = '/superadmin/subscriptions/' + vendor.id + '/addons';
+        document.getElementById('overrideAddonModal').style.display = 'flex';
+    }
 
     function openSubModal(vendor) {
         document.getElementById('subModalTitle').innerText = i18nConfig + ' ' + vendor.name;

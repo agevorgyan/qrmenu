@@ -310,13 +310,30 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::get('/plans', [SuperAdminController::class, 'plansIndex'])->name('plans.index');
     Route::post('/plans', [SuperAdminController::class, 'storePlan'])->name('plans.store');
     Route::post('/plans/{plan}', [SuperAdminController::class, 'updatePlan'])->name('plans.update');
+    Route::post('/plans/{plan}/builder', [SuperAdminController::class, 'savePlanBuilder'])->name('plans.builder.save');
+    Route::post('/plans/{plan}/duplicate', [SuperAdminController::class, 'duplicatePlan'])->name('plans.duplicate');
+    Route::post('/plans/{plan}/archive', [SuperAdminController::class, 'archivePlan'])->name('plans.archive');
+    Route::post('/plans/{plan}/versions/{version}/migrate', [SuperAdminController::class, 'migratePlanVersion'])->name('plans.versions.migrate');
     Route::post('/plans/{plan}/toggle', [SuperAdminController::class, 'togglePlan'])->name('plans.toggle');
     Route::delete('/plans/{plan}', [SuperAdminController::class, 'destroyPlan'])->name('plans.destroy');
+
+    // Feature Catalog, Categories, Dependencies & Add-ons
+    Route::post('/features/categories', [SuperAdminController::class, 'storeFeatureCategory'])->name('features.categories.store');
+    Route::put('/features/categories/{category}', [SuperAdminController::class, 'updateFeatureCategory'])->name('features.categories.update');
+    Route::post('/features', [SuperAdminController::class, 'storeFeature'])->name('features.store');
+    Route::put('/features/{feature}', [SuperAdminController::class, 'updateFeature'])->name('features.update');
+    Route::post('/features/{feature}/archive', [SuperAdminController::class, 'archiveFeature'])->name('features.archive');
+    Route::delete('/features/{feature}', [SuperAdminController::class, 'destroyFeature'])->name('features.destroy');
+    Route::post('/features/dependencies', [SuperAdminController::class, 'storeFeatureDependency'])->name('features.dependencies.store');
+    Route::delete('/features/dependencies/{dependency}', [SuperAdminController::class, 'destroyFeatureDependency'])->name('features.dependencies.destroy');
+    Route::post('/addons', [SuperAdminController::class, 'storeAddon'])->name('addons.store');
+    Route::put('/addons/{addon}', [SuperAdminController::class, 'updateAddon'])->name('addons.update');
 
     // Vendor Subscriptions & Payment Logs
     Route::get('/subscriptions', [SuperAdminController::class, 'subscriptionsIndex'])->name('subscriptions.index');
     Route::get('/subscriptions/payments', [SuperAdminController::class, 'allPaymentsIndex'])->name('subscriptions.payments.index');
     Route::get('/subscriptions/audit-logs', [SuperAdminController::class, 'subscriptionAuditLogs'])->name('subscriptions.audit_logs');
+    Route::post('/subscriptions/settings', [SuperAdminController::class, 'updateSubscriptionSettings'])->name('subscriptions.settings.update');
     Route::post('/subscriptions/{vendor}', [SuperAdminController::class, 'updateVendorSubscription'])->name('subscriptions.update');
     Route::post('/subscriptions/{vendor}/suspend', [SuperAdminController::class, 'suspendVendorSubscription'])->name('subscriptions.suspend');
     Route::post('/subscriptions/{vendor}/restore', [SuperAdminController::class, 'restoreVendorSubscription'])->name('subscriptions.restore');
@@ -327,6 +344,8 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::delete('/subscriptions/{vendor}/overrides/{featureKey}', [SuperAdminController::class, 'destroyFeatureOverride'])->name('subscriptions.overrides.destroy');
     Route::post('/subscriptions/{vendor}/quota-overrides', [SuperAdminController::class, 'storeQuotaOverride'])->name('subscriptions.quota_overrides.store');
     Route::delete('/subscriptions/{vendor}/quota-overrides/{quotaKey}', [SuperAdminController::class, 'destroyQuotaOverride'])->name('subscriptions.quota_overrides.destroy');
+    Route::post('/subscriptions/{vendor}/addons', [SuperAdminController::class, 'assignVendorAddon'])->name('subscriptions.addons.assign');
+    Route::delete('/subscriptions/{vendor}/addons/{vendorAddon}', [SuperAdminController::class, 'cancelVendorAddon'])->name('subscriptions.addons.cancel');
     Route::post('/subscriptions/{vendor}/usage-meters/{quotaKey}/reset', [SuperAdminController::class, 'resetUsageMeter'])->name('subscriptions.usage_meters.reset');
 
     // Landing, System & Security Settings Management

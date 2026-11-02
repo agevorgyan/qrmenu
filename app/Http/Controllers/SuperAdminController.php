@@ -5,27 +5,38 @@ namespace App\Http\Controllers;
 use App\Enums\SubscriptionStatus;
 use App\Http\Requests\UpdateSystemSettingsRequest;
 use App\Models\EmailLog;
+use App\Models\Feature;
+use App\Models\FeatureCategory;
+use App\Models\FeatureDependency;
 use App\Models\Location;
 use App\Models\MenuTemplate;
 use App\Models\Order;
 use App\Models\SecurityAuditLog;
 use App\Models\Subscription;
+use App\Models\SubscriptionAddon;
+use App\Models\SubscriptionAuditLog;
 use App\Models\SubscriptionLifecycleEvent;
 use App\Models\SubscriptionPayment;
 use App\Models\SubscriptionPlan;
 use App\Models\SubscriptionPlanPrice;
+use App\Models\SubscriptionPlanVersion;
 use App\Models\SystemSetting;
 use App\Models\TenantFeatureOverride;
 use App\Models\TenantQuotaOverride;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Models\VendorSubscriptionAddon;
 use App\Security\FeatureCatalog;
 use App\Security\QuotaCatalog;
 use App\Services\EntitlementService;
+use App\Services\FeatureDependencyService;
+use App\Services\PlanVersionService;
 use App\Services\QrCodeService;
 use App\Services\QuotaService;
 use App\Services\Security\ImageProcessor;
 use App\Services\SecurityAuditService;
+use App\Services\SubscriptionAddonService;
+use App\Services\SubscriptionAuditService;
 use App\Services\SubscriptionService;
 use App\Services\TelegramNotificationService;
 use App\Services\TenantCache;
@@ -151,11 +162,36 @@ class SuperAdminController extends Controller
     // Plan Management
     public function plansIndex()
     {
-        $plans = SubscriptionPlan::withCount('vendors')->with('activePrices')->orderBy('sort_order', 'asc')->get();
+        $plans = SubscriptionPlan::withCount('vendors')
+            ->with(['activePrices', 'versions', 'planFeatures.feature'])
+            ->orderBy('sort_order', 'asc')
+            ->get();
         $availableFeatures = FeatureCatalog::all();
         $availableQuotas = QuotaCatalog::all();
 
-        return view('superadmin.plans.index', compact('plans', 'availableFeatures', 'availableQuotas'));
+        $featureCategories = FeatureCategory::with(['features' => fn ($q) => $q->orderBy('sort_order')])
+            ->orderBy('sort_order')
+            ->get();
+        $catalogFeatures = Feature::with('category')->orderBy('sort_order')->get();
+        $featureDependencies = FeatureDependency::all();
+        $subscriptionAddons = SubscriptionAddon::orderBy('sort_order')->get();
+        $subscriptionSettings = [
+            'default_trial_days' => (int) (SystemSetting::get('subscription_default_trial_days') ?? 14),
+            'grace_period_days' => (int) (SystemSetting::get('subscription_grace_period_days') ?? 3),
+            'warning_threshold_percent' => (int) (SystemSetting::get('subscription_warning_threshold_percent') ?? 80),
+            'downgrade_behavior' => (string) (SystemSetting::get('subscription_downgrade_behavior') ?? 'preserve_data_restrict_new'),
+        ];
+
+        return view('superadmin.plans.index', compact(
+            'plans',
+            'availableFeatures',
+            'availableQuotas',
+            'featureCategories',
+            'catalogFeatures',
+            'featureDependencies',
+            'subscriptionAddons',
+            'subscriptionSettings'
+        ));
     }
 
     public function storePlan(Request $request)
@@ -409,9 +445,15 @@ class SuperAdminController extends Controller
 
         $vendors = $query->latest('id')->paginate(15)->withQueryString();
 
-        $plans = SubscriptionPlan::orderBy('sort_order', 'asc')->get();
+        $plans = SubscriptionPlan::with('versions')->orderBy('sort_order', 'asc')->get();
         $availableFeatures = FeatureCatalog::all();
         $availableQuotas = QuotaCatalog::all();
+        $catalogFeatures = Feature::with('category')->where('is_active', true)->orderBy('sort_order')->get();
+        $subscriptionAddons = SubscriptionAddon::where('is_active', true)->orderBy('sort_order')->get();
+        $recentAuditLogs = SubscriptionAuditLog::with(['vendor:id,name,slug', 'actor:id,name,email'])
+            ->latest('created_at')
+            ->limit(25)
+            ->get();
 
         // Calculate KPI stats
         $stats = [
@@ -420,9 +462,20 @@ class SuperAdminController extends Controller
             'trialing' => Subscription::withoutTenantQuery()->where('status', SubscriptionStatus::Trialing)->count(),
             'expired_suspended' => Subscription::withoutTenantQuery()->whereIn('status', [SubscriptionStatus::Expired, SubscriptionStatus::Suspended])->count(),
             'failed_payments' => SubscriptionPayment::withoutGlobalScopes()->where('status', 'failed')->count(),
+            'active_overrides' => TenantFeatureOverride::withoutGlobalScopes()->active()->count() + TenantQuotaOverride::withoutGlobalScopes()->active()->count(),
+            'active_addons' => VendorSubscriptionAddon::where('status', 'active')->count(),
         ];
 
-        return view('superadmin.subscriptions.index', compact('vendors', 'plans', 'availableFeatures', 'availableQuotas', 'stats'));
+        return view('superadmin.subscriptions.index', compact(
+            'vendors',
+            'plans',
+            'availableFeatures',
+            'availableQuotas',
+            'catalogFeatures',
+            'subscriptionAddons',
+            'recentAuditLogs',
+            'stats'
+        ));
     }
 
     public function updateVendorSubscription(Request $request, Vendor $vendor)
@@ -680,26 +733,54 @@ class SuperAdminController extends Controller
     {
         $validated = $request->validate([
             'feature_key' => 'required|string|max:100',
-            'is_enabled' => 'required|boolean',
+            'is_enabled' => 'nullable|boolean',
+            'value_type' => 'nullable|string|in:BOOLEAN,LIMIT,USAGE,CONFIGURATION,ENUM,METERED',
+            'limit_value' => 'nullable|integer|min:-1',
+            'usage_quota' => 'nullable|integer|min:-1',
+            'config_value' => 'nullable',
             'reason' => 'required|string|min:3|max:1000',
             'scope' => 'nullable|string|max:50',
             'expires_at' => 'nullable|date|after:now',
         ]);
 
+        $enabled = array_key_exists('is_enabled', $validated) && $validated['is_enabled'] !== null
+            ? (bool) $validated['is_enabled']
+            : true;
+
+        $configVal = $validated['config_value'] ?? null;
+        if (is_string($configVal) && $configVal !== '') {
+            $decoded = json_decode($configVal, true);
+            $configVal = json_last_error() === JSON_ERROR_NONE ? $decoded : ['value' => $configVal];
+        }
+
         $entitlementService = app(EntitlementService::class);
         $entitlementService->setOverride(
             vendor: $vendor,
             featureKey: $validated['feature_key'],
-            enabled: (bool) $validated['is_enabled'],
+            enabled: $enabled,
             reason: $validated['reason'],
             scope: $validated['scope'] ?? 'global',
             expiresAt: ! empty($validated['expires_at']) ? Carbon::parse($validated['expires_at']) : null,
+            actor: Auth::user(),
+            limitValue: isset($validated['limit_value']) && $validated['limit_value'] !== '' ? (int) $validated['limit_value'] : null,
+            usageQuota: isset($validated['usage_quota']) && $validated['usage_quota'] !== '' ? (int) $validated['usage_quota'] : null,
+            configValue: is_array($configVal) ? $configVal : null,
+            valueType: $validated['value_type'] ?? null
+        );
+
+        app(SubscriptionAuditService::class)->record(
+            actionType: 'vendor.feature_override.set',
+            entityType: Vendor::class,
+            entityId: $vendor->id,
+            vendor: $vendor,
+            newValues: $validated,
+            reason: $validated['reason'],
             actor: Auth::user()
         );
 
         app(SecurityAuditService::class)->record(
             event: SecurityAuditLog::EVENT_SECURITY_CONFIG_CHANGED,
-            action: "Set feature override [{$validated['feature_key']}] to ".($validated['is_enabled'] ? 'enabled' : 'disabled')." for vendor [{$vendor->name}]. Reason: {$validated['reason']}",
+            action: "Set feature override [{$validated['feature_key']}] to ".($enabled ? 'enabled' : 'disabled')." for vendor [{$vendor->name}]. Reason: {$validated['reason']}",
             vendor: $vendor,
             actor: Auth::user(),
             targetType: Vendor::class,
@@ -1391,5 +1472,671 @@ class SuperAdminController extends Controller
             ->paginate(50);
 
         return response()->json($logs);
+    }
+
+    /**
+     * Save visual Plan Builder configuration and create an immutable Plan Version.
+     */
+    public function savePlanBuilder(
+        Request $request,
+        SubscriptionPlan $plan,
+        PlanVersionService $planVersionService,
+        FeatureDependencyService $dependencyService
+    ): RedirectResponse|JsonResponse {
+        $validated = $request->validate([
+            'name' => 'nullable|string|max:255',
+            'name_translations' => 'nullable|array',
+            'description' => 'nullable|string|max:2000',
+            'description_translations' => 'nullable|array',
+            'price' => 'nullable|numeric|min:0',
+            'yearly_price' => 'nullable|numeric|min:0',
+            'currency' => 'nullable|string|size:3',
+            'trial_days' => 'nullable|integer|min:0',
+            'duration_days' => 'nullable|integer|min:1',
+            'billing_interval' => 'nullable|string|in:monthly,yearly,custom',
+            'plan_features' => 'required|array',
+            'change_summary' => 'nullable|string|max:1000',
+            'migrate_subscribers' => 'nullable|boolean',
+        ]);
+
+        $currency = strtoupper($validated['currency'] ?? $plan->currency ?? 'AMD');
+
+        $planUpdates = [];
+        if (isset($validated['name'])) {
+            $planUpdates['name'] = $validated['name'];
+        }
+        if (isset($validated['name_translations'])) {
+            $planUpdates['name_translations'] = $validated['name_translations'];
+        }
+        if (array_key_exists('description', $validated)) {
+            $planUpdates['description'] = $validated['description'];
+        }
+        if (isset($validated['description_translations'])) {
+            $planUpdates['description_translations'] = $validated['description_translations'];
+        }
+        if (isset($validated['price'])) {
+            $planUpdates['price'] = (float) $validated['price'];
+        }
+        if (array_key_exists('yearly_price', $validated) && $validated['yearly_price'] !== null) {
+            $planUpdates['yearly_price'] = (float) $validated['yearly_price'];
+        }
+        if (isset($validated['trial_days'])) {
+            $planUpdates['trial_days'] = (int) $validated['trial_days'];
+        }
+        if (isset($validated['duration_days'])) {
+            $planUpdates['duration_days'] = (int) $validated['duration_days'];
+        }
+        if (isset($validated['billing_interval'])) {
+            $planUpdates['billing_interval'] = $validated['billing_interval'];
+        }
+        $planUpdates['currency'] = $currency;
+
+        if (! empty($planUpdates)) {
+            $plan->update($planUpdates);
+        }
+
+        if (isset($validated['price'])) {
+            SubscriptionPlanPrice::updateOrCreate(
+                ['subscription_plan_id' => $plan->id, 'billing_interval' => 'monthly', 'currency' => $currency],
+                ['price' => (float) $validated['price'], 'is_active' => true]
+            );
+        }
+
+        if (isset($validated['yearly_price']) && is_numeric($validated['yearly_price'])) {
+            SubscriptionPlanPrice::updateOrCreate(
+                ['subscription_plan_id' => $plan->id, 'billing_interval' => 'yearly', 'currency' => $currency],
+                ['price' => (float) $validated['yearly_price'], 'is_active' => true]
+            );
+        }
+
+        $featurePayload = [];
+        $enabledCheckMap = [];
+        foreach ($validated['plan_features'] as $featureCode => $cfg) {
+            $isEnabled = filter_var($cfg['is_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            $isUnlimited = filter_var($cfg['is_unlimited'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            $limitVal = isset($cfg['limit_value']) && $cfg['limit_value'] !== '' ? (int) $cfg['limit_value'] : null;
+            if ($isUnlimited) {
+                $limitVal = -1;
+            }
+            $usageQuota = isset($cfg['usage_quota']) && $cfg['usage_quota'] !== '' ? (int) $cfg['usage_quota'] : null;
+            if ($isUnlimited && $usageQuota !== null) {
+                $usageQuota = -1;
+            }
+            $configVal = $cfg['config_value'] ?? null;
+            if (is_string($configVal) && $configVal !== '') {
+                $decoded = json_decode($configVal, true);
+                $configVal = json_last_error() === JSON_ERROR_NONE ? $decoded : ['value' => $configVal];
+            }
+
+            $featurePayload[$featureCode] = [
+                'is_enabled' => $isEnabled,
+                'limit_value' => $limitVal,
+                'is_unlimited' => $isUnlimited || $limitVal === -1 || $usageQuota === -1,
+                'usage_quota' => $usageQuota,
+                'config_value' => is_array($configVal) ? $configVal : null,
+            ];
+            $enabledCheckMap[$featureCode] = $isEnabled;
+        }
+
+        $dependencyWarnings = $dependencyService->validateFeatureMap($enabledCheckMap);
+
+        $version = $planVersionService->createVersion(
+            plan: $plan->fresh(),
+            featureConfigs: $featurePayload,
+            changeSummary: $validated['change_summary'] ?? 'Updated via Visual Plan Builder',
+            migrateExistingSubscribers: $request->boolean('migrate_subscribers', false),
+            actor: Auth::user()
+        );
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'version' => $version,
+                'dependency_warnings' => $dependencyWarnings,
+            ]);
+        }
+
+        $message = __('Plan Builder configuration saved as Version v:ver.', ['ver' => $version->version_number]);
+        if (! empty($dependencyWarnings)) {
+            $message .= ' '.__('Note: :count dependency warning(s) detected.', ['count' => count($dependencyWarnings)]);
+        }
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * Duplicate an existing subscription plan with all its features and limits.
+     */
+    public function duplicatePlan(Request $request, SubscriptionPlan $plan, PlanVersionService $planVersionService): RedirectResponse
+    {
+        $validated = $request->validate([
+            'new_name' => 'required|string|max:255',
+            'new_slug' => 'nullable|string|max:255',
+        ]);
+
+        $copy = $planVersionService->duplicatePlan(
+            sourcePlan: $plan,
+            newName: $validated['new_name'],
+            newSlug: $validated['new_slug'] ?? null,
+            actor: Auth::user()
+        );
+
+        return back()->with('success', __('Plan duplicated successfully as :name.', ['name' => $copy->name]));
+    }
+
+    /**
+     * Archive a subscription plan safely without breaking existing subscribers.
+     */
+    public function archivePlan(SubscriptionPlan $plan, PlanVersionService $planVersionService): RedirectResponse
+    {
+        $planVersionService->archivePlan($plan, Auth::user());
+
+        return back()->with('success', __('Subscription plan archived successfully.'));
+    }
+
+    /**
+     * Explicitly migrate existing subscribers of a plan to a specific Plan Version.
+     */
+    public function migratePlanVersion(
+        Request $request,
+        SubscriptionPlan $plan,
+        SubscriptionPlanVersion $version,
+        PlanVersionService $planVersionService
+    ): RedirectResponse {
+        if ((int) $version->subscription_plan_id !== (int) $plan->id) {
+            abort(400, 'Version does not belong to the specified plan.');
+        }
+
+        $migratedCount = $planVersionService->migrateSubscriptionsToVersion($plan, $version, Auth::user());
+
+        return back()->with('success', __('Migrated :count subscriber(s) to version v:ver.', [
+            'count' => $migratedCount,
+            'ver' => $version->version_number,
+        ]));
+    }
+
+    /**
+     * Store a new Feature Category.
+     */
+    public function storeFeatureCategory(Request $request, SubscriptionAuditService $auditService): RedirectResponse
+    {
+        $validated = $request->validate([
+            'code' => 'required|string|max:64|unique:feature_categories,code',
+            'name_translations' => 'required|array',
+            'description_translations' => 'nullable|array',
+            'icon' => 'nullable|string|max:64',
+            'sort_order' => 'nullable|integer|min:0',
+        ]);
+
+        $category = FeatureCategory::create([
+            'code' => strtolower(trim($validated['code'])),
+            'name_translations' => $validated['name_translations'],
+            'description_translations' => $validated['description_translations'] ?? [],
+            'icon' => $validated['icon'] ?? 'fa-layer-group',
+            'sort_order' => (int) ($validated['sort_order'] ?? ((FeatureCategory::max('sort_order') ?? 0) + 1)),
+            'is_active' => true,
+        ]);
+
+        $auditService->record(
+            actionType: 'feature_category.created',
+            entityType: FeatureCategory::class,
+            entityId: $category->id,
+            newValues: $category->toArray(),
+            actor: Auth::user()
+        );
+
+        return back()->with('success', __('Feature category created successfully.'));
+    }
+
+    /**
+     * Update an existing Feature Category.
+     */
+    public function updateFeatureCategory(
+        Request $request,
+        FeatureCategory $category,
+        SubscriptionAuditService $auditService
+    ): RedirectResponse {
+        $validated = $request->validate([
+            'name_translations' => 'required|array',
+            'description_translations' => 'nullable|array',
+            'icon' => 'nullable|string|max:64',
+            'sort_order' => 'nullable|integer|min:0',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $previous = $category->toArray();
+
+        $category->update([
+            'name_translations' => $validated['name_translations'],
+            'description_translations' => $validated['description_translations'] ?? $category->description_translations,
+            'icon' => $validated['icon'] ?? $category->icon,
+            'sort_order' => (int) ($validated['sort_order'] ?? $category->sort_order),
+            'is_active' => $request->has('is_active') ? $request->boolean('is_active') : $category->is_active,
+        ]);
+
+        $auditService->record(
+            actionType: 'feature_category.updated',
+            entityType: FeatureCategory::class,
+            entityId: $category->id,
+            previousValues: $previous,
+            newValues: $category->fresh()->toArray(),
+            actor: Auth::user()
+        );
+
+        return back()->with('success', __('Feature category updated successfully.'));
+    }
+
+    /**
+     * Create a new Feature in the Feature Catalog.
+     */
+    public function storeFeature(Request $request, SubscriptionAuditService $auditService): RedirectResponse
+    {
+        $validated = $request->validate([
+            'code' => 'required|string|max:100|unique:features,code',
+            'feature_category_id' => 'required|exists:feature_categories,id',
+            'feature_type' => 'required|string|in:BOOLEAN,LIMIT,USAGE,CONFIGURATION,ENUM,METERED',
+            'name_translations' => 'required|array',
+            'description_translations' => 'nullable|array',
+            'default_value' => 'nullable',
+            'allowed_options' => 'nullable',
+            'unit' => 'nullable|string|max:50',
+            'reset_period' => 'nullable|string|max:32',
+            'sort_order' => 'nullable|integer|min:0',
+            'admin_visible' => 'nullable|boolean',
+            'vendor_visible' => 'nullable|boolean',
+        ]);
+
+        $defaultVal = $validated['default_value'] ?? false;
+        if ($validated['feature_type'] === Feature::TYPE_BOOLEAN) {
+            $defaultVal = ['value' => filter_var($defaultVal, FILTER_VALIDATE_BOOLEAN)];
+        } elseif (in_array($validated['feature_type'], [Feature::TYPE_LIMIT, Feature::TYPE_USAGE, Feature::TYPE_METERED], true)) {
+            $defaultVal = ['value' => (int) $defaultVal];
+        } else {
+            $defaultVal = is_array($defaultVal) ? $defaultVal : ['value' => $defaultVal];
+        }
+
+        $allowedOptions = $validated['allowed_options'] ?? null;
+        if (is_string($allowedOptions) && $allowedOptions !== '') {
+            $allowedOptions = array_values(array_filter(array_map('trim', explode(',', $allowedOptions))));
+        }
+
+        $feature = Feature::create([
+            'code' => strtolower(trim($validated['code'])),
+            'feature_category_id' => (int) $validated['feature_category_id'],
+            'feature_type' => $validated['feature_type'],
+            'name_translations' => $validated['name_translations'],
+            'description_translations' => $validated['description_translations'] ?? [],
+            'default_value' => $defaultVal,
+            'allowed_options' => is_array($allowedOptions) ? $allowedOptions : null,
+            'unit' => $validated['unit'] ?? null,
+            'reset_period' => $validated['reset_period'] ?? null,
+            'is_active' => true,
+            'is_archived' => false,
+            'admin_visible' => $request->has('admin_visible') ? $request->boolean('admin_visible') : true,
+            'vendor_visible' => $request->has('vendor_visible') ? $request->boolean('vendor_visible') : true,
+            'sort_order' => (int) ($validated['sort_order'] ?? ((Feature::max('sort_order') ?? 0) + 1)),
+        ]);
+
+        $auditService->record(
+            actionType: 'feature.created',
+            entityType: Feature::class,
+            entityId: $feature->id,
+            newValues: $feature->toArray(),
+            actor: Auth::user()
+        );
+
+        return back()->with('success', __('Feature added to catalog successfully.'));
+    }
+
+    /**
+     * Update an existing Feature in the Feature Catalog (code is immutable).
+     */
+    public function updateFeature(
+        Request $request,
+        Feature $feature,
+        SubscriptionAuditService $auditService
+    ): RedirectResponse {
+        $validated = $request->validate([
+            'feature_category_id' => 'required|exists:feature_categories,id',
+            'feature_type' => 'required|string|in:BOOLEAN,LIMIT,USAGE,CONFIGURATION,ENUM,METERED',
+            'name_translations' => 'required|array',
+            'description_translations' => 'nullable|array',
+            'default_value' => 'nullable',
+            'allowed_options' => 'nullable',
+            'unit' => 'nullable|string|max:50',
+            'reset_period' => 'nullable|string|max:32',
+            'sort_order' => 'nullable|integer|min:0',
+            'is_active' => 'nullable|boolean',
+            'admin_visible' => 'nullable|boolean',
+            'vendor_visible' => 'nullable|boolean',
+        ]);
+
+        $previous = $feature->toArray();
+
+        $defaultVal = $validated['default_value'] ?? $feature->resolveDefaultScalar();
+        if ($validated['feature_type'] === Feature::TYPE_BOOLEAN) {
+            $defaultVal = ['value' => filter_var($defaultVal, FILTER_VALIDATE_BOOLEAN)];
+        } elseif (in_array($validated['feature_type'], [Feature::TYPE_LIMIT, Feature::TYPE_USAGE, Feature::TYPE_METERED], true)) {
+            $defaultVal = ['value' => (int) $defaultVal];
+        } else {
+            $defaultVal = is_array($defaultVal) ? $defaultVal : ['value' => $defaultVal];
+        }
+
+        $allowedOptions = $validated['allowed_options'] ?? $feature->allowed_options;
+        if (is_string($allowedOptions)) {
+            $allowedOptions = $allowedOptions !== ''
+                ? array_values(array_filter(array_map('trim', explode(',', $allowedOptions))))
+                : null;
+        }
+
+        $feature->update([
+            'feature_category_id' => (int) $validated['feature_category_id'],
+            'feature_type' => $validated['feature_type'],
+            'name_translations' => $validated['name_translations'],
+            'description_translations' => $validated['description_translations'] ?? $feature->description_translations,
+            'default_value' => $defaultVal,
+            'allowed_options' => is_array($allowedOptions) ? $allowedOptions : null,
+            'unit' => $validated['unit'] ?? $feature->unit,
+            'reset_period' => $validated['reset_period'] ?? $feature->reset_period,
+            'is_active' => $request->has('is_active') ? $request->boolean('is_active') : $feature->is_active,
+            'admin_visible' => $request->has('admin_visible') ? $request->boolean('admin_visible') : $feature->admin_visible,
+            'vendor_visible' => $request->has('vendor_visible') ? $request->boolean('vendor_visible') : $feature->vendor_visible,
+            'sort_order' => (int) ($validated['sort_order'] ?? $feature->sort_order),
+        ]);
+
+        $auditService->record(
+            actionType: 'feature.updated',
+            entityType: Feature::class,
+            entityId: $feature->id,
+            previousValues: $previous,
+            newValues: $feature->fresh()->toArray(),
+            actor: Auth::user()
+        );
+
+        return back()->with('success', __('Feature updated successfully.'));
+    }
+
+    /**
+     * Archive a Feature instead of deleting it when used by subscriptions.
+     */
+    public function archiveFeature(Feature $feature, SubscriptionAuditService $auditService): RedirectResponse
+    {
+        $previous = $feature->toArray();
+
+        $feature->update([
+            'is_archived' => true,
+            'is_active' => false,
+            'archived_at' => now(),
+        ]);
+
+        $auditService->record(
+            actionType: 'feature.archived',
+            entityType: Feature::class,
+            entityId: $feature->id,
+            previousValues: $previous,
+            newValues: $feature->fresh()->toArray(),
+            actor: Auth::user()
+        );
+
+        return back()->with('success', __('Feature archived successfully.'));
+    }
+
+    /**
+     * Delete a Feature ONLY if it is not used by any active subscription.
+     */
+    public function destroyFeature(Feature $feature, SubscriptionAuditService $auditService): RedirectResponse
+    {
+        if ($feature->isUsedByActiveSubscriptions()) {
+            return back()->with('error', __('Cannot delete a feature that is used by active subscriptions. Please archive it instead.'));
+        }
+
+        $previous = $feature->toArray();
+        $featureId = $feature->id;
+        $feature->delete();
+
+        $auditService->record(
+            actionType: 'feature.deleted',
+            entityType: Feature::class,
+            entityId: $featureId,
+            previousValues: $previous,
+            actor: Auth::user()
+        );
+
+        return back()->with('success', __('Feature deleted successfully.'));
+    }
+
+    /**
+     * Add a Feature Dependency rule with circular dependency detection.
+     */
+    public function storeFeatureDependency(
+        Request $request,
+        FeatureDependencyService $dependencyService,
+        SubscriptionAuditService $auditService
+    ): RedirectResponse {
+        $validated = $request->validate([
+            'feature_code' => 'required|string|max:100',
+            'depends_on_feature_code' => 'required|string|max:100|different:feature_code',
+        ]);
+
+        try {
+            $dep = $dependencyService->addDependency(
+                feature: $validated['feature_code'],
+                dependsOn: $validated['depends_on_feature_code']
+            );
+
+            $auditService->record(
+                actionType: 'feature_dependency.created',
+                entityType: FeatureDependency::class,
+                entityId: $dep->id,
+                newValues: $dep->toArray(),
+                actor: Auth::user()
+            );
+
+            return back()->with('success', __('Feature dependency rule added successfully.'));
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Remove a Feature Dependency rule.
+     */
+    public function destroyFeatureDependency(
+        FeatureDependency $dependency,
+        SubscriptionAuditService $auditService
+    ): RedirectResponse {
+        $previous = $dependency->toArray();
+        $id = $dependency->id;
+        $dependency->delete();
+
+        $auditService->record(
+            actionType: 'feature_dependency.deleted',
+            entityType: FeatureDependency::class,
+            entityId: $id,
+            previousValues: $previous,
+            actor: Auth::user()
+        );
+
+        return back()->with('success', __('Feature dependency removed.'));
+    }
+
+    /**
+     * Create a new Subscription Add-on.
+     */
+    public function storeAddon(Request $request, SubscriptionAuditService $auditService): RedirectResponse
+    {
+        $validated = $request->validate([
+            'code' => 'required|string|max:100|unique:subscription_addons,code',
+            'name_translations' => 'required|array',
+            'description_translations' => 'nullable|array',
+            'addon_type' => 'required|string|in:FEATURE,LIMIT,USAGE',
+            'feature_code' => 'required|string|max:100',
+            'value_increment' => 'nullable|integer|min:1',
+            'monthly_price' => 'required|numeric|min:0',
+            'yearly_price' => 'nullable|numeric|min:0',
+            'one_time_price' => 'nullable|numeric|min:0',
+            'currency' => 'nullable|string|size:3',
+            'billing_period' => 'required|string|in:monthly,yearly,one_time',
+            'compatible_plan_slugs' => 'nullable|array',
+        ]);
+
+        $addon = SubscriptionAddon::create([
+            'code' => strtolower(trim($validated['code'])),
+            'name_translations' => $validated['name_translations'],
+            'description_translations' => $validated['description_translations'] ?? [],
+            'addon_type' => $validated['addon_type'],
+            'feature_code' => $validated['feature_code'],
+            'value_increment' => isset($validated['value_increment']) ? (int) $validated['value_increment'] : 1,
+            'monthly_price' => (float) $validated['monthly_price'],
+            'yearly_price' => isset($validated['yearly_price']) ? (float) $validated['yearly_price'] : null,
+            'one_time_price' => isset($validated['one_time_price']) ? (float) $validated['one_time_price'] : null,
+            'currency' => strtoupper($validated['currency'] ?? 'AMD'),
+            'billing_period' => $validated['billing_period'],
+            'compatible_plan_slugs' => $validated['compatible_plan_slugs'] ?? ['basic', 'pro', 'advanced'],
+            'is_active' => true,
+            'sort_order' => (SubscriptionAddon::max('sort_order') ?? 0) + 1,
+        ]);
+
+        $auditService->record(
+            actionType: 'addon.created',
+            entityType: SubscriptionAddon::class,
+            entityId: $addon->id,
+            newValues: $addon->toArray(),
+            actor: Auth::user()
+        );
+
+        return back()->with('success', __('Add-on created successfully.'));
+    }
+
+    /**
+     * Update an existing Subscription Add-on.
+     */
+    public function updateAddon(
+        Request $request,
+        SubscriptionAddon $addon,
+        SubscriptionAuditService $auditService
+    ): RedirectResponse {
+        $validated = $request->validate([
+            'name_translations' => 'required|array',
+            'description_translations' => 'nullable|array',
+            'addon_type' => 'required|string|in:FEATURE,LIMIT,USAGE',
+            'feature_code' => 'required|string|max:100',
+            'value_increment' => 'nullable|integer|min:1',
+            'monthly_price' => 'required|numeric|min:0',
+            'yearly_price' => 'nullable|numeric|min:0',
+            'one_time_price' => 'nullable|numeric|min:0',
+            'billing_period' => 'required|string|in:monthly,yearly,one_time',
+            'compatible_plan_slugs' => 'nullable|array',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $previous = $addon->toArray();
+
+        $addon->update([
+            'name_translations' => $validated['name_translations'],
+            'description_translations' => $validated['description_translations'] ?? $addon->description_translations,
+            'addon_type' => $validated['addon_type'],
+            'feature_code' => $validated['feature_code'],
+            'value_increment' => isset($validated['value_increment']) ? (int) $validated['value_increment'] : $addon->value_increment,
+            'monthly_price' => (float) $validated['monthly_price'],
+            'yearly_price' => isset($validated['yearly_price']) ? (float) $validated['yearly_price'] : $addon->yearly_price,
+            'one_time_price' => isset($validated['one_time_price']) ? (float) $validated['one_time_price'] : $addon->one_time_price,
+            'billing_period' => $validated['billing_period'],
+            'compatible_plan_slugs' => $validated['compatible_plan_slugs'] ?? $addon->compatible_plan_slugs,
+            'is_active' => $request->has('is_active') ? $request->boolean('is_active') : $addon->is_active,
+        ]);
+
+        $auditService->record(
+            actionType: 'addon.updated',
+            entityType: SubscriptionAddon::class,
+            entityId: $addon->id,
+            previousValues: $previous,
+            newValues: $addon->fresh()->toArray(),
+            actor: Auth::user()
+        );
+
+        return back()->with('success', __('Add-on updated successfully.'));
+    }
+
+    /**
+     * Assign a Subscription Add-on to a Vendor.
+     */
+    public function assignVendorAddon(
+        Request $request,
+        Vendor $vendor,
+        SubscriptionAddonService $addonService
+    ): RedirectResponse {
+        $validated = $request->validate([
+            'subscription_addon_id' => 'required|exists:subscription_addons,id',
+            'quantity' => 'nullable|integer|min:1|max:100',
+            'billing_period' => 'nullable|string|in:monthly,yearly,one_time',
+            'expires_at' => 'nullable|date|after:now',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        $addon = SubscriptionAddon::findOrFail($validated['subscription_addon_id']);
+
+        try {
+            $addonService->assignAddon(
+                vendor: $vendor,
+                addon: $addon,
+                quantity: (int) ($validated['quantity'] ?? 1),
+                billingPeriod: $validated['billing_period'] ?? $addon->billing_period,
+                expiresAt: ! empty($validated['expires_at']) ? Carbon::parse($validated['expires_at']) : null,
+                notes: $validated['notes'] ?? null,
+                actor: Auth::user()
+            );
+
+            return back()->with('success', __('Add-on assigned to vendor successfully.'));
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Cancel an active Vendor Add-on.
+     */
+    public function cancelVendorAddon(
+        Vendor $vendor,
+        VendorSubscriptionAddon $vendorAddon,
+        SubscriptionAddonService $addonService
+    ): RedirectResponse {
+        if ((int) $vendorAddon->vendor_id !== (int) $vendor->id) {
+            abort(403, 'Add-on does not belong to this vendor.');
+        }
+
+        $addonService->cancelVendorAddon($vendorAddon, Auth::user());
+
+        return back()->with('success', __('Vendor add-on cancelled.'));
+    }
+
+    /**
+     * Update global Subscription Settings.
+     */
+    public function updateSubscriptionSettings(
+        Request $request,
+        SubscriptionAuditService $auditService
+    ): RedirectResponse {
+        $validated = $request->validate([
+            'default_trial_days' => 'required|integer|min:0|max:365',
+            'grace_period_days' => 'required|integer|min:0|max:90',
+            'warning_threshold_percent' => 'required|integer|min:50|max:99',
+            'downgrade_behavior' => 'required|string|in:preserve_data_restrict_new,strict_block',
+        ]);
+
+        SystemSetting::set('subscription_default_trial_days', (string) $validated['default_trial_days'], 'subscription');
+        SystemSetting::set('subscription_grace_period_days', (string) $validated['grace_period_days'], 'subscription');
+        SystemSetting::set('subscription_warning_threshold_percent', (string) $validated['warning_threshold_percent'], 'subscription');
+        SystemSetting::set('subscription_downgrade_behavior', $validated['downgrade_behavior'], 'subscription');
+
+        $auditService->record(
+            actionType: 'subscription.settings.updated',
+            entityType: SystemSetting::class,
+            entityId: 'subscription_settings',
+            newValues: $validated,
+            actor: Auth::user()
+        );
+
+        return back()->with('success', __('Subscription settings updated successfully.'));
     }
 }

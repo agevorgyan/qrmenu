@@ -19,6 +19,10 @@ class TenantFeatureOverride extends Model
         'vendor_id',
         'feature_key',
         'is_enabled',
+        'value_type',
+        'limit_value',
+        'usage_quota',
+        'config_value',
         'scope',
         'reason',
         'expires_at',
@@ -28,6 +32,9 @@ class TenantFeatureOverride extends Model
 
     protected $casts = [
         'is_enabled' => 'boolean',
+        'limit_value' => 'integer',
+        'usage_quota' => 'integer',
+        'config_value' => 'array',
         'expires_at' => 'datetime',
     ];
 

@@ -34,6 +34,12 @@ class QuotaCatalog
 
     public const KEY_API_REQUESTS_PERIOD = 'api.requests.period';
 
+    public const KEY_LANGUAGES_COUNT = 'languages.count';
+
+    public const KEY_DELIVERY_ZONES_COUNT = 'delivery_zones.count';
+
+    public const KEY_CURRENCIES_COUNT = 'currencies.count';
+
     /**
      * Aliases map for legacy or conversational keys.
      */
@@ -42,21 +48,25 @@ class QuotaCatalog
         'product' => self::KEY_PRODUCTS_COUNT,
         'dishes' => self::KEY_PRODUCTS_COUNT,
         'active_products' => self::KEY_PRODUCTS_COUNT,
+        'menu.products.limit' => self::KEY_PRODUCTS_COUNT,
 
         'categories' => self::KEY_CATEGORIES_COUNT,
         'category' => self::KEY_CATEGORIES_COUNT,
         'menus' => self::KEY_CATEGORIES_COUNT,
         'active_menus' => self::KEY_CATEGORIES_COUNT,
+        'menu.categories.limit' => self::KEY_CATEGORIES_COUNT,
 
         'branches' => self::KEY_BRANCHES_COUNT,
         'branch' => self::KEY_BRANCHES_COUNT,
         'locations' => self::KEY_BRANCHES_COUNT,
         'location' => self::KEY_BRANCHES_COUNT,
+        'locations.limit' => self::KEY_BRANCHES_COUNT,
 
         'team' => self::KEY_TEAM_MEMBERS_COUNT,
         'team_members' => self::KEY_TEAM_MEMBERS_COUNT,
         'staff' => self::KEY_TEAM_MEMBERS_COUNT,
         'users' => self::KEY_TEAM_MEMBERS_COUNT,
+        'staff.users.limit' => self::KEY_TEAM_MEMBERS_COUNT,
 
         'storage' => self::KEY_STORAGE_BYTES,
         'disk' => self::KEY_STORAGE_BYTES,
@@ -64,6 +74,7 @@ class QuotaCatalog
 
         'orders' => self::KEY_ORDERS_PERIOD,
         'orders.monthly' => self::KEY_ORDERS_PERIOD,
+        'orders.monthly_limit' => self::KEY_ORDERS_PERIOD,
         'online_orders' => self::KEY_ORDERS_PERIOD,
 
         'reservations' => self::KEY_RESERVATIONS_PERIOD,
@@ -73,10 +84,21 @@ class QuotaCatalog
         'ai' => self::KEY_AI_REQUESTS_PERIOD,
         'ai_requests' => self::KEY_AI_REQUESTS_PERIOD,
         'ai.requests' => self::KEY_AI_REQUESTS_PERIOD,
+        'ai.monthly_credits' => self::KEY_AI_REQUESTS_PERIOD,
+        'ai_credits' => self::KEY_AI_REQUESTS_PERIOD,
 
         'api' => self::KEY_API_REQUESTS_PERIOD,
         'api_requests' => self::KEY_API_REQUESTS_PERIOD,
         'api.requests' => self::KEY_API_REQUESTS_PERIOD,
+
+        'languages' => self::KEY_LANGUAGES_COUNT,
+        'menu.languages.limit' => self::KEY_LANGUAGES_COUNT,
+
+        'delivery_zones' => self::KEY_DELIVERY_ZONES_COUNT,
+        'delivery.zones.limit' => self::KEY_DELIVERY_ZONES_COUNT,
+
+        'currencies' => self::KEY_CURRENCIES_COUNT,
+        'currency.max_additional' => self::KEY_CURRENCIES_COUNT,
     ];
 
     /**
@@ -94,7 +116,9 @@ class QuotaCatalog
      */
     public static function isValid(string $key): bool
     {
-        return in_array(self::normalize($key), self::all(), true);
+        $norm = self::normalize($key);
+
+        return in_array($norm, self::all(), true) || in_array($norm, self::extendedKeys(), true);
     }
 
     /**
@@ -118,6 +142,20 @@ class QuotaCatalog
     }
 
     /**
+     * Extended resource quota keys.
+     *
+     * @return array<int, string>
+     */
+    public static function extendedKeys(): array
+    {
+        return [
+            self::KEY_LANGUAGES_COUNT,
+            self::KEY_DELIVERY_ZONES_COUNT,
+            self::KEY_CURRENCIES_COUNT,
+        ];
+    }
+
+    /**
      * Get quota classification type: 'resource' (stateful count) or 'event' (billing-period metered).
      */
     public static function getType(string $key): string
@@ -129,7 +167,10 @@ class QuotaCatalog
             self::KEY_CATEGORIES_COUNT,
             self::KEY_BRANCHES_COUNT,
             self::KEY_TEAM_MEMBERS_COUNT,
-            self::KEY_STORAGE_BYTES => self::TYPE_RESOURCE,
+            self::KEY_STORAGE_BYTES,
+            self::KEY_LANGUAGES_COUNT,
+            self::KEY_DELIVERY_ZONES_COUNT,
+            self::KEY_CURRENCIES_COUNT => self::TYPE_RESOURCE,
             default => self::TYPE_EVENT,
         };
     }
@@ -151,6 +192,9 @@ class QuotaCatalog
             self::KEY_RESERVATIONS_PERIOD => 'reservations',
             self::KEY_AI_REQUESTS_PERIOD => 'requests',
             self::KEY_API_REQUESTS_PERIOD => 'calls',
+            self::KEY_LANGUAGES_COUNT => 'languages',
+            self::KEY_DELIVERY_ZONES_COUNT => 'zones',
+            self::KEY_CURRENCIES_COUNT => 'currencies',
             default => 'units',
         };
     }
@@ -179,7 +223,7 @@ class QuotaCatalog
         }
 
         return match ($slug) {
-            'business' => [
+            'advanced', 'business' => [
                 self::KEY_PRODUCTS_COUNT => self::UNLIMITED,
                 self::KEY_CATEGORIES_COUNT => self::UNLIMITED,
                 self::KEY_BRANCHES_COUNT => 10,
@@ -224,7 +268,30 @@ class QuotaCatalog
         $canonical = self::normalize($quotaKey);
         $quotas = self::getDefaultQuotasForPlan($planSlug);
 
-        return $quotas[$canonical] ?? 0;
+        if (array_key_exists($canonical, $quotas)) {
+            return $quotas[$canonical];
+        }
+
+        $slug = strtolower(trim($planSlug));
+
+        return match ($canonical) {
+            self::KEY_LANGUAGES_COUNT => match ($slug) {
+                'advanced', 'business', 'custom' => self::UNLIMITED,
+                'pro' => 5,
+                default => 2,
+            },
+            self::KEY_DELIVERY_ZONES_COUNT => match ($slug) {
+                'advanced', 'business', 'custom' => self::UNLIMITED,
+                'pro' => 5,
+                default => 0,
+            },
+            self::KEY_CURRENCIES_COUNT => match ($slug) {
+                'advanced', 'business', 'custom' => self::UNLIMITED,
+                'pro' => 3,
+                default => 0,
+            },
+            default => 0,
+        };
     }
 
     /**
@@ -244,6 +311,9 @@ class QuotaCatalog
             self::KEY_RESERVATIONS_PERIOD => 'Ամրագրումներ (ամսական)',
             self::KEY_AI_REQUESTS_PERIOD => 'AI Հարցումներ (ամսական)',
             self::KEY_API_REQUESTS_PERIOD => 'API Հարցումներ (ամսական)',
+            self::KEY_LANGUAGES_COUNT => 'Առավելագույն լեզուների քանակ',
+            self::KEY_DELIVERY_ZONES_COUNT => 'Առաքման գոտիների քանակ',
+            self::KEY_CURRENCIES_COUNT => 'Լրացուցիչ արժույթների քանակ',
         ];
 
         $namesEn = [
@@ -256,10 +326,32 @@ class QuotaCatalog
             self::KEY_RESERVATIONS_PERIOD => 'Reservations (Per Period)',
             self::KEY_AI_REQUESTS_PERIOD => 'AI Requests (Per Period)',
             self::KEY_API_REQUESTS_PERIOD => 'API Requests (Per Period)',
+            self::KEY_LANGUAGES_COUNT => 'Maximum Languages Count',
+            self::KEY_DELIVERY_ZONES_COUNT => 'Delivery Zones Count',
+            self::KEY_CURRENCIES_COUNT => 'Additional Currencies Count',
+        ];
+
+        $namesRu = [
+            self::KEY_PRODUCTS_COUNT => 'Количество активных товаров',
+            self::KEY_CATEGORIES_COUNT => 'Количество категорий / меню',
+            self::KEY_BRANCHES_COUNT => 'Количество филиалов',
+            self::KEY_TEAM_MEMBERS_COUNT => 'Количество сотрудников',
+            self::KEY_STORAGE_BYTES => 'Объем хранилища (Storage)',
+            self::KEY_ORDERS_PERIOD => 'Онлайн-заказы (в месяц)',
+            self::KEY_RESERVATIONS_PERIOD => 'Бронирования (в месяц)',
+            self::KEY_AI_REQUESTS_PERIOD => 'AI-запросы (в месяц)',
+            self::KEY_API_REQUESTS_PERIOD => 'API-запросы (в месяц)',
+            self::KEY_LANGUAGES_COUNT => 'Максимальное количество языков',
+            self::KEY_DELIVERY_ZONES_COUNT => 'Количество зон доставки',
+            self::KEY_CURRENCIES_COUNT => 'Дополнительные валюты',
         ];
 
         if ($locale === 'en') {
             return $namesEn[$canonical] ?? ucfirst(str_replace(['.', '_'], ' ', $canonical));
+        }
+
+        if ($locale === 'ru') {
+            return $namesRu[$canonical] ?? $namesEn[$canonical] ?? $canonical;
         }
 
         return $namesHy[$canonical] ?? $canonical;

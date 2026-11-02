@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\RenewSubscriptionRequest;
 use App\Models\AnalyticsLog;
+use App\Models\FeatureCategory;
 use App\Models\Location;
 use App\Models\Order;
+use App\Models\SubscriptionAddon;
 use App\Models\SubscriptionPayment;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
@@ -196,12 +198,21 @@ class VendorAdminController extends Controller
 
         $entitledFeatures = $entitlementService->getEntitledFeatures($vendor);
         $allFeatures = FeatureCatalog::all();
+        $allEntitlements = EntitlementService::getAllEntitlements($vendor);
+        $featureCategories = FeatureCategory::with(['features' => fn ($q) => $q->where('is_active', true)->where('vendor_visible', true)->orderBy('sort_order')])
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
+        $availableAddons = SubscriptionAddon::where('is_active', true)->orderBy('sort_order')->get();
+        $activeVendorAddons = $vendor->activeSubscriptionAddons()->with('addon')->get();
 
         $keyQuotas = [
             QuotaCatalog::KEY_PRODUCTS_COUNT,
             QuotaCatalog::KEY_CATEGORIES_COUNT,
             QuotaCatalog::KEY_BRANCHES_COUNT,
             QuotaCatalog::KEY_TEAM_MEMBERS_COUNT,
+            QuotaCatalog::KEY_LANGUAGES_COUNT,
+            QuotaCatalog::KEY_DELIVERY_ZONES_COUNT,
             QuotaCatalog::KEY_ORDERS_PERIOD,
             QuotaCatalog::KEY_RESERVATIONS_PERIOD,
             QuotaCatalog::KEY_AI_REQUESTS_PERIOD,
@@ -220,6 +231,10 @@ class VendorAdminController extends Controller
             'allPlans',
             'entitledFeatures',
             'allFeatures',
+            'allEntitlements',
+            'featureCategories',
+            'availableAddons',
+            'activeVendorAddons',
             'quotas',
             'payments'
         ));

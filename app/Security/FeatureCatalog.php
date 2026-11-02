@@ -2,9 +2,11 @@
 
 namespace App\Security;
 
+use App\Models\Feature;
+
 class FeatureCatalog
 {
-    // Canonical feature keys
+    // Legacy & core canonical feature keys
     public const MENU_BASE = 'menu.base';
 
     public const MENU_TRANSLATIONS = 'menu.translations';
@@ -40,6 +42,129 @@ class FeatureCatalog
     public const BILLS_SPLIT = 'bills.split';
 
     public const POS_ACCESS = 'pos.access';
+
+    // Dynamic Feature Catalog canonical codes (Sections 3 & 4)
+    public const MENU_QR = 'menu.qr';
+
+    public const MENU_CATEGORIES_LIMIT = 'menu.categories.limit';
+
+    public const MENU_PRODUCTS_LIMIT = 'menu.products.limit';
+
+    public const MENU_PRODUCT_IMAGES = 'menu.product_images';
+
+    public const MENU_VIDEOS = 'menu.videos';
+
+    public const MENU_MODIFIERS = 'menu.modifiers';
+
+    public const MENU_VARIANTS = 'menu.variants';
+
+    public const MENU_SCHEDULING = 'menu.scheduling';
+
+    public const LANGUAGES_MULTILINGUAL = 'languages.multilingual';
+
+    public const MENU_LANGUAGES_LIMIT = 'menu.languages.limit';
+
+    public const AI_TRANSLATION = 'ai.translation';
+
+    public const CURRENCY_PRIMARY = 'currency.primary';
+
+    public const CURRENCY_MULTI = 'currency.multi';
+
+    public const CURRENCY_MAX_ADDITIONAL = 'currency.max_additional';
+
+    public const CURRENCY_AUTO_RATE = 'currency.auto_rate';
+
+    public const CURRENCY_MANUAL_RATE = 'currency.manual_rate';
+
+    public const ORDERS_TABLE_QR = 'orders.table_qr';
+
+    public const ORDERS_MANAGEMENT = 'orders.management';
+
+    public const ORDERS_MONTHLY_LIMIT = 'orders.monthly_limit';
+
+    public const ORDERS_ONLINE_PAYMENTS = 'orders.online_payments';
+
+    public const ORDERS_CASH_PAYMENTS = 'orders.cash_payments';
+
+    public const ORDERS_NOTIFICATIONS = 'orders.notifications';
+
+    public const ORDERS_TRACKING = 'orders.tracking';
+
+    public const ORDERS_ADVANCED_WORKFLOWS = 'orders.advanced_workflows';
+
+    public const DELIVERY_ENABLED = 'delivery.enabled';
+
+    public const PICKUP_ENABLED = 'pickup.enabled';
+
+    public const DELIVERY_ZONES_LIMIT = 'delivery.zones.limit';
+
+    public const DELIVERY_FEE_CONFIG = 'delivery.fee_config';
+
+    public const DELIVERY_MIN_ORDER = 'delivery.min_order';
+
+    public const DELIVERY_SCHEDULING = 'delivery.scheduling';
+
+    public const DELIVERY_ADVANCED_SCHEDULING = 'delivery.advanced_scheduling';
+
+    public const TABLES_MANAGEMENT = 'tables.management';
+
+    public const RESERVATIONS_ENABLED = 'reservations.enabled';
+
+    public const PREORDERS_ENABLED = 'preorders.enabled';
+
+    public const KDS_ENABLED = 'kds.enabled';
+
+    public const POS_ENABLED = 'pos.enabled';
+
+    public const POS_MANAGER_MODE = 'pos.manager_mode';
+
+    public const POS_CASHIER_MODE = 'pos.cashier_mode';
+
+    public const POS_WAITER_MODE = 'pos.waiter_mode';
+
+    public const STAFF_USERS_LIMIT = 'staff.users.limit';
+
+    public const MARKETING_COUPONS = 'marketing.coupons';
+
+    public const MARKETING_LOYALTY = 'marketing.loyalty';
+
+    public const MARKETING_APPLE_WALLET = 'marketing.apple_wallet';
+
+    public const MARKETING_CUSTOMERS = 'marketing.customers';
+
+    public const MARKETING_SEGMENTATION = 'marketing.segmentation';
+
+    public const REVIEWS_GENERATION = 'reviews.generation';
+
+    public const REVIEWS_GOOGLE = 'reviews.google';
+
+    public const REVIEWS_TRIPADVISOR = 'reviews.tripadvisor';
+
+    public const REVIEWS_YANDEX = 'reviews.yandex';
+
+    public const ANALYTICS_EXPORT = 'analytics.export';
+
+    public const ANALYTICS_FULL_REPORTING = 'analytics.full_reporting';
+
+    public const ANALYTICS_BUSINESS = 'analytics.business';
+
+    public const AI_RECOMMENDATIONS = 'ai.recommendations';
+
+    public const AI_ASSISTANT = 'ai.assistant';
+
+    public const AI_MONTHLY_CREDITS = 'ai.monthly_credits';
+
+    public const INTEGRATIONS_API = 'integrations.api';
+
+    public const INTEGRATIONS_WEBHOOKS = 'integrations.webhooks';
+
+    public const INTEGRATIONS_CUSTOM_DOMAIN = 'integrations.custom_domain';
+
+    public const BRANDING_WHITE_LABEL = 'branding.white_label';
+
+    public const LOCATIONS_MULTI = 'locations.multi';
+
+    public const LOCATIONS_LIMIT = 'locations.limit';
 
     /**
      * Map of legacy or abbreviated aliases to canonical feature keys.
@@ -133,17 +258,25 @@ class FeatureCatalog
     }
 
     /**
-     * Check if a feature key is recognized in the catalog.
+     * Check if a feature key is recognized in the catalog (static or database).
      */
     public static function isValid(string $feature): bool
     {
         $normalized = self::normalize($feature);
 
-        return in_array($normalized, self::all(), true);
+        if (in_array($normalized, self::all(), true) || in_array($normalized, self::dynamicCodes(), true)) {
+            return true;
+        }
+
+        try {
+            return Feature::where('code', $normalized)->exists();
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     /**
-     * Return all canonical feature keys.
+     * Return all core canonical feature keys.
      *
      * @return array<int, string>
      */
@@ -172,6 +305,83 @@ class FeatureCatalog
     }
 
     /**
+     * Return all extended dynamic feature codes.
+     *
+     * @return array<int, string>
+     */
+    public static function dynamicCodes(): array
+    {
+        return [
+            self::MENU_QR,
+            self::MENU_CATEGORIES_LIMIT,
+            self::MENU_PRODUCTS_LIMIT,
+            self::MENU_PRODUCT_IMAGES,
+            self::MENU_VIDEOS,
+            self::MENU_MODIFIERS,
+            self::MENU_VARIANTS,
+            self::MENU_SCHEDULING,
+            self::LANGUAGES_MULTILINGUAL,
+            self::MENU_LANGUAGES_LIMIT,
+            self::AI_TRANSLATION,
+            self::CURRENCY_PRIMARY,
+            self::CURRENCY_MULTI,
+            self::CURRENCY_MAX_ADDITIONAL,
+            self::CURRENCY_AUTO_RATE,
+            self::CURRENCY_MANUAL_RATE,
+            self::ORDERS_ONLINE,
+            self::ORDERS_TABLE_QR,
+            self::ORDERS_MANAGEMENT,
+            self::ORDERS_MONTHLY_LIMIT,
+            self::ORDERS_ONLINE_PAYMENTS,
+            self::ORDERS_CASH_PAYMENTS,
+            self::ORDERS_NOTIFICATIONS,
+            self::ORDERS_TRACKING,
+            self::ORDERS_ADVANCED_WORKFLOWS,
+            self::DELIVERY_ENABLED,
+            self::PICKUP_ENABLED,
+            self::DELIVERY_ZONES_LIMIT,
+            self::DELIVERY_FEE_CONFIG,
+            self::DELIVERY_MIN_ORDER,
+            self::DELIVERY_SCHEDULING,
+            self::DELIVERY_ADVANCED_SCHEDULING,
+            self::TABLES_MANAGEMENT,
+            self::RESERVATIONS_ENABLED,
+            self::PREORDERS_ENABLED,
+            self::KDS_ENABLED,
+            self::POS_ENABLED,
+            self::POS_MANAGER_MODE,
+            self::POS_CASHIER_MODE,
+            self::POS_WAITER_MODE,
+            self::STAFF_USERS_LIMIT,
+            self::TEAM_MANAGE,
+            self::MARKETING_COUPONS,
+            self::MARKETING_LOYALTY,
+            self::MARKETING_APPLE_WALLET,
+            self::MARKETING_CUSTOMERS,
+            self::MARKETING_SEGMENTATION,
+            self::REVIEWS_GENERATION,
+            self::REVIEWS_GOOGLE,
+            self::REVIEWS_TRIPADVISOR,
+            self::REVIEWS_YANDEX,
+            self::ANALYTICS_BASIC,
+            self::ANALYTICS_ADVANCED,
+            self::ANALYTICS_EXPORT,
+            self::ANALYTICS_FULL_REPORTING,
+            self::ANALYTICS_BUSINESS,
+            self::AI_WAITER,
+            self::AI_RECOMMENDATIONS,
+            self::AI_ASSISTANT,
+            self::AI_MONTHLY_CREDITS,
+            self::INTEGRATIONS_API,
+            self::INTEGRATIONS_WEBHOOKS,
+            self::INTEGRATIONS_CUSTOM_DOMAIN,
+            self::BRANDING_WHITE_LABEL,
+            self::LOCATIONS_MULTI,
+            self::LOCATIONS_LIMIT,
+        ];
+    }
+
+    /**
      * Return default feature bundle for a plan tier slug.
      *
      * @return array<int, string>
@@ -185,7 +395,7 @@ class FeatureCatalog
         }
 
         return match ($slug) {
-            'business' => [
+            'advanced', 'business' => [
                 self::MENU_BASE,
                 self::MENU_TRANSLATIONS,
                 self::ANALYTICS_BASIC,
@@ -242,6 +452,21 @@ class FeatureCatalog
             self::TEAM_MANAGE,
             self::ANALYTICS_ADVANCED,
             self::API_ACCESS,
+            self::INTEGRATIONS_API,
+            self::INTEGRATIONS_WEBHOOKS,
+            self::INTEGRATIONS_CUSTOM_DOMAIN,
+            self::BRANDING_WHITE_LABEL,
+            self::LOCATIONS_MULTI,
+            self::POS_ENABLED,
+            self::POS_MANAGER_MODE,
+            self::POS_CASHIER_MODE,
+            self::POS_WAITER_MODE,
+            self::AI_ASSISTANT,
+            self::ANALYTICS_FULL_REPORTING,
+            self::ANALYTICS_BUSINESS,
+            self::MARKETING_SEGMENTATION,
+            self::ORDERS_ADVANCED_WORKFLOWS,
+            self::DELIVERY_ADVANCED_SCHEDULING,
         ], true)) {
             return 'Business';
         }
@@ -257,6 +482,22 @@ class FeatureCatalog
             self::BRANDING_CUSTOM_DOMAIN,
             self::TIPS_RATINGS,
             self::BILLS_SPLIT,
+            self::MENU_VIDEOS,
+            self::MENU_MODIFIERS,
+            self::MENU_VARIANTS,
+            self::MENU_SCHEDULING,
+            self::AI_TRANSLATION,
+            self::CURRENCY_MULTI,
+            self::CURRENCY_AUTO_RATE,
+            self::DELIVERY_ENABLED,
+            self::PICKUP_ENABLED,
+            self::RESERVATIONS_ENABLED,
+            self::PREORDERS_ENABLED,
+            self::KDS_ENABLED,
+            self::MARKETING_COUPONS,
+            self::MARKETING_LOYALTY,
+            self::MARKETING_APPLE_WALLET,
+            self::ANALYTICS_EXPORT,
         ], true)) {
             return 'Pro';
         }
@@ -270,6 +511,15 @@ class FeatureCatalog
     public static function getDisplayName(string $feature, string $locale = 'hy'): string
     {
         $normalized = self::normalize($feature);
+
+        try {
+            $dbFeature = Feature::where('code', $normalized)->orWhere('code', $feature)->first();
+            if ($dbFeature) {
+                return $dbFeature->localizedName($locale);
+            }
+        } catch (\Throwable) {
+            // Fallback to static map if DB table not migrated yet
+        }
 
         $namesHy = [
             self::MENU_BASE => 'Թվային QR Մենյու',

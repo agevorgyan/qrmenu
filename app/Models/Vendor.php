@@ -2095,6 +2095,30 @@ class Vendor extends Model
     }
 
     /**
+     * Subscription add-ons assigned to this vendor.
+     */
+    public function subscriptionAddons(): HasMany
+    {
+        return $this->hasMany(VendorSubscriptionAddon::class);
+    }
+
+    /**
+     * Active subscription add-ons assigned to this vendor.
+     */
+    public function activeSubscriptionAddons(): HasMany
+    {
+        return $this->hasMany(VendorSubscriptionAddon::class)->active();
+    }
+
+    /**
+     * Subscription audit logs for this vendor.
+     */
+    public function subscriptionAuditLogs(): HasMany
+    {
+        return $this->hasMany(SubscriptionAuditLog::class, 'vendor_id')->latest('created_at');
+    }
+
+    /**
      * Administrative quota overrides for this vendor.
      */
     public function quotaOverrides(): HasMany

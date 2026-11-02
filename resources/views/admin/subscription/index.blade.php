@@ -260,9 +260,10 @@
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 0.85rem;">
         @foreach($allFeatures as $featKey)
             @php
-                $isUnlocked = in_array($featKey, $entitledFeatures, true);
+                $isUnlocked = in_array($featKey, $entitledFeatures, true) || \App\Services\EntitlementService::hasFeature($vendor, $featKey);
                 $displayName = \App\Security\FeatureCatalog::getDisplayName($featKey, app()->getLocale());
                 $minPlan = \App\Security\FeatureCatalog::getMinimumPlan($featKey);
+                $entMeta = ($allEntitlements ?? [])[$featKey] ?? null;
             @endphp
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.65rem; background: var(--bg-body); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 12px; font-size: 0.86rem;">
                 <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0;">
@@ -275,7 +276,9 @@
                     @endif
                 </div>
 
-                @if(! $isUnlocked)
+                @if($isUnlocked && $entMeta && ($entMeta['source'] ?? 'plan') !== 'plan')
+                    <span class="badge badge-indigo" style="font-size: 0.65rem;">{{ strtoupper($entMeta['source']) }}</span>
+                @elseif(! $isUnlocked)
                     <button type="button" @click="openRenewModal({{ $allPlans->where('slug', strtolower($minPlan))->first()?->id ?? null }})" style="background: none; border: none; padding: 0; color: var(--primary); font-size: 0.72rem; font-weight: 700; cursor: pointer; text-transform: uppercase; white-space: nowrap;">
                         {{ $minPlan }} <i class="fa-solid fa-chevron-right" style="font-size: 0.6rem;"></i>
                     </button>
@@ -284,6 +287,62 @@
         @endforeach
     </div>
 </div>
+
+<!-- Active & Available Subscription Add-ons Section -->
+@if((!empty($activeVendorAddons) && $activeVendorAddons->count() > 0) || (!empty($availableAddons) && $availableAddons->count() > 0))
+<div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.25rem, 3vw, 1.85rem); margin-bottom: 2rem; box-shadow: var(--shadow-card);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
+        <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="color: #6366f1;"><i class="fa-solid fa-puzzle-piece"></i></span>
+            <span>{{ __('Subscription Add-ons') }}</span>
+        </h3>
+        <span style="font-size: 0.78rem; color: var(--text-muted);">
+            {{ __('Extend your plan with additional quotas, staff accounts, locations, or features') }}
+        </span>
+    </div>
+
+    @if(!empty($activeVendorAddons) && $activeVendorAddons->count() > 0)
+        <div style="margin-bottom: 1.25rem;">
+            <h4 style="font-size: 0.85rem; font-weight: 700; color: #10b981; margin: 0 0 0.65rem;">
+                <i class="fa-solid fa-circle-check"></i> {{ __('Active Add-ons on Your Account') }}
+            </h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.85rem;">
+                @foreach($activeVendorAddons as $va)
+                    <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 0.85rem 1rem;">
+                        <div style="font-weight: 800; font-size: 0.9rem; color: var(--text-main);">
+                            {{ $va->addon?->localizedName() }} (x{{ $va->quantity }})
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">
+                            {{ $va->expires_at ? __('Expires:') . ' ' . $va->expires_at->format('d.m.Y') : __('Active with subscription') }}
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    @if(!empty($availableAddons) && $availableAddons->count() > 0)
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+            @foreach($availableAddons as $addon)
+                <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem 1.15rem; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+                            <strong style="font-size: 0.92rem; color: var(--text-main);">{{ $addon->localizedName() }}</strong>
+                            <span class="badge badge-indigo" style="font-size: 0.65rem;">{{ $addon->addon_type }}</span>
+                        </div>
+                        <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.35rem 0 0.75rem;">
+                            {{ $addon->localizedDescription() }}
+                        </p>
+                    </div>
+                    <div style="font-family: 'Outfit'; font-weight: 800; font-size: 0.95rem; color: var(--primary);">
+                        {{ number_format((float)$addon->monthly_price, 0) }} {{ $addon->currency }} / {{ __($addon->billing_period) }}
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @endif
+</div>
+@endif
 
 <!-- Available Plans Comparison -->
 <div style="margin-bottom: 2rem;">

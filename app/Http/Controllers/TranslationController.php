@@ -9,6 +9,7 @@ use App\Models\Language;
 use App\Models\Product;
 use App\Models\TranslationGlossary;
 use App\Models\VendorLanguage;
+use App\Services\EntitlementService;
 use App\Services\Localization\LocaleManager;
 use App\Services\Localization\TranslationService;
 use Illuminate\Http\RedirectResponse;
@@ -226,6 +227,14 @@ class TranslationController extends Controller
         $vendor = $user->vendor;
         abort_unless($vendor, 404, 'Vendor not found.');
 
+        if (! EntitlementService::hasFeature($vendor, 'ai.translation') && ! app(EntitlementService::class)->can($vendor, 'ai.menu_builder')) {
+            return back()->with('error', __('AI translation is not available on your current subscription plan. Please upgrade to Pro or Advanced.'));
+        }
+
+        if (! EntitlementService::canUse($vendor, 'ai.monthly_credits', 1)) {
+            return back()->with('error', __('Monthly AI credits quota reached for your subscription plan.'));
+        }
+
         $targetLocale = $request->validate([
             'target_locale' => ['required', 'string', 'min:2', 'max:10'],
         ])['target_locale'];
@@ -266,8 +275,23 @@ class TranslationController extends Controller
         $activeCodes = (array) ($validated['active_locales'] ?? []);
         $defaultCode = $validated['default_locale'];
 
+        if (! in_array($defaultCode, $activeCodes, true)) {
+            $activeCodes[] = $defaultCode;
+        }
+
+        $addingNewCustom = ! empty($validated['new_code']) && ! empty($validated['new_name']);
+        $proposedCount = count(array_unique(array_merge(
+            $activeCodes,
+            $addingNewCustom ? [strtolower(trim($validated['new_code']))] : []
+        )));
+
+        $maxLanguages = EntitlementService::getLimit($vendor, 'menu.languages.limit');
+        if ($maxLanguages !== -1 && $maxLanguages > 0 && $proposedCount > $maxLanguages) {
+            return back()->with('error', __('Maximum allowed languages (:limit) exceeded for your subscription plan.', ['limit' => $maxLanguages]));
+        }
+
         // If a new custom language was submitted simultaneously
-        if (! empty($validated['new_code']) && ! empty($validated['new_name'])) {
+        if ($addingNewCustom) {
             $newCode = strtolower(trim($validated['new_code']));
             $newName = trim($validated['new_name']);
             $newFlag = trim($validated['new_flag'] ?? '') ?: '🌐';
@@ -276,10 +300,6 @@ class TranslationController extends Controller
             if (! in_array($newCode, $activeCodes, true)) {
                 $activeCodes[] = $newCode;
             }
-        }
-
-        if (! in_array($defaultCode, $activeCodes, true)) {
-            $activeCodes[] = $defaultCode;
         }
 
         $allSystemLangs = Language::whereIn('code', $activeCodes)->get()->keyBy('code');

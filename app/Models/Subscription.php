@@ -18,10 +18,14 @@ class Subscription extends Model
     protected $fillable = [
         'vendor_id',
         'subscription_plan_id',
+        'plan_version_id',
+        'plan_version_number',
         'subscription_plan_price_id',
         'price',
         'currency',
         'status',
+        'billing_status',
+        'entitlement_status',
         'billing_interval',
         'trial_starts_at',
         'trial_ends_at',
@@ -39,6 +43,8 @@ class Subscription extends Model
     ];
 
     protected $casts = [
+        'plan_version_id' => 'integer',
+        'plan_version_number' => 'integer',
         'price' => 'decimal:2',
         'status' => SubscriptionStatus::class,
         'trial_starts_at' => 'datetime',
@@ -74,6 +80,16 @@ class Subscription extends Model
     public function plan(): BelongsTo
     {
         return $this->belongsTo(SubscriptionPlan::class, 'subscription_plan_id');
+    }
+
+    public function planVersion(): BelongsTo
+    {
+        return $this->belongsTo(SubscriptionPlanVersion::class, 'plan_version_id');
+    }
+
+    public function addons(): HasMany
+    {
+        return $this->hasMany(VendorSubscriptionAddon::class, 'subscription_id');
     }
 
     /**
