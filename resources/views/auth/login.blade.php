@@ -563,9 +563,6 @@
                 </a>
                 <div style="display: flex; align-items: center; gap: 0.65rem;">
                     @include('auth.partials.lang_switcher')
-                    <a href="{{ route('demo.login') }}" class="nav-badge-pill">
-                        <i class="fa-solid fa-bolt"></i> {{ __('Try Demo') }}
-                    </a>
                 </div>
             @endif
         </div>
@@ -707,29 +704,8 @@
             </form>
 
             @if(!isset($customVendor) || !$customVendor)
-                <div class="card-divider">
-                    <span>{{ __('or') }}</span>
-                </div>
-
-                <!-- Quick Demo Promo Box -->
-                <div class="demo-promo-card">
-                    <div class="demo-promo-info">
-                        <div class="demo-promo-icon">
-                            <i class="fa-solid fa-bolt"></i>
-                        </div>
-                        <div>
-                            <div class="demo-promo-title">{{ __('Explore Demo') }}</div>
-                            <div class="demo-promo-desc">{{ __('Test the system in 1 click') }}</div>
-                        </div>
-                    </div>
-                    <a href="{{ route('demo.login') }}" class="btn-demo-link">
-                        <span>{{ __('Demo Login') }}</span>
-                        <i class="fa-solid fa-arrow-right"></i>
-                    </a>
-                </div>
-
                 <!-- Self Registration CTA -->
-                <div class="register-link-box">
+                <div class="register-link-box" style="margin-top: 1.5rem;">
                     {{ __('Don\'t have a registered restaurant yet?') }} <br>
                     <a href="{{ route('register.show') }}">
                         <i class="fa-solid fa-user-plus"></i> {{ __('Register as New Partner (14 days free)') }}

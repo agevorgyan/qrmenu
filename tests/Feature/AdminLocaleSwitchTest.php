@@ -123,13 +123,6 @@ class AdminLocaleSwitchTest extends TestCase
         $forgotRes->assertSee(route('lang.switch', 'hy'));
         $forgotRes->assertSee(route('lang.switch', 'en'));
         $forgotRes->assertSee(route('lang.switch', 'ru'));
-
-        // 4. Demo Login page
-        $demoRes = $this->get(route('demo.login'));
-        $demoRes->assertStatus(200);
-        $demoRes->assertSee(route('lang.switch', 'hy'));
-        $demoRes->assertSee(route('lang.switch', 'en'));
-        $demoRes->assertSee(route('lang.switch', 'ru'));
     }
 
     public function test_partner_admin_header_displays_language_switcher(): void
@@ -217,9 +210,7 @@ class AdminLocaleSwitchTest extends TestCase
         $res->assertSee('Забыли пароль?');
         $res->assertSee('Проверка безопасности (CAPTCHA)');
         $res->assertSee('Введите ответ');
-        $res->assertSee('или');
-        $res->assertSee('Ознакомиться с Демо');
-        $res->assertSee('Протестируйте систему в 1 клик');
+        $res->assertDontSee('Ознакомиться с Демо');
         $res->assertSee('Еще нет зарегистрированного ресторана?');
         $res->assertSee('Зарегистрироваться как партнер (14 дней бесплатно)');
     }

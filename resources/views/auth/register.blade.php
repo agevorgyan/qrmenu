@@ -516,9 +516,6 @@
             </a>
             <div class="top-nav-actions">
                 @include('auth.partials.lang_switcher')
-                <a href="{{ route('demo.login') }}" class="nav-pill-btn">
-                    <i class="fa-solid fa-bolt"></i> {{ __('Try Demo') }}
-                </a>
                 <a href="{{ route('login') }}" class="nav-pill-btn" style="background: #ffffff; border-color: #cbd5e1; color: #334155;">
                     <i class="fa-solid fa-arrow-right-to-bracket"></i> {{ __('Login') }}
                 </a>
@@ -544,17 +541,7 @@
                 </p>
             </div>
 
-            <!-- Demo Link Banner -->
-            <div class="demo-bar-banner">
-                <div class="demo-bar-info">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    <span>{{ __('Want to explore the platform first without registering?') }}</span>
-                </div>
-                <a href="{{ route('demo.login') }}" class="btn-demo-inline">
-                    <span>{{ __('Explore Demo Version') }}</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </a>
-            </div>
+
 
             @if($errors->any())
                 <div class="alert-error">

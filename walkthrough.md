@@ -124,8 +124,8 @@
 | Role | Email | Password | Access URL |
 |---|---|---|---|
 | **Super Admin (Platform Owner)** | `admin@qrmenu.local` | `password` | `http://127.0.0.1:8000/login` |
-| **Vendor Owner (Bistro Yerevan)** | `owner@bistro.am` | `password` | `http://127.0.0.1:8000/demo/login` |
-| **Cascades Branch Manager** | `manager@bistro.am` | `password` | `http://127.0.0.1:8000/demo/login` |
+| **Vendor Owner (Bistro Yerevan)** | `owner@bistro.am` | `password` | `http://127.0.0.1:8000/login` |
+| **Cascades Branch Manager** | `manager@bistro.am` | `password` | `http://127.0.0.1:8000/login` |
 | **Customer Storefront** | *(Public)* | *(No auth)* | `http://127.0.0.1:8000/m/bistro-yerevan` |
 
 ---

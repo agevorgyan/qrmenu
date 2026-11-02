@@ -262,9 +262,6 @@ Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->middl
 // Captcha Refresh Endpoint
 Route::get('/captcha/refresh', [AuthController::class, 'refreshCaptcha'])->name('captcha.refresh');
 
-Route::get('/demo/login', [AuthController::class, 'showDemoLogin'])->name('demo.login');
-Route::post('/demo/login', [AuthController::class, 'demoLogin'])->name('demo.login.post');
-
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register.show');
 Route::post('/register', [RegisterController::class, 'register'])->middleware('throttle:10,1')->name('register.post');
 

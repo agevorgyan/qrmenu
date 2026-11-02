@@ -41,49 +41,6 @@ class AuthController extends Controller
         return response()->json(CaptchaService::generate());
     }
 
-    public function showDemoLogin(TenantContext $tenantContext)
-    {
-        $customVendor = $tenantContext->getTenant();
-
-        return view('auth.demo_login', compact('customVendor'));
-    }
-
-    public function demoLogin(Request $request, TenantContext $tenantContext)
-    {
-        $role = $request->input('role', 'owner');
-
-        // Only vendor accounts are permitted for demo; superadmin is strictly excluded
-        $email = match ($role) {
-            'manager' => 'manager@bistro.am',
-            default => 'owner@bistro.am',
-        };
-
-        $user = User::where('email', $email)->first();
-
-        if (! $user) {
-            $user = User::where('role', 'vendor_owner')->first();
-        }
-
-        if (! $user) {
-            return back()->withErrors([
-                'email' => 'Demo user not found in the system.',
-            ]);
-        }
-
-        Auth::login($user);
-        $request->session()->regenerate();
-
-        $activeLocale = $user->locale ?? session('admin_locale') ?? $request->cookie('app_locale') ?? app()->getLocale();
-        if ($activeLocale) {
-            session(['admin_locale' => $activeLocale, 'app_locale' => $activeLocale, 'locale' => $activeLocale]);
-            cookie()->queue('app_locale', $activeLocale, 525600);
-            cookie()->queue('admin_locale', $activeLocale, 525600);
-            cookie()->queue('locale', $activeLocale, 525600);
-        }
-
-        return redirect()->route('admin.dashboard');
-    }
-
     public function login(Request $request, TenantContext $tenantContext)
     {
         $credentials = $request->validate([
