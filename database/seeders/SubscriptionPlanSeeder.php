@@ -6,10 +6,13 @@ use App\Models\Feature;
 use App\Models\FeatureCategory;
 use App\Models\FeatureDependency;
 use App\Models\PlanFeature;
+use App\Models\Subscription;
 use App\Models\SubscriptionAddon;
+use App\Models\SubscriptionPayment;
 use App\Models\SubscriptionPlan;
 use App\Models\SubscriptionPlanPrice;
 use App\Models\SubscriptionPlanVersion;
+use App\Models\Vendor;
 use App\Security\FeatureCatalog;
 use App\Security\QuotaCatalog;
 use Illuminate\Database\Seeder;
@@ -100,6 +103,58 @@ class SubscriptionPlanSeeder extends Seeder
 
             if ($hasDynamicTables && ! empty($featureMap)) {
                 $this->seedPlanVersionAndFeatures($plan, $p['plan_matrix'], $featureMap);
+            }
+        }
+
+        // Reassign any legacy plans (e.g. business, custom) to Advanced and remove legacy initial plans
+        $advancedPlan = SubscriptionPlan::where('slug', 'advanced')->first();
+        if ($advancedPlan) {
+            $legacyPlanIds = SubscriptionPlan::whereNotIn('slug', ['basic', 'pro', 'advanced'])->pluck('id')->toArray();
+            if (! empty($legacyPlanIds)) {
+                Vendor::withoutGlobalScopes()
+                    ->whereIn('subscription_plan_id', $legacyPlanIds)
+                    ->update([
+                        'subscription_plan_id' => $advancedPlan->id,
+                        'subscription_plan' => 'advanced',
+                    ]);
+                Subscription::withoutGlobalScopes()
+                    ->whereIn('subscription_plan_id', $legacyPlanIds)
+                    ->update([
+                        'subscription_plan_id' => $advancedPlan->id,
+                        'plan_version_id' => $advancedPlan->current_version_id,
+                        'plan_version_number' => $advancedPlan->current_version_number ?? 1,
+                    ]);
+                SubscriptionPayment::withoutGlobalScopes()
+                    ->whereIn('subscription_plan_id', $legacyPlanIds)
+                    ->update(['subscription_plan_id' => $advancedPlan->id]);
+                SubscriptionPlanPrice::whereIn('subscription_plan_id', $legacyPlanIds)->delete();
+                SubscriptionPlan::whereIn('id', $legacyPlanIds)->delete();
+            }
+        }
+
+        // Reassign any legacy plans (e.g. business, custom) to Advanced and remove legacy initial plans
+        $advancedPlan = SubscriptionPlan::where('slug', 'advanced')->first();
+        if ($advancedPlan) {
+            $legacyPlanIds = SubscriptionPlan::whereNotIn('slug', ['basic', 'pro', 'advanced'])->pluck('id')->toArray();
+            if (! empty($legacyPlanIds)) {
+                \App\Models\Vendor::withoutGlobalScopes()
+                    ->whereIn('subscription_plan_id', $legacyPlanIds)
+                    ->update([
+                        'subscription_plan_id' => $advancedPlan->id,
+                        'subscription_plan' => 'advanced',
+                    ]);
+                \App\Models\Subscription::withoutGlobalScopes()
+                    ->whereIn('subscription_plan_id', $legacyPlanIds)
+                    ->update([
+                        'subscription_plan_id' => $advancedPlan->id,
+                        'plan_version_id' => $advancedPlan->current_version_id,
+                        'plan_version_number' => $advancedPlan->current_version_number ?? 1,
+                    ]);
+                \App\Models\SubscriptionPayment::withoutGlobalScopes()
+                    ->whereIn('subscription_plan_id', $legacyPlanIds)
+                    ->update(['subscription_plan_id' => $advancedPlan->id]);
+                SubscriptionPlanPrice::whereIn('subscription_plan_id', $legacyPlanIds)->delete();
+                SubscriptionPlan::whereIn('id', $legacyPlanIds)->delete();
             }
         }
     }
