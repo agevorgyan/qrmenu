@@ -72,7 +72,36 @@ class Category extends Model
     {
         $lang = $lang ?: app()->getLocale();
         if ($this->name_translations && isset($this->name_translations[$lang]) && ! empty($this->name_translations[$lang])) {
-            return $this->name_translations[$lang];
+            $name = (string) $this->name_translations[$lang];
+
+            if ($lang === 'hy') {
+                $name = str_replace(
+                    [
+                        'Հիմնական դասընթացներ',
+                        'Կողմեր ​​և հավելումներ',
+                        'Կողմեր և հավելումներ',
+                        'Նախուտեստներ և նախուտեստներ',
+                    ],
+                    [
+                        'Հիմնական Ճաշատեսակներ',
+                        'Խավարտներ և Հավելումներ',
+                        'Խավարտներ և Հավելումներ',
+                        'Նախուտեստներ',
+                    ],
+                    $name
+                );
+            }
+
+            return $name;
+        }
+
+        if ($lang === 'hy') {
+            return match ($this->name) {
+                'Main Courses', 'Main Dishes' => 'Հիմնական Ճաշատեսակներ',
+                'Sides & Extras', 'Sides' => 'Խավարտներ և Հավելումներ',
+                'Starters & Appetizers', 'Appetizers' => 'Նախուտեստներ',
+                default => $this->name,
+            };
         }
 
         return $this->name;

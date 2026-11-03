@@ -21,10 +21,15 @@ class PosReportingService
      *
      * @return array{Carbon, Carbon}
      */
-    protected function resolveDateRange(?string $startDate = null, ?string $endDate = null): array
+    protected function resolveDateRange(?string $startDate = null, ?string $endDate = null, ?Vendor $vendor = null): array
     {
-        $start = $startDate ? Carbon::parse($startDate)->startOfDay() : Carbon::today()->startOfDay();
-        $end = $endDate ? Carbon::parse($endDate)->endOfDay() : Carbon::today()->endOfDay();
+        $tz = $vendor?->timezone ?: config('app.timezone', 'Asia/Yerevan');
+        $start = $startDate
+            ? Carbon::parse($startDate, $tz)->startOfDay()->setTimezone('UTC')
+            : Carbon::now($tz)->startOfDay()->setTimezone('UTC');
+        $end = $endDate
+            ? Carbon::parse($endDate, $tz)->endOfDay()->setTimezone('UTC')
+            : Carbon::now($tz)->endOfDay()->setTimezone('UTC');
 
         return [$start, $end];
     }
@@ -38,7 +43,7 @@ class PosReportingService
         ?string $startDate = null,
         ?string $endDate = null
     ): array {
-        [$start, $end] = $this->resolveDateRange($startDate, $endDate);
+        [$start, $end] = $this->resolveDateRange($startDate, $endDate, $vendor);
 
         $orderQuery = Order::withoutGlobalScopes()
             ->where('vendor_id', $vendor->id)
@@ -139,7 +144,7 @@ class PosReportingService
         ?string $startDate = null,
         ?string $endDate = null
     ): array {
-        [$start, $end] = $this->resolveDateRange($startDate, $endDate);
+        [$start, $end] = $this->resolveDateRange($startDate, $endDate, $vendor);
 
         $orderQuery = Order::withoutGlobalScopes()
             ->where('vendor_id', $vendor->id)
@@ -221,7 +226,7 @@ class PosReportingService
         ?string $endDate = null,
         int $limit = 50
     ): array {
-        [$start, $end] = $this->resolveDateRange($startDate, $endDate);
+        [$start, $end] = $this->resolveDateRange($startDate, $endDate, $vendor);
 
         $query = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
@@ -275,7 +280,7 @@ class PosReportingService
         ?string $startDate = null,
         ?string $endDate = null
     ): array {
-        [$start, $end] = $this->resolveDateRange($startDate, $endDate);
+        [$start, $end] = $this->resolveDateRange($startDate, $endDate, $vendor);
 
         $query = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
@@ -326,7 +331,7 @@ class PosReportingService
         ?string $startDate = null,
         ?string $endDate = null
     ): array {
-        [$start, $end] = $this->resolveDateRange($startDate, $endDate);
+        [$start, $end] = $this->resolveDateRange($startDate, $endDate, $vendor);
 
         $query = PosShift::withoutGlobalScopes()
             ->where('vendor_id', $vendor->id)
@@ -370,7 +375,7 @@ class PosReportingService
         ?string $startDate = null,
         ?string $endDate = null
     ): array {
-        [$start, $end] = $this->resolveDateRange($startDate, $endDate);
+        [$start, $end] = $this->resolveDateRange($startDate, $endDate, $vendor);
 
         $query = Tip::withoutGlobalScopes()
             ->where('vendor_id', $vendor->id)
@@ -424,7 +429,7 @@ class PosReportingService
         ?string $startDate = null,
         ?string $endDate = null
     ): array {
-        [$start, $end] = $this->resolveDateRange($startDate, $endDate);
+        [$start, $end] = $this->resolveDateRange($startDate, $endDate, $vendor);
 
         // Discounts from Orders
         $orderQuery = Order::withoutGlobalScopes()
@@ -484,8 +489,9 @@ class PosReportingService
      */
     public function getOperationalDashboard(Vendor $vendor, ?int $locationId = null): array
     {
-        $todayStart = Carbon::today()->startOfDay();
-        $todayEnd = Carbon::today()->endOfDay();
+        $tz = $vendor->timezone ?: config('app.timezone', 'Asia/Yerevan');
+        $todayStart = Carbon::now($tz)->startOfDay()->setTimezone('UTC');
+        $todayEnd = Carbon::now($tz)->endOfDay()->setTimezone('UTC');
 
         // 1. Live sales today
         $todayOrders = Order::withoutGlobalScopes()

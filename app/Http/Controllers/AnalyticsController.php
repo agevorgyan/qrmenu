@@ -19,8 +19,9 @@ class AnalyticsController extends Controller
         $vendor = $user->vendor;
         $activeLocationId = $user->location_id ?: session('active_location_id', $vendor->locations->first()?->id);
 
-        $days = $request->get('range', 7);
-        $startDate = Carbon::now()->subDays($days - 1)->startOfDay();
+        $tz = $vendor->timezone ?: config('app.timezone', 'Asia/Yerevan');
+        $days = (int) $request->get('range', 7);
+        $startDate = Carbon::now($tz)->subDays($days - 1)->startOfDay()->format('Y-m-d');
 
         $analyticsQuery = AnalyticsLog::where('vendor_id', $vendor->id)
             ->where('visit_date', '>=', $startDate)

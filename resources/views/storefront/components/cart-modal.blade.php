@@ -450,7 +450,7 @@
                                         <span class="cart-item-flag" x-text="item.flag"></span>
                                         <span class="cart-item-name" x-text="item.name"></span>
                                         <span class="cart-item-dial" x-text="item.dial"></span>
-                                        <span class="cart-item-digits" x-show="item.digits" x-text="'(' + item.digits + ' {{ __('menu.digits_unit') }})'"></span>
+                                        <span class="cart-item-digits" x-show="item.digits" x-text="item.digits ? '(' + item.digits + ' {{ __('menu.digits_unit') }})' : ''"></span>
                                     </button>
                                 </template>
                             </div>

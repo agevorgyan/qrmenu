@@ -1291,15 +1291,18 @@
             },
 
             formatCategoryName(cat) {
+                if (!cat) return '';
+                const key = String(cat).toLowerCase().trim().replace(/[\s\-]+/g, '_');
                 const map = {
                     food_quality: translations.rating_cat_food_quality || 'Համեղ ուտեստներ',
                     service_speed: translations.rating_cat_service_speed || 'Արագ սպասարկում',
+                    speed_of_service: translations.rating_cat_service_speed || 'Արագ սպասարկում',
                     waiter_politeness: translations.rating_cat_waiter_politeness || 'Բարեհամբույր մատուցող',
                     cleanliness: translations.rating_cat_cleanliness || 'Մաքրություն',
                     ambiance: translations.rating_cat_ambiance || 'Հաճելի մթնոլորտ',
                     table_presentation: translations.rating_cat_table_presentation || 'Գեղեցիկ մատուցում'
                 };
-                return map[cat] || (cat.charAt(0).toUpperCase() + cat.slice(1).replace(/_/g, ' '));
+                return map[key] || map[cat] || (cat.charAt(0).toUpperCase() + cat.slice(1).replace(/_/g, ' '));
             },
 
             async submitRatingForm() {

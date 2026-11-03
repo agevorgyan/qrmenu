@@ -7,7 +7,7 @@
             'product_id' => $featuredDish->id,
             'product' => $featuredDish,
             'sort_order' => 0,
-            'badge' => $vendor->featured_dish_badge ?: __('menu.special_badge_default'),
+            'badge' => (! $vendor->featured_dish_badge || in_array(trim((string) $vendor->featured_dish_badge), ["⭐ TODAY'S SPECIAL", "TODAY'S SPECIAL"], true)) ? __('menu.special_badge_default') : $vendor->featured_dish_badge,
             'subtitle' => $vendor->featured_dish_subtitle ?: ($featuredDish->getTranslatedDescription($lang) ?: __('menu.chef_selection_default')),
             'effective_price' => (float)$featuredDish->getEffectivePrice($location?->id),
             'regular_price' => (float)$featuredDish->getRegularPrice($location?->id),
@@ -134,7 +134,10 @@
                     $isDelivery = (bool)($prod->available_for_delivery ?? true);
                     $isTimeAvailable = $prod->isTimeAvailable();
                     $scheduleSummary = $prod->getAvailabilityScheduleSummary($lang);
-                    $badgeText = $item->badge ?: ($vendor->featured_dish_badge ?: __('menu.special_badge_default'));
+                    $rawBadge = $item->badge ?: ($vendor->featured_dish_badge ?: null);
+                    $badgeText = (! $rawBadge || in_array(trim((string) $rawBadge), ["⭐ TODAY'S SPECIAL", "TODAY'S SPECIAL"], true))
+                        ? __('menu.special_badge_default')
+                        : $rawBadge;
                     $subtitleText = $item->subtitle ?: ($vendor->featured_dish_subtitle ?: ($prod->getTranslatedDescription($lang) ?: __('menu.chef_selection_default')));
                 @endphp
 

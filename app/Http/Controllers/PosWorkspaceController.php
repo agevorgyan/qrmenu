@@ -250,7 +250,8 @@ class PosWorkspaceController extends Controller
             abort(403, 'Unauthorized. Waiter workspace permission required.');
         }
 
-        $startOfDay = Carbon::today();
+        $tz = $vendor->timezone ?: config('app.timezone', 'Asia/Yerevan');
+        $startOfDay = Carbon::now($tz)->startOfDay()->setTimezone('UTC');
 
         // 1. Waiter's active orders
         $activeOrders = Order::where('vendor_id', $vendor->id)
@@ -432,7 +433,8 @@ class PosWorkspaceController extends Controller
             abort(403, 'Unauthorized. Cashier workspace permission required.');
         }
 
-        $startOfDay = Carbon::today();
+        $tz = $vendor->timezone ?: config('app.timezone', 'Asia/Yerevan');
+        $startOfDay = Carbon::now($tz)->startOfDay()->setTimezone('UTC');
 
         // 1. Current active shift for cashier / device
         $currentShift = PosShift::where('vendor_id', $vendor->id)
@@ -524,7 +526,8 @@ class PosWorkspaceController extends Controller
             abort(403, 'Unauthorized. Manager workspace permission required.');
         }
 
-        $startOfDay = Carbon::today();
+        $tz = $vendor->timezone ?: config('app.timezone', 'Asia/Yerevan');
+        $startOfDay = Carbon::now($tz)->startOfDay()->setTimezone('UTC');
 
         // 1. Operational Overview
         $allActiveOrders = Order::where('vendor_id', $vendor->id)

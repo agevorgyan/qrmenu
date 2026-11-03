@@ -716,6 +716,10 @@ Menu text:
             ],
             'hy' => [
                 'Starters & Appetizers' => 'Նախուտեստներ',
+                'Main Courses' => 'Հիմնական Ճաշատեսակներ',
+                'Main Dishes' => 'Հիմնական Ճաշատեսակներ',
+                'Sides & Extras' => 'Խավարտներ և Հավելումներ',
+                'Sides' => 'Խավարտներ',
                 'Signature Mains & Steaks' => 'Հիմնական Ուտեստներ և Սթեյքեր',
                 'Desserts & Sweets' => 'Աղանդերներ',
                 'Craft Cocktails & Wines' => 'Կոկտեյլներ և Գինիներ',
@@ -728,6 +732,10 @@ Menu text:
             ],
             'ru' => [
                 'Starters & Appetizers' => 'Закуски',
+                'Main Courses' => 'Основные Блюда',
+                'Main Dishes' => 'Основные Блюда',
+                'Sides & Extras' => 'Гарниры и Добавки',
+                'Sides' => 'Гарниры',
                 'Signature Mains & Steaks' => 'Фирменные Блюда и Стейки',
                 'Desserts & Sweets' => 'Десерты',
                 'Craft Cocktails & Wines' => 'Коктейли и Вина',

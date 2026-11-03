@@ -56,7 +56,7 @@ class EnsurePosAccess
                 return response()->json([
                     'success' => false,
                     'code' => 'FEATURE_NOT_ENTITLED',
-                    'message' => 'POS Terminal module is not enabled for your subscription plan.',
+                    'message' => __('POS Terminal module is not enabled for your subscription plan.'),
                 ], 403);
             }
 
@@ -65,7 +65,7 @@ class EnsurePosAccess
                     ->with('error', __('POS Terminal module is not enabled for your subscription plan. Please upgrade your plan.'));
             }
 
-            abort(403, 'POS Terminal module is not enabled for your subscription plan.');
+            abort(403, __('POS Terminal module is not enabled for your subscription plan.'));
         }
 
         // User role / permission check
