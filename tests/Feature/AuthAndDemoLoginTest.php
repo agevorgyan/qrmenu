@@ -60,6 +60,21 @@ class AuthAndDemoLoginTest extends TestCase
         $this->assertTrue(auth()->user()->isVendorOwner());
     }
 
+    public function test_user_can_login_with_uppercase_and_capitalized_email_address(): void
+    {
+        session(['captcha_answer' => '12']);
+
+        $response = $this->post('/login', [
+            'email' => 'OWNER@BISTRO.AM',
+            'password' => 'password',
+            'captcha' => '12',
+        ]);
+
+        $response->assertRedirect(route('admin.dashboard'));
+        $this->assertAuthenticated();
+        $this->assertEquals('owner@bistro.am', auth()->user()->email);
+    }
+
     public function test_branch_manager_can_login_with_standard_email_and_password(): void
     {
         session(['captcha_answer' => '12']);

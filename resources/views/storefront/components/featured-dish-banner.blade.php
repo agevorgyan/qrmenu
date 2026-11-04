@@ -287,7 +287,8 @@
                                     </button>
                                 @else
                                     <button type="button"
-                                            class="btn btn-primary"
+                                            class="btn btn-primary add-dish-btn"
+                                            data-action="add-to-cart"
                                             style="background: var(--primary); color: #ffffff; border: none; padding: 0.55rem 1rem; border-radius: 12px; font-weight: 700; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem; box-shadow: 0 4px 14px rgba(0,0,0,0.18); cursor: pointer; transition: transform 0.15s ease;"
                                             onmouseover="this.style.transform='translateY(-2px)'"
                                             onmouseout="this.style.transform='translateY(0)'">

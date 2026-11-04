@@ -48,7 +48,6 @@ class EnsurePosAccess
 
         // Feature entitlement check
         $hasPosFeature = $vendor->hasFeature('pos.access')
-            || $vendor->hasFeature('pos')
             || app()->environment('local');
 
         if (! $hasPosFeature) {

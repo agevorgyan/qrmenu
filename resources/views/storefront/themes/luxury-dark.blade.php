@@ -508,7 +508,7 @@
                                             <span>{{ __('menu.only_available_hours_notice', ['time' => $scheduleSummary]) }}</span>
                                         </button>
                                     @else
-                                        <button class="btn btn-primary" @click.stop='selectDish({{ json_encode($prodPayload, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})' aria-label="{{ __('menu.add_to_cart') }}" title="{{ __('menu.add_to_cart') }}">
+                                        <button class="btn btn-primary add-dish-btn" data-action="add-to-cart" @click.stop='selectDish({{ json_encode($prodPayload, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})' aria-label="{{ __('menu.add_to_cart') }}" title="{{ __('menu.add_to_cart') }}">
                                             @if($prod->variations->count() > 1)
                                                 <span>{{ __('menu.select_portion_btn') }}</span>
                                             @else

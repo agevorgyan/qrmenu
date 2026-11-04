@@ -42,14 +42,14 @@ class ForgotPasswordController extends Controller
             ])->withInput();
         }
 
-        $email = $request->input('email');
-        $user = User::where('email', $email)->first();
+        $email = strtolower(trim((string) $request->input('email', '')));
+        $user = User::whereRaw('LOWER(email) = ?', [$email])->first();
 
         if ($user) {
             $token = Str::random(64);
 
             DB::table('password_reset_tokens')->updateOrInsert(
-                ['email' => $email],
+                ['email' => $user->email],
                 [
                     'token' => Hash::make($token),
                     'created_at' => Carbon::now(),

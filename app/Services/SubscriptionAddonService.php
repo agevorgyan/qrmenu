@@ -96,18 +96,31 @@ class SubscriptionAddonService
         });
     }
 
+    protected static ?bool $hasAddonsTable = null;
+
+    protected array $addonFeatureCache = [];
+
     /**
      * Check if a vendor has a boolean feature unlocked via an active add-on.
      */
     public function hasFeatureViaAddon(Vendor $vendor, string $featureCode): bool
     {
-        if (! Schema::hasTable('vendor_subscription_addons')) {
+        if (self::$hasAddonsTable === null) {
+            self::$hasAddonsTable = Schema::hasTable('vendor_subscription_addons');
+        }
+
+        if (! self::$hasAddonsTable) {
             return false;
+        }
+
+        $cacheKey = "{$vendor->id}:{$featureCode}";
+        if (array_key_exists($cacheKey, $this->addonFeatureCache)) {
+            return $this->addonFeatureCache[$cacheKey];
         }
 
         $codes = $this->resolveRelatedFeatureCodes($featureCode);
 
-        return VendorSubscriptionAddon::query()
+        $exists = VendorSubscriptionAddon::query()
             ->where('vendor_id', $vendor->id)
             ->active()
             ->whereHas('addon', function ($q) use ($codes) {
@@ -115,6 +128,8 @@ class SubscriptionAddonService
                     ->whereIn('feature_code', $codes);
             })
             ->exists();
+
+        return $this->addonFeatureCache[$cacheKey] = $exists;
     }
 
     /**
@@ -122,7 +137,11 @@ class SubscriptionAddonService
      */
     public function getAdditiveBonus(Vendor $vendor, string $featureOrQuotaCode): int
     {
-        if (! Schema::hasTable('vendor_subscription_addons')) {
+        if (self::$hasAddonsTable === null) {
+            self::$hasAddonsTable = Schema::hasTable('vendor_subscription_addons');
+        }
+
+        if (! self::$hasAddonsTable) {
             return 0;
         }
 
@@ -184,4 +203,3 @@ class SubscriptionAddonService
         return $pairs[$code] ?? [$code];
     }
 }
-

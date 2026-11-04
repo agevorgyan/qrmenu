@@ -572,13 +572,16 @@ class EntitlementService
             if ($pfConfig !== null) {
                 $hasFeatureInPlan = self::hasFeature($vendor, $rawCode);
             }
-        } elseif ($plan && is_array($plan->feature_codes) && ! empty($plan->feature_codes)) {
-            $hasFeatureInPlan = in_array('*', $plan->feature_codes, true)
-                || in_array($normalized, $plan->feature_codes, true)
-                || in_array($rawCode, $plan->feature_codes, true);
-        } else {
+        }
+
+        if (! $hasFeatureInPlan) {
+            $featuresInPlan = ($plan && is_array($plan->feature_codes)) ? $plan->feature_codes : [];
             $defaultFeatures = FeatureCatalog::getDefaultFeaturesForPlan($planSlug);
-            $hasFeatureInPlan = in_array($normalized, $defaultFeatures, true);
+            $allPlanFeatures = array_unique(array_merge($featuresInPlan, $defaultFeatures));
+
+            $hasFeatureInPlan = in_array('*', $allPlanFeatures, true)
+                || in_array($normalized, $allPlanFeatures, true)
+                || in_array($rawCode, $allPlanFeatures, true);
         }
 
         if (! $hasFeatureInPlan) {

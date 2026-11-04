@@ -701,12 +701,14 @@
                                             <span>{{ __('menu.only_available_hours_notice', ['time' => $scheduleSummary]) }}</span>
                                         </span>
                                     @elseif($prod->variations->count() > 1)
-                                        <button class="btn-portion-select" 
+                                        <button class="btn-portion-select add-dish-btn"
+                                                data-action="add-to-cart"
                                                 @click.stop='selectDish({{ json_encode($prodPayload, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'>
                                             {{ __('menu.select_portion_btn') }}
                                         </button>
                                     @else
-                                        <button class="btn-add" 
+                                        <button class="btn-add add-dish-btn"
+                                                data-action="add-to-cart"
                                                 @click.stop='selectDish({{ json_encode($prodPayload, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'
                                                 aria-label="{{ __('menu.add_to_cart') }}">
                                             <i class="fa-solid fa-plus"></i>

@@ -73,6 +73,12 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected static function booted(): void
     {
+        static::saving(function (User $user) {
+            if ($user->email !== null) {
+                $user->email = strtolower(trim($user->email));
+            }
+        });
+
         static::creating(function (User $user) {
             if (! array_key_exists('email_verified_at', $user->getAttributes())) {
                 $user->email_verified_at = now();

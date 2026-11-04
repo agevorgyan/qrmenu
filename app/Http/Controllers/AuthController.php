@@ -57,13 +57,17 @@ class AuthController extends Controller
             }
         }
 
-        if (Auth::validate(['email' => $credentials['email'], 'password' => $credentials['password']])) {
-            $user = User::where('email', $credentials['email'])->first();
+        $normalizedEmail = strtolower(trim((string) $request->input('email', '')));
+        $user = User::whereRaw('LOWER(email) = ?', [$normalizedEmail])->first();
+        $authEmail = $user ? $user->email : $normalizedEmail;
+
+        if (Auth::validate(['email' => $authEmail, 'password' => $credentials['password']])) {
+            $user = $user ?? User::where('email', $authEmail)->first();
             $customVendor = $tenantContext->getTenant();
 
             if ($customVendor && ! $user->isSuperAdmin() && (int) $user->vendor_id !== (int) $customVendor->id) {
                 app(SecurityAuditService::class)->logFailedLogin(
-                    attemptedIdentifier: $credentials['email'],
+                    attemptedIdentifier: $normalizedEmail,
                     vendor: $customVendor,
                     reason: "User does not belong to vendor [{$customVendor->name}]."
                 );

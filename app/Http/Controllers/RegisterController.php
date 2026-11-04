@@ -48,6 +48,8 @@ class RegisterController extends Controller
             'captcha' => 'nullable|string',
         ]);
 
+        $validated['email'] = strtolower(trim($validated['email']));
+
         if (! CaptchaService::validate($request->input('captcha'))) {
             return back()->withErrors([
                 'captcha' => 'The security question (CAPTCHA) answer is incorrect.',
