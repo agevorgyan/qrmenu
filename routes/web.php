@@ -1,6 +1,12 @@
 <?php
 
 use App\Http\Controllers\Admin\AccessControlController;
+use App\Http\Controllers\Admin\IngredientCategoryController;
+use App\Http\Controllers\Admin\IngredientController;
+use App\Http\Controllers\Admin\InventoryStockController;
+use App\Http\Controllers\Admin\RecipeController;
+use App\Http\Controllers\Admin\UnitController;
+use App\Http\Controllers\Admin\WarehouseController;
 use App\Http\Controllers\AdminEventInquiryController;
 use App\Http\Controllers\AdminReservationController;
 use App\Http\Controllers\AdminSplitBillController;
@@ -488,6 +494,40 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', E
     Route::post('/menu/products/{product}/daily-offer-toggle', [MenuBuilderController::class, 'toggleDailyOffer'])->name('menu.products.daily_offer.toggle');
     Route::post('/menu/products/{product}/override', [MenuBuilderController::class, 'saveOverride'])->name('menu.products.override');
     Route::delete('/menu/products/{product}', [MenuBuilderController::class, 'destroyProduct'])->name('menu.products.destroy');
+
+    // ==========================================
+    // Inventory, Procurement & Production (Phase 1 Foundation)
+    // ==========================================
+    Route::prefix('inventory')->name('inventory.')->group(function () {
+        Route::get('/dashboard', [InventoryStockController::class, 'dashboard'])->name('dashboard');
+
+        // Ingredients Catalog
+        Route::get('/ingredients/export', [IngredientController::class, 'export'])->name('ingredients.export');
+        Route::resource('ingredients', IngredientController::class);
+
+        // Ingredient Categories
+        Route::resource('categories', IngredientCategoryController::class)->except(['create', 'show', 'edit']);
+
+        // Units & Conversions
+        Route::get('/units', [UnitController::class, 'index'])->name('units.index');
+        Route::post('/units', [UnitController::class, 'store'])->name('units.store');
+        Route::post('/units/conversions', [UnitController::class, 'storeConversion'])->name('units.conversions.store');
+        Route::delete('/units/conversions/{conversion}', [UnitController::class, 'destroyConversion'])->name('units.conversions.destroy');
+
+        // Warehouses
+        Route::post('/warehouses/{warehouse}/default', [WarehouseController::class, 'setDefault'])->name('warehouses.default');
+        Route::resource('warehouses', WarehouseController::class);
+
+        // Stock Balances & Movements Ledger
+        Route::get('/stocks', [InventoryStockController::class, 'overview'])->name('stocks.overview');
+        Route::get('/movements', [InventoryStockController::class, 'movements'])->name('stocks.movements');
+        Route::post('/transactions', [InventoryStockController::class, 'storeTransaction'])->name('stocks.transactions.store');
+
+        // Recipes & Technical Cards (Phase 2)
+        Route::post('/recipes/{recipe}/approve', [RecipeController::class, 'approve'])->name('recipes.approve');
+        Route::post('/recipes/{recipe}/recalculate', [RecipeController::class, 'recalculate'])->name('recipes.recalculate');
+        Route::resource('recipes', RecipeController::class);
+    });
 
     // AI Tools (Business Plan Feature)
     Route::middleware([EnsurePlanHasFeature::class.':ai.menu_builder'])->group(function () {

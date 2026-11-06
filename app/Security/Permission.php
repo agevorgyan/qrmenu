@@ -99,6 +99,46 @@ class Permission
 
     public const POS_CASH_DRAWER = 'pos.cash_drawer';
 
+    // Ingredients & Inventory Permissions
+    public const INGREDIENTS_VIEW = 'ingredients.view';
+
+    public const INGREDIENTS_CREATE = 'ingredients.create';
+
+    public const INGREDIENTS_UPDATE = 'ingredients.update';
+
+    public const INGREDIENTS_DELETE = 'ingredients.delete';
+
+    public const INGREDIENTS_EXPORT = 'ingredients.export';
+
+    public const INVENTORY_VIEW = 'inventory.view';
+
+    public const INVENTORY_RECEIPT = 'inventory.receipt';
+
+    public const INVENTORY_ISSUE = 'inventory.issue';
+
+    public const INVENTORY_TRANSFER = 'inventory.transfer';
+
+    public const INVENTORY_ADJUST = 'inventory.adjust';
+
+    public const INVENTORY_COUNT = 'inventory.count';
+
+    public const INVENTORY_APPROVE = 'inventory.approve';
+
+    // Recipe & Costing Permissions
+    public const RECIPES_VIEW = 'recipes.view';
+
+    public const RECIPES_CREATE = 'recipes.create';
+
+    public const RECIPES_UPDATE = 'recipes.update';
+
+    public const RECIPES_DELETE = 'recipes.delete';
+
+    public const RECIPES_APPROVE = 'recipes.approve';
+
+    public const RECIPES_COST_VIEW = 'recipes.cost.view';
+
+    public const RECIPES_EXPORT = 'recipes.export';
+
     public const POS_REFUNDS = 'pos.refunds';
 
     public const POS_DISCOUNTS = 'pos.discounts';
@@ -531,6 +571,25 @@ class Permission
                 self::TABLES_MANAGE,
                 self::SHIFTS_VIEW_ALL,
                 self::AUDIT_LOGS_VIEW,
+                self::INGREDIENTS_VIEW,
+                self::INGREDIENTS_CREATE,
+                self::INGREDIENTS_UPDATE,
+                self::INGREDIENTS_DELETE,
+                self::INGREDIENTS_EXPORT,
+                self::INVENTORY_VIEW,
+                self::INVENTORY_RECEIPT,
+                self::INVENTORY_ISSUE,
+                self::INVENTORY_TRANSFER,
+                self::INVENTORY_ADJUST,
+                self::INVENTORY_COUNT,
+                self::INVENTORY_APPROVE,
+                self::RECIPES_VIEW,
+                self::RECIPES_CREATE,
+                self::RECIPES_UPDATE,
+                self::RECIPES_DELETE,
+                self::RECIPES_APPROVE,
+                self::RECIPES_COST_VIEW,
+                self::RECIPES_EXPORT,
                 self::PROFILE_VIEW_OWN,
                 self::PROFILE_UPDATE_OWN,
                 self::PASSWORD_CHANGE_OWN,
@@ -572,6 +631,13 @@ class Permission
                 self::MENU_VIEW,
                 self::ORDERS_VIEW,
                 self::ORDERS_UPDATE, // For kitchen prep status transitions (e.g. preparing -> ready)
+                self::INGREDIENTS_VIEW,
+                self::INVENTORY_VIEW,
+                self::INVENTORY_ISSUE,
+                self::RECIPES_VIEW,
+                self::RECIPES_CREATE,
+                self::RECIPES_UPDATE,
+                self::RECIPES_COST_VIEW,
                 self::PROFILE_VIEW_OWN,
                 self::PASSWORD_CHANGE_OWN,
                 self::PIN_MANAGE_OWN,
@@ -582,6 +648,7 @@ class Permission
                 self::MENU_VIEW,
                 self::ORDERS_VIEW,
                 self::ORDERS_UPDATE,
+                self::RECIPES_VIEW,
                 self::PROFILE_VIEW_OWN,
                 self::PASSWORD_CHANGE_OWN,
                 self::PIN_MANAGE_OWN,

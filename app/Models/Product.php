@@ -10,6 +10,7 @@ use App\Services\TenantContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -623,5 +624,17 @@ class Product extends Model
     public function inventoryMovements(): HasMany
     {
         return $this->hasMany(PosInventoryMovement::class);
+    }
+
+    public function recipes(): HasMany
+    {
+        return $this->hasMany(Recipe::class, 'product_id');
+    }
+
+    public function recipe(): HasOne
+    {
+        return $this->hasOne(Recipe::class, 'product_id')
+            ->where('status', Recipe::STATUS_APPROVED)
+            ->where('is_active', true);
     }
 }

@@ -43,6 +43,15 @@ class FeatureCatalog
 
     public const POS_ACCESS = 'pos.access';
 
+    // Inventory & Production
+    public const INVENTORY_CATALOG = 'inventory.catalog';
+
+    public const INVENTORY_WAREHOUSES = 'inventory.warehouses';
+
+    public const INVENTORY_RECIPES = 'inventory.recipes';
+
+    public const INVENTORY_COSTING = 'inventory.costing';
+
     // Dynamic Feature Catalog canonical codes (Sections 3 & 4)
     public const MENU_QR = 'menu.qr';
 

@@ -8,6 +8,7 @@
            reservationsOpen: {{ (request()->routeIs('admin.reservations.*') || request()->routeIs('admin.event_inquiries.*') || request()->routeIs('admin.settings.reservations*')) ? 'true' : 'false' }},
            tablesOpen: {{ (request()->routeIs('admin.floor_plan.*') || request()->routeIs('admin.tables.*') || request()->routeIs('admin.qr.*')) ? 'true' : 'false' }},
            aiOpen: {{ (request()->routeIs('admin.ai.*') || request()->routeIs('admin.settings.ai*')) ? 'true' : 'false' }},
+           inventoryOpen: {{ request()->routeIs('admin.inventory.*') ? 'true' : 'false' }},
            settingsOpen: {{ (request()->routeIs('admin.settings.*') || request()->routeIs('admin.profile')) ? 'true' : 'false' }},
            currentSettingsTab: '{{ request()->query('tab', 'profile') }}',
            isSettingsPage: {{ request()->routeIs('admin.settings.index') ? 'true' : 'false' }},
@@ -301,6 +302,89 @@
                     <span>{{ __('Menu') }}</span>
                 </a>
             @endcan
+
+            <!-- ========================================== -->
+            <!-- INVENTORY & PRODUCTION                     -->
+            <!-- ========================================== -->
+            <div class="menu-category">{{ __('Inventory & Production') }}</div>
+
+            <div class="nav-group">
+                <button type="button" 
+                        class="nav-group-header {{ request()->routeIs('admin.inventory.*') ? 'active' : '' }}"
+                        @click="inventoryOpen = !inventoryOpen"
+                        aria-expanded="inventoryOpen"
+                        title="{{ __('Inventory & Production') }}">
+                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                        <i class="fa-solid fa-boxes-stacked" style="color: #10b981;"></i>
+                        <span>{{ __('Inventory & Production') }}</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down nav-chevron" :class="inventoryOpen ? 'rotate-180' : ''"></i>
+                </button>
+
+                <div class="nav-group-children" x-show="inventoryOpen" x-transition.opacity.duration.200ms style="display: {{ request()->routeIs('admin.inventory.*') ? 'flex' : 'none' }};">
+                    <a href="{{ route('admin.inventory.dashboard') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.dashboard') ? 'active' : '' }}" title="{{ __('Dashboard') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-chart-pie" style="font-size: 0.85rem; color: #10b981;"></i>
+                            <span>{{ __('Dashboard') }}</span>
+                        </span>
+                    </a>
+
+                    @can('ingredients.view')
+                        <a href="{{ route('admin.inventory.ingredients.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.ingredients.*') ? 'active' : '' }}" title="{{ __('Ingredients & Catalog') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-wheat-awn" style="font-size: 0.85rem; color: #f59e0b;"></i>
+                                <span>{{ __('Ingredients & Catalog') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.inventory.categories.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.categories.*') ? 'active' : '' }}" title="{{ __('Categories') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-folder-tree" style="font-size: 0.85rem; color: #06b6d4;"></i>
+                                <span>{{ __('Categories') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.inventory.units.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.units.*') ? 'active' : '' }}" title="{{ __('Units & Conversions') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-scale-balanced" style="font-size: 0.85rem; color: #8b5cf6;"></i>
+                                <span>{{ __('Units & Conversions') }}</span>
+                            </span>
+                        </a>
+                    @endcan
+
+                    @can('inventory.view')
+                        <a href="{{ route('admin.inventory.warehouses.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.warehouses.*') ? 'active' : '' }}" title="{{ __('Warehouses') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-warehouse" style="font-size: 0.85rem; color: #3b82f6;"></i>
+                                <span>{{ __('Warehouses') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.inventory.stocks.overview') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.stocks.overview') ? 'active' : '' }}" title="{{ __('Stock Overview') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-cubes-stacked" style="font-size: 0.85rem; color: #10b981;"></i>
+                                <span>{{ __('Stock Overview') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.inventory.stocks.movements') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.stocks.movements') ? 'active' : '' }}" title="{{ __('Stock Movements') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-timeline" style="font-size: 0.85rem; color: #ec4899;"></i>
+                                <span>{{ __('Stock Movements') }}</span>
+                            </span>
+                        </a>
+                    @endcan
+
+                    @can('recipes.view')
+                        <a href="{{ route('admin.inventory.recipes.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.recipes.*') ? 'active' : '' }}" title="{{ __('Recipes & Costing') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-utensils" style="font-size: 0.85rem; color: #f59e0b;"></i>
+                                <span>{{ __('Recipes & Costing') }}</span>
+                            </span>
+                        </a>
+                    @endcan
+                </div>
+            </div>
 
             <!-- ========================================== -->
             <!-- C. CUSTOMER EXPERIENCE & GROWTH            -->

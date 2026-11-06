@@ -40,10 +40,26 @@ class QuotaCatalog
 
     public const KEY_CURRENCIES_COUNT = 'currencies.count';
 
+    public const KEY_WAREHOUSES_COUNT = 'warehouses.count';
+
+    public const KEY_INGREDIENTS_COUNT = 'ingredients.count';
+
+    public const KEY_RECIPES_COUNT = 'recipes.count';
+
     /**
      * Aliases map for legacy or conversational keys.
      */
     protected const ALIASES = [
+        'warehouses' => self::KEY_WAREHOUSES_COUNT,
+        'warehouse' => self::KEY_WAREHOUSES_COUNT,
+        'warehouses.limit' => self::KEY_WAREHOUSES_COUNT,
+        'ingredients' => self::KEY_INGREDIENTS_COUNT,
+        'ingredient' => self::KEY_INGREDIENTS_COUNT,
+        'ingredients.limit' => self::KEY_INGREDIENTS_COUNT,
+        'recipes' => self::KEY_RECIPES_COUNT,
+        'recipe' => self::KEY_RECIPES_COUNT,
+        'recipes.limit' => self::KEY_RECIPES_COUNT,
+
         'products' => self::KEY_PRODUCTS_COUNT,
         'product' => self::KEY_PRODUCTS_COUNT,
         'dishes' => self::KEY_PRODUCTS_COUNT,
