@@ -1955,8 +1955,9 @@
         .pos-modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(5, 8, 15, 0.85);
-            backdrop-filter: blur(12px);
+            background: var(--modal-overlay);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             z-index: 100;
             display: flex;
             align-items: center;
@@ -1967,26 +1968,63 @@
         .pos-modal-card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 18px;
+            border-radius: 22px;
             width: 100%;
             max-width: 550px;
             max-height: 90vh;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 24px 60px -12px rgba(15, 23, 42, 0.22), 0 0 0 1px var(--border-color);
             overflow: hidden;
+            animation: modal-ios-in 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modal-ios-in {
+            from { opacity: 0; transform: scale(0.96) translateY(8px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        [data-theme="dark"] .pos-modal-card {
+            box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08);
         }
 
         .pos-modal-header {
-            padding: 1rem 1.25rem;
+            padding: 1.15rem 1.4rem;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
             justify-content: space-between;
+            background: var(--bg-card);
+        }
+
+        .pos-modal-close-btn,
+        .pos-modal-header .pos-tool-btn {
+            width: 32px !important;
+            height: 32px !important;
+            min-width: 32px !important;
+            border-radius: 50% !important;
+            background: var(--bg-subtle) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-muted) !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            font-size: 0.85rem !important;
+            transition: all 0.15s ease !important;
+            flex-shrink: 0 !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+        }
+
+        .pos-modal-close-btn:hover,
+        .pos-modal-header .pos-tool-btn:hover {
+            background: var(--bg-card-hover) !important;
+            color: var(--text-main) !important;
+            transform: scale(1.05) !important;
         }
 
         .pos-modal-body {
-            padding: 1.25rem;
+            padding: 1.25rem 1.4rem;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -2194,20 +2232,154 @@
             to { transform: translate(-50%, 0); opacity: 1; }
         }
 
-        /* Form Controls */
+        /* Modern iOS Form Controls & Fields */
         .pos-input {
             width: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 9px 12px;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px 14px;
             color: var(--text-main);
             font-size: 0.88rem;
+            font-weight: 500;
             outline: none;
+            transition: all 0.15s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            font-family: var(--font-main);
+            box-sizing: border-box;
         }
 
         .pos-input:focus {
             border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+            background: var(--bg-input);
+        }
+
+        .pos-input:disabled {
+            background: var(--bg-subtle) !important;
+            border-color: var(--border-color-light) !important;
+            color: var(--text-muted) !important;
+            cursor: not-allowed;
+            opacity: 0.85;
+        }
+
+        .pos-input::placeholder {
+            color: var(--text-subtle);
+            opacity: 0.8;
+        }
+
+        .pos-field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .pos-field-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pos-field-hint {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        /* Profile Modal iOS Extensions */
+        .pos-profile-status-bar {
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .pos-profile-tabs {
+            display: flex;
+            background: var(--bg-subtle);
+            padding: 3px;
+            border-radius: 12px;
+            gap: 3px;
+            border: 1px solid var(--border-color);
+        }
+
+        .pos-profile-tab-btn {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            padding: 7px 10px;
+            border-radius: 9px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.76rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .pos-profile-tab-btn:hover {
+            color: var(--text-main);
+        }
+
+        .pos-profile-tab-btn.active {
+            background: var(--bg-card);
+            color: var(--text-main);
+            font-weight: 700;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        .pos-read-only-box {
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 9px 12px;
+            font-size: 0.84rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 42px;
+            box-sizing: border-box;
+        }
+
+        .btn-profile-save {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 10px 22px;
+            border-radius: 12px;
+            background: var(--primary-gradient);
+            color: #ffffff;
+            font-size: 0.86rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 14px var(--primary-glow);
+            transition: all 0.15s ease;
+        }
+
+        .btn-profile-save:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px var(--primary-glow);
+        }
+
+        .btn-profile-save:active {
+            transform: scale(0.98);
         }
 
         /* Responsive Breakpoints & Mobile Navigation */
@@ -4446,176 +4618,196 @@
         <div class="pos-modal-overlay" x-show="showEmployeeProfileModal" x-cloak>
             <template x-if="showEmployeeProfileModal">
             <div class="pos-modal-card" style="max-width: 540px; max-height: 90vh; overflow-y: auto;">
-                <div class="pos-modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <div class="pos-user-avatar" style="width: 44px; height: 44px; font-size: 1.15rem;">
+                <div class="pos-modal-header">
+                    <div style="display: flex; align-items: center; gap: 0.85rem;">
+                        <div class="pos-user-avatar" style="width: 48px; height: 48px; font-size: 1.25rem; border-radius: 14px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);">
                             <template x-if="currentUser.avatar_url">
-                                <img :src="currentUser.avatar_url" style="width: 100%; height: 100%; object-fit: cover;">
+                                <img :src="currentUser.avatar_url" style="width: 100%; height: 100%; object-fit: cover; border-radius: 14px;">
                             </template>
                             <template x-if="!currentUser.avatar_url">
                                 <span x-text="currentUser.display_name.charAt(0).toUpperCase()"></span>
                             </template>
                         </div>
                         <div>
-                            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 800; margin: 0; color: var(--text-main);" x-text="currentUser.display_name"></h3>
-                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 2px;">
-                                <span class="badge badge-indigo" style="font-size: 0.7rem; text-transform: uppercase;" x-text="currentUser.role"></span>
-                                <span style="font-size: 0.75rem; color: var(--text-muted);" x-text="'ID: #' + (currentUser.employee_id || currentUser.id)"></span>
+                            <h3 style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 800; margin: 0; color: var(--text-main); letter-spacing: -0.01em;" x-text="currentUser.display_name"></h3>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 3px;">
+                                <span class="badge badge-indigo" style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase;" x-text="currentUser.role"></span>
+                                <span style="font-size: 0.74rem; color: var(--text-muted); font-weight: 600;" x-text="'ID: #' + (currentUser.employee_id || currentUser.id)"></span>
                             </div>
                         </div>
                     </div>
-                    <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showEmployeeProfileModal = false">
+                    <button type="button" class="pos-modal-close-btn" @click="showEmployeeProfileModal = false" aria-label="{{ __('Close') }}">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
 
-                <!-- Connectivity & Language Settings Widget -->
-                <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.65rem 0.9rem; margin-top: 0.75rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
-                    <!-- Online / Offline Status -->
-                    <div style="display: flex; align-items: center; gap: 0.6rem;">
-                        <div class="status-pill" :class="{ 'offline': !isOnline }" :title="isOnline ? '{{ __('Connected') }}' : '{{ __('Offline Mode') }}'">
-                            <span class="status-dot"></span>
-                            <span class="status-label" x-text="isOnline ? '{{ __('Online') }}' : '{{ __('Offline') }}'"></span>
+                <!-- Connectivity & Language Settings Bar -->
+                <div style="padding: 0.75rem 1.4rem 0 1.4rem;">
+                    <div class="pos-profile-status-bar">
+                        <!-- Online / Offline Status -->
+                        <div style="display: flex; align-items: center; gap: 0.65rem;">
+                            <span class="status-dot" :class="{ 'offline': !isOnline }" style="width: 10px; height: 10px; border-radius: 50%; display: inline-block; background: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);" :style="!isOnline ? 'background: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);' : ''"></span>
+                            <div>
+                                <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-main);" x-text="isOnline ? '{{ __('Online System') }}' : '{{ __('Offline Mode') }}'"></div>
+                                <div style="font-size: 0.70rem; color: var(--text-muted);" x-text="isOnline ? '{{ __('Cloud sync active') }}' : '{{ __('Local storage only') }}'"></div>
+                            </div>
+                            <template x-if="offlineQueue && offlineQueue.length > 0">
+                                <button type="button" class="pos-capsule-btn alert-sync" style="padding: 2px 8px; border-radius: 6px; font-size: 0.72rem;" @click="syncOfflineQueue()" title="{{ __('Sync Offline Data') }}">
+                                    <i class="fa-solid fa-cloud-arrow-up" :class="{ 'fa-spin': isSyncing }"></i>
+                                    <span x-text="offlineQueue.length"></span>
+                                </button>
+                            </template>
                         </div>
-                        <template x-if="offlineQueue && offlineQueue.length > 0">
-                            <button type="button" class="pos-capsule-btn alert-sync" @click="syncOfflineQueue()" title="{{ __('Sync Offline Data') }}">
-                                <i class="fa-solid fa-cloud-arrow-up" :class="{ 'fa-spin': isSyncing }"></i>
-                                <span x-text="offlineQueue.length"></span>
-                            </button>
-                        </template>
-                    </div>
 
-                    <!-- Language Switcher -->
-                    <div style="display: flex; align-items: center; gap: 0.45rem;">
-                        <span style="font-size: 0.74rem; font-weight: 600; color: var(--text-muted);">{{ __('Language') }}:</span>
-                        <div class="pos-lang-switch" title="{{ __('Language') }}">
-                            <a href="{{ route('lang.switch', 'hy') }}" class="pos-lang-btn {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">HY</a>
-                            <a href="{{ route('lang.switch', 'ru') }}" class="pos-lang-btn {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">RU</a>
-                            <a href="{{ route('lang.switch', 'en') }}" class="pos-lang-btn {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">EN</a>
+                        <!-- Language Switcher -->
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">{{ __('Language') }}:</span>
+                            <div class="pos-lang-switch">
+                                <a href="{{ route('lang.switch', 'hy') }}" class="pos-lang-btn {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">HY</a>
+                                <a href="{{ route('lang.switch', 'ru') }}" class="pos-lang-btn {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">RU</a>
+                                <a href="{{ route('lang.switch', 'en') }}" class="pos-lang-btn {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">EN</a>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Tabs: Profile Details, Change PIN, Change Password, Active Sessions -->
-                <div style="display: flex; gap: 0.35rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color); overflow-x: auto;">
-                    <button type="button" class="pos-mode-btn" :class="{ 'active': profileTab === 'info' }" @click="profileTab = 'info'" style="font-size: 0.78rem; padding: 0.35rem 0.75rem;">
-                        <i class="fa-solid fa-user"></i> {{ __('Profile') }}
-                    </button>
-                    <button type="button" class="pos-mode-btn" :class="{ 'active': profileTab === 'pin' }" @click="profileTab = 'pin'" style="font-size: 0.78rem; padding: 0.35rem 0.75rem;">
-                        <i class="fa-solid fa-key"></i> {{ __('Change PIN') }}
-                    </button>
-                    <button type="button" class="pos-mode-btn" :class="{ 'active': profileTab === 'password' }" @click="profileTab = 'password'" style="font-size: 0.78rem; padding: 0.35rem 0.75rem;">
-                        <i class="fa-solid fa-lock"></i> {{ __('Password') }}
-                    </button>
-                    <button type="button" class="pos-mode-btn" :class="{ 'active': profileTab === 'sessions' }" @click="profileTab = 'sessions'" style="font-size: 0.78rem; padding: 0.35rem 0.75rem;">
-                        <i class="fa-solid fa-shield-halved"></i> {{ __('Sessions') }}
-                    </button>
+                <div style="padding: 0.75rem 1.4rem 0 1.4rem;">
+                    <div class="pos-profile-tabs">
+                        <button type="button" class="pos-profile-tab-btn" :class="{ 'active': profileTab === 'info' }" @click="profileTab = 'info'">
+                            <i class="fa-solid fa-user"></i> <span>{{ __('Profile') }}</span>
+                        </button>
+                        <button type="button" class="pos-profile-tab-btn" :class="{ 'active': profileTab === 'pin' }" @click="profileTab = 'pin'">
+                            <i class="fa-solid fa-key"></i> <span>{{ __('Change PIN') }}</span>
+                        </button>
+                        <button type="button" class="pos-profile-tab-btn" :class="{ 'active': profileTab === 'password' }" @click="profileTab = 'password'">
+                            <i class="fa-solid fa-lock"></i> <span>{{ __('Password') }}</span>
+                        </button>
+                        <button type="button" class="pos-profile-tab-btn" :class="{ 'active': profileTab === 'sessions' }" @click="profileTab = 'sessions'">
+                            <i class="fa-solid fa-shield-halved"></i> <span>{{ __('Sessions') }}</span>
+                        </button>
+                    </div>
                 </div>
 
-                <div class="pos-modal-body" style="padding-top: 1rem;">
+                <div class="pos-modal-body" style="padding-top: 0.75rem;">
                     <!-- TAB 1: Profile Information -->
-                    <div x-show="profileTab === 'info'" style="display: flex; flex-direction: column; gap: 0.85rem;">
-                        <div>
-                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Full Name') }}</label>
+                    <div x-show="profileTab === 'info'" style="display: flex; flex-direction: column; gap: 0.9rem;">
+                        <div class="pos-field-group">
+                            <label class="pos-field-label">{{ __('Full Name') }}</label>
                             <input type="text" class="pos-input" x-model="profileName" autocomplete="off" data-lpignore="true">
                         </div>
-                        <div>
-                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Display / Callout Name') }}</label>
+                        <div class="pos-field-group">
+                            <label class="pos-field-label">
+                                <span>{{ __('Display / Callout Name') }}</span>
+                                <span class="pos-field-hint">({{ __('receipts & display') }})</span>
+                            </label>
                             <input type="text" class="pos-input" x-model="profileDisplayName" placeholder="{{ __('Short name displayed on receipts') }}" autocomplete="off" data-lpignore="true">
                         </div>
-                        <div>
-                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Phone Number') }}</label>
-                            <input type="text" class="pos-input" x-model="profilePhone" placeholder="+374 99 000000" autocomplete="off" data-lpignore="true">
+                        <div class="pos-field-group">
+                            <label class="pos-field-label">{{ __('Phone Number') }}</label>
+                            <input type="tel" class="pos-input" x-model="profilePhone" placeholder="+374 99 000000" autocomplete="off" data-lpignore="true">
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-                            <div>
-                                <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Assigned Role') }}</label>
-                                <input type="text" class="pos-input" :value="currentUser.role" disabled style="opacity: 0.6; cursor: not-allowed;">
+                            <div class="pos-field-group">
+                                <label class="pos-field-label">{{ __('Assigned Role') }}</label>
+                                <div class="pos-read-only-box">
+                                    <i class="fa-solid fa-id-badge" style="color: var(--primary);"></i>
+                                    <span x-text="currentUser.role"></span>
+                                </div>
                             </div>
-                            <div>
-                                <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Email Address') }}</label>
-                                <input type="text" class="pos-input" :value="currentUser.email" disabled style="opacity: 0.6; cursor: not-allowed;">
+                            <div class="pos-field-group">
+                                <label class="pos-field-label">{{ __('Email Address') }}</label>
+                                <div class="pos-read-only-box" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    <i class="fa-solid fa-envelope" style="color: var(--primary);"></i>
+                                    <span x-text="currentUser.email"></span>
+                                </div>
                             </div>
                         </div>
-                        <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
-                            <button type="button" class="btn btn-primary" :disabled="isUpdatingProfile" @click="updateEmployeeProfile()">
-                                <i class="fa-solid fa-floppy-disk"></i> {{ __('Save Details') }}
+                        <div style="display: flex; justify-content: flex-end; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
+                            <button type="button" class="btn-profile-save" :disabled="isUpdatingProfile" @click="updateEmployeeProfile()">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                <span>{{ __('Save Details') }}</span>
                             </button>
                         </div>
                     </div>
 
                     <!-- TAB 2: Set / Change PIN -->
-                    <form x-show="profileTab === 'pin'" @submit.prevent="updateEmployeePin()" autocomplete="off" style="display: flex; flex-direction: column; gap: 0.85rem;" x-cloak>
-                        <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.75rem; font-size: 0.82rem; color: var(--text-muted); line-height: 1.45;">
-                            {{ __('PIN code must be 4–6 numeric digits. Cannot be simple sequences like 0000, 1111, or 1234.') }}
+                    <form x-show="profileTab === 'pin'" @submit.prevent="updateEmployeePin()" autocomplete="off" style="display: flex; flex-direction: column; gap: 0.9rem;" x-cloak>
+                        <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.75rem 1rem; font-size: 0.80rem; color: var(--text-muted); line-height: 1.45; display: flex; align-items: flex-start; gap: 8px;">
+                            <i class="fa-solid fa-circle-info" style="color: var(--primary); margin-top: 2px;"></i>
+                            <span>{{ __('PIN code must be 4–6 numeric digits. Cannot be simple sequences like 0000, 1111, or 1234.') }}</span>
                         </div>
 
-                        <div>
-                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Current Password or Existing PIN') }} *</label>
+                        <div class="pos-field-group">
+                            <label class="pos-field-label">{{ __('Current Password or Existing PIN') }} *</label>
                             <input type="password" name="emp_auth_current" autocomplete="current-password" class="pos-input" x-model="pinCurrentAuth" placeholder="••••••••">
                         </div>
-                        <div>
-                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('New PIN Code') }} * (4–6 {{ __('digits') }})</label>
-                            <input type="password" name="emp_pin_new" autocomplete="new-password" maxlength="6" class="pos-input" x-model="pinNew" placeholder="••••" style="letter-spacing: 0.2em; font-family: monospace; font-size: 1.15rem; text-align: center;">
+                        <div class="pos-field-group">
+                            <label class="pos-field-label">{{ __('New PIN Code') }} * <span class="pos-field-hint">(4–6 {{ __('digits') }})</span></label>
+                            <input type="password" name="emp_pin_new" autocomplete="new-password" maxlength="6" class="pos-input" x-model="pinNew" placeholder="••••" style="letter-spacing: 0.25em; font-family: monospace; font-size: 1.15rem; text-align: center;">
                         </div>
-                        <div>
-                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Confirm New PIN') }} *</label>
-                            <input type="password" name="emp_pin_confirm" autocomplete="new-password" maxlength="6" class="pos-input" x-model="pinConfirm" placeholder="••••" style="letter-spacing: 0.2em; font-family: monospace; font-size: 1.15rem; text-align: center;">
+                        <div class="pos-field-group">
+                            <label class="pos-field-label">{{ __('Confirm New PIN') }} *</label>
+                            <input type="password" name="emp_pin_confirm" autocomplete="new-password" maxlength="6" class="pos-input" x-model="pinConfirm" placeholder="••••" style="letter-spacing: 0.25em; font-family: monospace; font-size: 1.15rem; text-align: center;">
                         </div>
 
                         <!-- Optional Email Verification Code -->
-                        <div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                <label style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">{{ __('Email Verification Code') }} ({{ __('Optional') }})</label>
-                                <button type="button" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.2rem 0.5rem; border-radius: 6px;" @click="sendEmployeePinCode()">
-                                    <i class="fa-solid fa-paper-plane" style="color: #f59e0b;"></i> <span x-text="pinCountdown > 0 ? 'Wait ' + pinCountdown + 's' : '{{ __('Send Code') }}'">{{ __('Send Code') }}</span>
+                        <div class="pos-field-group">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                                <label class="pos-field-label" style="margin: 0;">{{ __('Email Verification Code') }} <span class="pos-field-hint">({{ __('Optional') }})</span></label>
+                                <button type="button" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.25rem 0.6rem; border-radius: 8px;" @click="sendEmployeePinCode()">
+                                    <i class="fa-solid fa-paper-plane" style="color: var(--primary);"></i> <span x-text="pinCountdown > 0 ? 'Wait ' + pinCountdown + 's' : '{{ __('Send Code') }}'">{{ __('Send Code') }}</span>
                                 </button>
                             </div>
                             <input type="text" name="emp_pin_code" autocomplete="one-time-code" class="pos-input" x-model="pinEmailCode" placeholder="6-digit code">
                         </div>
 
-                        <div x-show="pinError" style="color: #ef4444; font-size: 0.8rem; font-weight: 600;" x-text="pinError"></div>
+                        <div x-show="pinError" style="color: var(--danger); font-size: 0.8rem; font-weight: 600;" x-text="pinError"></div>
 
-                        <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
-                            <button type="submit" class="btn btn-primary" :disabled="isUpdatingPin">
-                                <i class="fa-solid fa-shield-check"></i> {{ __('Save PIN Code') }}
+                        <div style="display: flex; justify-content: flex-end; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
+                            <button type="submit" class="btn-profile-save" :disabled="isUpdatingPin">
+                                <i class="fa-solid fa-shield-check"></i>
+                                <span>{{ __('Save PIN Code') }}</span>
                             </button>
                         </div>
                     </form>
 
                     <!-- TAB 3: Change Password -->
-                    <form x-show="profileTab === 'password'" @submit.prevent="updateEmployeePassword()" autocomplete="off" style="display: flex; flex-direction: column; gap: 0.85rem;" x-cloak>
-                        <div>
-                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Current Password') }} *</label>
+                    <form x-show="profileTab === 'password'" @submit.prevent="updateEmployeePassword()" autocomplete="off" style="display: flex; flex-direction: column; gap: 0.9rem;" x-cloak>
+                        <div class="pos-field-group">
+                            <label class="pos-field-label">{{ __('Current Password') }} *</label>
                             <input type="password" name="emp_pwd_current" autocomplete="current-password" class="pos-input" x-model="pwdCurrent" placeholder="••••••••">
                         </div>
-                        <div>
-                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('New Password') }} * ({{ __('minimum 6 characters') }})</label>
+                        <div class="pos-field-group">
+                            <label class="pos-field-label">{{ __('New Password') }} * <span class="pos-field-hint">({{ __('minimum 6 characters') }})</span></label>
                             <input type="password" name="emp_pwd_new" autocomplete="new-password" class="pos-input" x-model="pwdNew" placeholder="••••••••">
                         </div>
-                        <div>
-                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Confirm New Password') }} *</label>
+                        <div class="pos-field-group">
+                            <label class="pos-field-label">{{ __('Confirm New Password') }} *</label>
                             <input type="password" name="emp_pwd_confirm" autocomplete="new-password" class="pos-input" x-model="pwdConfirm" placeholder="••••••••">
                         </div>
-                        <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
-                            <button type="submit" class="btn btn-primary" :disabled="isUpdatingPassword">
-                                <i class="fa-solid fa-key"></i> {{ __('Update Password') }}
+                        <div style="display: flex; justify-content: flex-end; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
+                            <button type="submit" class="btn-profile-save" :disabled="isUpdatingPassword">
+                                <i class="fa-solid fa-key"></i>
+                                <span>{{ __('Update Password') }}</span>
                             </button>
                         </div>
                     </form>
 
                     <!-- TAB 4: Active Sessions & Logout Other Devices -->
                     <form x-show="profileTab === 'sessions'" @submit.prevent="logoutOtherSessions()" autocomplete="off" style="display: flex; flex-direction: column; gap: 1rem;" x-cloak>
-                        <p style="font-size: 0.84rem; color: var(--text-muted); margin: 0; line-height: 1.45;">
-                            {{ __('Sign out from all other active browser and POS terminal sessions. Requires current account password.') }}
-                        </p>
-                        <div>
-                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Enter Current Password to Confirm') }} *</label>
+                        <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.85rem 1rem; font-size: 0.82rem; color: var(--text-muted); line-height: 1.45; display: flex; align-items: flex-start; gap: 8px;">
+                            <i class="fa-solid fa-shield-halved" style="color: var(--primary); margin-top: 2px;"></i>
+                            <span>{{ __('Sign out from all other active browser and POS terminal sessions. Requires current account password.') }}</span>
+                        </div>
+                        <div class="pos-field-group">
+                            <label class="pos-field-label">{{ __('Enter Current Password to Confirm') }} *</label>
                             <input type="password" name="emp_logout_pwd" autocomplete="current-password" class="pos-input" x-model="logoutDevicesPwd" placeholder="••••••••">
                         </div>
-                        <div style="display: flex; justify-content: flex-end;">
-                            <button type="submit" class="btn btn-secondary" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" :disabled="isLoggingOutDevices">
-                                <i class="fa-solid fa-right-from-bracket"></i> {{ __('Log Out All Other Devices') }}
+                        <div style="display: flex; justify-content: flex-end; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
+                            <button type="submit" class="btn btn-secondary" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3); font-weight: 700; border-radius: 12px; padding: 10px 18px;" :disabled="isLoggingOutDevices">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                                <span>{{ __('Log Out All Other Devices') }}</span>
                             </button>
                         </div>
                     </form>
