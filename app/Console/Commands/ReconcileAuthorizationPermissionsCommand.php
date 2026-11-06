@@ -76,4 +76,3 @@ class ReconcileAuthorizationPermissionsCommand extends Command
         return self::SUCCESS;
     }
 }
-

@@ -414,4 +414,23 @@ class EnterpriseSidebarAndSettingsRefactoringTest extends TestCase
         $this->assertNotEquals('Hacked Vendor Name', $this->vendor->name);
         $this->assertEquals('Enterprise Bistro', $this->vendor->name);
     }
+
+    public function test_support_window_is_located_in_header_navbar_and_not_pinned_in_sidebar(): void
+    {
+        $response = $this->actingAs($this->owner)->get(route('admin.dashboard'));
+        $response->assertStatus(200);
+
+        // Help & Support is present in header navbar dropdown
+        $response->assertSee('support-dropdown-wrapper', false);
+        $response->assertSee('support-dropdown-menu', false);
+        $response->assertSee('fa-headset', false);
+        $response->assertSee(route('admin.dashboard'), false);
+
+        // Sidebar nav is cleanly self-contained and does not pin the widget below nav
+        $content = $response->getContent();
+        $this->assertStringContainsString('</nav>', $content);
+        $afterNav = substr($content, strpos($content, '</nav>') + strlen('</nav>'));
+        $sidebarEnd = substr($afterNav, 0, strpos($afterNav, '</aside>'));
+        $this->assertStringNotContainsString('sidebar-widget', $sidebarEnd);
+    }
 }

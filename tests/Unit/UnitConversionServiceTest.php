@@ -148,4 +148,3 @@ class UnitConversionServiceTest extends TestCase
         $this->service->convert(5, $this->kg, $this->piece);
     }
 }
-

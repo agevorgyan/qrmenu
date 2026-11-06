@@ -96,6 +96,14 @@
             </a>
         </div>
 
+        @if(!Auth::user()?->isSuperAdmin())
+            <!-- Quick Support Link for Mobile Drawer -->
+            <a href="mailto:{{ \App\Models\SystemSetting::get('contact_email') ?: 'support@elab.am' }}" class="sidebar-quick-action-btn" style="width: 100%; justify-content: center;" title="{{ __('Help & Support') }}">
+                <i class="fa-solid fa-headset" style="color: var(--primary); font-size: 0.95rem;"></i>
+                <span>{{ __('Help & Support') }}</span>
+            </a>
+        @endif
+
         <!-- Language Switcher Segmented Pills -->
         <div class="sidebar-lang-selector">
             <a href="{{ route('lang.switch', 'hy') }}" class="sidebar-lang-pill {{ app()->getLocale() === 'hy' ? 'active' : '' }}">
@@ -165,6 +173,18 @@
             <a href="{{ route('superadmin.emails.settings.index') }}" class="nav-item {{ request()->routeIs('superadmin.emails.settings.*') ? 'active' : '' }}">
                 <i class="fa-solid fa-gear" style="color: #94a3b8;"></i> <span>{{ __('Email Settings') }}</span>
             </a>
+
+            <!-- SuperAdmin Core Platform System Status Card -->
+            <div class="sidebar-widget" style="text-align: left; padding: 0.85rem 1rem; margin: 1.25rem 0.35rem 0.5rem;">
+                <div style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.4rem;">
+                    <i class="fa-solid fa-server" style="color: #6366f1;"></i> Core Platform
+                </div>
+                <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-main);">Laravel 13 & Reverb</div>
+                <div style="font-size: 0.72rem; color: #10b981; margin-top: 0.25rem; display: flex; align-items: center; gap: 0.35rem;">
+                    <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span>
+                    <span>WebSocket: Port 8080 Active</span>
+                </div>
+            </div>
         @else
             @php 
                 $v = Auth::user()?->vendor;
@@ -781,29 +801,4 @@
             @endif
         @endif
     </nav>
-
-    <!-- Sidebar Help & Support Desk Widget -->
-    @if(Auth::user()?->isSuperAdmin())
-        <div class="sidebar-widget" style="text-align: left; padding: 0.85rem 1rem; margin: 0.75rem 0.85rem 1.25rem;">
-            <div style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.4rem;">
-                <i class="fa-solid fa-server" style="color: #6366f1;"></i> Core Platform
-            </div>
-            <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-main);">Laravel 13 & Reverb</div>
-            <div style="font-size: 0.72rem; color: #10b981; margin-top: 0.25rem; display: flex; align-items: center; gap: 0.35rem;">
-                <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span>
-                <span>WebSocket: Port 8080 Active</span>
-            </div>
-        </div>
-    @else
-        <div class="sidebar-widget">
-            <div style="font-weight: 700; font-size: 0.8rem; color: var(--text-main); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.45rem;">
-                <i class="fa-solid fa-headset" style="color: var(--primary);"></i>
-                <span>{{ __('Help & Support') }}</span>
-            </div>
-            <p>{{ __('Need help or custom menu translation?') }}</p>
-            <a href="mailto:{{ \App\Models\SystemSetting::get('contact_email') ?: 'support@elab.am' }}" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.75rem; border-radius: 8px; width: 100%; text-decoration: none; justify-content: center;">
-                {{ __('Get Support') }}
-            </a>
-        </div>
-    @endif
 </aside>

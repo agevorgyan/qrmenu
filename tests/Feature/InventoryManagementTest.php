@@ -10,7 +10,9 @@ use App\Models\Unit;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Models\Warehouse;
+use App\Services\IngredientImportService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class InventoryManagementTest extends TestCase
@@ -320,5 +322,131 @@ class InventoryManagementTest extends TestCase
         $response->assertOk();
         $response->assertSeeText('Low Stock Sugar');
         $response->assertDontSeeText('Plentiful Flour');
+    }
+
+    public function test_can_download_ingredient_import_template_xlsx(): void
+    {
+        $response = $this->actingAs($this->ownerA)
+            ->get(route('admin.inventory.ingredients.template', ['format' => 'xlsx']));
+
+        $response->assertOk();
+        $this->assertEquals(
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            $response->headers->get('Content-Type')
+        );
+        $this->assertStringContainsString('ingredients_import_template.xlsx', (string) $response->headers->get('Content-Disposition'));
+    }
+
+    public function test_can_download_ingredient_import_template_csv(): void
+    {
+        $response = $this->actingAs($this->ownerA)
+            ->get(route('admin.inventory.ingredients.template', ['format' => 'csv']));
+
+        $response->assertOk();
+        $this->assertStringContainsString('text/csv', (string) $response->headers->get('Content-Type'));
+        $this->assertStringContainsString('ingredients_import_template.csv', (string) $response->headers->get('Content-Disposition'));
+    }
+
+    public function test_can_import_ingredients_from_xlsx_file(): void
+    {
+        $service = app(IngredientImportService::class);
+        $tpl = $service->generateTemplate('xlsx');
+
+        $tmpFile = tempnam(sys_get_temp_dir(), 'test_import_').'.xlsx';
+        file_put_contents($tmpFile, $tpl['content']);
+
+        $uploadedFile = new UploadedFile(
+            $tmpFile,
+            'ingredients_test.xlsx',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            null,
+            true
+        );
+
+        $response = $this->actingAs($this->ownerA)
+            ->post(route('admin.inventory.ingredients.import'), [
+                'file' => $uploadedFile,
+                'update_existing' => 1,
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('ingredients', [
+            'vendor_id' => $this->vendorA->id,
+            'sku' => 'FLOUR-001',
+            'name' => 'Ցորենի ալյուր բարձր տեսակի',
+            'unit_id' => $this->kg->id,
+            'current_cost' => 450,
+        ]);
+
+        $this->assertDatabaseHas('ingredients', [
+            'vendor_id' => $this->vendorA->id,
+            'sku' => 'BUTTER-01',
+            'name' => 'Կարագ 82.5%',
+            'current_cost' => 4200,
+        ]);
+
+        $this->assertDatabaseHas('ingredient_categories', [
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Հացահատիկ և ալյուր',
+        ]);
+
+        @unlink($tmpFile);
+    }
+
+    public function test_can_import_and_update_existing_ingredient_by_sku(): void
+    {
+        $existing = Ingredient::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Old Butter Name',
+            'sku' => 'BUTTER-01',
+            'type' => Ingredient::TYPE_RAW_MATERIAL,
+            'unit_id' => $this->kg->id,
+            'current_cost' => 2000,
+            'min_stock' => 1,
+            'is_active' => true,
+        ]);
+
+        $csvContent = "\xEF\xBB\xBF"
+            ."Name,SKU,Type,Category,Unit,Cost,Min Stock\n"
+            ."Updated Butter 82.5%,BUTTER-01,raw_material,Dairy,kg,4500,10\n";
+
+        $tmpFile = tempnam(sys_get_temp_dir(), 'test_csv_').'.csv';
+        file_put_contents($tmpFile, $csvContent);
+
+        $uploadedFile = new UploadedFile(
+            $tmpFile,
+            'ingredients.csv',
+            'text/csv',
+            null,
+            true
+        );
+
+        $response = $this->actingAs($this->ownerA)
+            ->post(route('admin.inventory.ingredients.import'), [
+                'file' => $uploadedFile,
+                'update_existing' => 1,
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $existing->refresh();
+        $this->assertEquals('Updated Butter 82.5%', $existing->name);
+        $this->assertEquals(4500.0, (float) $existing->current_cost);
+        $this->assertEquals(10.0, (float) $existing->min_stock);
+
+        @unlink($tmpFile);
+    }
+
+    public function test_import_validates_file_presence_and_format(): void
+    {
+        $response = $this->actingAs($this->ownerA)
+            ->post(route('admin.inventory.ingredients.import'), [
+                'file' => '',
+            ]);
+
+        $response->assertSessionHasErrors(['file']);
     }
 }

@@ -509,6 +509,8 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', E
         Route::get('/dashboard', [InventoryStockController::class, 'dashboard'])->name('dashboard');
 
         // Ingredients Catalog
+        Route::get('/ingredients/template', [IngredientController::class, 'template'])->name('ingredients.template');
+        Route::post('/ingredients/import', [IngredientController::class, 'import'])->name('ingredients.import');
         Route::get('/ingredients/export', [IngredientController::class, 'export'])->name('ingredients.export');
         Route::resource('ingredients', IngredientController::class);
 

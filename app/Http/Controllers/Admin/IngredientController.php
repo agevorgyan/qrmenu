@@ -10,9 +10,11 @@ use App\Models\Ingredient;
 use App\Models\IngredientCategory;
 use App\Models\Unit;
 use App\Security\Permission;
+use App\Services\IngredientImportService;
 use App\Services\StorageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -21,7 +23,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class IngredientController extends Controller
 {
     public function __construct(
-        protected StorageService $storageService
+        protected StorageService $storageService,
+        protected IngredientImportService $importService
     ) {}
 
     /**
@@ -204,6 +207,66 @@ class IngredientController extends Controller
 
             fclose($handle);
         }, 200, $headers);
+    }
+
+    /**
+     * Download an Excel or CSV template for ingredient import.
+     */
+    public function template(Request $request): Response
+    {
+        $this->authorizePermission(Permission::INGREDIENTS_VIEW);
+
+        $format = $request->query('format', 'xlsx');
+        $tpl = $this->importService->generateTemplate($format);
+
+        return response($tpl['content'], 200, [
+            'Content-Type' => $tpl['mime'],
+            'Content-Disposition' => 'attachment; filename="'.$tpl['filename'].'"',
+        ]);
+    }
+
+    /**
+     * Import ingredients from Excel or CSV file.
+     */
+    public function import(Request $request): RedirectResponse
+    {
+        $this->authorizePermission(Permission::INGREDIENTS_CREATE);
+
+        $request->validate([
+            'file' => ['required', 'file', 'max:10240', 'mimes:xlsx,csv,txt'],
+            'update_existing' => ['nullable', 'boolean'],
+        ], [
+            'file.required' => __('Please select a file to import.'),
+            'file.mimes' => __('The import file must be an Excel (.xlsx) or CSV (.csv) file.'),
+            'file.max' => __('The import file must not exceed 10MB.'),
+        ]);
+
+        $vendorId = Auth::user()->vendor_id;
+        $updateExisting = $request->boolean('update_existing', true);
+
+        $result = $this->importService->import(
+            file: $request->file('file'),
+            vendorId: $vendorId,
+            updateExisting: $updateExisting
+        );
+
+        if (! $result['success'] && empty($result['created']) && empty($result['updated'])) {
+            $errorMsg = ! empty($result['errors']) ? implode(' ', $result['errors']) : __('Failed to import ingredients from file.');
+
+            return back()->with('error', $errorMsg);
+        }
+
+        $message = __('Successfully processed file: :created created, :updated updated, :skipped skipped.', [
+            'created' => $result['created'],
+            'updated' => $result['updated'],
+            'skipped' => $result['skipped'],
+        ]);
+
+        if (! empty($result['errors'])) {
+            return back()->with('warning', $message.' '.__('Warnings:').' '.implode(' ', array_slice($result['errors'], 0, 3)));
+        }
+
+        return back()->with('success', $message);
     }
 
     /**

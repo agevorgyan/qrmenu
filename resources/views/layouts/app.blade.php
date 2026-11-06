@@ -297,7 +297,7 @@
         }
 
         .sidebar-menu {
-            padding: 1rem 0.5rem;
+            padding: 1rem 0.5rem 2.5rem;
             flex: 1;
             overflow-y: auto;
             overflow-x: hidden;
@@ -1061,6 +1061,80 @@
                     <i class="fa-solid" :class="currentTheme === 'dark' ? 'fa-sun' : 'fa-moon'" style="color: var(--primary);"></i>
                     <span class="hide-on-mobile" x-text="currentTheme === 'dark' ? '{{ __('Light') }}' : '{{ __('Dark') }}'"></span>
                 </button>
+
+                @if(!Auth::user()?->isSuperAdmin())
+                    <!-- Help & Support Dropdown Window -->
+                    @php
+                        $supportEmail = \App\Models\SystemSetting::get('contact_email') ?: 'support@elab.am';
+                        $supportPhone = \App\Models\SystemSetting::get('contact_phone');
+                        $supportWhatsapp = \App\Models\SystemSetting::get('contact_whatsapp');
+                        $supportTelegram = \App\Models\SystemSetting::get('contact_telegram');
+                    @endphp
+                    <div class="support-dropdown-wrapper hide-on-mobile" x-data="{ openSupport: false }" @click.outside="openSupport = false" style="position: relative;">
+                        <button type="button" @click="openSupport = !openSupport" class="theme-toggle-btn" style="border-radius: 10px; gap: 0.45rem; padding: 0.4rem 0.75rem;" title="{{ __('Help & Support') }}">
+                            <i class="fa-solid fa-headset" style="color: var(--primary);"></i>
+                            <span class="hide-on-mobile">{{ __('Support') }}</span>
+                            <i class="fa-solid fa-chevron-down" style="font-size: 0.65rem; opacity: 0.7; transition: transform 0.2s;" :style="openSupport ? 'transform: rotate(180deg)' : ''"></i>
+                        </button>
+                        <div x-show="openSupport" 
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 transform scale-95 -translate-y-1"
+                             x-transition:enter-end="opacity-100 transform scale-100 translate-y-0"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100 transform scale-100 translate-y-0"
+                             x-transition:leave-end="opacity-0 transform scale-95 -translate-y-1"
+                             class="support-dropdown-menu" 
+                             style="display: none; position: absolute; right: 0; top: calc(100% + 8px); z-index: 1000; width: 310px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; box-shadow: 0 12px 36px rgba(0,0,0,0.18); padding: 1.15rem;">
+                            
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem;">
+                                <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                                    <div style="width: 30px; height: 30px; border-radius: 8px; background: var(--primary-glow); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <i class="fa-solid fa-headset" style="color: var(--primary); font-size: 0.9rem;"></i>
+                                    </div>
+                                    <span>{{ __('Help & Support') }}</span>
+                                </div>
+                                <button type="button" @click="openSupport = false" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.85rem; padding: 0.25rem; display: flex; align-items: center;" aria-label="{{ __('Close') }}">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.9rem; line-height: 1.45;">
+                                {{ __('Need help or custom menu translation?') }}
+                            </p>
+
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <a href="mailto:{{ $supportEmail }}" class="btn btn-primary" style="font-size: 0.82rem; padding: 0.55rem 0.85rem; border-radius: 10px; text-decoration: none; justify-content: center; display: flex; align-items: center; gap: 0.5rem; width: 100%; font-weight: 600;">
+                                    <i class="fa-solid fa-envelope"></i>
+                                    <span>{{ __('Get Support') }}</span>
+                                </a>
+
+                                @if($supportPhone)
+                                    <a href="tel:{{ $supportPhone }}" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.5rem 0.85rem; border-radius: 10px; text-decoration: none; justify-content: center; display: flex; align-items: center; gap: 0.5rem; width: 100%; font-weight: 600;">
+                                        <i class="fa-solid fa-phone" style="color: #10b981;"></i>
+                                        <span>{{ $supportPhone }}</span>
+                                    </a>
+                                @endif
+
+                                @if($supportWhatsapp || $supportTelegram)
+                                    <div style="display: grid; grid-template-columns: {{ ($supportWhatsapp && $supportTelegram) ? '1fr 1fr' : '1fr' }}; gap: 0.5rem; margin-top: 0.2rem;">
+                                        @if($supportWhatsapp)
+                                            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $supportWhatsapp) }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.45rem 0.6rem; border-radius: 8px; text-decoration: none; justify-content: center; display: flex; align-items: center; gap: 0.4rem; color: #25d366; font-weight: 600;">
+                                                <i class="fa-brands fa-whatsapp"></i>
+                                                <span>WhatsApp</span>
+                                            </a>
+                                        @endif
+                                        @if($supportTelegram)
+                                            <a href="https://t.me/{{ ltrim($supportTelegram, '@') }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.45rem 0.6rem; border-radius: 8px; text-decoration: none; justify-content: center; display: flex; align-items: center; gap: 0.4rem; color: #229ed9; font-weight: 600;">
+                                                <i class="fa-brands fa-telegram"></i>
+                                                <span>Telegram</span>
+                                            </a>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endif
 
                 <!-- User Profile & 2FA Button -->
                 <a href="{{ Auth::user()?->isSuperAdmin() ? route('superadmin.settings.index') . '#security-section' : route('admin.profile') }}" class="theme-toggle-btn hide-on-mobile" style="text-decoration: none; border-radius: 10px;" title="{{ __('Security & 2FA') }}">
