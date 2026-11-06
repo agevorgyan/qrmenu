@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="dark">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -10,8 +10,20 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0a0e1a">
+    <meta name="theme-color" content="#ffffff" id="metaThemeColor">
     <script>
+        // Apply saved theme (defaulting to light) immediately to prevent FOUC
+        (function() {
+            try {
+                const savedTheme = localStorage.getItem('pos_theme') || 'light';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                const meta = document.getElementById('metaThemeColor');
+                if (meta) {
+                    meta.setAttribute('content', savedTheme === 'dark' ? '#0a0e1a' : '#ffffff');
+                }
+            } catch(e) {}
+        })();
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/pos-sw.js').catch(() => {});
@@ -29,13 +41,48 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer">
 
     <style>
-        :root {
+        :root, [data-theme="light"] {
+            --bg-body: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-card: #ffffff;
+            --bg-card-hover: #f1f5f9;
+            --bg-header: rgba(255, 255, 255, 0.95);
+            --bg-subtle: #f1f5f9;
+            --bg-input: #ffffff;
+            --border-color: #e2e8f0;
+            --border-color-light: #f1f5f9;
+            --border-color-strong: #cbd5e1;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --text-subtle: #94a3b8;
+            --primary: #f59e0b;
+            --primary-hover: #d97706;
+            --primary-glow: rgba(245, 158, 11, 0.2);
+            --primary-gradient: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+            --card-shadow-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+            --modal-overlay: rgba(15, 23, 42, 0.55);
+            --modal-bg: #ffffff;
+            --lock-bg: rgba(248, 250, 252, 0.98);
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-display: 'Outfit', sans-serif;
+        }
+
+        [data-theme="dark"] {
             --bg-body: #0a0e1a;
+            --bg-surface: #12192c;
             --bg-card: #12192c;
             --bg-card-hover: #18223c;
             --bg-header: rgba(14, 20, 36, 0.95);
+            --bg-subtle: rgba(255, 255, 255, 0.04);
+            --bg-input: rgba(0, 0, 0, 0.4);
             --border-color: rgba(255, 255, 255, 0.08);
             --border-color-light: rgba(255, 255, 255, 0.04);
+            --border-color-strong: rgba(255, 255, 255, 0.15);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --text-subtle: #64748b;
@@ -43,12 +90,11 @@
             --primary-hover: #d97706;
             --primary-glow: rgba(245, 158, 11, 0.25);
             --primary-gradient: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --info: #3b82f6;
-            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            --font-display: 'Outfit', sans-serif;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            --card-shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.45);
+            --modal-overlay: rgba(5, 8, 15, 0.85);
+            --modal-bg: #12192c;
+            --lock-bg: rgba(10, 14, 26, 0.96);
         }
 
         * {
@@ -124,21 +170,26 @@
         }
 
         .pos-branch-select {
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--bg-subtle);
             border: 1px solid var(--border-color);
-            color: var(--text-muted);
+            color: var(--text-main);
             font-size: 0.72rem;
-            padding: 2px 6px;
+            padding: 3px 8px;
             border-radius: 6px;
             cursor: pointer;
             outline: none;
+            transition: all 0.15s ease;
+        }
+
+        .pos-branch-select:focus {
+            border-color: var(--primary);
         }
 
         /* Mode Switcher Tabs */
         .pos-mode-switcher {
             display: flex;
             align-items: center;
-            background: rgba(0, 0, 0, 0.35);
+            background: var(--bg-subtle);
             padding: 3px;
             border-radius: 10px;
             border: 1px solid var(--border-color);
@@ -159,11 +210,12 @@
             cursor: pointer;
             transition: all 0.15s ease;
             min-height: 36px;
+            touch-action: manipulation;
         }
 
         .pos-mode-btn:hover {
             color: var(--text-main);
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--bg-card-hover);
         }
 
         .pos-mode-btn.active {
@@ -176,7 +228,7 @@
         .pos-actions-group {
             display: flex;
             align-items: center;
-            gap: 0.6rem;
+            gap: 0.5rem;
         }
 
         .status-pill {
@@ -188,14 +240,24 @@
             padding: 5px 9px;
             border-radius: 9999px;
             background: rgba(16, 185, 129, 0.12);
-            color: #34d399;
+            color: #10b981;
             border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+
+        [data-theme="light"] .status-pill {
+            color: #059669;
+            background: rgba(16, 185, 129, 0.1);
         }
 
         .status-pill.offline {
             background: rgba(239, 68, 68, 0.12);
             color: #f87171;
             border-color: rgba(239, 68, 68, 0.25);
+        }
+
+        [data-theme="light"] .status-pill.offline {
+            color: #dc2626;
+            background: rgba(239, 68, 68, 0.1);
         }
 
         .status-dot {
@@ -225,12 +287,30 @@
             font-size: 0.95rem;
             cursor: pointer;
             transition: all 0.15s ease;
+            touch-action: manipulation;
+            box-shadow: var(--card-shadow);
         }
 
         .pos-tool-btn:hover {
             background: var(--bg-card-hover);
             color: var(--text-main);
-            border-color: rgba(255, 255, 255, 0.15);
+            border-color: var(--border-color-strong);
+        }
+
+        .pos-tool-btn:active {
+            transform: scale(0.96);
+        }
+
+        .theme-toggle-btn {
+            cursor: pointer;
+        }
+
+        .theme-toggle-btn i {
+            transition: transform 0.2s ease;
+        }
+
+        .theme-toggle-btn:hover i {
+            transform: rotate(20deg);
         }
 
         .pos-user-badge {
@@ -243,11 +323,13 @@
             border: 1px solid var(--border-color);
             cursor: pointer;
             transition: all 0.15s ease;
+            box-shadow: var(--card-shadow);
+            touch-action: manipulation;
         }
 
         .pos-user-badge:hover {
             background: var(--bg-card-hover);
-            border-color: rgba(255, 255, 255, 0.15);
+            border-color: var(--border-color-strong);
         }
 
         .pos-user-avatar {
@@ -303,6 +385,19 @@
             overflow: hidden;
         }
 
+        /* Subtabs bar */
+        .pos-subtabs-bar {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.45rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-card);
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+
         /* Left/Catalog Column */
         .catalog-pane {
             flex: 1;
@@ -316,83 +411,215 @@
 
         /* Search & Context Header */
         .catalog-top-bar {
-            padding: 0.65rem 1rem;
+            padding: 0.55rem 0.85rem;
             background: var(--bg-card);
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.6rem;
             flex-shrink: 0;
+            flex-wrap: wrap;
         }
 
         .search-box-wrap {
             position: relative;
             flex: 1;
+            min-width: 160px;
             display: flex;
             align-items: center;
         }
 
-        .search-box-wrap i {
+        .search-box-wrap i.search-icon,
+        .search-box-wrap > i:first-child {
             position: absolute;
             left: 12px;
             color: var(--text-subtle);
-            font-size: 0.9rem;
+            font-size: 0.88rem;
+            pointer-events: none;
         }
 
         .catalog-search-input {
             width: 100%;
-            background: rgba(0, 0, 0, 0.4);
+            background: var(--bg-input);
             border: 1px solid var(--border-color);
             border-radius: 9px;
-            padding: 8px 12px 8px 34px;
+            padding: 8px 30px 8px 34px;
             color: var(--text-main);
             font-size: 0.88rem;
             outline: none;
             transition: all 0.15s ease;
+            box-shadow: var(--card-shadow);
+        }
+
+        .catalog-search-input::placeholder {
+            color: var(--text-subtle);
         }
 
         .catalog-search-input:focus {
             border-color: var(--primary);
-            background: rgba(0, 0, 0, 0.6);
+            background: var(--bg-card);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        /* Clear search button */
+        .search-clear-btn {
+            position: absolute;
+            right: 8px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--bg-subtle);
+            border: none;
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .search-clear-btn:hover {
+            color: var(--text-main);
+            background: var(--border-color-strong);
         }
 
         .table-context-chip {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 6px 12px;
+            padding: 7px 12px;
             background: rgba(245, 158, 11, 0.1);
-            border: 1px solid rgba(245, 158, 11, 0.3);
+            border: 1px solid rgba(245, 158, 11, 0.35);
             border-radius: 8px;
-            color: #fbbf24;
+            color: #d97706;
             font-weight: 700;
             font-size: 0.82rem;
             cursor: pointer;
             white-space: nowrap;
             transition: all 0.15s ease;
+            touch-action: manipulation;
+        }
+
+        [data-theme="dark"] .table-context-chip {
+            color: #fbbf24;
         }
 
         .table-context-chip:hover {
             background: rgba(245, 158, 11, 0.2);
+            border-color: var(--primary);
+        }
+
+        /* Guest counter box */
+        .pos-guest-counter {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 3px 6px;
+            height: 36px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .pos-guest-counter .guest-icon {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-right: 2px;
+        }
+
+        .pos-guest-counter .guest-btn {
+            width: 26px;
+            height: 26px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: 700;
+            touch-action: manipulation;
+        }
+
+        .pos-guest-counter .guest-btn:active {
+            background: var(--primary);
+            color: #ffffff;
+        }
+
+        .pos-guest-counter .guest-val {
+            font-size: 0.82rem;
+            font-weight: 700;
+            min-width: 18px;
+            text-align: center;
+            color: var(--text-main);
+        }
+
+        /* Layout switcher component (Grid / Compact / List) */
+        .pos-layout-switcher {
+            display: flex;
+            align-items: center;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: 9px;
+            padding: 2px;
+            gap: 2px;
+            flex-shrink: 0;
+            box-shadow: var(--card-shadow);
+        }
+
+        .layout-switch-btn {
+            width: 32px;
+            height: 30px;
+            border-radius: 7px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            touch-action: manipulation;
+        }
+
+        .layout-switch-btn:hover {
+            color: var(--text-main);
+            background: var(--bg-card-hover);
+        }
+
+        .layout-switch-btn.active {
+            background: var(--primary);
+            color: #ffffff;
+            box-shadow: 0 1px 4px var(--primary-glow);
         }
 
         /* Categories Bar */
         .categories-bar {
             display: flex;
             gap: 0.5rem;
-            padding: 0.6rem 1rem;
-            background: rgba(14, 20, 36, 0.6);
+            padding: 0.55rem 0.85rem;
+            background: var(--bg-card);
             border-bottom: 1px solid var(--border-color);
             overflow-x: auto;
             white-space: nowrap;
             flex-shrink: 0;
-            scrollbar-width: thin;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .categories-bar::-webkit-scrollbar {
+            display: none;
         }
 
         .cat-chip {
-            padding: 6px 14px;
+            padding: 7px 14px;
             border-radius: 8px;
-            background: var(--bg-card);
+            background: var(--bg-subtle);
             border: 1px solid var(--border-color);
             color: var(--text-muted);
             font-size: 0.82rem;
@@ -403,11 +630,14 @@
             gap: 0.4rem;
             transition: all 0.15s ease;
             min-height: 38px;
+            touch-action: manipulation;
+            box-shadow: var(--card-shadow);
         }
 
         .cat-chip:hover {
             color: var(--text-main);
             background: var(--bg-card-hover);
+            border-color: var(--border-color-strong);
         }
 
         .cat-chip.active {
@@ -417,36 +647,158 @@
             box-shadow: 0 2px 8px var(--primary-glow);
         }
 
-        /* Product Grid */
+        /* Product Grid Scroll & Dynamic Layouts */
         .products-grid-scroll {
             flex: 1;
             overflow-y: auto;
-            padding: 1rem;
+            padding: 0.85rem;
+            -webkit-overflow-scrolling: touch;
         }
 
         .products-grid {
+            transition: all 0.2s ease;
+        }
+
+        /* 1. Default Visual Grid */
+        .products-grid.layout-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: 0.85rem;
         }
 
+        .products-grid.layout-grid .dish-card {
+            min-height: 195px;
+            border-radius: 14px;
+        }
+
+        .products-grid.layout-grid .dish-img-wrap {
+            height: 110px;
+        }
+
+        /* 2. Compact Grid Mode (Fits 30-50% more items on smaller screens) */
+        .products-grid.layout-compact {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 0.55rem;
+        }
+
+        .products-grid.layout-compact .dish-card {
+            min-height: 140px;
+            border-radius: 10px;
+        }
+
+        .products-grid.layout-compact .dish-img-wrap {
+            height: 72px;
+        }
+
+        .products-grid.layout-compact .dish-body {
+            padding: 0.45rem 0.55rem;
+        }
+
+        .products-grid.layout-compact .dish-title {
+            font-size: 0.78rem;
+            -webkit-line-clamp: 1;
+            line-height: 1.2;
+        }
+
+        .products-grid.layout-compact .dish-price-row {
+            margin-top: 0.35rem;
+        }
+
+        .products-grid.layout-compact .dish-price {
+            font-size: 0.85rem;
+        }
+
+        .products-grid.layout-compact .dish-add-btn {
+            width: 26px;
+            height: 26px;
+            font-size: 0.72rem;
+            border-radius: 6px;
+        }
+
+        /* 3. Dense List Mode (Ultra-fast Touchscreen Cashiering) */
+        .products-grid.layout-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 0.45rem;
+        }
+
+        .products-grid.layout-list .dish-card {
+            min-height: 54px;
+            flex-direction: row;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 10px;
+        }
+
+        .products-grid.layout-list .dish-img-wrap {
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .products-grid.layout-list .dish-body {
+            padding: 0 0 0 10px;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .products-grid.layout-list .dish-info-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            flex: 1;
+            padding-right: 8px;
+        }
+
+        .products-grid.layout-list .dish-title {
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            -webkit-line-clamp: 1;
+        }
+
+        .products-grid.layout-list .dish-price-row {
+            margin-top: 0;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .products-grid.layout-list .dish-price {
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .products-grid.layout-list .dish-add-btn {
+            width: 32px;
+            height: 32px;
+            font-size: 0.8rem;
+            border-radius: 8px;
+        }
+
+        /* Dish Card Base */
         .dish-card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             cursor: pointer;
             transition: all 0.15s ease;
             position: relative;
-            min-height: 190px;
+            box-shadow: var(--card-shadow);
+            touch-action: manipulation;
         }
 
         .dish-card:hover {
-            border-color: rgba(245, 158, 11, 0.4);
+            border-color: rgba(245, 158, 11, 0.45);
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            box-shadow: var(--card-shadow-hover);
         }
 
         .dish-card:active {
@@ -454,9 +806,8 @@
         }
 
         .dish-img-wrap {
-            height: 105px;
             width: 100%;
-            background: #18223c;
+            background: var(--bg-subtle);
             position: relative;
             overflow: hidden;
         }
@@ -472,12 +823,27 @@
             transform: scale(1.05);
         }
 
+        .dish-no-img {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-subtle);
+            font-size: 1.5rem;
+            background: var(--bg-subtle);
+        }
+
         .dish-body {
             padding: 0.65rem 0.75rem;
             display: flex;
             flex-direction: column;
             flex: 1;
             justify-content: space-between;
+        }
+
+        .dish-info-group {
+            min-width: 0;
         }
 
         .dish-title {
@@ -505,13 +871,157 @@
             font-family: var(--font-display);
         }
 
+        [data-theme="light"] .dish-price {
+            color: #d97706;
+        }
+
+        .dish-add-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(245, 158, 11, 0.12);
+            color: #d97706;
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            touch-action: manipulation;
+        }
+
+        [data-theme="dark"] .dish-add-btn {
+            color: #fbbf24;
+            background: rgba(245, 158, 11, 0.15);
+            border: none;
+        }
+
+        .dish-add-btn:hover {
+            background: var(--primary);
+            color: #ffffff;
+            border-color: var(--primary);
+        }
+
+        .dish-add-btn:active {
+            transform: scale(0.92);
+        }
+
         .dish-variant-badge {
             font-size: 0.65rem;
             padding: 2px 6px;
             border-radius: 4px;
             background: rgba(245, 158, 11, 0.15);
-            color: #fbbf24;
+            color: #d97706;
             font-weight: 700;
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            backdrop-filter: blur(4px);
+        }
+
+        [data-theme="dark"] .dish-variant-badge {
+            color: #fbbf24;
+        }
+
+        /* Catalog empty state */
+        .catalog-empty-state {
+            padding: 3rem 1.5rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            color: var(--text-muted);
+            width: 100%;
+        }
+
+        .catalog-empty-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--text-subtle);
+        }
+
+        .catalog-empty-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+        }
+
+        .catalog-empty-subtitle {
+            font-size: 0.82rem;
+            max-width: 320px;
+            line-height: 1.4;
+            margin: 0;
+        }
+
+        /* Generic UI Utilities */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            padding: 0.45rem 0.95rem;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border: 1px solid transparent;
+            touch-action: manipulation;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: var(--bg-subtle);
+            border-color: var(--border-color);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-color-strong);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .badge-emerald {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+        }
+
+        .badge-indigo {
+            background: rgba(99, 102, 241, 0.15);
+            color: #6366f1;
+        }
+
+        .badge-amber {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
         }
 
         /* ---------------------------------------------------- */
@@ -1206,15 +1716,19 @@
                 flex: 1;
             }
             .products-grid {
-                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
-                gap: 0.65rem !important;
                 padding-bottom: 85px !important;
             }
-            .dish-card {
-                min-height: 175px !important;
+            .products-grid.layout-grid {
+                grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)) !important;
+                gap: 0.65rem !important;
             }
-            .dish-img-wrap {
-                height: 95px !important;
+            .products-grid.layout-compact {
+                grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)) !important;
+                gap: 0.5rem !important;
+            }
+            .products-grid.layout-list {
+                grid-template-columns: 1fr !important;
+                gap: 0.45rem !important;
             }
 
             /* Waiter Cart Drawer Bottom Sheet */
@@ -1229,8 +1743,8 @@
                 max-height: 84vh !important;
                 z-index: 100 !important;
                 border-radius: 20px 20px 0 0 !important;
-                box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.7) !important;
-                border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+                box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5) !important;
+                border-top: 1px solid var(--border-color) !important;
                 transform: translateY(100%);
                 transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
                 display: flex !important;
@@ -1475,6 +1989,15 @@
             </a>
             @endif
 
+            <!-- Theme Toggle Button (Light / Dark) -->
+            <button type="button" 
+                    class="pos-tool-btn theme-toggle-btn" 
+                    @click="toggleTheme()" 
+                    :title="posTheme === 'dark' ? '{{ __('Light Mode') }}' : '{{ __('Dark Mode') }}'"
+                    aria-label="Toggle Theme">
+                <i class="fa-solid" :class="posTheme === 'dark' ? 'fa-sun' : 'fa-moon'" :style="posTheme === 'dark' ? 'color: #f59e0b;' : 'color: #6366f1;'"></i>
+            </button>
+
             <!-- Fullscreen Toggle -->
             <button type="button" class="pos-tool-btn desktop-only-tool" @click="toggleFullscreen()" title="{{ __('Toggle Fullscreen') }}">
                 <i class="fa-solid" :class="isFullscreen ? 'fa-compress' : 'fa-expand'"></i>
@@ -1542,7 +2065,7 @@
         <!-- ========================================== -->
         <div class="pos-mode-pane" x-show="activeMode === 'waiter'" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
             <!-- Sub-tab Navigation for Waiter (Desktop & Mobile) -->
-            <div style="display: flex; gap: 0.5rem; padding: 0.45rem 1rem; border-bottom: 1px solid var(--border-color); background: rgba(255,255,255,0.02); align-items: center; justify-content: space-between; flex-shrink: 0; flex-wrap: wrap;">
+            <div class="pos-subtabs-bar">
                 <div style="display: flex; gap: 0.4rem; align-items: center;">
                     <button type="button" class="pos-mode-btn" :class="{ 'active': waiterSubTab === 'home' }" @click="waiterSubTab = 'home'">
                         <i class="fa-solid fa-utensils"></i>
@@ -1569,14 +2092,32 @@
             <div class="order-taking-layout" x-show="waiterSubTab === 'home'" style="flex: 1; height: 100%;">
             <!-- Left: Catalog & Product Grid -->
             <div class="catalog-pane">
-                <!-- Top Filter / Search Bar -->
+                <!-- Top Filter / Search Bar & View Mode Switcher -->
                 <div class="catalog-top-bar">
+                    <!-- Search Input (Protected against email/password autofill) -->
                     <div class="search-box-wrap">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" 
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="search" 
+                               id="posMenuSearch"
+                               name="pos_catalog_search_query"
                                class="catalog-search-input" 
                                x-model="searchQuery" 
-                               placeholder="{{ __('Search menu...') }}">
+                               placeholder="{{ __('Search menu...') }}"
+                               autocomplete="off"
+                               autocorrect="off"
+                               autocapitalize="off"
+                               spellcheck="false"
+                               role="searchbox"
+                               data-lpignore="true"
+                               data-1p-ignore="true"
+                               data-form-type="other">
+                        <button type="button" 
+                                x-show="searchQuery && searchQuery.length > 0" 
+                                @click="searchQuery = ''" 
+                                class="search-clear-btn" 
+                                title="{{ __('Clear') }}">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
                     </div>
 
                     <!-- Table Chip Button -->
@@ -1586,11 +2127,36 @@
                     </div>
 
                     <!-- Guest Count -->
-                    <div style="display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); border-radius: 8px; padding: 2px 6px;">
-                        <i class="fa-solid fa-user-group" style="font-size: 0.75rem; color: var(--text-muted); margin-right: 2px;"></i>
-                        <button type="button" class="pos-tool-btn" style="width: 24px; height: 24px; font-size: 0.7rem;" @click="guestCount = Math.max(1, guestCount - 1)">-</button>
-                        <span style="font-size: 0.8rem; font-weight: 700; min-width: 16px; text-align: center;" x-text="guestCount"></span>
-                        <button type="button" class="pos-tool-btn" style="width: 24px; height: 24px; font-size: 0.7rem;" @click="guestCount++">+</button>
+                    <div class="pos-guest-counter">
+                        <i class="fa-solid fa-user-group guest-icon"></i>
+                        <button type="button" class="pos-tool-btn guest-btn" @click="guestCount = Math.max(1, guestCount - 1)">-</button>
+                        <span class="guest-val" x-text="guestCount"></span>
+                        <button type="button" class="pos-tool-btn guest-btn" @click="guestCount++">+</button>
+                    </div>
+
+                    <!-- Product Card Layout Selector (Grid / Compact / List) -->
+                    <div class="pos-layout-switcher" title="{{ __('Card Layout') }}">
+                        <button type="button" 
+                                class="layout-switch-btn" 
+                                :class="{ 'active': cardLayout === 'grid' }" 
+                                @click="setCardLayout('grid')" 
+                                title="{{ __('Grid') }}">
+                            <i class="fa-solid fa-border-all"></i>
+                        </button>
+                        <button type="button" 
+                                class="layout-switch-btn" 
+                                :class="{ 'active': cardLayout === 'compact' }" 
+                                @click="setCardLayout('compact')" 
+                                title="{{ __('Compact') }}">
+                            <i class="fa-solid fa-grip"></i>
+                        </button>
+                        <button type="button" 
+                                class="layout-switch-btn" 
+                                :class="{ 'active': cardLayout === 'list' }" 
+                                @click="setCardLayout('list')" 
+                                title="{{ __('List') }}">
+                            <i class="fa-solid fa-list-ul"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -1621,31 +2187,53 @@
                     </template>
                 </div>
 
-                <!-- Products Grid Scroll -->
+                <!-- Products Grid Scroll & Layout Modes -->
                 <div class="products-grid-scroll">
-                    <div class="products-grid">
+                    <div class="products-grid" :class="'layout-' + cardLayout">
                         <template x-for="prod in filteredProducts" :key="prod.id">
                             <div class="dish-card" @click="handleProductClick(prod)">
                                 <div class="dish-img-wrap">
-                                    <img :src="prod.image" :alt="prod.name" loading="lazy">
+                                    <template x-if="prod.image">
+                                        <img :src="prod.image" :alt="prod.name" loading="lazy">
+                                    </template>
+                                    <template x-if="!prod.image">
+                                        <div class="dish-no-img">
+                                            <i class="fa-solid fa-utensils"></i>
+                                        </div>
+                                    </template>
                                     <template x-if="prod.variations && prod.variations.length > 0">
-                                        <span class="dish-variant-badge" style="position: absolute; top: 8px; right: 8px;">
+                                        <span class="dish-variant-badge">
                                             <span x-text="prod.variations.length + ' {{ __('Sizes') }}'"></span>
                                         </span>
                                     </template>
                                 </div>
                                 <div class="dish-body">
-                                    <div class="dish-title" x-text="prod.name"></div>
+                                    <div class="dish-info-group">
+                                        <div class="dish-title" x-text="prod.name"></div>
+                                    </div>
                                     <div class="dish-price-row">
                                         <span class="dish-price" x-text="formatCurrency(prod.price)"></span>
-                                        <span class="pos-tool-btn" style="width: 28px; height: 28px; font-size: 0.8rem; background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: none;">
+                                        <button type="button" class="dish-add-btn" aria-label="{{ __('Add') }}">
                                             <i class="fa-solid fa-plus"></i>
-                                        </span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         </template>
                     </div>
+
+                    <!-- Empty State when no dishes found -->
+                    <template x-if="filteredProducts.length === 0">
+                        <div class="catalog-empty-state">
+                            <div class="catalog-empty-icon">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </div>
+                            <p class="catalog-empty-title">{{ __('No dishes found matching the current search/category filter.') }}</p>
+                            <button type="button" class="btn btn-secondary" x-show="searchQuery || activeCategory !== 'all'" @click="searchQuery = ''; activeCategory = 'all'">
+                                <i class="fa-solid fa-rotate-left"></i> {{ __('All Dishes') }}
+                            </button>
+                        </div>
+                    </template>
                 </div>
             </div>
 
@@ -1949,7 +2537,7 @@
                     </div>
 
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h2 style="font-family: var(--font-display); font-size: 1.35rem; font-weight: 700; color: #fff; margin: 0;">
+                        <h2 style="font-family: var(--font-display); font-size: 1.35rem; font-weight: 700; color: var(--text-main); margin: 0;">
                             {{ __('Open Unpaid Orders') }}
                         </h2>
                         <button type="button" class="pos-tool-btn" @click="fetchCashierOrders()" title="{{ __('Refresh') }}">
@@ -1989,13 +2577,13 @@
                                           x-text="translateStatus(ord.status)"></span>
                                 </div>
                                 <div style="font-size: 0.82rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
-                                    <span style="color: #fff; font-weight: 600;" x-text="ord.table_number ? ('{{ __('Table') }} ' + ord.table_number) : '{{ __('Counter') }}'"></span>
+                                    <span style="color: var(--text-main); font-weight: 600;" x-text="ord.table_number ? ('{{ __('Table') }} ' + ord.table_number) : '{{ __('Counter') }}'"></span>
                                     <span>•</span>
                                     <span x-text="formatItemsCount(ord.items ? ord.items.length : 0)"></span>
                                 </div>
                                 <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 0.4rem;">
                                     <span style="font-size: 0.75rem; color: var(--text-subtle);" x-text="ord.waiter ? ord.waiter.name : ''"></span>
-                                    <span style="font-size: 1.15rem; font-weight: 800; color: #fff; font-family: var(--font-display);" x-text="formatCurrency(ord.total_amount)"></span>
+                                    <span style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); font-family: var(--font-display);" x-text="formatCurrency(ord.total_amount)"></span>
                                 </div>
                             </div>
                         </template>
@@ -2011,7 +2599,7 @@
                                 <span>{{ __('Back to Orders') }}</span>
                             </button>
                             <div>
-                                <div style="font-weight: 700; font-size: 0.95rem; color: #fff;" x-text="'#' + (selectedCashierOrder?.order_number || '')"></div>
+                                <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);" x-text="'#' + (selectedCashierOrder?.order_number || '')"></div>
                                 <div style="font-size: 0.75rem; color: var(--text-muted);" x-text="selectedCashierOrder?.table_number ? ('{{ __('Table') }}: ' + selectedCashierOrder.table_number) : '{{ __('Counter') }}'"></div>
                             </div>
                         </div>
@@ -2199,7 +2787,7 @@
                                     <i class="fa-solid fa-bell-concierge"></i>
                                 </span>
                             </div>
-                            <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: #fff; margin-top: 0.5rem;" x-text="cashierOrders.length"></div>
+                            <div style="font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: var(--text-main); margin-top: 0.5rem;" x-text="cashierOrders.length"></div>
                         </div>
                         <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -2242,7 +2830,7 @@
                 <!-- 2. TAB: SALES ANALYTICS -->
                 <div x-show="managerTab === 'sales'" style="display: flex; flex-direction: column; gap: 1.5rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3 style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 700;">{{ __('Sales Analytics') }}</h3>
+                        <h3 style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; color: var(--text-main);">{{ __('Sales Analytics') }}</h3>
                         <div style="display: flex; gap: 0.5rem;">
                             <button type="button" class="pos-mode-btn" :class="{ 'active': reportPeriod === 'today' }" @click="reportPeriod = 'today'; fetchSalesReport()">{{ __('Today') }}</button>
                             <button type="button" class="pos-mode-btn" :class="{ 'active': reportPeriod === '7d' }" @click="reportPeriod = '7d'; fetchSalesReport()">7 {{ __('Days') }}</button>
@@ -2259,7 +2847,7 @@
                                 </div>
                                 <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem;">
                                     <div style="font-size: 0.75rem; color: var(--text-muted);">{{ __('Gross Sales') }}</div>
-                                    <div style="font-size: 1.4rem; font-weight: 800; color: #fff;" x-text="formatCurrency(salesReport.summary.gross_sales)"></div>
+                                    <div style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);" x-text="formatCurrency(salesReport.summary.gross_sales)"></div>
                                 </div>
                                 <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem;">
                                     <div style="font-size: 0.75rem; color: var(--text-muted);">{{ __('Total Discounts') }}</div>
@@ -2273,12 +2861,12 @@
 
                             <!-- Tender breakdown -->
                             <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
-                                <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.75rem;">{{ __('Orders by Tender') }}</h4>
+                                <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-main);">{{ __('Orders by Tender') }}</h4>
                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem;">
                                     <template x-for="item in salesReport.by_payment_method" :key="item.method">
-                                        <div style="background: var(--bg-surface); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                                        <div style="background: var(--bg-subtle); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);">
                                             <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;" x-text="item.method"></div>
-                                            <div style="font-size: 1.15rem; font-weight: 800; color: #fff;" x-text="formatCurrency(item.total)"></div>
+                                            <div style="font-size: 1.15rem; font-weight: 800; color: var(--text-main);" x-text="formatCurrency(item.total)"></div>
                                             <div style="font-size: 0.7rem; color: var(--text-muted);" x-text="item.count + ' orders'"></div>
                                         </div>
                                     </template>
@@ -2292,7 +2880,7 @@
                 <div x-show="managerTab === 'employees'" style="display: flex; flex-direction: column; gap: 1.5rem;">
                     <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden;">
                         <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color);">
-                            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Waiter Performance') }}</h3>
+                            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; color: var(--text-main);">{{ __('Waiter Performance') }}</h3>
                         </div>
                         <table class="device-table" style="width: 100%; border-collapse: collapse;">
                             <thead>
@@ -2307,7 +2895,7 @@
                             <tbody>
                                 <template x-for="w in employeeReport?.waiters || []" :key="w.user_id">
                                     <tr style="border-bottom: 1px solid var(--border-color-light);">
-                                        <td style="padding: 12px 14px; font-weight: 700; color: #fff;" x-text="w.name"></td>
+                                        <td style="padding: 12px 14px; font-weight: 700; color: var(--text-main);" x-text="w.name"></td>
                                         <td style="padding: 12px 14px;" x-text="w.orders_count"></td>
                                         <td style="padding: 12px 14px;" x-text="w.total_guests"></td>
                                         <td style="padding: 12px 14px; color: #f59e0b; font-weight: 700;" x-text="formatCurrency(w.total_tips)"></td>
@@ -2323,7 +2911,7 @@
                 <div x-show="managerTab === 'products'" style="display: flex; flex-direction: column; gap: 1.5rem;">
                     <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden;">
                         <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color);">
-                            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Top Selling Dishes & Items') }}</h3>
+                            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; color: var(--text-main);">{{ __('Top Selling Dishes & Items') }}</h3>
                         </div>
                         <table class="device-table" style="width: 100%; border-collapse: collapse;">
                             <thead>
@@ -2338,7 +2926,7 @@
                             <tbody>
                                 <template x-for="p in productReport?.products || []" :key="p.product_id">
                                     <tr style="border-bottom: 1px solid var(--border-color-light);">
-                                        <td style="padding: 12px 14px; font-weight: 700; color: #fff;" x-text="p.product_name"></td>
+                                        <td style="padding: 12px 14px; font-weight: 700; color: var(--text-main);" x-text="p.product_name"></td>
                                         <td style="padding: 12px 14px; color: var(--text-muted);" x-text="p.category_name"></td>
                                         <td style="padding: 12px 14px; font-weight: 700;" x-text="p.quantity_sold"></td>
                                         <td style="padding: 12px 14px;" x-text="p.tracks_inventory ? (p.current_stock + ' left') : '—'"></td>
@@ -2354,7 +2942,7 @@
                 <div x-show="managerTab === 'cash'" style="display: flex; flex-direction: column; gap: 1.5rem;">
                     <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden;">
                         <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color);">
-                            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Shift Reconciliation') }}</h3>
+                            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; color: var(--text-main);">{{ __('Shift Reconciliation') }}</h3>
                         </div>
                         <table class="device-table" style="width: 100%; border-collapse: collapse;">
                             <thead>
@@ -2371,7 +2959,7 @@
                                 <template x-for="s in cashReport?.shifts || []" :key="s.shift_id">
                                     <tr style="border-bottom: 1px solid var(--border-color-light);">
                                         <td style="padding: 12px 14px; font-weight: 700; color: var(--primary);" x-text="'#' + s.shift_id"></td>
-                                        <td style="padding: 12px 14px; color: #fff;" x-text="s.cashier?.name"></td>
+                                        <td style="padding: 12px 14px; color: var(--text-main);" x-text="s.cashier?.name"></td>
                                         <td style="padding: 12px 14px;" x-text="formatCurrency(s.opening_float)"></td>
                                         <td style="padding: 12px 14px; color: #10b981; font-weight: 700;" x-text="formatCurrency(s.total_cash_sales)"></td>
                                         <td style="padding: 12px 14px;" :style="s.discrepancy < 0 ? 'color: #ef4444;' : (s.discrepancy > 0 ? 'color: #10b981;' : 'color: var(--text-muted);')" x-text="formatCurrency(s.discrepancy)"></td>
@@ -2388,7 +2976,7 @@
                     <!-- Device Management Card -->
                     <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden;">
                         <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-                            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;">{{ __('Device Management') }}</h3>
+                            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; color: var(--text-main);">{{ __('Device Management') }}</h3>
                             <button type="button" class="pos-mode-btn active" @click="openRegisterDeviceModal()">
                                 <i class="fa-solid fa-plus"></i>
                                 <span>{{ __('Register Device') }}</span>
@@ -2409,7 +2997,7 @@
                                 <template x-for="dev in devices" :key="dev.id">
                                     <tr style="border-bottom: 1px solid var(--border-color-light);">
                                         <td style="padding: 12px 14px;">
-                                            <div style="font-weight: 600; color: #fff;" x-text="dev.name"></div>
+                                            <div style="font-weight: 600; color: var(--text-main);" x-text="dev.name"></div>
                                             <div style="font-size: 0.7rem; color: var(--text-subtle);" x-text="dev.uuid"></div>
                                         </td>
                                         <td style="padding: 12px 14px; text-transform: capitalize;" x-text="dev.device_type"></td>
@@ -2543,7 +3131,7 @@
                                         <i class="fa-solid fa-qrcode" style="font-size: 0.7rem; color: #10b981;" title="QR Menu Order"></i>
                                     </template>
                                 </div>
-                                <div style="font-size: 0.92rem; font-weight: 800; color: #fff;" x-text="t.table_number"></div>
+                                <div style="font-size: 0.92rem; font-weight: 800; color: var(--text-main);" x-text="t.table_number"></div>
                                 <div style="font-size: 0.65rem; color: var(--text-subtle);" x-text="t.capacity + ' seats'"></div>
                                 <template x-if="t.occupancy_minutes !== null">
                                     <div class="table-timer-badge">
@@ -2566,7 +3154,7 @@
             <div class="pos-modal-card" style="max-width: 440px;" @click.away="showTableActionModal = false">
                 <div class="pos-modal-header">
                     <div>
-                        <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;" x-text="'{{ __('Table') }} ' + (selectedTableForActions?.table_number || '')"></h3>
+                        <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; color: var(--text-main);" x-text="'{{ __('Table') }} ' + (selectedTableForActions?.table_number || '')"></h3>
                         <div style="font-size: 0.72rem; color: var(--text-muted);" x-text="'{{ __('Status') }}: ' + translateStatus(selectedTableForActions?.status || 'available')"></div>
                     </div>
                     <button type="button" class="pos-tool-btn" style="width: 34px; height: 34px;" @click="showTableActionModal = false">
@@ -2575,14 +3163,14 @@
                 </div>
                 <div class="pos-modal-body" style="display: flex; flex-direction: column; gap: 0.75rem;">
                     <template x-if="selectedTableForActions?.order">
-                        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem;">
+                        <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                                 <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary);" x-text="selectedTableForActions.order.order_number"></span>
                                 <span class="table-status-pill" :style="getTableStatusStyle(selectedTableForActions.order.status)" x-text="translateStatus(selectedTableForActions.order.status)"></span>
                             </div>
                             <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
                                 <span x-text="'{{ __('Waiter') }}: ' + (selectedTableForActions.order.waiter_name || '{{ __('Unassigned') }}')"></span>
-                                <span style="font-weight: 700; color: #fff;" x-text="formatCurrency(selectedTableForActions.order.total_amount)"></span>
+                                <span style="font-weight: 700; color: var(--text-main);" x-text="formatCurrency(selectedTableForActions.order.total_amount)"></span>
                             </div>
                             <template x-if="selectedTableForActions.order.source === 'qr_menu'">
                                 <div style="margin-top: 4px; font-size: 0.7rem; color: #10b981; display: flex; align-items: center; gap: 4px;">
@@ -2770,7 +3358,7 @@
                 <div class="pos-modal-body">
                     <div style="text-align: center; margin-bottom: 0.5rem;">
                         <span style="font-size: 0.8rem; color: var(--text-muted);">{{ __('Total Due') }}</span>
-                        <div style="font-size: 1.75rem; font-weight: 800; color: #fff; font-family: var(--font-display);" x-text="formatCurrency(selectedCashierOrder?.total_amount || 0)"></div>
+                        <div style="font-size: 1.75rem; font-weight: 800; color: var(--text-main); font-family: var(--font-display);" x-text="formatCurrency(selectedCashierOrder?.total_amount || 0)"></div>
                     </div>
 
                     <div>
@@ -2789,7 +3377,7 @@
                     </div>
 
                     <!-- Change Calculation -->
-                    <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-size: 0.9rem; font-weight: 600;">{{ __('Change Due') }}:</span>
                         <span style="font-size: 1.35rem; font-weight: 800; color: #10b981; font-family: var(--font-display);" x-text="formatCurrency(Math.max(0, cashReceived - (selectedCashierOrder?.total_amount || 0)))"></span>
                     </div>
@@ -2812,9 +3400,9 @@
                     </button>
                 </div>
                 <div class="pos-modal-body" style="display: flex; flex-direction: column; gap: 0.85rem;">
-                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem; text-align: center;">
+                    <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem; text-align: center;">
                         <span style="font-size: 0.75rem; color: var(--text-muted);">{{ __('Total Due') }}</span>
-                        <div style="font-size: 1.5rem; font-weight: 800; color: #fff; font-family: var(--font-display);" x-text="formatCurrency(selectedCashierOrder?.total_amount || 0)"></div>
+                        <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); font-family: var(--font-display);" x-text="formatCurrency(selectedCashierOrder?.total_amount || 0)"></div>
                     </div>
                     <div>
                         <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Cash Amount') }}</label>
@@ -2993,12 +3581,12 @@
                 <div class="pos-modal-body">
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 1rem;">
                         <template x-for="emp in employees" :key="emp.id">
-                            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; text-align: center; cursor: pointer;" 
+                            <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; text-align: center; cursor: pointer;" 
                                  @click="selectEmployeeForSwitch(emp)">
                                 <div class="pos-user-avatar" style="width: 48px; height: 48px; font-size: 1.2rem; margin: 0 auto 0.5rem;">
                                     <span x-text="emp.display_name.charAt(0).toUpperCase()"></span>
                                 </div>
-                                <div style="font-size: 0.85rem; font-weight: 600; color: #fff;" x-text="emp.display_name"></div>
+                                <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);" x-text="emp.display_name"></div>
                                 <div style="font-size: 0.65rem; color: var(--primary); text-transform: uppercase; font-weight: 700; margin-top: 2px;" x-text="emp.role"></div>
                             </div>
                         </template>
@@ -3051,6 +3639,7 @@
 
         <!-- 7. Comprehensive Employee Profile & Security Modal -->
         <div class="pos-modal-overlay" x-show="showEmployeeProfileModal" x-cloak>
+            <template x-if="showEmployeeProfileModal">
             <div class="pos-modal-card" style="max-width: 540px; max-height: 90vh; overflow-y: auto;">
                 <div class="pos-modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
@@ -3063,7 +3652,7 @@
                             </template>
                         </div>
                         <div>
-                            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 800; margin: 0;" x-text="currentUser.display_name"></h3>
+                            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 800; margin: 0; color: var(--text-main);" x-text="currentUser.display_name"></h3>
                             <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 2px;">
                                 <span class="badge badge-indigo" style="font-size: 0.7rem; text-transform: uppercase;" x-text="currentUser.role"></span>
                                 <span style="font-size: 0.75rem; color: var(--text-muted);" x-text="'ID: #' + (currentUser.employee_id || currentUser.id)"></span>
@@ -3096,15 +3685,15 @@
                     <div x-show="profileTab === 'info'" style="display: flex; flex-direction: column; gap: 0.85rem;">
                         <div>
                             <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Full Name') }}</label>
-                            <input type="text" class="pos-input" x-model="profileName">
+                            <input type="text" class="pos-input" x-model="profileName" autocomplete="off" data-lpignore="true">
                         </div>
                         <div>
                             <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Display / Callout Name') }}</label>
-                            <input type="text" class="pos-input" x-model="profileDisplayName" placeholder="{{ __('Short name displayed on receipts') }}">
+                            <input type="text" class="pos-input" x-model="profileDisplayName" placeholder="{{ __('Short name displayed on receipts') }}" autocomplete="off" data-lpignore="true">
                         </div>
                         <div>
                             <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Phone Number') }}</label>
-                            <input type="text" class="pos-input" x-model="profilePhone" placeholder="+374 99 000000">
+                            <input type="text" class="pos-input" x-model="profilePhone" placeholder="+374 99 000000" autocomplete="off" data-lpignore="true">
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
                             <div>
@@ -3124,22 +3713,22 @@
                     </div>
 
                     <!-- TAB 2: Set / Change PIN -->
-                    <div x-show="profileTab === 'pin'" style="display: flex; flex-direction: column; gap: 0.85rem;" x-cloak>
-                        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.75rem; font-size: 0.82rem; color: var(--text-muted); line-height: 1.45;">
+                    <form x-show="profileTab === 'pin'" @submit.prevent="updateEmployeePin()" autocomplete="off" style="display: flex; flex-direction: column; gap: 0.85rem;" x-cloak>
+                        <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.75rem; font-size: 0.82rem; color: var(--text-muted); line-height: 1.45;">
                             {{ __('PIN code must be 4–6 numeric digits. Cannot be simple sequences like 0000, 1111, or 1234.') }}
                         </div>
 
                         <div>
                             <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Current Password or Existing PIN') }} *</label>
-                            <input type="password" class="pos-input" x-model="pinCurrentAuth" placeholder="••••••••">
+                            <input type="password" name="emp_auth_current" autocomplete="current-password" class="pos-input" x-model="pinCurrentAuth" placeholder="••••••••">
                         </div>
                         <div>
                             <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('New PIN Code') }} * (4–6 {{ __('digits') }})</label>
-                            <input type="password" maxlength="6" class="pos-input" x-model="pinNew" placeholder="••••" style="letter-spacing: 0.2em; font-family: monospace; font-size: 1.15rem; text-align: center;">
+                            <input type="password" name="emp_pin_new" autocomplete="new-password" maxlength="6" class="pos-input" x-model="pinNew" placeholder="••••" style="letter-spacing: 0.2em; font-family: monospace; font-size: 1.15rem; text-align: center;">
                         </div>
                         <div>
                             <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Confirm New PIN') }} *</label>
-                            <input type="password" maxlength="6" class="pos-input" x-model="pinConfirm" placeholder="••••" style="letter-spacing: 0.2em; font-family: monospace; font-size: 1.15rem; text-align: center;">
+                            <input type="password" name="emp_pin_confirm" autocomplete="new-password" maxlength="6" class="pos-input" x-model="pinConfirm" placeholder="••••" style="letter-spacing: 0.2em; font-family: monospace; font-size: 1.15rem; text-align: center;">
                         </div>
 
                         <!-- Optional Email Verification Code -->
@@ -3150,56 +3739,57 @@
                                     <i class="fa-solid fa-paper-plane" style="color: #f59e0b;"></i> <span x-text="pinCountdown > 0 ? 'Wait ' + pinCountdown + 's' : '{{ __('Send Code') }}'">{{ __('Send Code') }}</span>
                                 </button>
                             </div>
-                            <input type="text" class="pos-input" x-model="pinEmailCode" placeholder="6-digit code">
+                            <input type="text" name="emp_pin_code" autocomplete="one-time-code" class="pos-input" x-model="pinEmailCode" placeholder="6-digit code">
                         </div>
 
                         <div x-show="pinError" style="color: #ef4444; font-size: 0.8rem; font-weight: 600;" x-text="pinError"></div>
 
                         <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
-                            <button type="button" class="btn btn-primary" :disabled="isUpdatingPin" @click="updateEmployeePin()">
+                            <button type="submit" class="btn btn-primary" :disabled="isUpdatingPin">
                                 <i class="fa-solid fa-shield-check"></i> {{ __('Save PIN Code') }}
                             </button>
                         </div>
-                    </div>
+                    </form>
 
                     <!-- TAB 3: Change Password -->
-                    <div x-show="profileTab === 'password'" style="display: flex; flex-direction: column; gap: 0.85rem;" x-cloak>
+                    <form x-show="profileTab === 'password'" @submit.prevent="updateEmployeePassword()" autocomplete="off" style="display: flex; flex-direction: column; gap: 0.85rem;" x-cloak>
                         <div>
                             <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Current Password') }} *</label>
-                            <input type="password" class="pos-input" x-model="pwdCurrent" placeholder="••••••••">
+                            <input type="password" name="emp_pwd_current" autocomplete="current-password" class="pos-input" x-model="pwdCurrent" placeholder="••••••••">
                         </div>
                         <div>
                             <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('New Password') }} * ({{ __('minimum 6 characters') }})</label>
-                            <input type="password" class="pos-input" x-model="pwdNew" placeholder="••••••••">
+                            <input type="password" name="emp_pwd_new" autocomplete="new-password" class="pos-input" x-model="pwdNew" placeholder="••••••••">
                         </div>
                         <div>
                             <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Confirm New Password') }} *</label>
-                            <input type="password" class="pos-input" x-model="pwdConfirm" placeholder="••••••••">
+                            <input type="password" name="emp_pwd_confirm" autocomplete="new-password" class="pos-input" x-model="pwdConfirm" placeholder="••••••••">
                         </div>
                         <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
-                            <button type="button" class="btn btn-primary" :disabled="isUpdatingPassword" @click="updateEmployeePassword()">
+                            <button type="submit" class="btn btn-primary" :disabled="isUpdatingPassword">
                                 <i class="fa-solid fa-key"></i> {{ __('Update Password') }}
                             </button>
                         </div>
-                    </div>
+                    </form>
 
                     <!-- TAB 4: Active Sessions & Logout Other Devices -->
-                    <div x-show="profileTab === 'sessions'" style="display: flex; flex-direction: column; gap: 1rem;" x-cloak>
+                    <form x-show="profileTab === 'sessions'" @submit.prevent="logoutOtherSessions()" autocomplete="off" style="display: flex; flex-direction: column; gap: 1rem;" x-cloak>
                         <p style="font-size: 0.84rem; color: var(--text-muted); margin: 0; line-height: 1.45;">
                             {{ __('Sign out from all other active browser and POS terminal sessions. Requires current account password.') }}
                         </p>
                         <div>
                             <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">{{ __('Enter Current Password to Confirm') }} *</label>
-                            <input type="password" class="pos-input" x-model="logoutDevicesPwd" placeholder="••••••••">
+                            <input type="password" name="emp_logout_pwd" autocomplete="current-password" class="pos-input" x-model="logoutDevicesPwd" placeholder="••••••••">
                         </div>
                         <div style="display: flex; justify-content: flex-end;">
-                            <button type="button" class="btn btn-secondary" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" :disabled="isLoggingOutDevices" @click="logoutOtherSessions()">
+                            <button type="submit" class="btn btn-secondary" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" :disabled="isLoggingOutDevices">
                                 <i class="fa-solid fa-right-from-bracket"></i> {{ __('Log Out All Other Devices') }}
                             </button>
                         </div>
-                    </div>
+                    </form>
                 </div>
             </div>
+            </template>
         </div>
 
         <!-- 7. PIN Screen Overlay -->
@@ -3254,7 +3844,7 @@
                     <template x-for="call in waiterCalls" :key="call.id">
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 0.5rem;">
                             <div>
-                                <div style="font-weight: 700; font-size: 0.95rem; color: #fff;" x-text="'Table ' + call.table_number"></div>
+                                <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);" x-text="'Table ' + call.table_number"></div>
                                 <div style="font-size: 0.8rem; color: var(--text-muted);" x-text="call.type === 'call_waiter' ? 'Call Waiter' : (call.type === 'bill_cash' ? 'Bill (Cash)' : 'Bill (Card)')"></div>
                             </div>
                             <button type="button" class="cart-btn-primary" style="padding: 0.35rem 0.85rem; font-size: 0.8rem;" @click="resolveWaiterCall(call)">
@@ -3289,10 +3879,10 @@
                                 <div style="font-weight: 800; font-size: 1rem; color: var(--primary);" x-text="'#' + ord.order_number"></div>
                                 <span style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;" x-text="ord.source"></span>
                             </div>
-                            <div style="font-size: 0.85rem; color: #fff; margin-bottom: 4px;" x-text="(ord.customer_name || 'Guest') + (ord.table_number ? ' • Table ' + ord.table_number : '')"></div>
+                            <div style="font-size: 0.85rem; color: var(--text-main); margin-bottom: 4px;" x-text="(ord.customer_name || 'Guest') + (ord.table_number ? ' • Table ' + ord.table_number : '')"></div>
                             <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;" x-text="(ord.items || []).map(i => i.quantity + 'x ' + (i.product_name || i.product?.name || 'Item')).join(', ')"></div>
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-weight: 800; font-size: 1.1rem; color: #fff;" x-text="formatCurrency(ord.total_amount)"></span>
+                                <span style="font-weight: 800; font-size: 1.1rem; color: var(--text-main);" x-text="formatCurrency(ord.total_amount)"></span>
                                 <div style="display: flex; gap: 0.5rem;">
                                     <button type="button" class="cart-btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; color: #ef4444;" @click="rejectOnlineOrder(ord)">{{ __('Reject Online Order') }}</button>
                                     <button type="button" class="cart-btn-primary" style="padding: 0.35rem 0.85rem; font-size: 0.8rem;" @click="acceptOnlineOrder(ord)">{{ __('Accept Online Order') }}</button>
@@ -3323,7 +3913,7 @@
                     <template x-for="res in reservations" :key="res.id">
                         <div style="padding: 0.85rem; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
                             <div>
-                                <div style="font-weight: 800; font-size: 0.95rem; color: #fff;" x-text="res.customer_name"></div>
+                                <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);" x-text="res.customer_name"></div>
                                 <div style="font-size: 0.8rem; color: var(--text-muted);" x-text="res.reservation_time + ' • ' + res.guest_count + ' guests' + (res.table_number ? ' • Table ' + res.table_number : '')"></div>
                                 <template x-if="res.pre_order">
                                     <span style="font-size: 0.7rem; color: #10b981; font-weight: 700;">• Has Pre-order</span>
@@ -3355,7 +3945,7 @@
                     <div style="margin-bottom: 1rem;">
                         <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 6px;">{{ __('Search Customer (Phone, Name, Email)') }}</label>
                         <div style="display: flex; gap: 0.5rem;">
-                            <input type="text" class="pos-input" x-model="customerSearchQuery" @keyup.enter="searchCustomers()" placeholder="e.g. +374 99 123456">
+                            <input type="search" name="pos_customer_search_input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-form-type="other" class="pos-input" x-model="customerSearchQuery" @keyup.enter="searchCustomers()" placeholder="e.g. +374 99 123456">
                             <button type="button" class="cart-btn-primary" style="padding: 0 1rem;" @click="searchCustomers()">
                                 <i class="fa-solid fa-magnifying-glass"></i>
                             </button>
@@ -3368,7 +3958,7 @@
                                  :style="selectedCustomer?.id === cust.id ? 'border-color: var(--primary); background: rgba(245, 158, 11, 0.1);' : ''"
                                  @click="selectedCustomer = cust">
                                 <div>
-                                    <div style="font-weight: 700; color: #fff;" x-text="cust.name"></div>
+                                    <div style="font-weight: 700; color: var(--text-main);" x-text="cust.name"></div>
                                     <div style="font-size: 0.75rem; color: var(--text-muted);" x-text="cust.phone || cust.email"></div>
                                 </div>
                                 <div style="text-align: right;">
@@ -3409,7 +3999,7 @@
                     </button>
                 </div>
                 <div class="pos-modal-body" style="padding: 1.5rem;">
-                    <div style="font-size: 1.5rem; font-weight: 800; color: #fff; font-family: var(--font-display); margin-bottom: 0.5rem;" x-text="formatCurrency(activeQrPayment?.amount || 0)"></div>
+                    <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); font-family: var(--font-display); margin-bottom: 0.5rem;" x-text="formatCurrency(activeQrPayment?.amount || 0)"></div>
                     <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">{{ __('Please instruct the guest to scan this QR code with their mobile wallet.') }}</p>
                     <div style="background: #fff; padding: 1rem; border-radius: 12px; display: inline-block; margin-bottom: 1.25rem;">
                         <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(activeQrPayment?.qr_data || '')" style="width: 220px; height: 220px; display: block;" alt="Payment QR">
@@ -3680,7 +4270,34 @@
                 cashReport: null,
                 reportPeriod: 'today',
 
+                // UI / UX Theme & Layout Settings
+                posTheme: localStorage.getItem('pos_theme') || 'light',
+                cardLayout: localStorage.getItem('pos_card_layout') || 'grid',
+
+                toggleTheme() {
+                    this.posTheme = this.posTheme === 'dark' ? 'light' : 'dark';
+                    try {
+                        localStorage.setItem('pos_theme', this.posTheme);
+                        document.documentElement.setAttribute('data-theme', this.posTheme);
+                        const meta = document.getElementById('metaThemeColor');
+                        if (meta) {
+                            meta.setAttribute('content', this.posTheme === 'dark' ? '#0a0e1a' : '#ffffff');
+                        }
+                    } catch (e) {}
+                },
+
+                setCardLayout(layout) {
+                    this.cardLayout = layout;
+                    try {
+                        localStorage.setItem('pos_card_layout', layout);
+                    } catch (e) {}
+                },
+
                 initPos() {
+                    try {
+                        document.documentElement.setAttribute('data-theme', this.posTheme);
+                    } catch (e) {}
+
                     if (localStorage.getItem('elam_pos_locked') === '1' || this.bootstrapData?.is_terminal_locked) {
                         this.isLocked = true;
                     }
