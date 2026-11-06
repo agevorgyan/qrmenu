@@ -9,6 +9,7 @@
            tablesOpen: {{ (request()->routeIs('admin.floor_plan.*') || request()->routeIs('admin.tables.*') || request()->routeIs('admin.qr.*')) ? 'true' : 'false' }},
            aiOpen: {{ (request()->routeIs('admin.ai.*') || request()->routeIs('admin.settings.ai*')) ? 'true' : 'false' }},
            inventoryOpen: {{ request()->routeIs('admin.inventory.*') ? 'true' : 'false' }},
+           loyaltyOpen: {{ request()->routeIs('admin.loyalty.*') ? 'true' : 'false' }},
            settingsOpen: {{ (request()->routeIs('admin.settings.*') || request()->routeIs('admin.profile')) ? 'true' : 'false' }},
            currentSettingsTab: '{{ request()->query('tab', 'profile') }}',
            isSettingsPage: {{ request()->routeIs('admin.settings.index') ? 'true' : 'false' }},
@@ -544,75 +545,116 @@
             @endcan
 
             <!-- Loyalty & Digital Wallet (Enterprise) -->
-            <div class="nav-group" x-data="{ loyaltyOpen: {{ request()->routeIs('admin.loyalty.*') ? 'true' : 'false' }} }">
+            <div class="nav-group">
                 <button type="button" 
-                        class="nav-item nav-group-header" 
-                        :class="{ 'expanded': loyaltyOpen, 'active': {{ request()->routeIs('admin.loyalty.*') ? 'true' : 'false' }} }"
+                        class="nav-group-header {{ request()->routeIs('admin.loyalty.*') ? 'active' : '' }}"
                         @click="loyaltyOpen = !loyaltyOpen"
-                        title="{{ __('Loyalty & Digital Wallet') }}"
-                        style="width: 100%; display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                        aria-expanded="loyaltyOpen"
+                        title="{{ __('Loyalty & Digital Wallet') }}">
                     <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
                         <i class="fa-solid fa-gift" style="color: #ec4899;"></i>
-                        <span>{{ __('Loyalty & Wallet') }}</span>
+                        <span>{{ __('Loyalty & Digital Wallet') }}</span>
                     </span>
-                    <i class="fa-solid fa-chevron-down nav-arrow" :class="{ 'rotated': loyaltyOpen }"></i>
+                    <i class="fa-solid fa-chevron-down nav-chevron" :class="loyaltyOpen ? 'rotate-180' : ''"></i>
                 </button>
-                <div class="nav-subitems" x-show="loyaltyOpen" x-collapse>
-                    <a href="{{ route('admin.loyalty.index') }}" class="nav-subitem {{ request()->routeIs('admin.loyalty.index') ? 'active' : '' }}">
-                        <i class="fa-solid fa-chart-line"></i>
-                        <span>{{ __('Overview') }}</span>
+
+                <div class="nav-group-children" x-show="loyaltyOpen" x-transition.opacity.duration.200ms style="display: {{ request()->routeIs('admin.loyalty.*') ? 'flex' : 'none' }};">
+                    <a href="{{ route('admin.loyalty.index') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.index') ? 'active' : '' }}" title="{{ __('Overview') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-chart-line" style="font-size: 0.85rem; color: #ec4899;"></i>
+                            <span>{{ __('Overview') }}</span>
+                        </span>
                     </a>
-                    <a href="{{ route('admin.loyalty.staff') }}" class="nav-subitem {{ request()->routeIs('admin.loyalty.staff') ? 'active' : '' }}">
-                        <i class="fa-solid fa-qrcode"></i>
-                        <span>{{ __('Staff Scanner') }}</span>
+
+                    <a href="{{ route('admin.loyalty.staff') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.staff') ? 'active' : '' }}" title="{{ __('Staff Scanner') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-qrcode" style="font-size: 0.85rem; color: #6366f1;"></i>
+                            <span>{{ __('Staff Scanner') }}</span>
+                        </span>
                     </a>
-                    <a href="{{ route('admin.loyalty.customers') }}" class="nav-subitem {{ request()->routeIs('admin.loyalty.customers') ? 'active' : '' }}">
-                        <i class="fa-solid fa-users"></i>
-                        <span>{{ __('Members & Balances') }}</span>
+
+                    <a href="{{ route('admin.loyalty.customers') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.customers') ? 'active' : '' }}" title="{{ __('Members & Balances') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-users" style="font-size: 0.85rem; color: #3b82f6;"></i>
+                            <span>{{ __('Members & Balances') }}</span>
+                        </span>
                     </a>
-                    <a href="{{ route('admin.loyalty.rules') }}" class="nav-subitem {{ request()->routeIs('admin.loyalty.rules') ? 'active' : '' }}">
-                        <i class="fa-solid fa-sliders"></i>
-                        <span>{{ __('Earning Rules') }}</span>
+
+                    <a href="{{ route('admin.loyalty.rules') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.rules') ? 'active' : '' }}" title="{{ __('Earning Rules') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-sliders" style="font-size: 0.85rem; color: #f59e0b;"></i>
+                            <span>{{ __('Earning Rules') }}</span>
+                        </span>
                     </a>
-                    <a href="{{ route('admin.loyalty.rewards') }}" class="nav-subitem {{ request()->routeIs('admin.loyalty.rewards') ? 'active' : '' }}">
-                        <i class="fa-solid fa-award"></i>
-                        <span>{{ __('Rewards Catalog') }}</span>
+
+                    <a href="{{ route('admin.loyalty.rewards') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.rewards') ? 'active' : '' }}" title="{{ __('Rewards Catalog') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-award" style="font-size: 0.85rem; color: #10b981;"></i>
+                            <span>{{ __('Rewards Catalog') }}</span>
+                        </span>
                     </a>
-                    <a href="{{ route('admin.loyalty.tiers') }}" class="nav-subitem {{ request()->routeIs('admin.loyalty.tiers') ? 'active' : '' }}">
-                        <i class="fa-solid fa-layer-group"></i>
-                        <span>{{ __('Membership Tiers') }}</span>
+
+                    <a href="{{ route('admin.loyalty.tiers') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.tiers') ? 'active' : '' }}" title="{{ __('Membership Tiers') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-layer-group" style="font-size: 0.85rem; color: #8b5cf6;"></i>
+                            <span>{{ __('Membership Tiers') }}</span>
+                        </span>
                     </a>
-                    <a href="{{ route('admin.loyalty.stamps') }}" class="nav-subitem {{ request()->routeIs('admin.loyalty.stamps') ? 'active' : '' }}">
-                        <i class="fa-solid fa-stamp"></i>
-                        <span>{{ __('Digital Stamp Cards') }}</span>
+
+                    <a href="{{ route('admin.loyalty.stamps') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.stamps') ? 'active' : '' }}" title="{{ __('Digital Stamp Cards') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-stamp" style="font-size: 0.85rem; color: #06b6d4;"></i>
+                            <span>{{ __('Digital Stamp Cards') }}</span>
+                        </span>
                     </a>
-                    <a href="{{ route('admin.loyalty.referrals') }}" class="nav-subitem {{ request()->routeIs('admin.loyalty.referrals') ? 'active' : '' }}">
-                        <i class="fa-solid fa-user-plus"></i>
-                        <span>{{ __('Referral Program') }}</span>
+
+                    <a href="{{ route('admin.loyalty.referrals') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.referrals') ? 'active' : '' }}" title="{{ __('Referral Program') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-user-plus" style="font-size: 0.85rem; color: #f97316;"></i>
+                            <span>{{ __('Referral Program') }}</span>
+                        </span>
                     </a>
-                    <a href="{{ route('admin.loyalty.campaigns') }}" class="nav-subitem {{ request()->routeIs('admin.loyalty.campaigns') ? 'active' : '' }}">
-                        <i class="fa-solid fa-bullhorn"></i>
-                        <span>{{ __('Marketing Campaigns') }}</span>
+
+                    <a href="{{ route('admin.loyalty.campaigns') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.campaigns') ? 'active' : '' }}" title="{{ __('Marketing Campaigns') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-bullhorn" style="font-size: 0.85rem; color: #ec4899;"></i>
+                            <span>{{ __('Marketing Campaigns') }}</span>
+                        </span>
                     </a>
-                    <a href="{{ route('admin.loyalty.designer') }}" class="nav-subitem {{ request()->routeIs('admin.loyalty.designer') ? 'active' : '' }}">
-                        <i class="fa-solid fa-palette"></i>
-                        <span>{{ __('Card Designer') }}</span>
+
+                    <a href="{{ route('admin.loyalty.designer') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.designer') ? 'active' : '' }}" title="{{ __('Card Designer') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-palette" style="font-size: 0.85rem; color: #a855f7;"></i>
+                            <span>{{ __('Card Designer') }}</span>
+                        </span>
                     </a>
-                    <a href="{{ route('admin.loyalty.wallet_settings') }}" class="nav-subitem {{ request()->routeIs('admin.loyalty.wallet_settings') ? 'active' : '' }}">
-                        <i class="fa-brands fa-apple"></i>
-                        <span>{{ __('Wallet Settings') }}</span>
+
+                    <a href="{{ route('admin.loyalty.wallet_settings') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.wallet_settings') ? 'active' : '' }}" title="{{ __('Wallet Settings') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-brands fa-apple" style="font-size: 0.85rem; color: #64748b;"></i>
+                            <span>{{ __('Wallet Settings') }}</span>
+                        </span>
                     </a>
-                    <a href="{{ route('admin.loyalty.transactions') }}" class="nav-subitem {{ request()->routeIs('admin.loyalty.transactions') ? 'active' : '' }}">
-                        <i class="fa-solid fa-receipt"></i>
-                        <span>{{ __('Transactions') }}</span>
+
+                    <a href="{{ route('admin.loyalty.transactions') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.transactions') ? 'active' : '' }}" title="{{ __('Transactions') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-receipt" style="font-size: 0.85rem; color: #14b8a6;"></i>
+                            <span>{{ __('Transactions') }}</span>
+                        </span>
                     </a>
-                    <a href="{{ route('admin.loyalty.settings') }}" class="nav-subitem {{ request()->routeIs('admin.loyalty.settings') ? 'active' : '' }}">
-                        <i class="fa-solid fa-gear"></i>
-                        <span>{{ __('Program Settings') }}</span>
+
+                    <a href="{{ route('admin.loyalty.settings') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.settings') ? 'active' : '' }}" title="{{ __('Program Settings') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-gear" style="font-size: 0.85rem; color: #6b7280;"></i>
+                            <span>{{ __('Program Settings') }}</span>
+                        </span>
                     </a>
-                    <a href="{{ route('admin.loyalty.audit_logs') }}" class="nav-subitem {{ request()->routeIs('admin.loyalty.audit_logs') ? 'active' : '' }}">
-                        <i class="fa-solid fa-shield-halved"></i>
-                        <span>{{ __('Audit Logs') }}</span>
+
+                    <a href="{{ route('admin.loyalty.audit_logs') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.audit_logs') ? 'active' : '' }}" title="{{ __('Audit Logs') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-shield-halved" style="font-size: 0.85rem; color: #dc2626;"></i>
+                            <span>{{ __('Audit Logs') }}</span>
+                        </span>
                     </a>
                 </div>
             </div>

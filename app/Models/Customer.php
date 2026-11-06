@@ -2,6 +2,13 @@
 
 namespace App\Models;
 
+use App\Domains\Loyalty\Models\LoyaltyCashbackAccount;
+use App\Domains\Loyalty\Models\LoyaltyPointsAccount;
+use App\Domains\Loyalty\Models\LoyaltyReferral;
+use App\Domains\Loyalty\Models\LoyaltyRewardRedemption;
+use App\Domains\Loyalty\Models\LoyaltyStampCard;
+use App\Domains\Loyalty\Models\LoyaltyTierHistory;
+use App\Domains\Loyalty\Models\WalletPass;
 use App\Models\Traits\BelongsToVendor;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -87,36 +94,36 @@ class Customer extends Model
 
     public function pointsAccount()
     {
-        return $this->hasOne(\App\Domains\Loyalty\Models\LoyaltyPointsAccount::class);
+        return $this->hasOne(LoyaltyPointsAccount::class);
     }
 
     public function cashbackAccount()
     {
-        return $this->hasOne(\App\Domains\Loyalty\Models\LoyaltyCashbackAccount::class);
+        return $this->hasOne(LoyaltyCashbackAccount::class);
     }
 
     public function stampCards()
     {
-        return $this->hasMany(\App\Domains\Loyalty\Models\LoyaltyStampCard::class)->latest();
+        return $this->hasMany(LoyaltyStampCard::class)->latest();
     }
 
     public function walletPasses()
     {
-        return $this->hasMany(\App\Domains\Loyalty\Models\WalletPass::class)->latest();
+        return $this->hasMany(WalletPass::class)->latest();
     }
 
     public function rewardRedemptions()
     {
-        return $this->hasMany(\App\Domains\Loyalty\Models\LoyaltyRewardRedemption::class)->latest();
+        return $this->hasMany(LoyaltyRewardRedemption::class)->latest();
     }
 
     public function tierHistories()
     {
-        return $this->hasMany(\App\Domains\Loyalty\Models\LoyaltyTierHistory::class)->latest();
+        return $this->hasMany(LoyaltyTierHistory::class)->latest();
     }
 
     public function referrals()
     {
-        return $this->hasMany(\App\Domains\Loyalty\Models\LoyaltyReferral::class, 'referrer_customer_id')->latest();
+        return $this->hasMany(LoyaltyReferral::class, 'referrer_customer_id')->latest();
     }
 }

@@ -116,7 +116,26 @@ class SupplierInvoiceController extends Controller
             ];
         })->values();
 
-        return view('admin.inventory.invoices.show', compact('supplierInvoice', 'ingredients', 'ingredientsData'));
+        $invoiceItemsData = $supplierInvoice->items->map(function ($item) use ($supplierInvoice) {
+            return [
+                'id' => $item->id,
+                'description' => $item->description,
+                'classifier_code' => $item->classifier_code,
+                'ingredient_id' => $item->ingredient_id,
+                'ingredient_name' => $item->ingredient?->name ?? '',
+                'quantity' => (float) $item->quantity,
+                'unit_name' => $item->unit_name ?: ($item->unit?->name ?? $item->unit?->code),
+                'original_quantity' => $item->original_quantity ? (float) $item->original_quantity : (float) $item->quantity,
+                'original_unit_name' => $item->original_unit_name ?: $item->unit_name,
+                'conversion_factor' => $item->conversion_factor ? (float) $item->conversion_factor : 1.0,
+                'unit_price' => (float) $item->unit_price,
+                'total_price' => (float) $item->total_price,
+                'is_converted' => (bool) $item->is_converted,
+                'convert_url' => route('admin.inventory.invoices.convert-item', [$supplierInvoice, $item]),
+            ];
+        })->values();
+
+        return view('admin.inventory.invoices.show', compact('supplierInvoice', 'ingredients', 'ingredientsData', 'invoiceItemsData'));
     }
 
     /**

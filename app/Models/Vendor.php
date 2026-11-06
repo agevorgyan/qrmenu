@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Domains\Loyalty\Models\LoyaltyProgram;
+use App\Domains\Loyalty\Models\WalletIssuer;
+use App\Domains\Loyalty\Models\WalletPassDesign;
 use App\DTOs\QuotaStatus;
 use App\Security\FeatureCatalog;
 use App\Services\CredentialService;
@@ -2982,18 +2985,18 @@ class Vendor extends Model
         return (bool) $this->getSplitBillSetting()->is_enabled;
     }
 
-    public function loyaltyProgram(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function loyaltyProgram(): HasOne
     {
-        return $this->hasOne(\App\Domains\Loyalty\Models\LoyaltyProgram::class);
+        return $this->hasOne(LoyaltyProgram::class);
     }
 
-    public function walletIssuer(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function walletIssuer(): HasOne
     {
-        return $this->hasOne(\App\Domains\Loyalty\Models\WalletIssuer::class);
+        return $this->hasOne(WalletIssuer::class);
     }
 
-    public function walletPassDesign(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function walletPassDesign(): HasOne
     {
-        return $this->hasOne(\App\Domains\Loyalty\Models\WalletPassDesign::class);
+        return $this->hasOne(WalletPassDesign::class);
     }
 }

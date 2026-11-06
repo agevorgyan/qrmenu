@@ -215,8 +215,11 @@ class Permission
 
     // Loyalty permissions
     public const LOYALTY_VIEW = 'loyalty.view';
+
     public const LOYALTY_MANAGE = 'loyalty.manage';
+
     public const LOYALTY_OPERATE = 'loyalty.operate';
+
     public const LOYALTY_ADJUST = 'loyalty.adjust';
 
     public const ROLES_VIEW = 'roles.view';

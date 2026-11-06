@@ -327,7 +327,10 @@
     </form>
 
     <!-- Interactive Ingredient Picker Modal -->
-    <dialog id="ingredientPickerModal" style="border: none; border-radius: 20px; padding: 0; background: transparent; max-width: 680px; width: 95%;">
+    <dialog id="ingredientPickerModal"
+            @click.self="closePickerModal()"
+            @keydown.escape.window="closePickerModal()"
+            style="border: none; border-radius: 20px; padding: 0; background: transparent; max-width: 680px; width: 95%;">
         <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.5rem; box-shadow: var(--shadow-modal); max-height: 85vh; display: flex; flex-direction: column;">
             <!-- Modal Header -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -450,6 +453,27 @@
         </div>
     </dialog>
 </div>
+
+<style>
+dialog#ingredientPickerModal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    max-width: 680px;
+    width: 95%;
+    border: none;
+    border-radius: 20px;
+    padding: 0;
+    background: transparent;
+    z-index: 1050;
+}
+dialog#ingredientPickerModal::backdrop {
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(4px);
+}
+</style>
 
 <script>
 let globalPoEditForm = null;
