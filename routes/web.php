@@ -1,12 +1,19 @@
 <?php
 
 use App\Http\Controllers\Admin\AccessControlController;
+use App\Http\Controllers\Admin\HaccpController;
 use App\Http\Controllers\Admin\IngredientCategoryController;
 use App\Http\Controllers\Admin\IngredientController;
+use App\Http\Controllers\Admin\InventoryReportController;
 use App\Http\Controllers\Admin\InventoryStockController;
+use App\Http\Controllers\Admin\ProductionOrderController;
+use App\Http\Controllers\Admin\PurchaseOrderController;
 use App\Http\Controllers\Admin\RecipeController;
+use App\Http\Controllers\Admin\SupplierController;
+use App\Http\Controllers\Admin\SupplierInvoiceController;
 use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\WarehouseController;
+use App\Http\Controllers\Admin\WasteController;
 use App\Http\Controllers\AdminEventInquiryController;
 use App\Http\Controllers\AdminReservationController;
 use App\Http\Controllers\AdminSplitBillController;
@@ -527,6 +534,53 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', E
         Route::post('/recipes/{recipe}/approve', [RecipeController::class, 'approve'])->name('recipes.approve');
         Route::post('/recipes/{recipe}/recalculate', [RecipeController::class, 'recalculate'])->name('recipes.recalculate');
         Route::resource('recipes', RecipeController::class);
+
+        // Suppliers & Price Lists (Phase 3)
+        Route::post('/suppliers/{supplier}/prices', [SupplierController::class, 'savePrices'])->name('suppliers.prices.save');
+        Route::resource('suppliers', SupplierController::class);
+
+        // Procurement & Purchase Orders (Phase 3)
+        Route::get('/procurement/suggestions', [PurchaseOrderController::class, 'suggestions'])->name('procurement.suggestions');
+        Route::post('/procurement/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve'])->name('procurement.approve');
+        Route::post('/procurement/{purchaseOrder}/send', [PurchaseOrderController::class, 'markSent'])->name('procurement.send');
+        Route::post('/procurement/{purchaseOrder}/receive', [PurchaseOrderController::class, 'receive'])->name('procurement.receive');
+        Route::post('/procurement/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel'])->name('procurement.cancel');
+        Route::resource('procurement', PurchaseOrderController::class)->parameters(['procurement' => 'purchaseOrder']);
+
+        // Accounts Payable Invoices & Payments (Phase 3)
+        Route::get('/invoices', [SupplierInvoiceController::class, 'index'])->name('invoices.index');
+        Route::get('/invoices/{supplierInvoice}', [SupplierInvoiceController::class, 'show'])->name('invoices.show');
+        Route::post('/payments', [SupplierInvoiceController::class, 'storePayment'])->name('payments.store');
+
+        // Production & Semi-Finished Processing (Phase 4)
+        Route::post('/production/{productionOrder}/start', [ProductionOrderController::class, 'start'])->name('production.start');
+        Route::post('/production/{productionOrder}/complete', [ProductionOrderController::class, 'complete'])->name('production.complete');
+        Route::post('/production/{productionOrder}/cancel', [ProductionOrderController::class, 'cancel'])->name('production.cancel');
+        Route::resource('production', ProductionOrderController::class)->parameters(['production' => 'productionOrder']);
+
+        // HACCP, Food Safety & Traceability (Phase 6)
+        Route::get('/haccp', [HaccpController::class, 'dashboard'])->name('haccp.dashboard');
+        Route::get('/haccp/temperatures', [HaccpController::class, 'temperatureLogs'])->name('haccp.temperatures');
+        Route::post('/haccp/temperatures', [HaccpController::class, 'storeTemperature'])->name('haccp.temperatures.store');
+        Route::get('/haccp/checklists', [HaccpController::class, 'checklists'])->name('haccp.checklists');
+        Route::post('/haccp/checklists', [HaccpController::class, 'storeChecklist'])->name('haccp.checklists.store');
+        Route::get('/haccp/ccps', [HaccpController::class, 'ccps'])->name('haccp.ccps');
+        Route::post('/haccp/ccps/seed', [HaccpController::class, 'seedCcps'])->name('haccp.ccps.seed');
+        Route::get('/haccp/batches', [HaccpController::class, 'batches'])->name('haccp.batches');
+        Route::get('/haccp/traceability', [HaccpController::class, 'traceability'])->name('haccp.traceability');
+
+        // Waste & Loss Management (Phase 7)
+        Route::get('/waste', [WasteController::class, 'index'])->name('waste.index');
+        Route::get('/waste/create', [WasteController::class, 'create'])->name('waste.create');
+        Route::post('/waste', [WasteController::class, 'store'])->name('waste.store');
+        Route::get('/waste/{wasteLog}', [WasteController::class, 'show'])->name('waste.show');
+
+        // Inventory Reports & Business Intelligence (Phase 7)
+        Route::get('/reports/inventory', [InventoryReportController::class, 'index'])->name('reports.inventory.index');
+        Route::get('/reports/inventory/food-cost', [InventoryReportController::class, 'foodCostVariance'])->name('reports.inventory.food-cost');
+        Route::get('/reports/inventory/abc-analysis', [InventoryReportController::class, 'abcAnalysis'])->name('reports.inventory.abc-analysis');
+        Route::get('/reports/inventory/turnover', [InventoryReportController::class, 'turnover'])->name('reports.inventory.turnover');
+        Route::get('/reports/inventory/waste', [InventoryReportController::class, 'wasteAnalysis'])->name('reports.inventory.waste');
     });
 
     // AI Tools (Business Plan Feature)

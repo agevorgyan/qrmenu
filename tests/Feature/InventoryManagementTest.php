@@ -251,4 +251,74 @@ class InventoryManagementTest extends TestCase
             $txResponse->assertSessionHasErrors(['warehouse_id']);
         }
     }
+
+    public function test_can_render_inventory_dashboard_with_low_stock_query_on_postgresql(): void
+    {
+        // Create an ingredient with min_stock > 0 and 0 stock balance
+        $cat = IngredientCategory::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Baking Supplies',
+        ]);
+
+        Ingredient::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Organic Vanilla Extract',
+            'sku' => 'VANILLA-001',
+            'type' => Ingredient::TYPE_RAW_MATERIAL,
+            'category_id' => $cat->id,
+            'unit_id' => $this->kg->id,
+            'min_stock' => 5.0,
+        ]);
+
+        $response = $this->actingAs($this->ownerA)->get(route('admin.inventory.dashboard'));
+
+        $response->assertOk();
+        $response->assertSeeText('Inventory');
+    }
+
+    public function test_can_filter_ingredients_by_low_stock_on_postgresql(): void
+    {
+        $cat = IngredientCategory::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Dry Goods',
+        ]);
+
+        // Low stock item: min_stock 10, current balance 0
+        Ingredient::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Low Stock Sugar',
+            'sku' => 'SUGAR-LOW-01',
+            'type' => Ingredient::TYPE_RAW_MATERIAL,
+            'category_id' => $cat->id,
+            'unit_id' => $this->kg->id,
+            'min_stock' => 10.0,
+        ]);
+
+        // Plentiful item: min_stock 2, current balance 50
+        $flour = Ingredient::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Plentiful Flour',
+            'sku' => 'FLOUR-HIGH-01',
+            'type' => Ingredient::TYPE_RAW_MATERIAL,
+            'category_id' => $cat->id,
+            'unit_id' => $this->kg->id,
+            'min_stock' => 2.0,
+        ]);
+
+        InventoryBalance::create([
+            'vendor_id' => $this->vendorA->id,
+            'warehouse_id' => $this->warehouseA->id,
+            'ingredient_id' => $flour->id,
+            'quantity_on_hand' => 50.0,
+            'quantity_reserved' => 0.0,
+            'unit_cost' => 500.0,
+            'total_value' => 25000.0,
+        ]);
+
+        $response = $this->actingAs($this->ownerA)->get(route('admin.inventory.ingredients.index', ['low_stock' => 1]));
+
+        $response->assertOk();
+        $response->assertSeeText('Low Stock Sugar');
+        $response->assertDontSeeText('Plentiful Flour');
+    }
 }

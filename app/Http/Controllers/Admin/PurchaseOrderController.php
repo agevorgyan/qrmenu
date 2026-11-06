@@ -1,0 +1,218 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\ReceiveGoodsRequest;
+use App\Http\Requests\StorePurchaseOrderRequest;
+use App\Models\Ingredient;
+use App\Models\PurchaseOrder;
+use App\Models\Supplier;
+use App\Models\Unit;
+use App\Models\Warehouse;
+use App\Security\Permission;
+use App\Services\ProcurementService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
+
+class PurchaseOrderController extends Controller
+{
+    public function __construct(
+        protected ProcurementService $procurementService
+    ) {}
+
+    /**
+     * Display a listing of purchase orders.
+     */
+    public function index(Request $request): View
+    {
+        $this->authorizePermission(Permission::PROCUREMENT_VIEW);
+
+        $vendorId = Auth::user()->vendor_id;
+
+        $query = PurchaseOrder::where('vendor_id', $vendorId)
+            ->with(['supplier', 'warehouse', 'items']);
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('po_number', 'ilike', "%{$search}%")
+                    ->orWhereHas('supplier', function ($sq) use ($search) {
+                        $sq->where('name', 'ilike', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        if ($supplierId = $request->input('supplier_id')) {
+            $query->where('supplier_id', $supplierId);
+        }
+
+        if ($warehouseId = $request->input('warehouse_id')) {
+            $query->where('warehouse_id', $warehouseId);
+        }
+
+        $purchaseOrders = $query->orderByDesc('order_date')->paginate(20)->withQueryString();
+
+        $suppliers = Supplier::where('vendor_id', $vendorId)->where('is_active', true)->orderBy('name')->get();
+        $warehouses = Warehouse::where('vendor_id', $vendorId)->where('is_active', true)->orderBy('name')->get();
+
+        $totalCount = PurchaseOrder::where('vendor_id', $vendorId)->count();
+        $draftCount = PurchaseOrder::where('vendor_id', $vendorId)->where('status', PurchaseOrder::STATUS_DRAFT)->count();
+        $approvedCount = PurchaseOrder::where('vendor_id', $vendorId)->where('status', PurchaseOrder::STATUS_APPROVED)->count();
+        $pendingDeliveryCount = PurchaseOrder::where('vendor_id', $vendorId)->whereIn('status', [PurchaseOrder::STATUS_SENT, PurchaseOrder::STATUS_PARTIALLY_RECEIVED])->count();
+
+        return view('admin.inventory.procurement.index', compact(
+            'purchaseOrders',
+            'suppliers',
+            'warehouses',
+            'totalCount',
+            'draftCount',
+            'approvedCount',
+            'pendingDeliveryCount'
+        ));
+    }
+
+    /**
+     * Show form for creating a new purchase order.
+     */
+    public function create(): View
+    {
+        $this->authorizePermission(Permission::PROCUREMENT_CREATE);
+
+        $vendor = Auth::user()->vendor;
+        $suppliers = Supplier::where('vendor_id', $vendor->id)->where('is_active', true)->orderBy('name')->get();
+        $warehouses = Warehouse::where('vendor_id', $vendor->id)->where('is_active', true)->orderBy('name')->get();
+        $ingredients = Ingredient::where('vendor_id', $vendor->id)->where('is_active', true)->with('unit')->orderBy('name')->get();
+        $units = Unit::forCurrentVendor()->where('is_active', true)->orderBy('name')->get();
+
+        $suggestedItems = $this->procurementService->suggestReplenishment($vendor);
+
+        return view('admin.inventory.procurement.create', compact(
+            'suppliers',
+            'warehouses',
+            'ingredients',
+            'units',
+            'suggestedItems'
+        ));
+    }
+
+    /**
+     * Store newly created purchase order.
+     */
+    public function store(StorePurchaseOrderRequest $request): RedirectResponse
+    {
+        $vendor = Auth::user()->vendor;
+        $po = $this->procurementService->createPurchaseOrder($vendor, $request->validated(), Auth::user());
+
+        return redirect()->route('admin.inventory.procurement.show', $po)
+            ->with('success', __('Purchase Order created successfully as draft.'));
+    }
+
+    /**
+     * Display a purchase order details and goods receipt panel.
+     */
+    public function show(PurchaseOrder $purchaseOrder): View
+    {
+        $this->authorizePermission(Permission::PROCUREMENT_VIEW);
+
+        $purchaseOrder->load([
+            'supplier',
+            'warehouse',
+            'items.ingredient.unit',
+            'items.unit',
+            'invoices.warehouse',
+            'invoices.payments',
+            'approver',
+            'creator',
+        ]);
+
+        return view('admin.inventory.procurement.show', compact('purchaseOrder'));
+    }
+
+    /**
+     * Approve purchase order.
+     */
+    public function approve(PurchaseOrder $purchaseOrder): RedirectResponse
+    {
+        $this->authorizePermission(Permission::PROCUREMENT_APPROVE);
+
+        $this->procurementService->approvePurchaseOrder($purchaseOrder, Auth::user());
+
+        return back()->with('success', __('Purchase Order approved successfully.'));
+    }
+
+    /**
+     * Mark purchase order as sent to supplier.
+     */
+    public function markSent(PurchaseOrder $purchaseOrder): RedirectResponse
+    {
+        $this->authorizePermission(Permission::PROCUREMENT_APPROVE);
+
+        $this->procurementService->markAsSent($purchaseOrder);
+
+        return back()->with('success', __('Purchase Order marked as sent to supplier.'));
+    }
+
+    /**
+     * Receive goods from purchase order into warehouse stock.
+     */
+    public function receive(ReceiveGoodsRequest $request, PurchaseOrder $purchaseOrder): RedirectResponse
+    {
+        $this->authorizePermission(Permission::PROCUREMENT_RECEIVE);
+
+        $invoice = $this->procurementService->receiveGoodsFromPo(
+            po: $purchaseOrder,
+            receivedItems: $request->input('items'),
+            invoiceNumber: $request->input('invoice_number'),
+            dueDate: $request->input('due_date'),
+            user: Auth::user(),
+            notes: $request->input('notes')
+        );
+
+        return back()->with('success', __('Stock received and logged to warehouse. Invoice #:invoice created.', ['invoice' => $invoice->invoice_number]));
+    }
+
+    /**
+     * Cancel a purchase order.
+     */
+    public function cancel(PurchaseOrder $purchaseOrder): RedirectResponse
+    {
+        $this->authorizePermission(Permission::PROCUREMENT_APPROVE);
+
+        if ($purchaseOrder->status === PurchaseOrder::STATUS_RECEIVED) {
+            return back()->with('error', __('Cannot cancel a purchase order that has already been received.'));
+        }
+
+        $purchaseOrder->status = PurchaseOrder::STATUS_CANCELLED;
+        $purchaseOrder->save();
+
+        return back()->with('success', __('Purchase Order cancelled.'));
+    }
+
+    /**
+     * Auto replenishment suggestions API.
+     */
+    public function suggestions(): JsonResponse
+    {
+        $this->authorizePermission(Permission::PROCUREMENT_VIEW);
+
+        $vendor = Auth::user()->vendor;
+        $suggestions = $this->procurementService->suggestReplenishment($vendor);
+
+        return response()->json($suggestions);
+    }
+
+    protected function authorizePermission(string $permission): void
+    {
+        $user = Auth::user();
+        if (! $user || ! $user->hasPermission($permission)) {
+            abort(403, 'Unauthorized action.');
+        }
+    }
+}

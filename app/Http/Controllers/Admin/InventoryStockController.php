@@ -38,11 +38,7 @@ class InventoryStockController extends Controller
         $totalStockValue = (float) InventoryBalance::sum('total_value');
 
         // Low stock count
-        $lowStockCount = Ingredient::whereRaw('min_stock > 0')
-            ->whereHas('balances', function ($q) {
-                $q->havingRaw('SUM(quantity_on_hand - quantity_reserved) <= ingredients.min_stock');
-            })
-            ->count();
+        $lowStockCount = Ingredient::lowStock()->count();
 
         // Recent 10 transactions
         $recentTransactions = InventoryTransaction::with(['warehouse', 'targetWarehouse', 'user'])
@@ -234,4 +230,3 @@ class InventoryStockController extends Controller
         }
     }
 }
-

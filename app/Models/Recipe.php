@@ -149,6 +149,11 @@ class Recipe extends Model
         return $this->belongsTo(User::class, 'updated_by');
     }
 
+    public function productionOrders(): HasMany
+    {
+        return $this->hasMany(ProductionOrder::class);
+    }
+
     /**
      * Get aggregated allergens from all ingredients in recipe and nested sub-recipes.
      *

@@ -73,4 +73,9 @@ class Warehouse extends Model
     {
         return $this->hasMany(InventoryTransaction::class, 'target_warehouse_id');
     }
+
+    public function batches(): HasMany
+    {
+        return $this->hasMany(InventoryBatch::class, 'warehouse_id');
+    }
 }

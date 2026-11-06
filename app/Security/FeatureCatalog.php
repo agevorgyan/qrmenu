@@ -52,6 +52,18 @@ class FeatureCatalog
 
     public const INVENTORY_COSTING = 'inventory.costing';
 
+    public const INVENTORY_SUPPLIERS = 'inventory.suppliers';
+
+    public const INVENTORY_PROCUREMENT = 'inventory.procurement';
+
+    public const INVENTORY_PRODUCTION = 'inventory.production';
+
+    public const INVENTORY_HACCP = 'inventory.haccp';
+
+    public const INVENTORY_WASTE = 'inventory.waste';
+
+    public const INVENTORY_REPORTS = 'inventory.reports';
+
     // Dynamic Feature Catalog canonical codes (Sections 3 & 4)
     public const MENU_QR = 'menu.qr';
 

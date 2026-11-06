@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Traits\BelongsToVendor;
 use App\Models\Traits\HasContentTranslations;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -137,6 +138,19 @@ class Ingredient extends Model
         return $this->total_stock_available <= (float) $this->min_stock;
     }
 
+    /**
+     * Scope query to ingredients with stock at or below minimum threshold.
+     * Compatible with PostgreSQL grouping and handles out-of-stock items.
+     *
+     * @param  Builder  $query
+     * @return Builder
+     */
+    public function scopeLowStock($query)
+    {
+        return $query->where('min_stock', '>', 0)
+            ->whereRaw('COALESCE((SELECT SUM(quantity_on_hand - quantity_reserved) FROM inventory_balances WHERE inventory_balances.ingredient_id = ingredients.id), 0) <= ingredients.min_stock');
+    }
+
     public function recipe(): HasOne
     {
         return $this->hasOne(Recipe::class, 'produced_ingredient_id');
@@ -145,5 +159,30 @@ class Ingredient extends Model
     public function usedInRecipeItems(): HasMany
     {
         return $this->hasMany(RecipeItem::class, 'ingredient_id');
+    }
+
+    public function suppliers(): BelongsToMany
+    {
+        return $this->belongsToMany(Supplier::class, 'supplier_ingredients')
+            ->withPivot([
+                'supplier_sku',
+                'unit_id',
+                'price',
+                'is_primary_supplier',
+                'lead_time_days',
+                'minimum_order_quantity',
+                'package_size',
+            ])
+            ->withTimestamps();
+    }
+
+    public function supplierIngredients(): HasMany
+    {
+        return $this->hasMany(SupplierIngredient::class, 'ingredient_id');
+    }
+
+    public function batches(): HasMany
+    {
+        return $this->hasMany(InventoryBatch::class);
     }
 }

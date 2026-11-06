@@ -18,6 +18,7 @@ use App\Security\Permission;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -347,6 +348,18 @@ class PosService
 
         $order->lock_version++;
         $order->save();
+
+        // Inventory Stock Depletion & Reversals (Phase 5)
+        try {
+            $depletionService = app(OrderStockDepletionService::class);
+            if ($newStatus === 'cancelled') {
+                $depletionService->reverseOrderDepletion($order, $reason ?? 'POS Order Cancelled');
+            } elseif (in_array($newStatus, ['confirmed', 'preparing', 'completed'], true)) {
+                $depletionService->depleteOrder($order);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('POS order inventory sync failed: '.$e->getMessage());
+        }
 
         PosOperationLog::log(
             vendor: $order->vendor,

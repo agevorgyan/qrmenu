@@ -383,6 +383,67 @@
                             </span>
                         </a>
                     @endcan
+
+                    @can('production.view')
+                        <a href="{{ route('admin.inventory.production.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.production.*') ? 'active' : '' }}" title="{{ __('Production Orders') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-industry" style="font-size: 0.85rem; color: #f97316;"></i>
+                                <span>{{ __('Production Orders') }}</span>
+                            </span>
+                        </a>
+                    @endcan
+
+                    @can('suppliers.view')
+                        <a href="{{ route('admin.inventory.suppliers.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.suppliers.*') ? 'active' : '' }}" title="{{ __('Suppliers') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-truck-field" style="font-size: 0.85rem; color: #06b6d4;"></i>
+                                <span>{{ __('Suppliers') }}</span>
+                            </span>
+                        </a>
+                    @endcan
+
+                    @can('procurement.view')
+                        <a href="{{ route('admin.inventory.procurement.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.procurement.*') ? 'active' : '' }}" title="{{ __('Purchase Orders') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-cart-shopping" style="font-size: 0.85rem; color: #6366f1;"></i>
+                                <span>{{ __('Purchase Orders') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.inventory.invoices.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.invoices.*') ? 'active' : '' }}" title="{{ __('Invoices & AP') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-file-invoice-dollar" style="font-size: 0.85rem; color: #10b981;"></i>
+                                <span>{{ __('Invoices & AP') }}</span>
+                            </span>
+                        </a>
+                    @endcan
+
+                    @can('haccp.view')
+                        <a href="{{ route('admin.inventory.haccp.dashboard') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.haccp.*') ? 'active' : '' }}" title="{{ __('HACCP & Food Safety') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-shield-virus" style="font-size: 0.85rem; color: #10b981;"></i>
+                                <span>{{ __('HACCP & Food Safety') }}</span>
+                            </span>
+                        </a>
+                    @endcan
+
+                    @can('inventory.view')
+                        <a href="{{ route('admin.inventory.waste.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.waste.*') ? 'active' : '' }}" title="{{ __('Waste & Loss') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-trash-can" style="font-size: 0.85rem; color: #ef4444;"></i>
+                                <span>{{ __('Waste & Loss') }}</span>
+                            </span>
+                        </a>
+                    @endcan
+
+                    @can('reports.view')
+                        <a href="{{ route('admin.inventory.reports.inventory.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.reports.*') ? 'active' : '' }}" title="{{ __('Costing & Analytics') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-chart-pie" style="font-size: 0.85rem; color: #6366f1;"></i>
+                                <span>{{ __('Costing & Analytics') }}</span>
+                            </span>
+                        </a>
+                    @endcan
                 </div>
             </div>
 

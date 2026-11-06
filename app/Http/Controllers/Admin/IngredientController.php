@@ -57,10 +57,7 @@ class IngredientController extends Controller
 
         // Filter by low stock
         if ($request->boolean('low_stock')) {
-            $query->whereRaw('min_stock > 0')
-                ->whereHas('balances', function ($q) {
-                    $q->havingRaw('SUM(quantity_on_hand - quantity_reserved) <= ingredients.min_stock');
-                });
+            $query->lowStock();
         }
 
         $ingredients = $query->paginate(20)->withQueryString();
@@ -219,4 +216,3 @@ class IngredientController extends Controller
         }
     }
 }
-

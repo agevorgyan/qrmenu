@@ -46,6 +46,12 @@ class QuotaCatalog
 
     public const KEY_RECIPES_COUNT = 'recipes.count';
 
+    public const KEY_SUPPLIERS_COUNT = 'suppliers.count';
+
+    public const KEY_PURCHASE_ORDERS_COUNT = 'purchase_orders.count';
+
+    public const KEY_PRODUCTION_ORDERS_COUNT = 'production_orders.count';
+
     /**
      * Aliases map for legacy or conversational keys.
      */
@@ -59,6 +65,9 @@ class QuotaCatalog
         'recipes' => self::KEY_RECIPES_COUNT,
         'recipe' => self::KEY_RECIPES_COUNT,
         'recipes.limit' => self::KEY_RECIPES_COUNT,
+        'suppliers' => self::KEY_SUPPLIERS_COUNT,
+        'supplier' => self::KEY_SUPPLIERS_COUNT,
+        'purchase_orders' => self::KEY_PURCHASE_ORDERS_COUNT,
 
         'products' => self::KEY_PRODUCTS_COUNT,
         'product' => self::KEY_PRODUCTS_COUNT,

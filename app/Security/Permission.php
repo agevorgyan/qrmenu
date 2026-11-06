@@ -124,6 +124,10 @@ class Permission
 
     public const INVENTORY_APPROVE = 'inventory.approve';
 
+    public const INVENTORY_WASTE = 'inventory.waste';
+
+    public const INVENTORY_REPORTS = 'inventory.reports';
+
     // Recipe & Costing Permissions
     public const RECIPES_VIEW = 'recipes.view';
 
@@ -138,6 +142,47 @@ class Permission
     public const RECIPES_COST_VIEW = 'recipes.cost.view';
 
     public const RECIPES_EXPORT = 'recipes.export';
+
+    // Supplier & Procurement Permissions
+    public const SUPPLIERS_VIEW = 'suppliers.view';
+
+    public const SUPPLIERS_CREATE = 'suppliers.create';
+
+    public const SUPPLIERS_UPDATE = 'suppliers.update';
+
+    public const SUPPLIERS_DELETE = 'suppliers.delete';
+
+    public const PROCUREMENT_VIEW = 'procurement.view';
+
+    public const PROCUREMENT_CREATE = 'procurement.create';
+
+    public const PROCUREMENT_APPROVE = 'procurement.approve';
+
+    public const PROCUREMENT_RECEIVE = 'procurement.receive';
+
+    public const PROCUREMENT_PAY = 'procurement.pay';
+
+    // Production & Processing Permissions
+    public const PRODUCTION_VIEW = 'production.view';
+
+    public const PRODUCTION_CREATE = 'production.create';
+
+    public const PRODUCTION_START = 'production.start';
+
+    public const PRODUCTION_COMPLETE = 'production.complete';
+
+    public const PRODUCTION_CANCEL = 'production.cancel';
+
+    public const PRODUCTION_DELETE = 'production.delete';
+
+    // HACCP & Food Safety Permissions
+    public const HACCP_VIEW = 'haccp.view';
+
+    public const HACCP_LOG = 'haccp.log';
+
+    public const HACCP_MANAGE = 'haccp.manage';
+
+    public const HACCP_REPORTS = 'haccp.reports';
 
     public const POS_REFUNDS = 'pos.refunds';
 
@@ -366,6 +411,46 @@ class Permission
             self::SECURITY_VIEW,
             self::SECURITY_MANAGE,
             self::AI_MENU_BUILDER,
+            self::INGREDIENTS_VIEW,
+            self::INGREDIENTS_CREATE,
+            self::INGREDIENTS_UPDATE,
+            self::INGREDIENTS_DELETE,
+            self::INGREDIENTS_EXPORT,
+            self::INVENTORY_VIEW,
+            self::INVENTORY_RECEIPT,
+            self::INVENTORY_ISSUE,
+            self::INVENTORY_TRANSFER,
+            self::INVENTORY_ADJUST,
+            self::INVENTORY_COUNT,
+            self::INVENTORY_APPROVE,
+            self::INVENTORY_WASTE,
+            self::INVENTORY_REPORTS,
+            self::RECIPES_VIEW,
+            self::RECIPES_CREATE,
+            self::RECIPES_UPDATE,
+            self::RECIPES_DELETE,
+            self::RECIPES_APPROVE,
+            self::RECIPES_COST_VIEW,
+            self::RECIPES_EXPORT,
+            self::SUPPLIERS_VIEW,
+            self::SUPPLIERS_CREATE,
+            self::SUPPLIERS_UPDATE,
+            self::SUPPLIERS_DELETE,
+            self::PROCUREMENT_VIEW,
+            self::PROCUREMENT_CREATE,
+            self::PROCUREMENT_APPROVE,
+            self::PROCUREMENT_RECEIVE,
+            self::PROCUREMENT_PAY,
+            self::PRODUCTION_VIEW,
+            self::PRODUCTION_CREATE,
+            self::PRODUCTION_START,
+            self::PRODUCTION_COMPLETE,
+            self::PRODUCTION_CANCEL,
+            self::PRODUCTION_DELETE,
+            self::HACCP_VIEW,
+            self::HACCP_LOG,
+            self::HACCP_MANAGE,
+            self::HACCP_REPORTS,
         ];
     }
 
@@ -516,6 +601,46 @@ class Permission
                 self::ORDERS_CANCEL_REQUEST,
                 self::TABLES_VIEW_ASSIGNED,
                 self::TIPS_VIEW_OWN,
+                self::INGREDIENTS_VIEW,
+                self::INGREDIENTS_CREATE,
+                self::INGREDIENTS_UPDATE,
+                self::INGREDIENTS_DELETE,
+                self::INGREDIENTS_EXPORT,
+                self::INVENTORY_VIEW,
+                self::INVENTORY_RECEIPT,
+                self::INVENTORY_ISSUE,
+                self::INVENTORY_TRANSFER,
+                self::INVENTORY_ADJUST,
+                self::INVENTORY_COUNT,
+                self::INVENTORY_APPROVE,
+                self::INVENTORY_WASTE,
+                self::INVENTORY_REPORTS,
+                self::RECIPES_VIEW,
+                self::RECIPES_CREATE,
+                self::RECIPES_UPDATE,
+                self::RECIPES_DELETE,
+                self::RECIPES_APPROVE,
+                self::RECIPES_COST_VIEW,
+                self::RECIPES_EXPORT,
+                self::SUPPLIERS_VIEW,
+                self::SUPPLIERS_CREATE,
+                self::SUPPLIERS_UPDATE,
+                self::SUPPLIERS_DELETE,
+                self::PROCUREMENT_VIEW,
+                self::PROCUREMENT_CREATE,
+                self::PROCUREMENT_APPROVE,
+                self::PROCUREMENT_RECEIVE,
+                self::PROCUREMENT_PAY,
+                self::PRODUCTION_VIEW,
+                self::PRODUCTION_CREATE,
+                self::PRODUCTION_START,
+                self::PRODUCTION_COMPLETE,
+                self::PRODUCTION_CANCEL,
+                self::PRODUCTION_DELETE,
+                self::HACCP_VIEW,
+                self::HACCP_LOG,
+                self::HACCP_MANAGE,
+                self::HACCP_REPORTS,
                 self::PROFILE_VIEW_OWN,
                 self::PROFILE_UPDATE_OWN,
                 self::PASSWORD_CHANGE_OWN,

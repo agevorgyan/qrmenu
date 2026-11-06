@@ -59,9 +59,11 @@ class InventoryLedgerService
         array $items,
         ?User $user = null,
         ?string $notes = null,
-        ?string $idempotencyKey = null
+        ?string $idempotencyKey = null,
+        ?string $referenceType = null,
+        ?int $referenceId = null
     ): InventoryTransaction {
-        return DB::transaction(function () use ($warehouse, $items, $user, $notes, $idempotencyKey) {
+        return DB::transaction(function () use ($warehouse, $items, $user, $notes, $idempotencyKey, $referenceType, $referenceId) {
             if ($idempotencyKey) {
                 $existing = InventoryTransaction::where('vendor_id', $warehouse->vendor_id)
                     ->where('idempotency_key', $idempotencyKey)
@@ -80,6 +82,8 @@ class InventoryLedgerService
                 'date' => now()->toDateString(),
                 'user_id' => $user?->id,
                 'approved_by' => $user?->id,
+                'reference_type' => $referenceType,
+                'reference_id' => $referenceId,
                 'notes' => $notes,
                 'idempotency_key' => $idempotencyKey,
             ]);
@@ -152,9 +156,10 @@ class InventoryLedgerService
         ?string $notes = null,
         ?string $idempotencyKey = null,
         ?string $referenceType = null,
-        ?int $referenceId = null
+        ?int $referenceId = null,
+        bool $allowNegative = false
     ): InventoryTransaction {
-        return DB::transaction(function () use ($warehouse, $items, $type, $user, $notes, $idempotencyKey, $referenceType, $referenceId) {
+        return DB::transaction(function () use ($warehouse, $items, $type, $user, $notes, $idempotencyKey, $referenceType, $referenceId, $allowNegative) {
             if ($idempotencyKey) {
                 $existing = InventoryTransaction::where('vendor_id', $warehouse->vendor_id)
                     ->where('idempotency_key', $idempotencyKey)
@@ -191,7 +196,7 @@ class InventoryLedgerService
                 $balance = $this->getBalanceForUpdate($warehouse, $ingredient);
                 $available = (float) $balance->quantity_on_hand;
 
-                if ($normalizedQty > $available) {
+                if ($normalizedQty > $available && ! $allowNegative) {
                     throw new InvalidArgumentException(
                         "Insufficient stock for [{$ingredient->name}] in warehouse [{$warehouse->name}]. Requested: {$normalizedQty}, Available: {$available}."
                     );
