@@ -87,4 +87,3 @@ class UpdateIngredientRequest extends FormRequest
         ];
     }
 }
-

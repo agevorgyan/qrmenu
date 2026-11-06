@@ -308,4 +308,3 @@ class RecipeCostingService
         return $recipes;
     }
 }
-

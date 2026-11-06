@@ -42,4 +42,3 @@ class RecipePackaging extends Model
         return $this->belongsTo(Unit::class, 'unit_id');
     }
 }
-

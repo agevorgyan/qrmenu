@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreRecipeRequest;
 use App\Http\Requests\UpdateRecipeRequest;
+use App\Models\Category;
 use App\Models\Ingredient;
-use App\Models\IngredientCategory;
 use App\Models\Product;
 use App\Models\Recipe;
 use App\Models\RecipeCost;
@@ -16,10 +16,12 @@ use App\Models\Unit;
 use App\Security\Permission;
 use App\Services\RecipeCostingService;
 use App\Services\StorageService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class RecipeController extends Controller
@@ -62,7 +64,7 @@ class RecipeController extends Controller
 
         $recipes = $query->orderBy('name')->paginate(20)->withQueryString();
 
-        $categories = IngredientCategory::where('vendor_id', $vendorId)->orderBy('name')->get();
+        $categories = Category::where('vendor_id', $vendorId)->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
         $totalRecipes = Recipe::where('vendor_id', $vendorId)->count();
         $approvedRecipes = Recipe::where('vendor_id', $vendorId)->where('status', Recipe::STATUS_APPROVED)->count();
         $dishCount = Recipe::where('vendor_id', $vendorId)->where('type', Recipe::TYPE_DISH)->count();
@@ -88,22 +90,58 @@ class RecipeController extends Controller
         $vendorId = Auth::user()->vendor_id;
 
         $units = Unit::forCurrentVendor()->where('is_active', true)->orderBy('name')->get();
-        $categories = IngredientCategory::where('vendor_id', $vendorId)->orderBy('name')->get();
+        $categories = Category::where('vendor_id', $vendorId)->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
         $ingredients = Ingredient::where('vendor_id', $vendorId)->where('is_active', true)->with('unit')->orderBy('name')->get();
+        $packagingIngredients = $ingredients->where('type', Ingredient::TYPE_PACKAGING)->values();
         $semiFinishedRecipes = Recipe::where('vendor_id', $vendorId)
             ->whereIn('type', [Recipe::TYPE_SEMI_FINISHED, Recipe::TYPE_SAUCE, Recipe::TYPE_PREP])
             ->where('status', '!=', Recipe::STATUS_ARCHIVED)
             ->with('yieldUnit')
             ->orderBy('name')
             ->get();
-        $products = Product::where('vendor_id', $vendorId)->orderBy('name')->get();
+        $products = Product::where('vendor_id', $vendorId)
+            ->with('category')
+            ->orderBy('name')
+            ->get();
+
+        $preselectedProduct = null;
+        if (request()->filled('product_id')) {
+            $preselectedProduct = $products->firstWhere('id', (int) request('product_id'));
+        }
+
+        $productsData = $products->map(fn ($p) => [
+            'id' => (string) $p->id,
+            'name' => $p->name,
+            'price' => (float) $p->price,
+            'category_id' => $p->category_id ? (string) $p->category_id : '',
+            'category_name' => $p->category?->name ?? '',
+        ])->values()->all();
+
+        $packagingData = $packagingIngredients->map(fn ($pi) => [
+            'id' => (string) $pi->id,
+            'name' => $pi->name,
+            'unit_id' => (string) $pi->unit_id,
+            'unit_code' => $pi->unit?->code ?? '',
+        ])->values()->all();
+
+        $consumablesData = $ingredients->where('type', '!=', Ingredient::TYPE_PACKAGING)->map(fn ($ing) => [
+            'id' => (string) $ing->id,
+            'name' => $ing->name,
+            'unit_id' => (string) $ing->unit_id,
+            'unit_code' => $ing->unit?->code ?? '',
+        ])->values()->all();
 
         return view('admin.inventory.recipes.create', compact(
             'units',
             'categories',
             'ingredients',
+            'packagingIngredients',
             'semiFinishedRecipes',
-            'products'
+            'products',
+            'preselectedProduct',
+            'productsData',
+            'packagingData',
+            'consumablesData'
         ));
     }
 
@@ -231,11 +269,12 @@ class RecipeController extends Controller
 
         $vendorId = Auth::user()->vendor_id;
 
-        $recipe->load(['items', 'packagings']);
+        $recipe->load(['items', 'packagings', 'product.category']);
 
         $units = Unit::forCurrentVendor()->where('is_active', true)->orderBy('name')->get();
-        $categories = IngredientCategory::where('vendor_id', $vendorId)->orderBy('name')->get();
+        $categories = Category::where('vendor_id', $vendorId)->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
         $ingredients = Ingredient::where('vendor_id', $vendorId)->where('is_active', true)->with('unit')->orderBy('name')->get();
+        $packagingIngredients = $ingredients->where('type', Ingredient::TYPE_PACKAGING)->values();
         $semiFinishedRecipes = Recipe::where('vendor_id', $vendorId)
             ->where('id', '!=', $recipe->id)
             ->whereIn('type', [Recipe::TYPE_SEMI_FINISHED, Recipe::TYPE_SAUCE, Recipe::TYPE_PREP])
@@ -243,16 +282,109 @@ class RecipeController extends Controller
             ->with('yieldUnit')
             ->orderBy('name')
             ->get();
-        $products = Product::where('vendor_id', $vendorId)->orderBy('name')->get();
+        $products = Product::where('vendor_id', $vendorId)
+            ->with('category')
+            ->orderBy('name')
+            ->get();
+
+        $productsData = $products->map(fn ($p) => [
+            'id' => (string) $p->id,
+            'name' => $p->name,
+            'price' => (float) $p->price,
+            'category_id' => $p->category_id ? (string) $p->category_id : '',
+            'category_name' => $p->category?->name ?? '',
+        ])->values()->all();
+
+        $packagingData = $packagingIngredients->map(fn ($pi) => [
+            'id' => (string) $pi->id,
+            'name' => $pi->name,
+            'unit_id' => (string) $pi->unit_id,
+            'unit_code' => $pi->unit?->code ?? '',
+        ])->values()->all();
+
+        $consumablesData = $ingredients->where('type', '!=', Ingredient::TYPE_PACKAGING)->map(fn ($ing) => [
+            'id' => (string) $ing->id,
+            'name' => $ing->name,
+            'unit_id' => (string) $ing->unit_id,
+            'unit_code' => $ing->unit?->code ?? '',
+        ])->values()->all();
+
+        $existingItemsData = old('items', $recipe->items->map(fn ($it) => [
+            'type' => $it->type,
+            'ingredient_id' => (string) ($it->ingredient_id ?? ''),
+            'sub_recipe_id' => (string) ($it->sub_recipe_id ?? ''),
+            'quantity' => (float) $it->quantity,
+            'gross_weight' => (float) $it->gross_weight,
+            'unit_id' => (string) $it->unit_id,
+            'net_weight' => (float) ($it->net_weight ?? 0),
+            'prep_loss_percent' => (float) ($it->prep_loss_percent ?? 0),
+            'cooking_loss_percent' => (float) ($it->cooking_loss_percent ?? 0),
+            'notes' => $it->notes ?? '',
+            'is_optional' => (bool) $it->is_optional,
+        ])->all());
+
+        $existingPackagingsData = old('packagings', $recipe->packagings->map(fn ($pkg) => [
+            'ingredient_id' => (string) $pkg->ingredient_id,
+            'quantity' => (float) $pkg->quantity,
+            'unit_id' => (string) $pkg->unit_id,
+            'notes' => $pkg->notes ?? '',
+        ])->all());
 
         return view('admin.inventory.recipes.edit', compact(
             'recipe',
             'units',
             'categories',
             'ingredients',
+            'packagingIngredients',
             'semiFinishedRecipes',
-            'products'
+            'products',
+            'productsData',
+            'packagingData',
+            'consumablesData',
+            'existingItemsData',
+            'existingPackagingsData'
         ));
+    }
+
+    /**
+     * Quick AJAX store for packaging material directly from recipe form.
+     */
+    public function quickStorePackaging(Request $request): JsonResponse
+    {
+        $this->authorizePermission(Permission::RECIPES_CREATE);
+
+        $vendor = Auth::user()->vendor;
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:200'],
+            'unit_id' => ['required', 'exists:units,id'],
+            'purchase_price' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $ingredient = Ingredient::create([
+            'vendor_id' => $vendor->id,
+            'name' => $validated['name'],
+            'sku' => 'PKG-'.strtoupper(Str::random(6)),
+            'type' => Ingredient::TYPE_PACKAGING,
+            'unit_id' => $validated['unit_id'],
+            'last_purchase_price' => $validated['purchase_price'] ?? 0,
+            'current_cost' => $validated['purchase_price'] ?? 0,
+            'is_active' => true,
+        ]);
+
+        $ingredient->load('unit');
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Packaging material created successfully.'),
+            'ingredient' => [
+                'id' => $ingredient->id,
+                'name' => $ingredient->name,
+                'type' => $ingredient->type,
+                'unit_id' => $ingredient->unit_id,
+                'unit_code' => $ingredient->unit?->code ?? '',
+                'cost' => (float) ($ingredient->current_cost ?? 0),
+            ],
+        ]);
     }
 
     /**
@@ -408,4 +540,3 @@ class RecipeController extends Controller
         }
     }
 }
-

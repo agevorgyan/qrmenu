@@ -31,4 +31,3 @@ class StoreUnitConversionRequest extends FormRequest
         ];
     }
 }
-

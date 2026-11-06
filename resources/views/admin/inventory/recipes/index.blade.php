@@ -100,6 +100,18 @@
             </select>
         </div>
 
+        <div style="flex: 1; min-width: 150px;">
+            <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.35rem; display: block;">{{ __('Category') }}</label>
+            <select name="category_id" class="form-select" style="width: 100%; border-radius: 10px;">
+                <option value="">{{ __('All Categories') }}</option>
+                @foreach($categories as $category)
+                    <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                        {{ $category->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
         <div style="display: flex; gap: 0.5rem;">
             <button type="submit" class="btn btn-primary" style="border-radius: 10px; font-weight: 600; padding: 0.6rem 1.25rem;">
                 <i class="fa-solid fa-filter"></i> {{ __('Filter') }}

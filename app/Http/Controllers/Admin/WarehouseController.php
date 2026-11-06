@@ -129,4 +129,3 @@ class WarehouseController extends Controller
         }
     }
 }
-

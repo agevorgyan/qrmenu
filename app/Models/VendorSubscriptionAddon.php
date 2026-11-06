@@ -82,4 +82,3 @@ class VendorSubscriptionAddon extends Model
         return true;
     }
 }
-

@@ -77,4 +77,3 @@ class StoreIngredientRequest extends FormRequest
         ];
     }
 }
-

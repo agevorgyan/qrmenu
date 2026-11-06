@@ -99,4 +99,3 @@ class InventoryTransaction extends Model
         return sprintf('%s-%s-%04d', strtoupper($prefix), now()->format('Ymd'), random_int(1000, 9999));
     }
 }
-

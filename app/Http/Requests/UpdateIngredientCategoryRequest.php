@@ -45,4 +45,3 @@ class UpdateIngredientCategoryRequest extends FormRequest
         ];
     }
 }
-

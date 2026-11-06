@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Category;
 use App\Models\Ingredient;
-use App\Models\IngredientCategory;
 use App\Models\Product;
 use App\Security\Permission;
 use Illuminate\Foundation\Http\FormRequest;
@@ -29,7 +29,7 @@ class UpdateRecipeRequest extends FormRequest
         }
 
         if ($this->filled('category_id')) {
-            $cat = IngredientCategory::find($this->input('category_id'));
+            $cat = Category::find($this->input('category_id'));
             if (! $cat || (int) $cat->vendor_id !== (int) $user->vendor_id) {
                 return false;
             }
@@ -50,6 +50,21 @@ class UpdateRecipeRequest extends FormRequest
         }
 
         return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('items') && is_array($this->items)) {
+            $items = $this->items;
+            foreach ($items as $k => $item) {
+                $qty = $item['quantity'] ?? $item['gross_weight'] ?? null;
+                if ($qty !== null && $qty !== '') {
+                    $items[$k]['quantity'] = $qty;
+                    $items[$k]['gross_weight'] = $qty;
+                }
+            }
+            $this->merge(['items' => $items]);
+        }
     }
 
     public function rules(): array
@@ -78,7 +93,7 @@ class UpdateRecipeRequest extends FormRequest
             ],
             'category_id' => [
                 'nullable',
-                Rule::exists('ingredient_categories', 'id')->where('vendor_id', $vendorId),
+                Rule::exists('categories', 'id')->where('vendor_id', $vendorId),
             ],
             'yield_quantity' => ['required', 'numeric', 'min:0.0001'],
             'yield_unit_id' => ['required', 'exists:units,id'],
@@ -99,9 +114,9 @@ class UpdateRecipeRequest extends FormRequest
             'items.*.type' => ['required_with:items', 'in:ingredient,sub_recipe'],
             'items.*.ingredient_id' => ['nullable', 'required_if:items.*.type,ingredient', 'exists:ingredients,id'],
             'items.*.sub_recipe_id' => ['nullable', 'required_if:items.*.type,sub_recipe', 'exists:recipes,id'],
-            'items.*.quantity' => ['required_with:items', 'numeric', 'min:0.0001'],
+            'items.*.gross_weight' => ['required_with:items', 'numeric', 'min:0.0001'],
+            'items.*.quantity' => ['nullable', 'numeric', 'min:0.0001'],
             'items.*.unit_id' => ['required_with:items', 'exists:units,id'],
-            'items.*.gross_weight' => ['nullable', 'numeric', 'min:0'],
             'items.*.net_weight' => ['nullable', 'numeric', 'min:0'],
             'items.*.prep_loss_percent' => ['nullable', 'numeric', 'min:0', 'max:99.99'],
             'items.*.cooking_loss_percent' => ['nullable', 'numeric', 'min:0', 'max:99.99'],
@@ -111,6 +126,29 @@ class UpdateRecipeRequest extends FormRequest
             'packagings.*.ingredient_id' => ['required_with:packagings', 'exists:ingredients,id'],
             'packagings.*.quantity' => ['required_with:packagings', 'numeric', 'min:0.0001'],
             'packagings.*.unit_id' => ['required_with:packagings', 'exists:units,id'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'name.required' => __('The recipe name is required.'),
+            'code.required' => __('The recipe code is required.'),
+            'code.unique' => __('The recipe code has already been taken.'),
+            'type.required' => __('The recipe type is required.'),
+            'yield_quantity.required' => __('Yield quantity is required.'),
+            'yield_quantity.min' => __('Yield quantity must be at least 0.0001.'),
+            'yield_unit_id.required' => __('Yield unit is required.'),
+            'items.*.ingredient_id.required_if' => __('Please select an ingredient for all recipe rows.'),
+            'items.*.sub_recipe_id.required_if' => __('Please select a sub-recipe for all recipe rows.'),
+            'items.*.gross_weight.required_with' => __('Ingredient quantity is required.'),
+            'items.*.gross_weight.min' => __('Ingredient quantity must be greater than 0.'),
+            'items.*.quantity.min' => __('Ingredient quantity must be greater than 0.'),
+            'items.*.unit_id.required_with' => __('Unit of measure is required for all ingredients.'),
+            'packagings.*.ingredient_id.required_with' => __('Please select a packaging item.'),
+            'packagings.*.quantity.required_with' => __('Packaging quantity is required.'),
+            'packagings.*.quantity.min' => __('Packaging quantity must be greater than 0.'),
+            'packagings.*.unit_id.required_with' => __('Unit is required for packaging item.'),
         ];
     }
 }

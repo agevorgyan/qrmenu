@@ -140,4 +140,3 @@ class Feature extends Model
         };
     }
 }
-

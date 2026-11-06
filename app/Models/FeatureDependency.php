@@ -34,4 +34,3 @@ class FeatureDependency extends Model
         return $this->belongsTo(Feature::class, 'depends_on_feature_id');
     }
 }
-

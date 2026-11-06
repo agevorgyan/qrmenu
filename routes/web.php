@@ -531,6 +531,7 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', E
         Route::post('/transactions', [InventoryStockController::class, 'storeTransaction'])->name('stocks.transactions.store');
 
         // Recipes & Technical Cards (Phase 2)
+        Route::post('/recipes/quick-packaging', [RecipeController::class, 'quickStorePackaging'])->name('recipes.quick-packaging');
         Route::post('/recipes/{recipe}/approve', [RecipeController::class, 'approve'])->name('recipes.approve');
         Route::post('/recipes/{recipe}/recalculate', [RecipeController::class, 'recalculate'])->name('recipes.recalculate');
         Route::resource('recipes', RecipeController::class);

@@ -57,4 +57,3 @@ class RecipeCost extends Model
         return $this->belongsTo(RecipeVersion::class, 'recipe_version_id');
     }
 }
-

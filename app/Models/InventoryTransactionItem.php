@@ -42,4 +42,3 @@ class InventoryTransactionItem extends Model
         return $this->belongsTo(Unit::class);
     }
 }
-

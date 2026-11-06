@@ -79,4 +79,3 @@ class RecipeVersion extends Model
         return $this->hasMany(RecipeItem::class, 'recipe_version_id');
     }
 }
-

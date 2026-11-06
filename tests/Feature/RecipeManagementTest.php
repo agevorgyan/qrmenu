@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Category;
 use App\Models\Ingredient;
+use App\Models\Product;
 use App\Models\Recipe;
 use App\Models\RecipeItem;
 use App\Models\Unit;
@@ -113,6 +115,24 @@ class RecipeManagementTest extends TestCase
         $response->assertOk();
         $response->assertSee('Ribeye Steak');
         $response->assertDontSee('Garden Salad');
+    }
+
+    public function test_can_render_recipe_create_and_edit_views(): void
+    {
+        $createResponse = $this->actingAs($this->ownerA)->get(route('admin.inventory.recipes.create'));
+        $createResponse->assertOk();
+
+        $recipe = Recipe::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Editable Dish',
+            'code' => 'EDIT-001',
+            'type' => Recipe::TYPE_DISH,
+            'yield_quantity' => 1.0,
+            'yield_unit_id' => $this->portion->id,
+        ]);
+
+        $editResponse = $this->actingAs($this->ownerA)->get(route('admin.inventory.recipes.edit', $recipe));
+        $editResponse->assertOk();
     }
 
     public function test_can_create_recipe_with_items_and_recalculate(): void
@@ -260,5 +280,177 @@ class RecipeManagementTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('error');
         $this->assertDatabaseHas('recipes', ['id' => $subRecipe->id, 'deleted_at' => null]);
+    }
+
+    public function test_can_create_recipe_with_decimal_ingredient_quantity_and_menu_category(): void
+    {
+        $category = Category::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Bakery & Pastry',
+            'slug' => 'bakery-pastry-'.uniqid(),
+            'is_active' => true,
+        ]);
+
+        $flour = Ingredient::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Wheat Flour Premium',
+            'unit_id' => $this->kg->id,
+            'type' => Ingredient::TYPE_RAW_MATERIAL,
+            'current_cost' => 500,
+            'is_active' => true,
+        ]);
+
+        $product = Product::create([
+            'vendor_id' => $this->vendorA->id,
+            'category_id' => $category->id,
+            'name' => 'Fresh Croissant',
+            'slug' => 'fresh-croissant-'.uniqid(),
+            'price' => 1200,
+            'is_active' => true,
+        ]);
+
+        $payload = [
+            'name' => 'Fresh Croissant',
+            'code' => 'CROISSANT-01',
+            'type' => 'dish',
+            'product_id' => $product->id,
+            'category_id' => $category->id,
+            'yield_quantity' => 1.0,
+            'yield_unit_id' => $this->portion->id,
+            'selling_price' => 1200,
+            'items' => [
+                [
+                    'type' => 'ingredient',
+                    'ingredient_id' => $flour->id,
+                    'gross_weight' => 0.2, // 0.2 kg as user reported!
+                    'unit_id' => $this->kg->id,
+                    'prep_loss_percent' => 0,
+                    'cooking_loss_percent' => 5.0,
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($this->ownerA)->post(route('admin.inventory.recipes.store'), $payload);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('recipes', [
+            'vendor_id' => $this->vendorA->id,
+            'code' => 'CROISSANT-01',
+            'name' => 'Fresh Croissant',
+            'category_id' => $category->id,
+            'product_id' => $product->id,
+        ]);
+
+        $recipe = Recipe::where('vendor_id', $this->vendorA->id)->where('code', 'CROISSANT-01')->firstOrFail();
+        $this->assertEquals($category->id, $recipe->category_id);
+        $this->assertEquals($category->name, $recipe->category->name);
+
+        $this->assertCount(1, $recipe->items);
+        $this->assertEquals(0.2, (float) $recipe->items->first()->quantity);
+        $this->assertEquals(0.2, (float) $recipe->items->first()->gross_weight);
+    }
+
+    public function test_can_quick_create_packaging_material_via_ajax(): void
+    {
+        $payload = [
+            'name' => 'Eco Takeaway Box 500ml',
+            'unit_id' => $this->portion->id,
+            'purchase_price' => 120.50,
+        ];
+
+        $response = $this->actingAs($this->ownerA)
+            ->postJson(route('admin.inventory.recipes.quick-packaging'), $payload);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+            ])
+            ->assertJsonPath('ingredient.name', 'Eco Takeaway Box 500ml')
+            ->assertJsonPath('ingredient.type', Ingredient::TYPE_PACKAGING);
+
+        $this->assertDatabaseHas('ingredients', [
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Eco Takeaway Box 500ml',
+            'type' => Ingredient::TYPE_PACKAGING,
+            'unit_id' => $this->portion->id,
+            'last_purchase_price' => 120.50,
+            'current_cost' => 120.50,
+        ]);
+    }
+
+    public function test_can_create_recipe_with_packaging_materials(): void
+    {
+        $box = Ingredient::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Pizza Box 32cm',
+            'unit_id' => $this->portion->id,
+            'type' => Ingredient::TYPE_PACKAGING,
+            'current_cost' => 150,
+            'is_active' => true,
+        ]);
+
+        $payload = [
+            'name' => 'Margherita Pizza',
+            'code' => 'PIZZA-MARG-01',
+            'type' => 'dish',
+            'yield_quantity' => 1.0,
+            'yield_unit_id' => $this->portion->id,
+            'items' => [
+                [
+                    'type' => 'ingredient',
+                    'ingredient_id' => $this->beef->id,
+                    'gross_weight' => 0.15,
+                    'unit_id' => $this->kg->id,
+                ],
+            ],
+            'packagings' => [
+                [
+                    'ingredient_id' => $box->id,
+                    'quantity' => 1,
+                    'unit_id' => $this->portion->id,
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($this->ownerA)->post(route('admin.inventory.recipes.store'), $payload);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        $recipe = Recipe::where('vendor_id', $this->vendorA->id)->where('code', 'PIZZA-MARG-01')->firstOrFail();
+        $this->assertCount(1, $recipe->packagings);
+        $this->assertEquals($box->id, $recipe->packagings->first()->ingredient_id);
+        $this->assertEquals(1.0, (float) $recipe->packagings->first()->quantity);
+    }
+
+    public function test_recipe_validation_messages_are_translated(): void
+    {
+        $this->ownerA->locale = 'hy';
+        $this->ownerA->save();
+
+        $response = $this->actingAs($this->ownerA)
+            ->withSession(['admin_locale' => 'hy', 'app_locale' => 'hy'])
+            ->post(route('admin.inventory.recipes.store'), [
+                'name' => '',
+                'code' => '',
+                'type' => 'dish',
+                'items' => [
+                    [
+                        'type' => 'ingredient',
+                        'ingredient_id' => $this->beef->id,
+                        'gross_weight' => -1, // invalid
+                        'unit_id' => $this->kg->id,
+                    ],
+                ],
+            ]);
+
+        $response->assertSessionHasErrors(['name', 'code', 'items.0.gross_weight']);
+        $errors = session('errors')->getBag('default')->getMessages();
+
+        $this->assertEquals('Տեխնոլոգիական քարտի անվանումը պարտադիր է:', $errors['name'][0]);
+        $this->assertEquals('Տեխնոլոգիական քարտի կոդը պարտադիր է:', $errors['code'][0]);
+        $this->assertEquals('Բաղադրիչի քանակը պետք է մեծ լինի 0-ից:', $errors['items.0.gross_weight'][0]);
     }
 }
