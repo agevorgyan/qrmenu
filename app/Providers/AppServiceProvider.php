@@ -96,7 +96,22 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (app()->environment('production') || str_starts_with(config('app.url'), 'https://')) {
+        $isHttps = app()->environment('production') ||
+            str_starts_with((string) config('app.url'), 'https://') ||
+            (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+            (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
+            (isset($_SERVER['HTTP_X_FORWARDED_SSL']) && $_SERVER['HTTP_X_FORWARDED_SSL'] === 'on') ||
+            (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
+
+        if (! app()->runningInConsole()) {
+            try {
+                $isHttps = $isHttps || request()->isSecure() || request()->header('x-forwarded-proto') === 'https';
+            } catch (\Throwable $e) {
+                // Ignore during early bootstrap
+            }
+        }
+
+        if ($isHttps) {
             URL::forceScheme('https');
         }
 

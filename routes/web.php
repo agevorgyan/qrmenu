@@ -804,7 +804,8 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', E
 
         // Referrals
         Route::get('/referrals', [LoyaltyReferralsController::class, 'index'])->name('referrals');
-        Route::post('/referrals/settings', [LoyaltyReferralsController::class, 'updateSettings'])->name('referrals.settings.update');
+        Route::match(['post', 'put'], '/referrals/settings', [LoyaltyReferralsController::class, 'updateSettings'])->name('referrals.settings');
+        Route::match(['post', 'put'], '/referrals/settings-update', [LoyaltyReferralsController::class, 'updateSettings'])->name('referrals.settings.update');
 
         // Campaigns
         Route::get('/campaigns', [LoyaltyCampaignsController::class, 'index'])->name('campaigns');
