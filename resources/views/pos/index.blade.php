@@ -185,21 +185,22 @@
             border-color: var(--primary);
         }
 
-        /* Mode Switcher Tabs */
+        /* Mode Switcher Tabs (Segmented Control) */
         .pos-mode-switcher {
             display: flex;
             align-items: center;
             background: var(--bg-subtle);
             padding: 3px;
-            border-radius: 10px;
+            border-radius: 11px;
             border: 1px solid var(--border-color);
             gap: 3px;
+            box-shadow: var(--card-shadow);
         }
 
         .pos-mode-btn {
-            padding: 7px 14px;
-            border-radius: 7px;
-            border: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid transparent;
             background: transparent;
             color: var(--text-muted);
             font-size: 0.82rem;
@@ -209,7 +210,7 @@
             gap: 0.45rem;
             cursor: pointer;
             transition: all 0.15s ease;
-            min-height: 36px;
+            min-height: 34px;
             touch-action: manipulation;
         }
 
@@ -219,9 +220,18 @@
         }
 
         .pos-mode-btn.active {
-            background: var(--primary-gradient);
+            background: var(--bg-card);
+            color: var(--text-main);
+            font-weight: 700;
+            border-color: var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+
+        [data-theme="dark"] .pos-mode-btn.active {
+            background: var(--bg-card);
             color: #ffffff;
-            box-shadow: 0 2px 10px var(--primary-glow);
+            border-color: var(--border-color-strong);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
         }
 
         /* Right Actions Cluster */
@@ -231,33 +241,128 @@
             gap: 0.5rem;
         }
 
+        /* Modern Functional Header Capsules */
+        .pos-header-capsule {
+            display: inline-flex;
+            align-items: center;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 2px 3px;
+            gap: 2px;
+            box-shadow: var(--card-shadow);
+            flex-shrink: 0;
+        }
+
+        .pos-capsule-btn {
+            min-width: 32px;
+            height: 32px;
+            padding: 0 8px;
+            border-radius: 7px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            touch-action: manipulation;
+            position: relative;
+            text-decoration: none;
+        }
+
+        .pos-capsule-btn:hover {
+            background: var(--bg-card);
+            color: var(--text-main);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .pos-capsule-btn:active {
+            transform: scale(0.96);
+        }
+
+        .pos-capsule-btn.alert-sync {
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.12);
+        }
+
+        .pos-capsule-btn.has-badge.alert-danger {
+            color: #ef4444;
+        }
+
+        .pos-capsule-btn.has-badge.alert-info {
+            color: #3b82f6;
+        }
+
+        .pos-capsule-btn.has-badge.alert-success {
+            color: #10b981;
+        }
+
+        .capsule-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            font-size: 0.62rem;
+            font-weight: 800;
+            border-radius: 999px;
+            padding: 1px 4px;
+            line-height: 1;
+            border: 1.5px solid var(--bg-surface);
+        }
+
+        .capsule-badge.badge-danger {
+            background: #ef4444;
+            color: #ffffff;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+            animation: pulse-dot 1.8s infinite;
+        }
+
+        .capsule-badge.badge-info {
+            background: #3b82f6;
+            color: #ffffff;
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+        }
+
+        .capsule-badge.badge-success {
+            background: #10b981;
+            color: #ffffff;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+        }
+
+        .pos-capsule-divider {
+            width: 1px;
+            height: 18px;
+            background: var(--border-color);
+            margin: 0 2px;
+            flex-shrink: 0;
+        }
+
         .status-pill {
             display: inline-flex;
             align-items: center;
             gap: 6px;
             font-size: 0.72rem;
             font-weight: 600;
-            padding: 5px 9px;
-            border-radius: 9999px;
-            background: rgba(16, 185, 129, 0.12);
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: transparent;
             color: #10b981;
-            border: 1px solid rgba(16, 185, 129, 0.25);
         }
 
         [data-theme="light"] .status-pill {
             color: #059669;
-            background: rgba(16, 185, 129, 0.1);
         }
 
         .status-pill.offline {
-            background: rgba(239, 68, 68, 0.12);
-            color: #f87171;
-            border-color: rgba(239, 68, 68, 0.25);
+            color: #ef4444;
         }
 
         [data-theme="light"] .status-pill.offline {
             color: #dc2626;
-            background: rgba(239, 68, 68, 0.1);
         }
 
         .status-dot {
@@ -306,44 +411,47 @@
         }
 
         .theme-toggle-btn i {
-            transition: transform 0.2s ease;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .theme-toggle-btn:hover i {
-            transform: rotate(20deg);
+            transform: rotate(25deg);
+        }
+
+        .pos-staff-capsule {
+            gap: 2px;
         }
 
         .pos-user-badge {
             display: flex;
             align-items: center;
-            gap: 0.55rem;
-            padding: 3px 9px 3px 5px;
-            border-radius: 20px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
+            gap: 0.5rem;
+            padding: 2px 7px 2px 3px;
+            border-radius: 7px;
+            background: transparent;
+            border: none;
             cursor: pointer;
             transition: all 0.15s ease;
-            box-shadow: var(--card-shadow);
             touch-action: manipulation;
         }
 
         .pos-user-badge:hover {
-            background: var(--bg-card-hover);
-            border-color: var(--border-color-strong);
+            background: var(--bg-card);
         }
 
         .pos-user-avatar {
-            width: 28px;
-            height: 28px;
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
             background: var(--primary);
             color: #000;
-            font-weight: 700;
+            font-weight: 800;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
         }
 
         .pos-user-info {
@@ -354,16 +462,18 @@
         }
 
         .pos-user-name {
-            font-size: 0.78rem;
-            font-weight: 600;
+            font-size: 0.76rem;
+            font-weight: 700;
             color: var(--text-main);
+            white-space: nowrap;
         }
 
         .pos-user-role {
-            font-size: 0.62rem;
+            font-size: 0.60rem;
             color: var(--primary);
             text-transform: uppercase;
             font-weight: 700;
+            letter-spacing: 0.02em;
         }
 
         /* Main Workspace Stage */
@@ -396,6 +506,82 @@
             justify-content: space-between;
             flex-shrink: 0;
             flex-wrap: wrap;
+        }
+
+        .pos-subtabs-group {
+            display: inline-flex;
+            align-items: center;
+            background: var(--bg-subtle);
+            padding: 3px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            gap: 3px;
+        }
+
+        .pos-subtab-btn {
+            padding: 6px 14px;
+            border-radius: 7px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            touch-action: manipulation;
+        }
+
+        .pos-subtab-btn:hover {
+            color: var(--text-main);
+            background: var(--bg-card-hover);
+        }
+
+        .pos-subtab-btn.active {
+            background: var(--bg-card);
+            color: var(--text-main);
+            font-weight: 700;
+            border-color: var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+
+        [data-theme="dark"] .pos-subtab-btn.active {
+            border-color: var(--border-color-strong);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+        }
+
+        .subtab-count {
+            font-size: 0.68rem;
+            font-weight: 800;
+            padding: 1px 6px;
+            border-radius: 999px;
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            margin-left: 4px;
+        }
+
+        .pos-table-map-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 6px 13px;
+            border-radius: 8px;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            touch-action: manipulation;
+            box-shadow: var(--card-shadow);
+        }
+
+        .pos-table-map-btn:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-color-strong);
         }
 
         /* Left/Catalog Column */
@@ -489,25 +675,29 @@
             align-items: center;
             gap: 0.5rem;
             padding: 7px 12px;
-            background: rgba(245, 158, 11, 0.1);
-            border: 1px solid rgba(245, 158, 11, 0.35);
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
-            color: #d97706;
-            font-weight: 700;
+            color: var(--text-main);
+            font-weight: 600;
             font-size: 0.82rem;
             cursor: pointer;
             white-space: nowrap;
             transition: all 0.15s ease;
             touch-action: manipulation;
+            box-shadow: var(--card-shadow);
         }
 
-        [data-theme="dark"] .table-context-chip {
-            color: #fbbf24;
+        .table-context-chip.has-table {
+            background: rgba(16, 185, 129, 0.08);
+            border-color: rgba(16, 185, 129, 0.35);
+            color: #10b981;
+            font-weight: 700;
         }
 
         .table-context-chip:hover {
-            background: rgba(245, 158, 11, 0.2);
-            border-color: var(--primary);
+            background: var(--bg-card-hover);
+            border-color: var(--border-color-strong);
         }
 
         /* Guest counter box */
@@ -830,8 +1020,14 @@
             align-items: center;
             justify-content: center;
             color: var(--text-subtle);
-            font-size: 1.5rem;
-            background: var(--bg-subtle);
+            font-size: 1.6rem;
+            background: linear-gradient(135deg, var(--bg-subtle) 0%, rgba(245, 158, 11, 0.05) 100%);
+            transition: all 0.2s ease;
+        }
+
+        .dish-card:hover .dish-no-img {
+            color: var(--primary);
+            background: linear-gradient(135deg, var(--bg-subtle) 0%, rgba(245, 158, 11, 0.12) 100%);
         }
 
         .dish-body {
@@ -1043,12 +1239,12 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: rgba(14, 20, 36, 0.4);
+            background: var(--bg-card);
         }
 
         .cart-type-selector {
             display: flex;
-            background: rgba(0, 0, 0, 0.35);
+            background: var(--bg-subtle);
             padding: 2px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
@@ -1056,19 +1252,32 @@
         }
 
         .cart-type-btn {
-            padding: 4px 10px;
+            padding: 5px 12px;
             border-radius: 6px;
-            border: none;
+            border: 1px solid transparent;
             background: transparent;
             color: var(--text-muted);
-            font-size: 0.75rem;
+            font-size: 0.78rem;
             font-weight: 600;
             cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .cart-type-btn:hover {
+            color: var(--text-main);
         }
 
         .cart-type-btn.active {
-            background: var(--primary-gradient);
-            color: #fff;
+            background: var(--bg-card);
+            color: var(--text-main);
+            font-weight: 700;
+            border-color: var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        [data-theme="dark"] .cart-type-btn.active {
+            border-color: var(--border-color-strong);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
         }
 
         /* Cart Items Scrollable List */
@@ -1082,19 +1291,20 @@
         }
 
         .cart-item-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border-color-light);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 10px;
             padding: 0.75rem;
             display: flex;
             flex-direction: column;
             gap: 0.4rem;
             transition: all 0.15s ease;
+            box-shadow: var(--card-shadow);
         }
 
         .cart-item-card:hover {
-            border-color: rgba(255, 255, 255, 0.12);
-            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--border-color-strong);
+            background: var(--bg-card-hover);
         }
 
         .cart-item-top {
@@ -1122,7 +1332,8 @@
             font-size: 0.68rem;
             padding: 2px 6px;
             border-radius: 4px;
-            background: rgba(255, 255, 255, 0.06);
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
             color: var(--text-muted);
             display: inline-block;
             margin-top: 3px;
@@ -1139,7 +1350,7 @@
         .cart-qty-stepper {
             display: flex;
             align-items: center;
-            background: rgba(0, 0, 0, 0.4);
+            background: var(--bg-subtle);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             overflow: hidden;
@@ -1184,7 +1395,7 @@
         .cart-summary {
             padding: 0.85rem 1rem;
             border-top: 1px solid var(--border-color);
-            background: rgba(14, 20, 36, 0.7);
+            background: var(--bg-subtle);
             display: flex;
             flex-direction: column;
             gap: 0.35rem;
@@ -1203,7 +1414,7 @@
             border-top: 1px dashed var(--border-color);
             font-size: 1.15rem;
             font-weight: 800;
-            color: #ffffff;
+            color: var(--text-main);
             font-family: var(--font-display);
         }
 
@@ -1643,7 +1854,7 @@
         .pos-lang-switch {
             display: inline-flex;
             align-items: center;
-            background: rgba(0, 0, 0, 0.4);
+            background: var(--bg-subtle);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 2px;
@@ -1655,20 +1866,27 @@
             font-weight: 700;
             padding: 3px 7px;
             border-radius: 6px;
+            border: 1px solid transparent;
             color: var(--text-muted);
             text-decoration: none;
             transition: all 0.15s ease;
         }
 
         .pos-lang-btn:hover {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            background: var(--bg-card);
         }
 
         .pos-lang-btn.active {
-            background: var(--primary);
-            color: #000;
+            background: var(--bg-card);
+            color: var(--text-main);
             font-weight: 800;
+            border-color: var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        [data-theme="dark"] .pos-lang-btn.active {
+            border-color: var(--border-color-strong);
         }
 
         .status-pill.status-pending {
@@ -1903,7 +2121,7 @@
             </div>
         </div>
 
-        <!-- Mode Switcher (Backend Enforced & Strictly Role-Restricted) -->
+        <!-- Mode Switcher (Segmented Control) -->
         @if(count($allowedModes ?? []) > 1)
         <div class="pos-mode-switcher">
             @if(in_array('waiter', $allowedModes ?? []))
@@ -1911,7 +2129,7 @@
                     class="pos-mode-btn" 
                     :class="{ 'active': activeMode === 'waiter' }"
                     @click="setMode('waiter')">
-                <i class="fa-solid fa-user-tie"></i>
+                <i class="fa-solid fa-user-tie" :style="activeMode === 'waiter' ? 'color: #10b981;' : ''"></i>
                 <span>{{ __('Waiter Mode') }}</span>
             </button>
             @endif
@@ -1920,7 +2138,7 @@
                     class="pos-mode-btn" 
                     :class="{ 'active': activeMode === 'cashier' }"
                     @click="setMode('cashier')">
-                <i class="fa-solid fa-receipt"></i>
+                <i class="fa-solid fa-receipt" :style="activeMode === 'cashier' ? 'color: #6366f1;' : ''"></i>
                 <span>{{ __('Cashier Mode') }}</span>
             </button>
             @endif
@@ -1929,118 +2147,149 @@
                     class="pos-mode-btn" 
                     :class="{ 'active': activeMode === 'manager' }"
                     @click="setMode('manager')">
-                <i class="fa-solid fa-chart-line"></i>
+                <i class="fa-solid fa-chart-line" :style="activeMode === 'manager' ? 'color: #f59e0b;' : ''"></i>
                 <span>{{ __('Manager Mode') }}</span>
             </button>
             @endif
         </div>
         @else
-        <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); padding: 0.4rem 0.9rem; border-radius: 12px;">
-            <i class="fa-solid" :class="activeMode === 'waiter' ? 'fa-user-tie' : (activeMode === 'cashier' ? 'fa-receipt' : 'fa-chart-line')" :style="activeMode === 'waiter' ? 'color: #10b981;' : (activeMode === 'cashier' ? 'color: #6366f1;' : 'color: #f59e0b;')"></i>
-            <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-main);" x-text="activeMode === 'waiter' ? '{{ __('Waiter Mode') }}' : (activeMode === 'cashier' ? '{{ __('Cashier Mode') }}' : '{{ __('Manager Mode') }}')"></span>
+        <div class="pos-header-capsule">
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.8rem;">
+                <i class="fa-solid" :class="activeMode === 'waiter' ? 'fa-user-tie' : (activeMode === 'cashier' ? 'fa-receipt' : 'fa-chart-line')" :style="activeMode === 'waiter' ? 'color: #10b981;' : (activeMode === 'cashier' ? 'color: #6366f1;' : 'color: #f59e0b;')"></i>
+                <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-main);" x-text="activeMode === 'waiter' ? '{{ __('Waiter Mode') }}' : (activeMode === 'cashier' ? '{{ __('Cashier Mode') }}' : '{{ __('Manager Mode') }}')"></span>
+            </div>
         </div>
         @endif
 
-        <!-- Right System Indicators & Tools -->
+        <!-- Right System Indicators & Consolidated Action Capsules -->
         <div class="pos-actions-group">
-            <!-- Language Switcher -->
-            <div class="pos-lang-switch" title="{{ __('Language') }}">
-                <a href="{{ route('lang.switch', 'hy') }}" class="pos-lang-btn {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">HY</a>
-                <a href="{{ route('lang.switch', 'ru') }}" class="pos-lang-btn {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">RU</a>
-                <a href="{{ route('lang.switch', 'en') }}" class="pos-lang-btn {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">EN</a>
+            <!-- Capsule 1: Connectivity & Language -->
+            <div class="pos-header-capsule pos-connectivity-capsule">
+                <!-- Online / Offline Status Badge -->
+                <div class="status-pill" :class="{ 'offline': !isOnline }" :title="isOnline ? '{{ __('Connected') }}' : '{{ __('Offline Mode') }}'">
+                    <span class="status-dot"></span>
+                    <span class="status-label" x-text="isOnline ? '{{ __('Online') }}' : '{{ __('Offline') }}'"></span>
+                </div>
+
+                <!-- Unsynced Operations Badge -->
+                <template x-if="offlineQueue && offlineQueue.length > 0">
+                    <button type="button" class="pos-capsule-btn alert-sync" @click="syncOfflineQueue()" title="{{ __('Sync Offline Data') }}">
+                        <i class="fa-solid fa-cloud-arrow-up" :class="{ 'fa-spin': isSyncing }"></i>
+                        <span x-text="offlineQueue.length"></span>
+                    </button>
+                </template>
+
+                <div class="pos-capsule-divider"></div>
+
+                <!-- Language Switcher -->
+                <div class="pos-lang-switch" title="{{ __('Language') }}">
+                    <a href="{{ route('lang.switch', 'hy') }}" class="pos-lang-btn {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">HY</a>
+                    <a href="{{ route('lang.switch', 'ru') }}" class="pos-lang-btn {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">RU</a>
+                    <a href="{{ route('lang.switch', 'en') }}" class="pos-lang-btn {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">EN</a>
+                </div>
             </div>
 
-            <!-- Online / Offline Status Badge -->
-            <div class="status-pill" :class="{ 'offline': !isOnline }">
-                <span class="status-dot"></span>
-                <span x-text="isOnline ? '{{ __('Online') }}' : '{{ __('Offline') }}'"></span>
-            </div>
-
-            <!-- Unsynced Operations Badge -->
-            <template x-if="offlineQueue && offlineQueue.length > 0">
-                <button type="button" class="status-pill" style="background: rgba(245, 158, 11, 0.2); border-color: rgba(245, 158, 11, 0.4); color: #fbbf24; cursor: pointer;" @click="syncOfflineQueue()" title="{{ __('Sync Offline Data') }}">
-                    <i class="fa-solid fa-cloud-arrow-up" :class="{ 'fa-spin': isSyncing }"></i>
-                    <span x-text="'{{ __('Sync') }} (' + offlineQueue.length + ')'"></span>
+            <!-- Capsule 2: Live Activity & Operations Hub (Waiter Calls, Online Orders, Reservations, Kitchen) -->
+            <div class="pos-header-capsule pos-activity-capsule">
+                <!-- Waiter Calls Indicator -->
+                <button type="button" 
+                        class="pos-capsule-btn" 
+                        :class="{ 'has-badge alert-danger': waiterCalls.length > 0, 'desktop-only-tool': waiterCalls.length === 0 }" 
+                        @click="openWaiterCallsModal()" 
+                        title="{{ __('Waiter Calls') }}">
+                    <i class="fa-solid fa-bell"></i>
+                    <span x-show="waiterCalls.length > 0" class="capsule-badge badge-danger" x-text="waiterCalls.length"></span>
                 </button>
-            </template>
 
-            <!-- Waiter Calls Indicator -->
-            <button type="button" class="pos-tool-btn" :class="{ 'desktop-only-tool': waiterCalls.length === 0 }" @click="openWaiterCallsModal()" :style="waiterCalls.length > 0 ? 'color: #ef4444;' : ''" title="{{ __('Waiter Calls') }}" style="position: relative;">
-                <i class="fa-solid fa-bell"></i>
-                <span x-show="waiterCalls.length > 0" x-text="waiterCalls.length" style="position: absolute; top: 1px; right: 1px; background: #ef4444; color: #fff; font-size: 0.65rem; font-weight: 800; border-radius: 999px; padding: 0.05rem 0.35rem; line-height: 1;"></span>
-            </button>
+                <!-- Incoming External Orders (QR / Online) Indicator -->
+                <button type="button" 
+                        class="pos-capsule-btn" 
+                        :class="{ 'has-badge alert-info': incomingOrders.length > 0, 'desktop-only-tool': incomingOrders.length === 0 }" 
+                        @click="openIncomingOrdersModal()" 
+                        title="{{ __('Incoming Orders') }}">
+                    <i class="fa-solid fa-cloud-arrow-down"></i>
+                    <span x-show="incomingOrders.length > 0" class="capsule-badge badge-info" x-text="incomingOrders.length"></span>
+                </button>
 
-            <!-- Incoming External Orders (QR / Online) Indicator -->
-            <button type="button" class="pos-tool-btn" :class="{ 'desktop-only-tool': incomingOrders.length === 0 }" @click="openIncomingOrdersModal()" :style="incomingOrders.length > 0 ? 'color: #3b82f6;' : ''" title="{{ __('Incoming Orders') }}" style="position: relative;">
-                <i class="fa-solid fa-cloud-arrow-down"></i>
-                <span x-show="incomingOrders.length > 0" x-text="incomingOrders.length" style="position: absolute; top: 1px; right: 1px; background: #3b82f6; color: #fff; font-size: 0.65rem; font-weight: 800; border-radius: 999px; padding: 0.05rem 0.35rem; line-height: 1;"></span>
-            </button>
+                <!-- Reservations Indicator -->
+                <button type="button" 
+                        class="pos-capsule-btn" 
+                        :class="{ 'has-badge alert-success': reservations.length > 0, 'desktop-only-tool': reservations.length === 0 }" 
+                        @click="openReservationsModal()" 
+                        title="{{ __('Reservations') }}">
+                    <i class="fa-regular fa-calendar-check"></i>
+                    <span x-show="reservations.length > 0" class="capsule-badge badge-success" x-text="reservations.length"></span>
+                </button>
 
-            <!-- Reservations Indicator -->
-            <button type="button" class="pos-tool-btn" :class="{ 'desktop-only-tool': reservations.length === 0 }" @click="openReservationsModal()" :style="reservations.length > 0 ? 'color: #10b981;' : ''" title="{{ __('Reservations') }}" style="position: relative;">
-                <i class="fa-regular fa-calendar-check"></i>
-                <span x-show="reservations.length > 0" x-text="reservations.length" style="position: absolute; top: 1px; right: 1px; background: #10b981; color: #fff; font-size: 0.65rem; font-weight: 800; border-radius: 999px; padding: 0.05rem 0.35rem; line-height: 1;"></span>
-            </button>
-
-            <!-- Kitchen Display System (KDS) Button -->
-            @if(Auth::user()->isVendorOwner() || Auth::user()->isManager() || Auth::user()->isChef())
-            <a href="{{ route('pos.kds') }}" target="_blank" class="pos-tool-btn desktop-only-tool" title="{{ __('Kitchen Display System (KDS)') }}" style="text-decoration: none; color: #f59e0b;">
-                <i class="fa-solid fa-fire-burner"></i>
-            </a>
-            @endif
-
-            <!-- Theme Toggle Button (Light / Dark) -->
-            <button type="button" 
-                    class="pos-tool-btn theme-toggle-btn" 
-                    @click="toggleTheme()" 
-                    :title="posTheme === 'dark' ? '{{ __('Light Mode') }}' : '{{ __('Dark Mode') }}'"
-                    aria-label="Toggle Theme">
-                <i class="fa-solid" :class="posTheme === 'dark' ? 'fa-sun' : 'fa-moon'" :style="posTheme === 'dark' ? 'color: #f59e0b;' : 'color: #6366f1;'"></i>
-            </button>
-
-            <!-- Fullscreen Toggle -->
-            <button type="button" class="pos-tool-btn desktop-only-tool" @click="toggleFullscreen()" title="{{ __('Toggle Fullscreen') }}">
-                <i class="fa-solid" :class="isFullscreen ? 'fa-compress' : 'fa-expand'"></i>
-            </button>
-
-            <!-- Quick Lock Screen -->
-            <button type="button" class="pos-tool-btn" @click="lockTerminal()" title="{{ __('Lock Terminal') }}">
-                <i class="fa-solid fa-lock"></i>
-            </button>
-
-            <!-- Quick Employee Switcher Button -->
-            @if(Auth::user()->isVendorOwner() || Auth::user()->isManager() || count($allowedModes ?? []) > 1)
-            <button type="button" class="pos-tool-btn desktop-only-tool" @click="openEmployeeSwitcher()" title="{{ __('Quick Switch Employee') }}" style="color: var(--primary);">
-                <i class="fa-solid fa-users-gear"></i>
-            </button>
-            @endif
-
-            <!-- Employee Profile Badge & Modal Trigger -->
-            <div class="pos-user-badge" @click="openEmployeeProfileModal()" title="{{ __('My Profile & Security') }}">
-                <div class="pos-user-avatar">
-                    <template x-if="currentUser.avatar_url">
-                        <img :src="currentUser.avatar_url" style="width: 100%; height: 100%; object-fit: cover;">
-                    </template>
-                    <template x-if="!currentUser.avatar_url">
-                        <span x-text="currentUser.display_name.charAt(0).toUpperCase()"></span>
-                    </template>
-                </div>
-                <div class="pos-user-info">
-                    <span class="pos-user-name" x-text="currentUser.display_name"></span>
-                    <span class="pos-user-role" x-text="activeMode"></span>
-                </div>
+                <!-- Kitchen Display System (KDS) Button -->
+                @if(Auth::user()->isVendorOwner() || Auth::user()->isManager() || Auth::user()->isChef())
+                <div class="pos-capsule-divider desktop-only-tool"></div>
+                <a href="{{ route('pos.kds') }}" target="_blank" class="pos-capsule-btn desktop-only-tool" title="{{ __('Kitchen Display System (KDS)') }}">
+                    <i class="fa-solid fa-fire-burner" style="color: #f59e0b;"></i>
+                </a>
+                @endif
             </div>
 
-            <!-- Return to Admin or Logout -->
-            @if(Auth::user()->isVendorOwner() || Auth::user()->isManager())
-            <a href="{{ route('admin.dashboard') }}" class="pos-tool-btn desktop-only-tool" title="{{ __('Back to Dashboard') }}">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i>
-            </a>
-            @else
-            <button type="button" class="pos-tool-btn desktop-only-tool" @click="confirmLogout()" title="{{ __('Logout') }}" style="color: #ef4444;">
-                <i class="fa-solid fa-power-off"></i>
-            </button>
-            @endif
+            <!-- Capsule 3: System Utilities (Theme, Fullscreen, Lock) -->
+            <div class="pos-header-capsule pos-system-capsule">
+                <!-- Theme Toggle Button (Light / Dark) -->
+                <button type="button" 
+                        class="pos-capsule-btn theme-toggle-btn" 
+                        @click="toggleTheme()" 
+                        :title="posTheme === 'dark' ? '{{ __('Light Mode') }}' : '{{ __('Dark Mode') }}'"
+                        aria-label="Toggle Theme">
+                    <i class="fa-solid" :class="posTheme === 'dark' ? 'fa-sun' : 'fa-moon'" :style="posTheme === 'dark' ? 'color: #f59e0b;' : 'color: #6366f1;'"></i>
+                </button>
+
+                <!-- Fullscreen Toggle -->
+                <button type="button" class="pos-capsule-btn desktop-only-tool" @click="toggleFullscreen()" title="{{ __('Toggle Fullscreen') }}">
+                    <i class="fa-solid" :class="isFullscreen ? 'fa-compress' : 'fa-expand'"></i>
+                </button>
+
+                <!-- Quick Lock Screen -->
+                <button type="button" class="pos-capsule-btn" @click="lockTerminal()" title="{{ __('Lock Terminal') }}">
+                    <i class="fa-solid fa-lock"></i>
+                </button>
+            </div>
+
+            <!-- Capsule 4: Staff Identity & Session Hub -->
+            <div class="pos-header-capsule pos-staff-capsule">
+                <!-- Employee Profile Badge & Modal Trigger -->
+                <div class="pos-user-badge" @click="openEmployeeProfileModal()" title="{{ __('My Profile & Security') }}">
+                    <div class="pos-user-avatar">
+                        <template x-if="currentUser.avatar_url">
+                            <img :src="currentUser.avatar_url" style="width: 100%; height: 100%; object-fit: cover;">
+                        </template>
+                        <template x-if="!currentUser.avatar_url">
+                            <span x-text="currentUser.display_name.charAt(0).toUpperCase()"></span>
+                        </template>
+                    </div>
+                    <div class="pos-user-info">
+                        <span class="pos-user-name" x-text="currentUser.display_name"></span>
+                        <span class="pos-user-role" x-text="activeMode"></span>
+                    </div>
+                </div>
+
+                <!-- Quick Employee Switcher Button -->
+                @if(Auth::user()->isVendorOwner() || Auth::user()->isManager() || count($allowedModes ?? []) > 1)
+                <button type="button" class="pos-capsule-btn desktop-only-tool" @click="openEmployeeSwitcher()" title="{{ __('Quick Switch Employee') }}">
+                    <i class="fa-solid fa-users-gear" style="color: var(--primary);"></i>
+                </button>
+                @endif
+
+                <div class="pos-capsule-divider desktop-only-tool"></div>
+
+                <!-- Return to Admin or Logout -->
+                @if(Auth::user()->isVendorOwner() || Auth::user()->isManager())
+                <a href="{{ route('admin.dashboard') }}" class="pos-capsule-btn desktop-only-tool" title="{{ __('Back to Dashboard') }}">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                </a>
+                @else
+                <button type="button" class="pos-capsule-btn desktop-only-tool" @click="confirmLogout()" title="{{ __('Logout') }}" style="color: var(--danger);">
+                    <i class="fa-solid fa-power-off"></i>
+                </button>
+                @endif
+            </div>
         </div>
     </header>
 
@@ -2066,24 +2315,25 @@
         <div class="pos-mode-pane" x-show="activeMode === 'waiter'" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
             <!-- Sub-tab Navigation for Waiter (Desktop & Mobile) -->
             <div class="pos-subtabs-bar">
-                <div style="display: flex; gap: 0.4rem; align-items: center;">
-                    <button type="button" class="pos-mode-btn" :class="{ 'active': waiterSubTab === 'home' }" @click="waiterSubTab = 'home'">
-                        <i class="fa-solid fa-utensils"></i>
+                <div class="pos-subtabs-group">
+                    <button type="button" class="pos-subtab-btn" :class="{ 'active': waiterSubTab === 'home' }" @click="waiterSubTab = 'home'">
+                        <i class="fa-solid fa-utensils" :style="waiterSubTab === 'home' ? 'color: var(--primary);' : ''"></i>
                         <span>{{ __('Menu & Order') }}</span>
                     </button>
-                    <button type="button" class="pos-mode-btn" :class="{ 'active': waiterSubTab === 'orders' }" @click="waiterSubTab = 'orders'; fetchWaiterDashboard();">
-                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    <button type="button" class="pos-subtab-btn" :class="{ 'active': waiterSubTab === 'orders' }" @click="waiterSubTab = 'orders'; fetchWaiterDashboard();">
+                        <i class="fa-solid fa-clock-rotate-left" :style="waiterSubTab === 'orders' ? 'color: #3b82f6;' : ''"></i>
                         <span>{{ __('My Orders') }}</span>
-                        <span x-show="waiterActiveOrdersCount > 0" class="badge badge-emerald" style="font-size: 0.7rem; padding: 0.1rem 0.4rem; margin-left: 4px;" x-text="waiterActiveOrdersCount"></span>
+                        <span x-show="waiterActiveOrdersCount > 0" class="subtab-count" x-text="waiterActiveOrdersCount"></span>
                     </button>
-                    <button type="button" class="pos-mode-btn" :class="{ 'active': waiterSubTab === 'tips' }" @click="waiterSubTab = 'tips'; fetchWaiterTips();">
-                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                    <button type="button" class="pos-subtab-btn" :class="{ 'active': waiterSubTab === 'tips' }" @click="waiterSubTab = 'tips'; fetchWaiterTips();">
+                        <i class="fa-solid fa-hand-holding-dollar" :style="waiterSubTab === 'tips' ? 'color: #10b981;' : ''"></i>
                         <span>{{ __('My Tips') }}</span>
                     </button>
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <button type="button" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.35rem 0.75rem; border-radius: 8px;" @click="openTableModal()">
-                        <i class="fa-solid fa-chair text-emerald"></i> <span x-text="selectedTable ? ('{{ __('Table') }} ' + selectedTable.table_number) : '{{ __('Floor Plan') }}'"></span>
+                    <button type="button" class="pos-table-map-btn" @click="openTableModal()">
+                        <i class="fa-solid fa-chair" style="color: #10b981;"></i> 
+                        <span x-text="selectedTable ? ('{{ __('Table') }} ' + selectedTable.table_number) : '{{ __('Floor Plan') }}'"></span>
                     </button>
                 </div>
             </div>
@@ -2121,9 +2371,9 @@
                     </div>
 
                     <!-- Table Chip Button -->
-                    <div class="table-context-chip" @click="openTableModal()">
-                        <i class="fa-solid fa-table-cells"></i>
-                        <span x-text="selectedTable ? selectedTable.table_number : '{{ __('Quick Sale / Counter') }}'"></span>
+                    <div class="table-context-chip" :class="{ 'has-table': selectedTable }" @click="openTableModal()">
+                        <i class="fa-solid" :class="selectedTable ? 'fa-chair' : 'fa-bolt'" :style="selectedTable ? 'color: #10b981;' : 'color: var(--primary);'"></i>
+                        <span x-text="selectedTable ? ('{{ __('Table') }} ' + selectedTable.table_number) : '{{ __('Quick Sale / Counter') }}'"></span>
                     </div>
 
                     <!-- Guest Count -->
@@ -2194,13 +2444,13 @@
                             <div class="dish-card" @click="handleProductClick(prod)">
                                 <div class="dish-img-wrap">
                                     <template x-if="prod.image">
-                                        <img :src="prod.image" :alt="prod.name" loading="lazy">
+                                        <img :src="prod.image" 
+                                             loading="lazy" 
+                                             x-on:error="$el.style.display='none'; $el.nextElementSibling.style.display='flex'">
                                     </template>
-                                    <template x-if="!prod.image">
-                                        <div class="dish-no-img">
-                                            <i class="fa-solid fa-utensils"></i>
-                                        </div>
-                                    </template>
+                                    <div class="dish-no-img" :style="prod.image ? 'display: none;' : 'display: flex;'">
+                                        <i class="fa-solid fa-utensils"></i>
+                                    </div>
                                     <template x-if="prod.variations && prod.variations.length > 0">
                                         <span class="dish-variant-badge">
                                             <span x-text="prod.variations.length + ' {{ __('Sizes') }}'"></span>
@@ -2254,10 +2504,10 @@
                     </div>
 
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <button type="button" class="pos-tool-btn" style="width: 32px; height: 32px; font-size: 0.8rem; color: var(--danger);" @click="clearCart()" title="{{ __('Clear Cart') }}">
+                        <button type="button" class="pos-tool-btn" style="min-width: 32px; width: 32px; height: 32px; font-size: 0.82rem; color: var(--danger);" @click="clearCart()" title="{{ __('Clear Cart') }}">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
-                        <button type="button" class="pos-tool-btn waiter-mobile-cart-close" style="width: 32px; height: 32px; font-size: 0.9rem;" @click="showMobileCart = false" title="{{ __('Close') }}">
+                        <button type="button" class="pos-tool-btn waiter-mobile-cart-close" style="min-width: 32px; width: 32px; height: 32px; font-size: 0.9rem;" @click="showMobileCart = false" title="{{ __('Close') }}">
                             <i class="fa-solid fa-chevron-down"></i>
                         </button>
                     </div>
