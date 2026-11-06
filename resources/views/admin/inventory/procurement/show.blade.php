@@ -116,6 +116,14 @@
             </div>
             <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">
                 <div>{{ __('Subtotal:') }} {{ number_format($purchaseOrder->subtotal, 2) }} {{ Auth::user()->vendor->currency }}</div>
+                @if((float) $purchaseOrder->discount_amount > 0)
+                    <div style="color: #10b981; font-weight: 600;">
+                        {{ __('Discount:') }} -{{ number_format($purchaseOrder->discount_amount, 2) }} {{ Auth::user()->vendor->currency }}
+                        @if((float) $purchaseOrder->discount_percent > 0)
+                            ({{ (float) $purchaseOrder->discount_percent }}%)
+                        @endif
+                    </div>
+                @endif
                 <div>{{ __('Tax / VAT:') }} {{ number_format($purchaseOrder->tax_amount, 2) }} {{ Auth::user()->vendor->currency }}</div>
             </div>
         </div>

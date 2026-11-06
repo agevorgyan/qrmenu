@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ReceiveGoodsRequest;
 use App\Http\Requests\StorePurchaseOrderRequest;
 use App\Models\Ingredient;
+use App\Models\IngredientCategory;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
+use App\Models\SupplierIngredient;
 use App\Models\Unit;
 use App\Models\Warehouse;
 use App\Security\Permission;
@@ -88,17 +90,61 @@ class PurchaseOrderController extends Controller
         $vendor = Auth::user()->vendor;
         $suppliers = Supplier::where('vendor_id', $vendor->id)->where('is_active', true)->orderBy('name')->get();
         $warehouses = Warehouse::where('vendor_id', $vendor->id)->where('is_active', true)->orderBy('name')->get();
-        $ingredients = Ingredient::where('vendor_id', $vendor->id)->where('is_active', true)->with('unit')->orderBy('name')->get();
+        $categories = IngredientCategory::where('vendor_id', $vendor->id)->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
+        $ingredients = Ingredient::where('vendor_id', $vendor->id)->where('is_active', true)->with(['unit', 'category'])->orderBy('name')->get();
         $units = Unit::forCurrentVendor()->where('is_active', true)->orderBy('name')->get();
 
         $suggestedItems = $this->procurementService->suggestReplenishment($vendor);
 
+        $supplierIngredients = SupplierIngredient::where('vendor_id', $vendor->id)
+            ->with(['ingredient.unit', 'unit'])
+            ->get();
+
+        $supplierIngredientsData = [];
+        foreach ($supplierIngredients as $si) {
+            $sId = (string) $si->supplier_id;
+            if (! isset($supplierIngredientsData[$sId])) {
+                $supplierIngredientsData[$sId] = [];
+            }
+            $supplierIngredientsData[$sId][] = [
+                'ingredient_id' => (string) $si->ingredient_id,
+                'name' => $si->ingredient?->name ?? '',
+                'unit_id' => (string) ($si->unit_id ?? $si->ingredient?->unit_id ?? ''),
+                'unit_code' => $si->unit?->code ?? $si->ingredient?->unit?->code ?? '',
+                'price' => (float) ($si->price ?? $si->ingredient?->last_purchase_price ?? $si->ingredient?->current_cost ?? 0),
+                'discount_percent' => (float) ($si->discount_percent ?? 0),
+                'supplier_sku' => $si->supplier_sku ?? '',
+            ];
+        }
+
+        $ingredientsData = $ingredients->map(fn ($ing) => [
+            'id' => (string) $ing->id,
+            'name' => $ing->name,
+            'sku' => $ing->sku,
+            'unit_id' => (string) $ing->unit_id,
+            'unit_code' => $ing->unit?->code ?? '',
+            'category_id' => (string) ($ing->category_id ?? ''),
+            'category_name' => $ing->category?->name ?? '',
+            'cost' => (float) ($ing->last_purchase_price ?? $ing->current_cost ?? 0),
+        ])->values()->all();
+
+        $suppliersData = $suppliers->map(fn ($s) => [
+            'id' => (string) $s->id,
+            'name' => $s->name,
+            'discount_percent' => (float) ($s->discount_percent ?? 0),
+            'tax_id' => $s->tax_id ?? '',
+        ])->values()->all();
+
         return view('admin.inventory.procurement.create', compact(
             'suppliers',
             'warehouses',
+            'categories',
             'ingredients',
             'units',
-            'suggestedItems'
+            'suggestedItems',
+            'supplierIngredientsData',
+            'ingredientsData',
+            'suppliersData'
         ));
     }
 

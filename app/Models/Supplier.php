@@ -18,6 +18,7 @@ class Supplier extends Model
         'name',
         'code',
         'tax_id',
+        'vat_number',
         'contact_person',
         'phone',
         'email',
@@ -25,6 +26,7 @@ class Supplier extends Model
         'bank_name',
         'bank_account',
         'payment_terms',
+        'discount_percent',
         'delivery_schedule',
         'minimum_order_amount',
         'rating',
@@ -35,6 +37,7 @@ class Supplier extends Model
 
     protected $casts = [
         'delivery_schedule' => 'array',
+        'discount_percent' => 'decimal:2',
         'minimum_order_amount' => 'decimal:2',
         'rating' => 'decimal:2',
         'current_balance' => 'decimal:2',

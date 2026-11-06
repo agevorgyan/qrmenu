@@ -551,6 +551,7 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', E
         Route::resource('procurement', PurchaseOrderController::class)->parameters(['procurement' => 'purchaseOrder']);
 
         // Accounts Payable Invoices & Payments (Phase 3)
+        Route::post('/invoices/tax-import', [SupplierInvoiceController::class, 'importTaxInvoice'])->name('invoices.tax-import');
         Route::get('/invoices', [SupplierInvoiceController::class, 'index'])->name('invoices.index');
         Route::get('/invoices/{supplierInvoice}', [SupplierInvoiceController::class, 'show'])->name('invoices.show');
         Route::post('/payments', [SupplierInvoiceController::class, 'storePayment'])->name('payments.store');

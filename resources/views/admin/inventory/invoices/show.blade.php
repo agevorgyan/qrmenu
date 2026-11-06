@@ -56,7 +56,16 @@
             </div>
             <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
                 @if($supplierInvoice->supplier->tax_id)
-                    <div><strong>{{ __('Tax ID:') }}</strong> {{ $supplierInvoice->supplier->tax_id }}</div>
+                    <div><strong>{{ __('TIN (ՀՎՀՀ):') }}</strong> {{ $supplierInvoice->supplier->tax_id }}</div>
+                @endif
+                @if($supplierInvoice->supplier->vat_number)
+                    <div><strong>{{ __('VAT Number:') }}</strong> {{ $supplierInvoice->supplier->vat_number }}</div>
+                @endif
+                @if($supplierInvoice->supplier->bank_account)
+                    <div><strong>{{ __('Bank:') }}</strong> {{ $supplierInvoice->supplier->bank_name }} <span style="font-family: monospace;">{{ $supplierInvoice->supplier->bank_account }}</span></div>
+                @endif
+                @if($supplierInvoice->supply_location)
+                    <div><strong>{{ __('Supply Location:') }}</strong> {{ $supplierInvoice->supply_location }}</div>
                 @endif
                 @if($supplierInvoice->supplier->phone)
                     <div><i class="fa-solid fa-phone"></i> {{ $supplierInvoice->supplier->phone }}</div>
@@ -71,7 +80,16 @@
             </div>
             <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
                 <div><strong>{{ __('Invoice Date:') }}</strong> {{ $supplierInvoice->invoice_date->toVendorTimezone()->format('M d, Y') }}</div>
+                @if($supplierInvoice->supply_date)
+                    <div><strong>{{ __('Supply Date:') }}</strong> {{ $supplierInvoice->supply_date->toVendorTimezone()->format('M d, Y') }}</div>
+                @endif
                 <div><strong>{{ __('Due Date:') }}</strong> {{ $supplierInvoice->due_date->toVendorTimezone()->format('M d, Y') }}</div>
+                @if($supplierInvoice->delivery_location)
+                    <div><strong>{{ __('Delivery Location:') }}</strong> {{ $supplierInvoice->delivery_location }}</div>
+                @endif
+                @if($supplierInvoice->additional_data)
+                    <div><strong>{{ __('Additional Data:') }}</strong> {{ $supplierInvoice->additional_data }}</div>
+                @endif
                 @if($supplierInvoice->purchaseOrder)
                     <div>
                         <strong>{{ __('PO:') }}</strong>
@@ -89,11 +107,78 @@
                 {{ number_format($supplierInvoice->remaining_balance, 2) }} {{ Auth::user()->vendor->currency }}
             </div>
             <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">
+                <div>{{ __('Subtotal (excl. VAT):') }} {{ number_format($supplierInvoice->subtotal, 2) }} {{ Auth::user()->vendor->currency }}</div>
+                <div>{{ __('VAT Amount:') }} {{ number_format($supplierInvoice->tax_amount, 2) }} {{ Auth::user()->vendor->currency }}</div>
+                @if((float) $supplierInvoice->environmental_fee > 0)
+                    <div>{{ __('Environmental Fee:') }} {{ number_format($supplierInvoice->environmental_fee, 2) }} {{ Auth::user()->vendor->currency }}</div>
+                @endif
                 <div>{{ __('Total Invoiced:') }} {{ number_format($supplierInvoice->total_amount, 2) }} {{ Auth::user()->vendor->currency }}</div>
                 <div>{{ __('Amount Paid:') }} {{ number_format($supplierInvoice->paid_amount, 2) }} {{ Auth::user()->vendor->currency }}</div>
             </div>
         </div>
     </div>
+
+    @if($supplierInvoice->items->isNotEmpty())
+        <!-- Received Items from Tax Invoice -->
+        <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: var(--shadow-card);">
+            <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin: 0 0 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-boxes-stacked" style="color: #6366f1;"></i>
+                <span>{{ __('Received Products & Line Items') }} ({{ $supplierInvoice->items->count() }})</span>
+            </h2>
+
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border-color); background: rgba(0,0,0,0.02);">
+                            <th style="padding: 0.65rem 0.5rem;">{{ __('Product / Good') }}</th>
+                            <th style="padding: 0.65rem 0.5rem; color: var(--text-muted);">{{ __('Classifier (ԱՏԳ ԱԱ)') }}</th>
+                            <th style="padding: 0.65rem 0.5rem; text-align: right;">{{ __('Quantity') }}</th>
+                            <th style="padding: 0.65rem 0.5rem;">{{ __('Unit') }}</th>
+                            <th style="padding: 0.65rem 0.5rem; text-align: right;">{{ __('Price (excl. VAT)') }}</th>
+                            <th style="padding: 0.65rem 0.5rem; text-align: right;">{{ __('VAT %') }}</th>
+                            <th style="padding: 0.65rem 0.5rem; text-align: right;">{{ __('VAT Amount') }}</th>
+                            <th style="padding: 0.65rem 0.5rem; text-align: right; font-weight: 700;">{{ __('Total') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($supplierInvoice->items as $item)
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <td style="padding: 0.65rem 0.5rem;">
+                                    <strong style="color: var(--text-main);">{{ $item->description }}</strong>
+                                    @if($item->ingredient)
+                                        <div style="font-size: 0.75rem; color: #10b981;">
+                                            <i class="fa-solid fa-link"></i> {{ __('Linked to:') }} {{ $item->ingredient->name }} (SKU: {{ $item->ingredient->sku }})
+                                        </div>
+                                    @endif
+                                </td>
+                                <td style="padding: 0.65rem 0.5rem; font-family: monospace; color: var(--text-muted);">
+                                    {{ $item->classifier_code ?: '—' }}
+                                </td>
+                                <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: monospace; font-weight: 700;">
+                                    {{ (float) $item->quantity }}
+                                </td>
+                                <td style="padding: 0.65rem 0.5rem; color: var(--text-muted);">
+                                    {{ $item->unit_name ?: $item->unit?->code }}
+                                </td>
+                                <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: monospace;">
+                                    {{ number_format($item->unit_price, 2) }}
+                                </td>
+                                <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: monospace; color: var(--text-muted);">
+                                    {{ (float) $item->vat_rate }}%
+                                </td>
+                                <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: monospace; color: var(--text-muted);">
+                                    {{ number_format($item->vat_amount, 2) }}
+                                </td>
+                                <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: monospace; font-weight: 800; color: #10b981;">
+                                    {{ number_format($item->total_price, 2) }} {{ Auth::user()->vendor->currency }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
 
     <!-- Payments History on this Invoice -->
     <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: var(--shadow-card);">

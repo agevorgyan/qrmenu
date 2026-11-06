@@ -99,6 +99,7 @@ class ProcurementService
             ]);
 
             $subtotal = 0.0;
+            $lineDiscountTotal = 0.0;
             $totalTax = 0.0;
 
             foreach ($data['items'] as $itemData) {
@@ -108,31 +109,46 @@ class ProcurementService
 
                 $qty = (float) $itemData['quantity'];
                 $price = (float) $itemData['unit_price'];
+                $lineBase = $qty * $price;
+                $discPercent = (float) ($itemData['discount_percent'] ?? 0.0);
+                $discAmount = round($lineBase * ($discPercent / 100.0), 2);
+                $netBase = max(0.0, $lineBase - $discAmount);
+
                 $taxPercent = (float) ($itemData['tax_percent'] ?? 0.0);
-                $taxAmount = round(($qty * $price) * ($taxPercent / 100.0), 2);
-                $total = round(($qty * $price) + $taxAmount, 2);
+                $taxAmount = round($netBase * ($taxPercent / 100.0), 2);
+                $total = round($netBase + $taxAmount, 2);
 
                 PurchaseOrderItem::create([
                     'vendor_id' => $vendor->id,
                     'purchase_order_id' => $po->id,
                     'ingredient_id' => $itemData['ingredient_id'],
+                    'classifier_code' => $itemData['classifier_code'] ?? null,
                     'quantity_ordered' => $qty,
                     'quantity_received' => 0,
                     'unit_id' => $itemData['unit_id'],
                     'unit_price' => $price,
+                    'discount_percent' => $discPercent,
+                    'discount_amount' => $discAmount,
                     'tax_percent' => $taxPercent,
                     'tax_amount' => $taxAmount,
                     'total_amount' => $total,
                     'notes' => $itemData['notes'] ?? null,
                 ]);
 
-                $subtotal += ($qty * $price);
+                $subtotal += $lineBase;
+                $lineDiscountTotal += $discAmount;
                 $totalTax += $taxAmount;
             }
 
+            $orderDiscPercent = (float) ($data['discount_percent'] ?? 0.0);
+            $orderDiscAmount = $orderDiscPercent > 0 ? round(($subtotal - $lineDiscountTotal) * ($orderDiscPercent / 100.0), 2) : 0.0;
+            $finalDiscount = round($lineDiscountTotal + $orderDiscAmount, 2);
+
             $po->subtotal = round($subtotal, 2);
+            $po->discount_percent = $orderDiscPercent;
+            $po->discount_amount = $finalDiscount;
             $po->tax_amount = round($totalTax, 2);
-            $po->total_amount = round($subtotal + $totalTax, 2);
+            $po->total_amount = max(0.0, round($subtotal - $finalDiscount + $totalTax, 2));
             $po->save();
 
             return $po;

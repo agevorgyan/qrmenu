@@ -26,24 +26,38 @@ class SupplierInvoice extends Model
         'purchase_order_id',
         'warehouse_id',
         'invoice_number',
+        'series',
+        'number',
         'invoice_date',
+        'supply_date',
         'due_date',
         'subtotal',
+        'discount_amount',
         'tax_amount',
+        'environmental_fee',
+        'tare_price',
         'total_amount',
         'paid_amount',
         'remaining_balance',
         'payment_status',
         'received_by',
+        'supply_location',
+        'delivery_location',
+        'additional_data',
         'notes',
         'document_url',
+        'einvoice_xml',
     ];
 
     protected $casts = [
         'invoice_date' => 'date',
+        'supply_date' => 'date',
         'due_date' => 'date',
         'subtotal' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'tax_amount' => 'decimal:2',
+        'environmental_fee' => 'decimal:2',
+        'tare_price' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'paid_amount' => 'decimal:2',
         'remaining_balance' => 'decimal:2',
@@ -57,6 +71,11 @@ class SupplierInvoice extends Model
     public function purchaseOrder(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrder::class, 'purchase_order_id');
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(SupplierInvoiceItem::class, 'supplier_invoice_id');
     }
 
     public function warehouse(): BelongsTo

@@ -17,6 +17,9 @@
     </div>
     <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
         @can('procurement.create')
+            <button type="button" onclick="document.getElementById('importTaxInvoiceModal').showModal();" class="btn btn-secondary" style="display: flex; align-items: center; gap: 0.5rem; border-radius: 12px; font-weight: 700; color: #6366f1; border-color: rgba(99, 102, 241, 0.3); background: rgba(99, 102, 241, 0.08);">
+                <i class="fa-solid fa-file-import"></i> {{ __('Import Armenian Tax Invoice (e-Invoicing)') }}
+            </button>
             <a href="{{ route('admin.inventory.procurement.create') }}" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem; border-radius: 12px; font-weight: 700;">
                 <i class="fa-solid fa-plus"></i> {{ __('Create Purchase Order') }}
             </a>
@@ -216,5 +219,60 @@
         @endif
     @endif
 </div>
+
+<!-- Modal: Import Armenian Tax Invoice -->
+<dialog id="importTaxInvoiceModal" style="border: none; border-radius: 16px; padding: 0; background: transparent; max-width: 520px; width: 92%;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.75rem; box-shadow: var(--shadow-modal);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-file-invoice" style="color: #6366f1;"></i>
+                <span>{{ __('Import Armenian Tax Invoice (e-Invoicing)') }}</span>
+            </h3>
+            <button type="button" onclick="document.getElementById('importTaxInvoiceModal').close();" class="btn btn-secondary btn-sm" style="border-radius: 8px; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+
+        <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.45; margin: 0 0 1.25rem;">
+            {{ __('Upload official RA Tax Service e-Invoicing XML (taxservice.am) or Excel register. The system will automatically create/link the supplier, update ingredient catalog, credit stock into warehouse, and log Accounts Payable debt.') }}
+        </p>
+
+        <form method="POST" action="{{ route('admin.inventory.invoices.tax-import') }}" enctype="multipart/form-data">
+            @csrf
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">
+                    {{ __('Invoice File (.xml, .xlsx, .xls)') }} <span style="color: #ef4444;">*</span>
+                </label>
+                <input type="file" name="file" accept=".xml,.xlsx,.xls,.csv" required class="form-input" style="width: 100%; border-radius: 8px; padding: 0.5rem;">
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.3rem;">
+                    {{ __('Supported: e-Invoicing XML files exported from State Revenue Committee (ՀՀ ՊԵԿ) or Excel invoice exports.') }}
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">
+                    {{ __('Target Warehouse for Stock Intake') }} <span style="color: #ef4444;">*</span>
+                </label>
+                <select name="warehouse_id" required class="form-select" style="width: 100%; border-radius: 8px;">
+                    @foreach($warehouses as $wh)
+                        <option value="{{ $wh->id }}" {{ $wh->is_default ? 'selected' : '' }}>
+                            {{ $wh->name }} {{ $wh->is_default ? '(' . __('Default') . ')' : '' }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button type="button" onclick="document.getElementById('importTaxInvoiceModal').close();" class="btn btn-secondary" style="border-radius: 10px;">
+                    {{ __('Cancel') }}
+                </button>
+                <button type="submit" class="btn btn-primary" style="border-radius: 10px; font-weight: 700;">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> {{ __('Import & Credit Stock') }}
+                </button>
+            </div>
+        </form>
+    </div>
+</dialog>
 @endsection
 

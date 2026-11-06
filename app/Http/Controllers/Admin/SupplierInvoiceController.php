@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSupplierPaymentRequest;
 use App\Models\Supplier;
 use App\Models\SupplierInvoice;
+use App\Models\Warehouse;
 use App\Security\Permission;
+use App\Services\ArmenianTaxInvoiceService;
 use App\Services\ProcurementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,7 +18,8 @@ use Illuminate\View\View;
 class SupplierInvoiceController extends Controller
 {
     public function __construct(
-        protected ProcurementService $procurementService
+        protected ProcurementService $procurementService,
+        protected ArmenianTaxInvoiceService $taxInvoiceService
     ) {}
 
     /**
@@ -51,6 +54,7 @@ class SupplierInvoiceController extends Controller
         $invoices = $query->orderByDesc('invoice_date')->paginate(20)->withQueryString();
 
         $suppliers = Supplier::where('vendor_id', $vendorId)->where('is_active', true)->orderBy('name')->get();
+        $warehouses = Warehouse::where('vendor_id', $vendorId)->where('is_active', true)->orderBy('name')->get();
 
         $totalInvoiced = (float) SupplierInvoice::where('vendor_id', $vendorId)->sum('total_amount');
         $totalPaid = (float) SupplierInvoice::where('vendor_id', $vendorId)->sum('paid_amount');
@@ -66,6 +70,7 @@ class SupplierInvoiceController extends Controller
         return view('admin.inventory.invoices.index', compact(
             'invoices',
             'suppliers',
+            'warehouses',
             'totalInvoiced',
             'totalPaid',
             'totalOutstanding',
@@ -86,9 +91,45 @@ class SupplierInvoiceController extends Controller
             'purchaseOrder.items.ingredient',
             'payments.creator',
             'receiver',
+            'items.ingredient.unit',
+            'items.unit',
         ]);
 
         return view('admin.inventory.invoices.show', compact('supplierInvoice'));
+    }
+
+    /**
+     * Import a received tax invoice directly from Armenian e-invoicing (XML or XLSX).
+     */
+    public function importTaxInvoice(Request $request): RedirectResponse
+    {
+        $this->authorizePermission(Permission::PROCUREMENT_CREATE);
+
+        $request->validate([
+            'file' => ['required', 'file', 'max:20480'],
+            'warehouse_id' => ['required', 'exists:warehouses,id'],
+        ], [
+            'file.required' => __('Please select an invoice file to import.'),
+            'warehouse_id.required' => __('Please select a destination warehouse.'),
+        ]);
+
+        $vendor = Auth::user()->vendor;
+        $warehouse = Warehouse::where('vendor_id', $vendor->id)->findOrFail($request->input('warehouse_id'));
+
+        try {
+            $parsed = $this->taxInvoiceService->parseFile($request->file('file'));
+            $invoice = $this->taxInvoiceService->importInvoice($vendor, $parsed, $warehouse, Auth::user());
+
+            return redirect()->route('admin.inventory.invoices.show', $invoice)
+                ->with('success', __('Armenian Tax Invoice #:number from :supplier successfully imported with :count products. Stock credited to :warehouse.', [
+                    'number' => $invoice->invoice_number,
+                    'supplier' => $invoice->supplier->name,
+                    'count' => $invoice->items->count(),
+                    'warehouse' => $warehouse->name,
+                ]));
+        } catch (\Throwable $e) {
+            return back()->with('error', __('Failed to import tax invoice: :msg', ['msg' => $e->getMessage()]));
+        }
     }
 
     /**
