@@ -571,7 +571,7 @@ function closeCustomerAdjustModal() {
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.75rem;">
                             <div>
                                 <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                                    <a href="{{ route('admin.reservations.events.show', $inq->id) }}" style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: var(--primary); text-decoration: none;">
+                                    <a href="{{ route('admin.event_inquiries.show', $inq->id) }}" style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: var(--primary); text-decoration: none;">
                                         #{{ $inq->reference }}
                                     </a>
                                     @php
@@ -614,7 +614,7 @@ function closeCustomerAdjustModal() {
                                 </div>
                             </div>
 
-                            <a href="{{ route('admin.reservations.events.show', $inq->id) }}" class="btn btn-sm btn-secondary" style="font-size: 0.8rem; font-weight: 600; border-radius: 8px;">
+                            <a href="{{ route('admin.event_inquiries.show', $inq->id) }}" class="btn btn-sm btn-secondary" style="font-size: 0.8rem; font-weight: 600; border-radius: 8px;">
                                 {{ __('View Inquiry') }} &rarr;
                             </a>
                         </div>
