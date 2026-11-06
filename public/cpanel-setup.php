@@ -181,13 +181,13 @@ $hasViteBuild = file_exists($manifestPath);
     <h3>5. Storage Թղթապանակներ և Իրավունքներ (Permissions Auto-Fix)</h3>
     <div class="box"><?php
     $dirsToEnsure = [
-storage_path('app/public/products'),
-storage_path('app/public/branding'),
-storage_path('framework/views'),
-storage_path('framework/sessions'),
-storage_path('framework/cache'),
-storage_path('logs'),
-base_path('bootstrap/cache'),
+        storage_path('app/public/products'),
+        storage_path('app/public/branding'),
+        storage_path('framework/views'),
+        storage_path('framework/sessions'),
+        storage_path('framework/cache'),
+        storage_path('logs'),
+        base_path('bootstrap/cache'),
     ];
 
 foreach ($dirsToEnsure as $dir) {

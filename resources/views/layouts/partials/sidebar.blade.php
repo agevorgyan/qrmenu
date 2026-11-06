@@ -10,6 +10,7 @@
            aiOpen: {{ (request()->routeIs('admin.ai.*') || request()->routeIs('admin.settings.ai*')) ? 'true' : 'false' }},
            inventoryOpen: {{ request()->routeIs('admin.inventory.*') ? 'true' : 'false' }},
            loyaltyOpen: {{ request()->routeIs('admin.loyalty.*') ? 'true' : 'false' }},
+           teamOpen: {{ (request()->routeIs('admin.team.*') || request()->routeIs('admin.access_control.*') || request()->routeIs('admin.hr.*')) ? 'true' : 'false' }},
            settingsOpen: {{ (request()->routeIs('admin.settings.*') || request()->routeIs('admin.profile')) ? 'true' : 'false' }},
            currentSettingsTab: '{{ request()->query('tab', 'profile') }}',
            isSettingsPage: {{ request()->routeIs('admin.settings.index') ? 'true' : 'false' }},
@@ -696,20 +697,137 @@
                 </a>
             @endcan
 
-            @can('team.view')
-                <a href="{{ route('admin.team.index') }}" 
-                   class="nav-item {{ (request()->routeIs('admin.team.*') || request()->routeIs('admin.access_control.*')) ? 'active' : '' }}" 
-                   style="justify-content: space-between;"
-                   title="{{ __('Team & Employees') }}">
-                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                        <i class="fa-solid fa-users" style="color: #0ea5e9;"></i>
-                        <span>{{ __('Team & Employees') }}</span>
-                    </span>
-                    @if($v && !$v->hasFeature('team'))
-                        <span class="nav-lock-badge-biz">🔒 BIZ</span>
-                    @endif
-                </a>
-            @endcan
+            @if(auth()->user()?->can('team.view') || auth()->user()?->can('hr.employees.view') || auth()->user()?->can('hr.self_service.view'))
+                <!-- Team & Workforce Management (Collapsible Group) -->
+                <div class="nav-group">
+                    <button type="button" 
+                            class="nav-group-header {{ (request()->routeIs('admin.team.*') || request()->routeIs('admin.access_control.*') || request()->routeIs('admin.hr.*')) ? 'active' : '' }}"
+                            @click="teamOpen = !teamOpen"
+                            aria-expanded="teamOpen"
+                            title="{{ __('Team & Employees') }}">
+                        <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                            <i class="fa-solid fa-users-gear" style="color: #0ea5e9;"></i>
+                            <span>{{ __('Team & Employees') }}</span>
+                        </span>
+                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                            @if($v && !$v->hasFeature('team'))
+                                <span class="nav-lock-badge-biz">🔒 BIZ</span>
+                            @endif
+                            <i class="fa-solid fa-chevron-down nav-chevron" :class="teamOpen ? 'rotate-180' : ''"></i>
+                        </div>
+                    </button>
+
+                    <div class="nav-group-children" x-show="teamOpen" x-transition.opacity.duration.200ms style="display: {{ (request()->routeIs('admin.team.*') || request()->routeIs('admin.access_control.*') || request()->routeIs('admin.hr.*')) ? 'flex' : 'none' }};">
+                        @if(auth()->user()?->can('team.view') || auth()->user()?->can('hr.employees.view'))
+                            <a href="{{ route('admin.hr.employees.index') }}" class="nav-sub-item {{ request()->routeIs('admin.hr.employees.*') ? 'active' : '' }}" title="{{ __('Employees') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-user-group" style="font-size: 0.85rem; color: #0ea5e9;"></i>
+                                    <span>{{ __('Employees') }}</span>
+                                </span>
+                            </a>
+                        @endif
+
+                        @can('team.view')
+                            <a href="{{ route('admin.team.index') }}" class="nav-sub-item {{ (request()->routeIs('admin.team.*') || request()->routeIs('admin.access_control.*')) ? 'active' : '' }}" title="{{ __('Roles & Access') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-user-shield" style="font-size: 0.85rem; color: #6366f1;"></i>
+                                    <span>{{ __('Roles & Access') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+
+                        @can('hr.departments.view')
+                            <a href="{{ route('admin.hr.departments.index') }}" class="nav-sub-item {{ (request()->routeIs('admin.hr.departments.*') || request()->routeIs('admin.hr.positions.*')) ? 'active' : '' }}" title="{{ __('Departments & Positions') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-sitemap" style="font-size: 0.85rem; color: #8b5cf6;"></i>
+                                    <span>{{ __('Departments & Positions') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+
+                        @can('hr.schedules.view')
+                            <a href="{{ route('admin.hr.schedules.index') }}" class="nav-sub-item {{ request()->routeIs('admin.hr.schedules.*') ? 'active' : '' }}" title="{{ __('Work Schedules') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-calendar-days" style="font-size: 0.85rem; color: #10b981;"></i>
+                                    <span>{{ __('Work Schedules') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+
+                        @can('hr.attendance.view')
+                            <a href="{{ route('admin.hr.attendance.index') }}" class="nav-sub-item {{ request()->routeIs('admin.hr.attendance.*') ? 'active' : '' }}" title="{{ __('Attendance') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-clipboard-user" style="font-size: 0.85rem; color: #14b8a6;"></i>
+                                    <span>{{ __('Attendance') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+
+                        @can('hr.timesheets.view')
+                            <a href="{{ route('admin.hr.timesheets.index') }}" class="nav-sub-item {{ request()->routeIs('admin.hr.timesheets.*') ? 'active' : '' }}" title="{{ __('Timesheets') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-business-time" style="font-size: 0.85rem; color: #f59e0b;"></i>
+                                    <span>{{ __('Timesheets') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+
+                        @can('hr.leaves.view')
+                            <a href="{{ route('admin.hr.leaves.index') }}" class="nav-sub-item {{ request()->routeIs('admin.hr.leaves.*') ? 'active' : '' }}" title="{{ __('Leaves & Time Off') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-plane-departure" style="font-size: 0.85rem; color: #f97316;"></i>
+                                    <span>{{ __('Leaves & Time Off') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+
+                        @can('hr.payroll.view')
+                            <a href="{{ route('admin.hr.payroll.index') }}" class="nav-sub-item {{ request()->routeIs('admin.hr.payroll.*') ? 'active' : '' }}" title="{{ __('Payroll Calculation') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-file-invoice-dollar" style="font-size: 0.85rem; color: #22c55e;"></i>
+                                    <span>{{ __('Payroll') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+
+                        @can('hr.payroll.payout')
+                            <a href="{{ route('admin.hr.payments.index') }}" class="nav-sub-item {{ request()->routeIs('admin.hr.payments.*') ? 'active' : '' }}" title="{{ __('Salary Payouts') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-money-bill-wave" style="font-size: 0.85rem; color: #059669;"></i>
+                                    <span>{{ __('Payouts') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+
+                        @can('hr.payroll.advances')
+                            <a href="{{ route('admin.hr.advances.index') }}" class="nav-sub-item {{ request()->routeIs('admin.hr.advances.*') ? 'active' : '' }}" title="{{ __('Advances & Debts') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-hand-holding-dollar" style="font-size: 0.85rem; color: #d97706;"></i>
+                                    <span>{{ __('Advances') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+
+                        @can('hr.self_service.view')
+                            <a href="{{ route('admin.hr.self_service.index') }}" class="nav-sub-item {{ request()->routeIs('admin.hr.self_service.*') ? 'active' : '' }}" title="{{ __('My Portal (Self-Service)') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-id-badge" style="font-size: 0.85rem; color: #a855f7;"></i>
+                                    <span>{{ __('My Portal') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+
+                        @can('hr.reports.view')
+                            <a href="{{ route('admin.hr.reports.dashboard') }}" class="nav-sub-item {{ request()->routeIs('admin.hr.reports.*') ? 'active' : '' }}" title="{{ __('HR Reports') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-chart-pie" style="font-size: 0.85rem; color: #3b82f6;"></i>
+                                    <span>{{ __('HR Reports') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+                    </div>
+                </div>
+            @endif
 
             @can('waiters.view')
                 <a href="{{ route('admin.waiters.index') }}" 

@@ -212,11 +212,17 @@ class Reservation extends Model
         if (! empty($this->reservation_date) && ! empty($this->reservation_time)) {
             $tz = $this->vendor?->timezone ?: 'Asia/Yerevan';
             $time = trim((string) $this->reservation_time);
+            $date = $this->reservation_date instanceof \DateTimeInterface
+                ? $this->reservation_date->format('Y-m-d')
+                : trim((string) $this->reservation_date);
+            if (str_contains($date, ' ')) {
+                $date = explode(' ', $date)[0];
+            }
             try {
-                $localDateTime = Carbon::parse("{$this->reservation_date} {$time}", $tz);
+                $localDateTime = Carbon::parse("{$date} {$time}", $tz);
                 $this->reservation_datetime = $localDateTime->utc();
             } catch (\Throwable $e) {
-                $this->reservation_datetime = Carbon::parse("{$this->reservation_date} {$time}");
+                $this->reservation_datetime = Carbon::parse("{$date} {$time}");
             }
         }
     }

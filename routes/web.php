@@ -17,6 +17,16 @@ use App\Domains\Loyalty\Http\Controllers\Staff\StaffLoyaltyOperationsController;
 use App\Domains\Loyalty\Http\Controllers\Webhooks\ApplePassKitWebserviceController;
 use App\Http\Controllers\Admin\AccessControlController;
 use App\Http\Controllers\Admin\HaccpController;
+use App\Http\Controllers\Admin\Hr\HrAttendanceController;
+use App\Http\Controllers\Admin\Hr\HrDepartmentPositionController;
+use App\Http\Controllers\Admin\Hr\HrEmployeeProfileController;
+use App\Http\Controllers\Admin\Hr\HrLeaveController;
+use App\Http\Controllers\Admin\Hr\HrPaymentAdvanceController;
+use App\Http\Controllers\Admin\Hr\HrPayrollController;
+use App\Http\Controllers\Admin\Hr\HrReportController;
+use App\Http\Controllers\Admin\Hr\HrScheduleController;
+use App\Http\Controllers\Admin\Hr\HrSelfServiceController;
+use App\Http\Controllers\Admin\Hr\HrTimesheetController;
 use App\Http\Controllers\Admin\IngredientCategoryController;
 use App\Http\Controllers\Admin\IngredientController;
 use App\Http\Controllers\Admin\InventoryReportController;
@@ -517,6 +527,91 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', E
             Route::delete('/roles/{role}', [AccessControlController::class, 'destroyRole'])->name('roles.destroy');
 
             Route::get('/audit-logs/export', [AccessControlController::class, 'exportAuditLogs'])->name('audit_logs.export');
+        });
+
+        // HR & Workforce Management Sub-Module (Within Team & Employees)
+        Route::prefix('hr')->name('hr.')->group(function () {
+            // 1. Departments & Positions
+            Route::get('/departments', [HrDepartmentPositionController::class, 'departmentsIndex'])->name('departments.index');
+            Route::post('/departments', [HrDepartmentPositionController::class, 'storeDepartment'])->name('departments.store');
+            Route::put('/departments/{department}', [HrDepartmentPositionController::class, 'updateDepartment'])->name('departments.update');
+            Route::delete('/departments/{department}', [HrDepartmentPositionController::class, 'destroyDepartment'])->name('departments.destroy');
+
+            Route::get('/positions', [HrDepartmentPositionController::class, 'positionsIndex'])->name('positions.index');
+            Route::post('/positions', [HrDepartmentPositionController::class, 'storePosition'])->name('positions.store');
+            Route::put('/positions/{position}', [HrDepartmentPositionController::class, 'updatePosition'])->name('positions.update');
+            Route::delete('/positions/{position}', [HrDepartmentPositionController::class, 'destroyPosition'])->name('positions.destroy');
+
+            // 2. Employees & Detailed Profiles
+            Route::get('/employees', [HrEmployeeProfileController::class, 'index'])->name('employees.index');
+            Route::get('/employees/{employee}', [HrEmployeeProfileController::class, 'show'])->name('employees.show');
+            Route::put('/employees/{employee}', [HrEmployeeProfileController::class, 'update'])->name('employees.update');
+            Route::post('/employees/{employee}/transfer', [HrEmployeeProfileController::class, 'transfer'])->name('employees.transfer');
+            Route::post('/employees/{employee}/salary', [HrEmployeeProfileController::class, 'reviseSalary'])->name('employees.salary');
+            Route::post('/employees/{employee}/contracts', [HrEmployeeProfileController::class, 'storeContract'])->name('employees.contracts.store');
+            Route::post('/employees/{employee}/contract', [HrEmployeeProfileController::class, 'storeContract'])->name('employees.contract');
+            Route::post('/employees/{employee}/documents', [HrEmployeeProfileController::class, 'uploadDocument'])->name('employees.documents.store');
+            Route::post('/employees/{employee}/document/upload', [HrEmployeeProfileController::class, 'uploadDocument'])->name('employees.document.upload');
+            Route::get('/employees/{employee}/documents/{document}', [HrEmployeeProfileController::class, 'downloadDocument'])->name('employees.documents.download');
+            Route::get('/employees/{employee}/document/{document}/download', [HrEmployeeProfileController::class, 'downloadDocument'])->name('employees.document.download');
+            Route::delete('/employees/{employee}/documents/{document}', [HrEmployeeProfileController::class, 'destroyDocument'])->name('employees.documents.destroy');
+            Route::delete('/employees/{employee}/document/{document}', [HrEmployeeProfileController::class, 'destroyDocument'])->name('employees.document.destroy');
+
+            // 3. Work Schedules & Shifts
+            Route::get('/schedules', [HrScheduleController::class, 'index'])->name('schedules.index');
+            Route::post('/shifts', [HrScheduleController::class, 'storeShift'])->name('shifts.store');
+            Route::post('/schedules/store', [HrScheduleController::class, 'storeShift'])->name('schedules.store');
+            Route::put('/shifts/{shift}', [HrScheduleController::class, 'updateShift'])->name('shifts.update');
+            Route::delete('/shifts/{shift}', [HrScheduleController::class, 'destroyShift'])->name('shifts.destroy');
+            Route::delete('/schedules/{shift}', [HrScheduleController::class, 'destroyShift'])->name('schedules.destroy');
+            Route::post('/shifts/copy-week', [HrScheduleController::class, 'copyWeek'])->name('shifts.copy_week');
+            Route::post('/schedules/copy-week', [HrScheduleController::class, 'copyWeek'])->name('schedules.copy_week');
+
+            // 4. Attendance & Time Clock
+            Route::get('/attendance', [HrAttendanceController::class, 'index'])->name('attendance.index');
+            Route::post('/attendance/punch', [HrAttendanceController::class, 'punch'])->name('attendance.punch');
+            Route::post('/attendance/manual', [HrAttendanceController::class, 'manualEntry'])->name('attendance.manual');
+            Route::post('/attendance/{record}/adjust', [HrAttendanceController::class, 'adjust'])->name('attendance.adjust');
+            Route::get('/attendance/qr-token', [HrAttendanceController::class, 'getQrToken'])->name('attendance.qr_token');
+            Route::get('/attendance/qr', [HrAttendanceController::class, 'getQrToken'])->name('attendance.qr');
+
+            // 5. Timesheets (Tabel)
+            Route::get('/timesheets', [HrTimesheetController::class, 'index'])->name('timesheets.index');
+            Route::post('/timesheets/generate', [HrTimesheetController::class, 'generate'])->name('timesheets.generate');
+            Route::post('/timesheets/{timesheet}/approve', [HrTimesheetController::class, 'approve'])->name('timesheets.approve');
+            Route::put('/timesheets/{timesheet}', [HrTimesheetController::class, 'update'])->name('timesheets.update');
+
+            // 6. Leaves & Absences
+            Route::get('/leaves', [HrLeaveController::class, 'index'])->name('leaves.index');
+            Route::post('/leaves', [HrLeaveController::class, 'storeRequest'])->name('leaves.store');
+            Route::post('/leaves/{leaveRequest}/review', [HrLeaveController::class, 'review'])->name('leaves.review');
+            Route::get('/leaves/balances', [HrLeaveController::class, 'balancesIndex'])->name('leaves.balances');
+
+            // 7. Payroll & Payslips
+            Route::get('/payroll', [HrPayrollController::class, 'index'])->name('payroll.index');
+            Route::post('/payroll/create-period', [HrPayrollController::class, 'createPeriod'])->name('payroll.create_period');
+            Route::post('/payroll/period/create', [HrPayrollController::class, 'createPeriod'])->name('payroll.period.create');
+            Route::post('/payroll/{period}/calculate', [HrPayrollController::class, 'calculate'])->name('payroll.calculate');
+            Route::get('/payroll/{period}/preview', [HrPayrollController::class, 'preview'])->name('payroll.preview');
+            Route::post('/payroll/{period}/approve', [HrPayrollController::class, 'approve'])->name('payroll.approve');
+            Route::post('/payroll/{period}/lock', [HrPayrollController::class, 'lock'])->name('payroll.lock');
+            Route::get('/payroll/items/{item}/payslip', [HrPayrollController::class, 'payslip'])->name('payroll.payslip');
+
+            // 8. Payments & Advances
+            Route::get('/payments', [HrPaymentAdvanceController::class, 'paymentsIndex'])->name('payments.index');
+            Route::post('/payments', [HrPaymentAdvanceController::class, 'storePayment'])->name('payments.store');
+            Route::get('/advances', [HrPaymentAdvanceController::class, 'advancesIndex'])->name('advances.index');
+            Route::post('/advances', [HrPaymentAdvanceController::class, 'storeAdvance'])->name('advances.store');
+            Route::post('/advances/{advance}/review', [HrPaymentAdvanceController::class, 'reviewAdvance'])->name('advances.review');
+
+            // 9. Employee Self-Service (Staff Portal)
+            Route::get('/self-service', [HrSelfServiceController::class, 'index'])->name('self_service.index');
+            Route::post('/self-service/leaves', [HrSelfServiceController::class, 'requestLeave'])->name('self_service.leaves.request');
+            Route::post('/self-service/advances', [HrSelfServiceController::class, 'requestAdvance'])->name('self_service.advances.request');
+
+            // 10. Reports & Exports
+            Route::get('/reports/dashboard', [HrReportController::class, 'dashboard'])->name('reports.dashboard');
+            Route::get('/reports/export/{type}', [HrReportController::class, 'export'])->name('reports.export');
         });
     });
 

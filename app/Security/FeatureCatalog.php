@@ -64,6 +64,21 @@ class FeatureCatalog
 
     public const INVENTORY_REPORTS = 'inventory.reports';
 
+    // HR & Workforce Management
+    public const HR_BASE = 'hr.base';
+
+    public const HR_TIMESHEETS = 'hr.timesheets';
+
+    public const HR_LEAVES = 'hr.leaves';
+
+    public const HR_CONTRACTS = 'hr.contracts';
+
+    public const HR_PAYROLL = 'hr.payroll';
+
+    public const HR_SELF_SERVICE = 'hr.self_service';
+
+    public const HR_REPORTS_ADVANCED = 'hr.reports_advanced';
+
     // Dynamic Feature Catalog canonical codes (Sections 3 & 4)
     public const MENU_QR = 'menu.qr';
 
@@ -259,6 +274,14 @@ class FeatureCatalog
         'staff' => self::TEAM_MANAGE,
         'staff_roles' => self::TEAM_MANAGE,
         'roles' => self::TEAM_MANAGE,
+        'hr' => self::HR_BASE,
+        'hr_attendance' => self::HR_BASE,
+        'hr_timesheets' => self::HR_TIMESHEETS,
+        'hr_leaves' => self::HR_LEAVES,
+        'hr_contracts' => self::HR_CONTRACTS,
+        'hr_payroll' => self::HR_PAYROLL,
+        'hr_self_service' => self::HR_SELF_SERVICE,
+        'hr_reports' => self::HR_REPORTS_ADVANCED,
 
         // Analytics aliases
         'analytics' => self::ANALYTICS_BASIC,
@@ -346,6 +369,13 @@ class FeatureCatalog
             self::TIPS_RATINGS,
             self::BILLS_SPLIT,
             self::POS_ACCESS,
+            self::HR_BASE,
+            self::HR_TIMESHEETS,
+            self::HR_LEAVES,
+            self::HR_CONTRACTS,
+            self::HR_PAYROLL,
+            self::HR_SELF_SERVICE,
+            self::HR_REPORTS_ADVANCED,
         ];
     }
 
@@ -467,6 +497,13 @@ class FeatureCatalog
                 self::MARKETING_REFERRALS,
                 self::MARKETING_STAMP_CARDS,
                 self::MARKETING_CAMPAIGNS,
+                self::HR_BASE,
+                self::HR_TIMESHEETS,
+                self::HR_LEAVES,
+                self::HR_CONTRACTS,
+                self::HR_PAYROLL,
+                self::HR_SELF_SERVICE,
+                self::HR_REPORTS_ADVANCED,
             ],
             'pro' => [
                 self::MENU_BASE,
@@ -488,12 +525,19 @@ class FeatureCatalog
                 self::MARKETING_GOOGLE_WALLET,
                 self::MARKETING_CASHBACK,
                 self::MARKETING_TIERS,
+                self::HR_BASE,
+                self::HR_TIMESHEETS,
+                self::HR_LEAVES,
+                self::HR_CONTRACTS,
+                self::HR_PAYROLL,
+                self::HR_SELF_SERVICE,
             ],
             default => [
                 self::MENU_BASE,
                 self::MENU_TRANSLATIONS,
                 self::ANALYTICS_BASIC,
                 self::POS_ACCESS,
+                self::HR_BASE,
             ],
         };
     }

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
@@ -113,6 +114,21 @@ class User extends Authenticatable implements MustVerifyEmail
                 if (! empty($user->location_id)) {
                     $membership->locations()->syncWithoutDetaching([$user->location_id]);
                 }
+
+                EmployeeProfile::firstOrCreate(
+                    [
+                        'user_id' => $user->id,
+                    ],
+                    [
+                        'vendor_id' => $user->vendor_id,
+                        'hired_at' => now()->toDateString(),
+                        'employment_status' => $user->is_active ? 'active' : 'suspended',
+                        'employment_type' => 'full_time',
+                        'compensation_type' => 'monthly',
+                        'base_salary' => 0.00,
+                        'hourly_rate' => 0.00,
+                    ]
+                );
             }
         });
 
@@ -209,6 +225,66 @@ class User extends Authenticatable implements MustVerifyEmail
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class, 'waiter_id');
+    }
+
+    public function employeeProfile(): HasOne
+    {
+        return $this->hasOne(EmployeeProfile::class, 'user_id');
+    }
+
+    public function profile(): HasOne
+    {
+        return $this->employeeProfile();
+    }
+
+    public function employmentContracts(): HasMany
+    {
+        return $this->hasMany(EmploymentContract::class, 'user_id');
+    }
+
+    public function workShifts(): HasMany
+    {
+        return $this->hasMany(WorkShift::class, 'user_id');
+    }
+
+    public function attendanceRecords(): HasMany
+    {
+        return $this->hasMany(AttendanceRecord::class, 'user_id');
+    }
+
+    public function timesheets(): HasMany
+    {
+        return $this->hasMany(Timesheet::class, 'user_id');
+    }
+
+    public function leaveRequests(): HasMany
+    {
+        return $this->hasMany(LeaveRequest::class, 'user_id');
+    }
+
+    public function leaveBalances(): HasMany
+    {
+        return $this->hasMany(EmployeeLeaveBalance::class, 'user_id');
+    }
+
+    public function payrollItems(): HasMany
+    {
+        return $this->hasMany(PayrollItem::class, 'user_id');
+    }
+
+    public function salaryPayments(): HasMany
+    {
+        return $this->hasMany(SalaryPayment::class, 'user_id');
+    }
+
+    public function employeeAdvances(): HasMany
+    {
+        return $this->hasMany(EmployeeAdvance::class, 'user_id');
+    }
+
+    public function employeeDocuments(): HasMany
+    {
+        return $this->hasMany(EmployeeDocument::class, 'user_id');
     }
 
     public function isSuperAdmin(): bool

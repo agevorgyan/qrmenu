@@ -315,6 +315,67 @@ class Permission
 
     public const PLATFORM_EMAILS = 'platform.emails';
 
+    // HR & Workforce Management Permissions
+    public const HR_DEPARTMENTS_VIEW = 'hr.departments.view';
+
+    public const HR_DEPARTMENTS_MANAGE = 'hr.departments.manage';
+
+    public const HR_POSITIONS_VIEW = 'hr.positions.view';
+
+    public const HR_POSITIONS_MANAGE = 'hr.positions.manage';
+
+    public const HR_CONTRACTS_VIEW = 'hr.contracts.view';
+
+    public const HR_CONTRACTS_MANAGE = 'hr.contracts.manage';
+
+    public const HR_SCHEDULES_VIEW = 'hr.schedules.view';
+
+    public const HR_SCHEDULES_MANAGE = 'hr.schedules.manage';
+
+    public const HR_ATTENDANCE_VIEW = 'hr.attendance.view';
+
+    public const HR_ATTENDANCE_MANAGE = 'hr.attendance.manage';
+
+    public const HR_ATTENDANCE_CLOCK = 'hr.attendance.clock';
+
+    public const HR_TIMESHEETS_VIEW = 'hr.timesheets.view';
+
+    public const HR_TIMESHEETS_MANAGE = 'hr.timesheets.manage';
+
+    public const HR_TIMESHEETS_APPROVE = 'hr.timesheets.approve';
+
+    public const HR_LEAVE_VIEW = 'hr.leave.view';
+
+    public const HR_LEAVE_REQUEST = 'hr.leave.request';
+
+    public const HR_LEAVE_APPROVE = 'hr.leave.approve';
+
+    public const HR_PAYROLL_VIEW = 'hr.payroll.view';
+
+    public const HR_PAYROLL_CALCULATE = 'hr.payroll.calculate';
+
+    public const HR_PAYROLL_APPROVE = 'hr.payroll.approve';
+
+    public const HR_PAYROLL_LOCK = 'hr.payroll.lock';
+
+    public const HR_PAYROLL_PAY = 'hr.payroll.pay';
+
+    public const HR_PAYROLL_VIEW_SENSITIVE = 'hr.payroll.view_sensitive';
+
+    public const HR_ADVANCES_VIEW = 'hr.advances.view';
+
+    public const HR_ADVANCES_REQUEST = 'hr.advances.request';
+
+    public const HR_ADVANCES_APPROVE = 'hr.advances.approve';
+
+    public const HR_DOCUMENTS_VIEW = 'hr.documents.view';
+
+    public const HR_DOCUMENTS_MANAGE = 'hr.documents.manage';
+
+    public const HR_REPORTS_VIEW = 'hr.reports.view';
+
+    public const HR_REPORTS_EXPORT = 'hr.reports.export';
+
     /**
      * Get all defined permissions in the system.
      */
@@ -464,6 +525,36 @@ class Permission
             self::LOYALTY_MANAGE,
             self::LOYALTY_OPERATE,
             self::LOYALTY_ADJUST,
+            self::HR_DEPARTMENTS_VIEW,
+            self::HR_DEPARTMENTS_MANAGE,
+            self::HR_POSITIONS_VIEW,
+            self::HR_POSITIONS_MANAGE,
+            self::HR_CONTRACTS_VIEW,
+            self::HR_CONTRACTS_MANAGE,
+            self::HR_SCHEDULES_VIEW,
+            self::HR_SCHEDULES_MANAGE,
+            self::HR_ATTENDANCE_VIEW,
+            self::HR_ATTENDANCE_MANAGE,
+            self::HR_ATTENDANCE_CLOCK,
+            self::HR_TIMESHEETS_VIEW,
+            self::HR_TIMESHEETS_MANAGE,
+            self::HR_TIMESHEETS_APPROVE,
+            self::HR_LEAVE_VIEW,
+            self::HR_LEAVE_REQUEST,
+            self::HR_LEAVE_APPROVE,
+            self::HR_PAYROLL_VIEW,
+            self::HR_PAYROLL_CALCULATE,
+            self::HR_PAYROLL_APPROVE,
+            self::HR_PAYROLL_LOCK,
+            self::HR_PAYROLL_PAY,
+            self::HR_PAYROLL_VIEW_SENSITIVE,
+            self::HR_ADVANCES_VIEW,
+            self::HR_ADVANCES_REQUEST,
+            self::HR_ADVANCES_APPROVE,
+            self::HR_DOCUMENTS_VIEW,
+            self::HR_DOCUMENTS_MANAGE,
+            self::HR_REPORTS_VIEW,
+            self::HR_REPORTS_EXPORT,
         ];
     }
 
@@ -538,6 +629,9 @@ class Permission
                 self::PROFILE_UPDATE_OWN,
                 self::PASSWORD_CHANGE_OWN,
                 self::PIN_MANAGE_OWN,
+                self::HR_ATTENDANCE_CLOCK,
+                self::HR_LEAVE_REQUEST,
+                self::HR_ADVANCES_REQUEST,
             ],
             'vendor_owner' => [
                 self::MENU_VIEW,
@@ -658,10 +752,43 @@ class Permission
                 self::LOYALTY_MANAGE,
                 self::LOYALTY_OPERATE,
                 self::LOYALTY_ADJUST,
+                self::HR_DEPARTMENTS_VIEW,
+                self::HR_DEPARTMENTS_MANAGE,
+                self::HR_POSITIONS_VIEW,
+                self::HR_POSITIONS_MANAGE,
+                self::HR_CONTRACTS_VIEW,
+                self::HR_CONTRACTS_MANAGE,
+                self::HR_SCHEDULES_VIEW,
+                self::HR_SCHEDULES_MANAGE,
+                self::HR_ATTENDANCE_VIEW,
+                self::HR_ATTENDANCE_MANAGE,
+                self::HR_ATTENDANCE_CLOCK,
+                self::HR_TIMESHEETS_VIEW,
+                self::HR_TIMESHEETS_MANAGE,
+                self::HR_TIMESHEETS_APPROVE,
+                self::HR_LEAVE_VIEW,
+                self::HR_LEAVE_REQUEST,
+                self::HR_LEAVE_APPROVE,
+                self::HR_PAYROLL_VIEW,
+                self::HR_PAYROLL_CALCULATE,
+                self::HR_PAYROLL_APPROVE,
+                self::HR_PAYROLL_LOCK,
+                self::HR_PAYROLL_PAY,
+                self::HR_PAYROLL_VIEW_SENSITIVE,
+                self::HR_ADVANCES_VIEW,
+                self::HR_ADVANCES_REQUEST,
+                self::HR_ADVANCES_APPROVE,
+                self::HR_DOCUMENTS_VIEW,
+                self::HR_DOCUMENTS_MANAGE,
+                self::HR_REPORTS_VIEW,
+                self::HR_REPORTS_EXPORT,
                 self::PROFILE_VIEW_OWN,
                 self::PROFILE_UPDATE_OWN,
                 self::PASSWORD_CHANGE_OWN,
                 self::PIN_MANAGE_OWN,
+                self::HR_ATTENDANCE_CLOCK,
+                self::HR_LEAVE_REQUEST,
+                self::HR_ADVANCES_REQUEST,
             ],
             'manager' => [
                 self::MENU_VIEW,
@@ -736,10 +863,43 @@ class Permission
                 self::LOYALTY_MANAGE,
                 self::LOYALTY_OPERATE,
                 self::LOYALTY_ADJUST,
+                self::HR_DEPARTMENTS_VIEW,
+                self::HR_DEPARTMENTS_MANAGE,
+                self::HR_POSITIONS_VIEW,
+                self::HR_POSITIONS_MANAGE,
+                self::HR_CONTRACTS_VIEW,
+                self::HR_CONTRACTS_MANAGE,
+                self::HR_SCHEDULES_VIEW,
+                self::HR_SCHEDULES_MANAGE,
+                self::HR_ATTENDANCE_VIEW,
+                self::HR_ATTENDANCE_MANAGE,
+                self::HR_ATTENDANCE_CLOCK,
+                self::HR_TIMESHEETS_VIEW,
+                self::HR_TIMESHEETS_MANAGE,
+                self::HR_TIMESHEETS_APPROVE,
+                self::HR_LEAVE_VIEW,
+                self::HR_LEAVE_REQUEST,
+                self::HR_LEAVE_APPROVE,
+                self::HR_PAYROLL_VIEW,
+                self::HR_PAYROLL_CALCULATE,
+                self::HR_PAYROLL_APPROVE,
+                self::HR_PAYROLL_LOCK,
+                self::HR_PAYROLL_PAY,
+                self::HR_PAYROLL_VIEW_SENSITIVE,
+                self::HR_ADVANCES_VIEW,
+                self::HR_ADVANCES_REQUEST,
+                self::HR_ADVANCES_APPROVE,
+                self::HR_DOCUMENTS_VIEW,
+                self::HR_DOCUMENTS_MANAGE,
+                self::HR_REPORTS_VIEW,
+                self::HR_REPORTS_EXPORT,
                 self::PROFILE_VIEW_OWN,
                 self::PROFILE_UPDATE_OWN,
                 self::PASSWORD_CHANGE_OWN,
                 self::PIN_MANAGE_OWN,
+                self::HR_ATTENDANCE_CLOCK,
+                self::HR_LEAVE_REQUEST,
+                self::HR_ADVANCES_REQUEST,
             ],
             'staff' => [
                 self::POS_ACCESS,
@@ -755,6 +915,9 @@ class Permission
                 self::PROFILE_UPDATE_OWN,
                 self::PASSWORD_CHANGE_OWN,
                 self::PIN_MANAGE_OWN,
+                self::HR_ATTENDANCE_CLOCK,
+                self::HR_LEAVE_REQUEST,
+                self::HR_ADVANCES_REQUEST,
             ],
             'waiter' => [
                 self::POS_ACCESS,
@@ -772,6 +935,9 @@ class Permission
                 self::PROFILE_UPDATE_OWN,
                 self::PASSWORD_CHANGE_OWN,
                 self::PIN_MANAGE_OWN,
+                self::HR_ATTENDANCE_CLOCK,
+                self::HR_LEAVE_REQUEST,
+                self::HR_ADVANCES_REQUEST,
             ],
             'chef' => [
                 self::POS_ACCESS,
@@ -826,6 +992,9 @@ class Permission
                 self::PROFILE_UPDATE_OWN,
                 self::PASSWORD_CHANGE_OWN,
                 self::PIN_MANAGE_OWN,
+                self::HR_ATTENDANCE_CLOCK,
+                self::HR_LEAVE_REQUEST,
+                self::HR_ADVANCES_REQUEST,
             ],
         ];
     }
