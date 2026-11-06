@@ -154,7 +154,7 @@
                         <td style="padding: 1rem;">
                             <strong style="color: var(--text-main); display: block;">{{ $log->ingredient->name }}</strong>
                             @if($log->batch)
-                                <small style="color: var(--text-muted); font-family: monospace;">Lot: {{ $log->batch->batch_number }}</small>
+                                <small style="color: var(--text-muted); font-family: monospace;">{{ __('Lot') }}: {{ $log->batch->batch_number }}</small>
                             @endif
                         </td>
                         <td style="padding: 1rem; color: var(--text-muted);">
@@ -191,7 +191,7 @@
                             </span>
                         </td>
                         <td style="padding: 1rem 1.25rem; text-align: right; color: var(--text-muted); font-size: 0.85rem;">
-                            {{ $log->logged_at ? $log->logged_at->format('M d, Y H:i') : $log->created_at->format('M d, Y H:i') }}
+                            {{ ($log->logged_at ?? $log->created_at)?->toVendorTimezone()->format('M d, Y H:i') }}
                         </td>
                         <td style="padding: 1rem; text-align: center;">
                             <a href="{{ route('admin.inventory.waste.show', $log) }}" class="btn btn-sm btn-outline-secondary" style="border-radius: 8px;">

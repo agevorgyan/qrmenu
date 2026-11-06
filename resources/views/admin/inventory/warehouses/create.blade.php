@@ -36,7 +36,7 @@
                 <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.4rem;">
                     {{ __('Warehouse Name') }} <span style="color: #ef4444;">*</span>
                 </label>
-                <input type="text" name="name" value="{{ old('name') }}" required placeholder="e.g. Main Kitchen Cold Room" class="form-input" style="width: 100%; border-radius: 10px;">
+                <input type="text" name="name" value="{{ old('name') }}" required placeholder="{{ __('e.g. Main Kitchen Cold Room') }}" class="form-input" style="width: 100%; border-radius: 10px;">
             </div>
 
             <div>
@@ -93,7 +93,7 @@
                 <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.4rem;">
                     {{ __('Physical Address / Notes') }}
                 </label>
-                <input type="text" name="address" value="{{ old('address') }}" placeholder="Basement floor, Room B2" class="form-input" style="width: 100%; border-radius: 10px;">
+                <input type="text" name="address" value="{{ old('address') }}" placeholder="{{ __('Basement floor, Room B2') }}" class="form-input" style="width: 100%; border-radius: 10px;">
             </div>
 
             <div>

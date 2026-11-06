@@ -55,9 +55,12 @@ class SupplierInvoiceController extends Controller
         $totalInvoiced = (float) SupplierInvoice::where('vendor_id', $vendorId)->sum('total_amount');
         $totalPaid = (float) SupplierInvoice::where('vendor_id', $vendorId)->sum('paid_amount');
         $totalOutstanding = (float) SupplierInvoice::where('vendor_id', $vendorId)->sum('remaining_balance');
+        $vendor = Auth::user()?->vendor;
+        $today = $vendor ? $vendor->getLocalTime()->toDateString() : now()->toDateString();
+
         $overdueCount = SupplierInvoice::where('vendor_id', $vendorId)
             ->where('payment_status', '!=', SupplierInvoice::PAYMENT_PAID)
-            ->where('due_date', '<', now()->toDateString())
+            ->where('due_date', '<', $today)
             ->count();
 
         return view('admin.inventory.invoices.index', compact(
@@ -109,9 +112,12 @@ class SupplierInvoiceController extends Controller
             user: Auth::user()
         );
 
-        return back()->with('success', __('Payment #:number of $:amount recorded successfully.', [
+        $currency = Auth::user()?->vendor?->currency ?? 'AMD';
+
+        return back()->with('success', __('Payment #:number of :amount :currency recorded successfully.', [
             'number' => $payment->payment_number,
             'amount' => number_format($payment->amount, 2),
+            'currency' => $currency,
         ]));
     }
 

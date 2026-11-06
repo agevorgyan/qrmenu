@@ -126,7 +126,7 @@
                                 {{ $order->order_number }}
                             </a>
                             <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">
-                                {{ $order->created_at->format('M d, Y H:i') }}
+                                {{ $order->created_at->toVendorTimezone()->format('M d, Y H:i') }}
                             </div>
                         </td>
                         <td style="padding: 1rem;">
@@ -156,11 +156,11 @@
                         </td>
                         <td style="padding: 1rem; text-align: right;">
                             <div style="font-weight: 700; color: var(--text-main);">
-                                {{ number_format((float)$order->total_cost, 2) }}
+                                {{ number_format((float)$order->total_cost, 2) }} {{ Auth::user()->vendor->currency }}
                             </div>
                             @if((float)$order->unit_cost > 0)
                                 <div style="font-size: 0.75rem; color: var(--text-muted);">
-                                    {{ number_format((float)$order->unit_cost, 2) }} / {{ $order->unit->code }}
+                                    {{ number_format((float)$order->unit_cost, 2) }} {{ Auth::user()->vendor->currency }} / {{ $order->unit->code }}
                                 </div>
                             @endif
                         </td>

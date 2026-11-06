@@ -135,7 +135,7 @@
                                 {{ $log->loggedBy?->name ?? __('System') }}
                             </td>
                             <td style="padding: 1rem 1.25rem; text-align: right; font-size: 0.85rem; color: var(--text-muted);">
-                                {{ $log->logged_at->format('M d, Y H:i') }}
+                                {{ $log->logged_at->toVendorTimezone()->format('M d, Y H:i') }}
                             </td>
                         </tr>
                     @empty

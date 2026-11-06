@@ -124,10 +124,10 @@
                                 {{ number_format($bal->available_quantity, 2) }} {{ $bal->ingredient?->unit?->code }}
                             </td>
                             <td style="padding: 0.85rem 1rem; text-align: right; font-family: monospace; color: var(--text-muted);">
-                                {{ number_format((float) $bal->unit_cost, 2) }}
+                                {{ number_format((float) $bal->unit_cost, 2) }} {{ Auth::user()->vendor->currency }}
                             </td>
                             <td style="padding: 0.85rem 1rem; text-align: right; font-weight: 800; color: var(--text-main);">
-                                {{ number_format((float) $bal->total_value, 2) }}
+                                {{ number_format((float) $bal->total_value, 2) }} {{ Auth::user()->vendor->currency }}
                             </td>
                             <td style="padding: 0.85rem 1rem; text-align: right;">
                                 <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.78rem;" onclick="openQuickAdjust({{ $bal->warehouse_id }}, {{ $bal->ingredient_id }}, {{ (float) $bal->quantity_on_hand }}, '{{ addslashes($bal->ingredient?->name) }}')">
@@ -238,7 +238,7 @@
                     <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">
                         {{ __('Unit Cost (Optional for Receipt, auto-calculated for Issue)') }}
                     </label>
-                    <input type="number" step="0.0001" name="items[0][unit_cost]" placeholder="Leave blank to use current unit cost" class="form-input" style="width: 100%; border-radius: 10px;">
+                    <input type="number" step="0.0001" name="items[0][unit_cost]" placeholder="{{ __('Leave blank to use current unit cost') }}" class="form-input" style="width: 100%; border-radius: 10px;">
                 </div>
             </div>
 
@@ -260,14 +260,14 @@
                 </div>
                 <div style="margin-bottom: 1rem;">
                     <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">{{ __('Reason for Discrepancy') }}</label>
-                    <input type="text" name="reason" placeholder="e.g. Periodic inventory count audit" class="form-input" style="width: 100%; border-radius: 10px;">
+                    <input type="text" name="reason" placeholder="{{ __('e.g. Periodic inventory count audit') }}" class="form-input" style="width: 100%; border-radius: 10px;">
                 </div>
             </div>
 
             <!-- Notes -->
             <div style="margin-bottom: 1.5rem;">
                 <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">{{ __('Notes / Reference') }}</label>
-                <textarea name="notes" rows="2" placeholder="e.g. Supplier Invoice #1024 or Kitchen Spoilage" class="form-input" style="width: 100%; border-radius: 10px;"></textarea>
+                <textarea name="notes" rows="2" placeholder="{{ __('e.g. Supplier Invoice #1024 or Kitchen Spoilage') }}" class="form-input" style="width: 100%; border-radius: 10px;"></textarea>
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">

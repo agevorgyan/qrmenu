@@ -148,12 +148,12 @@
             @csrf
             <div style="margin-bottom: 1rem;">
                 <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">{{ __('Unit Code (Symbol)') }} <span style="color: #ef4444;">*</span></label>
-                <input type="text" name="code" required placeholder="e.g. can, tray, sack" class="form-input" style="width: 100%; border-radius: 10px;">
+                <input type="text" name="code" required placeholder="{{ __('e.g. can, tray, sack') }}" class="form-input" style="width: 100%; border-radius: 10px;">
             </div>
 
             <div style="margin-bottom: 1rem;">
                 <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">{{ __('Unit Name') }} <span style="color: #ef4444;">*</span></label>
-                <input type="text" name="name" required placeholder="e.g. Aluminum Can" class="form-input" style="width: 100%; border-radius: 10px;">
+                <input type="text" name="name" required placeholder="{{ __('e.g. Aluminum Can') }}" class="form-input" style="width: 100%; border-radius: 10px;">
             </div>
 
             <div style="margin-bottom: 1rem;">
@@ -220,7 +220,7 @@
                 <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">
                     {{ __('Conversion Multiplier (Factor)') }} <span style="color: #ef4444;">*</span>
                 </label>
-                <input type="number" step="0.000001" name="factor" required placeholder="e.g. 12 (if 1 Box = 12 Pieces)" class="form-input" style="width: 100%; border-radius: 10px;">
+                <input type="number" step="0.000001" name="factor" required placeholder="{{ __('e.g. 12 (if 1 Box = 12 Pieces)') }}" class="form-input" style="width: 100%; border-radius: 10px;">
                 <span style="font-size: 0.72rem; color: var(--text-muted);">{{ __('Formula: To_Quantity = From_Quantity * Factor') }}</span>
             </div>
 

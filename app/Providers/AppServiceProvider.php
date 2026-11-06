@@ -49,12 +49,14 @@ use App\Services\Localization\TranslationService;
 use App\Services\Localization\TranslationValidator;
 use App\Services\QuotaService;
 use App\Services\TenantContext;
+use Carbon\Carbon;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Queue\Events\JobExceptionOccurred;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -168,6 +170,14 @@ class AppServiceProvider extends ServiceProvider
 
         Blade::if('quota', function (string $quotaKey, int $quantity = 1, ?Vendor $vendor = null): bool {
             return app(QuotaService::class)->can($vendor, $quotaKey, $quantity);
+        });
+
+        // Register Carbon macro to cleanly convert timestamps to active vendor's timezone
+        Carbon::macro('toVendorTimezone', function (?Vendor $vendor = null) {
+            /** @var Carbon $this */
+            $tz = ($vendor ?? Auth::user()?->vendor)?->getTimezone() ?? (string) config('app.timezone', 'UTC');
+
+            return $this->copy()->setTimezone($tz);
         });
     }
 }

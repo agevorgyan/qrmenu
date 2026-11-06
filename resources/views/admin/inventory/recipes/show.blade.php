@@ -79,10 +79,10 @@
             <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem; box-shadow: var(--shadow-card);">
                 <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">{{ __('Portion Cost (Cost of Goods)') }}</div>
                 <div style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); font-family: monospace; margin: 0.25rem 0;">
-                    ${{ number_format($portionCost, 2) }}
+                    {{ number_format($portionCost, 2) }} {{ Auth::user()->vendor->currency }}
                 </div>
                 <div style="font-size: 0.78rem; color: var(--text-muted);">
-                    {{ __('Total Batch:') }} ${{ number_format($cost?->total_cost ?? 0, 2) }}
+                    {{ __('Total Batch:') }} {{ number_format($cost?->total_cost ?? 0, 2) }} {{ Auth::user()->vendor->currency }}
                 </div>
             </div>
 
@@ -90,7 +90,7 @@
                 <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">{{ __('Selling Price') }}</div>
                 <div style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); font-family: monospace; margin: 0.25rem 0;">
                     @if($sellingPrice > 0)
-                        ${{ number_format($sellingPrice, 2) }}
+                        {{ number_format($sellingPrice, 2) }} {{ Auth::user()->vendor->currency }}
                     @else
                         <span style="color: var(--text-muted); font-size: 1.1rem;">{{ __('Not set') }}</span>
                     @endif
@@ -126,7 +126,7 @@
                 <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">{{ __('Gross Profit / Portion') }}</div>
                 <div style="font-size: 1.6rem; font-weight: 800; color: #10b981; font-family: monospace; margin: 0.25rem 0;">
                     @if($grossProfit !== null)
-                        ${{ number_format($grossProfit, 2) }}
+                        {{ number_format($grossProfit, 2) }} {{ Auth::user()->vendor->currency }}
                     @else
                         —
                     @endif
@@ -232,9 +232,9 @@
             </p>
 
             <div style="margin-top: 1rem; font-size: 0.78rem; color: var(--text-muted);">
-                {{ __('Created by:') }} {{ $recipe->creator?->name ?? 'System' }} • {{ $recipe->created_at->format('M d, Y') }}
+                {{ __('Created by:') }} {{ $recipe->creator?->name ?? 'System' }} • {{ $recipe->created_at->toVendorTimezone()->format('M d, Y') }}
                 @if($recipe->approver)
-                    <br>{{ __('Approved by:') }} {{ $recipe->approver->name }} • {{ $recipe->approved_at?->format('M d, Y') }}
+                    <br>{{ __('Approved by:') }} {{ $recipe->approver->name }} • {{ $recipe->approved_at?->toVendorTimezone()->format('M d, Y') }}
                 @endif
             </div>
         </div>
@@ -313,8 +313,8 @@
                             <td style="padding: 0.75rem 0.6rem; text-align: right; color: var(--text-muted); font-family: monospace;">{{ (float) $item->cooking_loss_percent }}%</td>
                             <td style="padding: 0.75rem 0.6rem; text-align: right; font-family: monospace; font-weight: 700; color: #10b981;">{{ (float) $item->final_weight }}</td>
                             @if($canViewCost)
-                                <td style="padding: 0.75rem 0.6rem; text-align: right; font-family: monospace; color: var(--text-muted);">${{ number_format($item->unit_cost, 2) }}</td>
-                                <td style="padding: 0.75rem 0.6rem; text-align: right; font-family: monospace; font-weight: 700; color: var(--text-main);">${{ number_format($item->total_cost, 2) }}</td>
+                                <td style="padding: 0.75rem 0.6rem; text-align: right; font-family: monospace; color: var(--text-muted);">{{ number_format($item->unit_cost, 2) }} {{ Auth::user()->vendor->currency }}</td>
+                                <td style="padding: 0.75rem 0.6rem; text-align: right; font-family: monospace; font-weight: 700; color: var(--text-main);">{{ number_format($item->total_cost, 2) }} {{ Auth::user()->vendor->currency }}</td>
                             @endif
                             <td style="padding: 0.75rem 0.6rem; color: var(--text-muted); font-size: 0.8rem;">{{ $item->notes ?? '—' }}</td>
                         </tr>
@@ -336,7 +336,7 @@
                         <td style="padding: 0.85rem 0.6rem; text-align: right; font-family: monospace; color: #10b981;">{{ number_format($sumFinal, 2) }}</td>
                         @if($canViewCost)
                             <td style="padding: 0.85rem 0.6rem;"></td>
-                            <td style="padding: 0.85rem 0.6rem; text-align: right; font-family: monospace; color: #10b981;">${{ number_format($sumCost, 2) }}</td>
+                            <td style="padding: 0.85rem 0.6rem; text-align: right; font-family: monospace; color: #10b981;">{{ number_format($sumCost, 2) }} {{ Auth::user()->vendor->currency }}</td>
                         @endif
                         <td style="padding: 0.85rem 0.6rem;"></td>
                     </tr>
@@ -373,8 +373,8 @@
                                 <td style="padding: 0.65rem; text-align: right; font-family: monospace;">{{ (float) $pkg->quantity }}</td>
                                 <td style="padding: 0.65rem; color: var(--text-muted);">{{ $pkg->unit?->code }}</td>
                                 @if($canViewCost)
-                                    <td style="padding: 0.65rem; text-align: right; font-family: monospace;">${{ number_format($pkg->unit_cost, 2) }}</td>
-                                    <td style="padding: 0.65rem; text-align: right; font-family: monospace; font-weight: 700;">${{ number_format($pkg->total_cost, 2) }}</td>
+                                    <td style="padding: 0.65rem; text-align: right; font-family: monospace;">{{ number_format($pkg->unit_cost, 2) }} {{ Auth::user()->vendor->currency }}</td>
+                                    <td style="padding: 0.65rem; text-align: right; font-family: monospace; font-weight: 700;">{{ number_format($pkg->total_cost, 2) }} {{ Auth::user()->vendor->currency }}</td>
                                 @endif
                             </tr>
                         @endforeach
@@ -431,9 +431,9 @@
                         @foreach($recipe->versions as $v)
                             <tr style="border-bottom: 1px solid var(--border-color);">
                                 <td style="padding: 0.6rem; font-weight: 700; font-family: monospace;">v{{ $v->version_number }}</td>
-                                <td style="padding: 0.6rem; color: var(--text-muted);">{{ $v->approved_at?->format('Y-m-d H:i') ?? $v->created_at->format('Y-m-d H:i') }}</td>
+                                <td style="padding: 0.6rem; color: var(--text-muted);">{{ ($v->approved_at ?? $v->created_at)?->toVendorTimezone()->format('Y-m-d H:i') }}</td>
                                 <td style="padding: 0.6rem; font-weight: 600;">{{ $v->approver?->name ?? 'System' }}</td>
-                                <td style="padding: 0.6rem; text-align: right; font-family: monospace;">${{ number_format($v->portion_cost, 2) }}</td>
+                                <td style="padding: 0.6rem; text-align: right; font-family: monospace;">{{ number_format($v->portion_cost, 2) }} {{ Auth::user()->vendor->currency }}</td>
                                 <td style="padding: 0.6rem; text-align: right; font-family: monospace;">{{ $v->food_cost_percent !== null ? number_format($v->food_cost_percent, 1) . '%' : '—' }}</td>
                                 <td style="padding: 0.6rem; color: var(--text-muted);">{{ $v->change_summary ?? 'Official version release' }}</td>
                             </tr>
@@ -476,14 +476,14 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
                 <div>
                     <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">
-                        {{ __('Direct Labor ($)') }}
+                        {{ __('Direct Labor') }} ({{ Auth::user()->vendor->currency }})
                     </label>
                     <input type="number" step="0.01" name="labor_cost" value="{{ $cost?->labor_cost ?? 0 }}" class="form-input" style="width: 100%; border-radius: 8px;">
                 </div>
 
                 <div>
                     <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">
-                        {{ __('Overhead ($)') }}
+                        {{ __('Overhead') }} ({{ Auth::user()->vendor->currency }})
                     </label>
                     <input type="number" step="0.01" name="overhead_cost" value="{{ $cost?->overhead_cost ?? 0 }}" class="form-input" style="width: 100%; border-radius: 8px;">
                 </div>

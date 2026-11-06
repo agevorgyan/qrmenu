@@ -22,8 +22,9 @@ class InventoryReportController extends Controller
         $this->authorizePermission(Permission::REPORTS_VIEW);
 
         $vendor = $request->user()->vendor;
-        $from = now()->startOfMonth();
-        $to = now()->endOfDay();
+        $tz = $vendor->getTimezone();
+        $from = $vendor->getLocalTime()->startOfMonth();
+        $to = $vendor->getLocalTime()->endOfDay();
 
         $variance = $this->reportService->getFoodCostVariance($vendor, $from, $to);
         $abc = $this->reportService->getAbcAnalysis($vendor);
@@ -43,8 +44,9 @@ class InventoryReportController extends Controller
         $this->authorizePermission(Permission::REPORTS_VIEW);
 
         $vendor = $request->user()->vendor;
-        $from = $request->filled('from') ? Carbon::parse($request->from) : now()->startOfMonth();
-        $to = $request->filled('to') ? Carbon::parse($request->to) : now()->endOfDay();
+        $tz = $vendor->getTimezone();
+        $from = $request->filled('from') ? Carbon::parse($request->from, $tz)->startOfDay() : $vendor->getLocalTime()->startOfMonth();
+        $to = $request->filled('to') ? Carbon::parse($request->to, $tz)->endOfDay() : $vendor->getLocalTime()->endOfDay();
 
         $report = $this->reportService->getFoodCostVariance($vendor, $from, $to);
 
@@ -81,8 +83,9 @@ class InventoryReportController extends Controller
         $this->authorizePermission(Permission::REPORTS_VIEW);
 
         $vendor = $request->user()->vendor;
-        $from = $request->filled('from') ? Carbon::parse($request->from) : now()->startOfMonth();
-        $to = $request->filled('to') ? Carbon::parse($request->to) : now()->endOfDay();
+        $tz = $vendor->getTimezone();
+        $from = $request->filled('from') ? Carbon::parse($request->from, $tz)->startOfDay() : $vendor->getLocalTime()->startOfMonth();
+        $to = $request->filled('to') ? Carbon::parse($request->to, $tz)->endOfDay() : $vendor->getLocalTime()->endOfDay();
 
         $waste = $this->wasteService->getWasteSummary($vendor, $from, $to);
 

@@ -1073,6 +1073,44 @@ class Vendor extends Model
         return $now ? $now->copy()->setTimezone($tz) : Carbon::now($tz);
     }
 
+    /**
+     * Format an amount using the vendor's primary currency.
+     */
+    public function formatCurrency(float|int|string|null $amount, int $decimals = 2): string
+    {
+        return number_format((float) ($amount ?? 0), $decimals).' '.$this->currency;
+    }
+
+    /**
+     * Format a DateTime instance using the vendor's configured timezone.
+     */
+    public function formatDateTime(?\DateTimeInterface $date, string $format = 'M d, Y H:i'): string
+    {
+        if (! $date) {
+            return '-';
+        }
+
+        $carbon = $date instanceof Carbon ? $date : Carbon::instance($date);
+
+        return $carbon->copy()->setTimezone($this->getTimezone())->format($format);
+    }
+
+    /**
+     * Format a Date using the vendor's configured timezone.
+     */
+    public function formatDate(?\DateTimeInterface $date, string $format = 'M d, Y'): string
+    {
+        return $this->formatDateTime($date, $format);
+    }
+
+    /**
+     * Format a Time using the vendor's configured timezone.
+     */
+    public function formatTime(?\DateTimeInterface $date, string $format = 'H:i'): string
+    {
+        return $this->formatDateTime($date, $format);
+    }
+
     public function featuredProduct()
     {
         return $this->belongsTo(Product::class, 'featured_product_id');

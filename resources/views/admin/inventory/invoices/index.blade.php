@@ -32,7 +32,7 @@
         </div>
         <div>
             <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">{{ __('Total Invoiced') }}</div>
-            <div style="font-size: 1.35rem; font-weight: 800; font-family: monospace; color: var(--text-main);">${{ number_format($totalInvoiced, 2) }}</div>
+            <div style="font-size: 1.35rem; font-weight: 800; font-family: monospace; color: var(--text-main);">{{ number_format($totalInvoiced, 2) }} {{ Auth::user()->vendor->currency }}</div>
         </div>
     </div>
 
@@ -42,7 +42,7 @@
         </div>
         <div>
             <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">{{ __('Total Paid') }}</div>
-            <div style="font-size: 1.35rem; font-weight: 800; font-family: monospace; color: #10b981;">${{ number_format($totalPaid, 2) }}</div>
+            <div style="font-size: 1.35rem; font-weight: 800; font-family: monospace; color: #10b981;">{{ number_format($totalPaid, 2) }} {{ Auth::user()->vendor->currency }}</div>
         </div>
     </div>
 
@@ -52,7 +52,7 @@
         </div>
         <div>
             <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">{{ __('Outstanding AP Debt') }}</div>
-            <div style="font-size: 1.35rem; font-weight: 800; font-family: monospace; color: #ef4444;">${{ number_format($totalOutstanding, 2) }}</div>
+            <div style="font-size: 1.35rem; font-weight: 800; font-family: monospace; color: #ef4444;">{{ number_format($totalOutstanding, 2) }} {{ Auth::user()->vendor->currency }}</div>
         </div>
     </div>
 
@@ -163,26 +163,26 @@
                             </td>
 
                             <td style="padding: 1rem 1.25rem; color: var(--text-muted);">
-                                {{ $inv->invoice_date->format('M d, Y') }}
+                                {{ $inv->invoice_date->toVendorTimezone()->format('M d, Y') }}
                             </td>
 
                             <td style="padding: 1rem 1.25rem; font-weight: 600; color: {{ $isOverdue ? '#dc2626' : 'var(--text-main)' }};">
-                                {{ $inv->due_date->format('M d, Y') }}
+                                {{ $inv->due_date->toVendorTimezone()->format('M d, Y') }}
                                 @if($isOverdue)
                                     <span style="font-size: 0.72rem; color: #dc2626; display: block;">{{ __('Overdue') }}</span>
                                 @endif
                             </td>
 
                             <td style="padding: 1rem 1.25rem; text-align: right; font-family: monospace; font-weight: 600;">
-                                ${{ number_format($inv->total_amount, 2) }}
+                                {{ number_format($inv->total_amount, 2) }} {{ Auth::user()->vendor->currency }}
                             </td>
 
                             <td style="padding: 1rem 1.25rem; text-align: right; font-family: monospace; font-weight: 600; color: #10b981;">
-                                ${{ number_format($inv->paid_amount, 2) }}
+                                {{ number_format($inv->paid_amount, 2) }} {{ Auth::user()->vendor->currency }}
                             </td>
 
                             <td style="padding: 1rem 1.25rem; text-align: right; font-family: monospace; font-weight: 800; color: {{ (float) $inv->remaining_balance > 0 ? '#ef4444' : '#10b981' }};">
-                                ${{ number_format($inv->remaining_balance, 2) }}
+                                {{ number_format($inv->remaining_balance, 2) }} {{ Auth::user()->vendor->currency }}
                             </td>
 
                             <td style="padding: 1rem 1.25rem; text-align: center;">
@@ -242,7 +242,7 @@
                     <option value="">{{ __('Select Supplier...') }}</option>
                     @foreach($suppliers as $sup)
                         <option value="{{ $sup->id }}">
-                            {{ $sup->name }} ({{ __('Debt:') }} ${{ number_format($sup->current_balance, 2) }})
+                            {{ $sup->name }} ({{ __('Debt:') }} {{ number_format($sup->current_balance, 2) }} {{ Auth::user()->vendor->currency }})
                         </option>
                     @endforeach
                 </select>
@@ -250,7 +250,7 @@
 
             <div style="margin-bottom: 1rem;">
                 <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">
-                    {{ __('Payment Amount ($)') }} <span style="color: #ef4444;">*</span>
+                    {{ __('Payment Amount') }} ({{ Auth::user()->vendor->currency }}) <span style="color: #ef4444;">*</span>
                 </label>
                 <input type="number" step="0.01" name="amount" required class="form-input" style="width: 100%; border-radius: 8px;">
             </div>

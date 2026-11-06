@@ -41,17 +41,18 @@ class WasteController extends Controller
             $query->where('ingredient_id', $request->ingredient_id);
         }
 
+        $tz = $vendor->getTimezone();
         if ($request->filled('from') && $request->filled('to')) {
             $query->whereBetween('logged_at', [
-                Carbon::parse($request->from)->startOfDay(),
-                Carbon::parse($request->to)->endOfDay(),
+                Carbon::parse($request->from, $tz)->startOfDay()->utc(),
+                Carbon::parse($request->to, $tz)->endOfDay()->utc(),
             ]);
         }
 
         $logs = $query->orderBy('logged_at', 'desc')->paginate(25)->withQueryString();
 
-        $from = $request->filled('from') ? Carbon::parse($request->from) : now()->startOfMonth();
-        $to = $request->filled('to') ? Carbon::parse($request->to) : now()->endOfDay();
+        $from = $request->filled('from') ? Carbon::parse($request->from, $tz)->startOfDay() : $vendor->getLocalTime()->startOfMonth();
+        $to = $request->filled('to') ? Carbon::parse($request->to, $tz)->endOfDay() : $vendor->getLocalTime()->endOfDay();
         $summary = $this->wasteService->getWasteSummary($vendor, $from, $to);
 
         $warehouses = Warehouse::where('vendor_id', $vendor->id)->where('is_active', true)->get();

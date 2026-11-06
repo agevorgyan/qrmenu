@@ -115,12 +115,12 @@
                                 </small>
                             </td>
                             <td style="padding: 1rem; text-align: center; font-size: 0.85rem; color: var(--text-muted);">
-                                {{ $batch->production_date?->format('M d, Y') ?? '-' }}
+                                {{ $batch->production_date ? $batch->production_date->toVendorTimezone()->format('M d, Y') : '-' }}
                             </td>
                             <td style="padding: 1rem; text-align: center;">
                                 @if($batch->expiry_date)
                                     <span class="badge" style="background: {{ $isExpired ? 'rgba(239, 68, 68, 0.15)' : ($isCritical ? 'rgba(245, 158, 11, 0.15)' : 'rgba(16, 185, 129, 0.15)') }}; color: {{ $isExpired ? '#ef4444' : ($isCritical ? '#f59e0b' : '#10b981') }}; font-weight: 700;">
-                                        {{ $batch->expiry_date->format('M d, Y') }}
+                                        {{ $batch->expiry_date->toVendorTimezone()->format('M d, Y') }}
                                         ({{ $isExpired ? __('EXPIRED') : $batch->expiry_date->diffForHumans() }})
                                     </span>
                                 @else

@@ -154,9 +154,9 @@
                                     {{ $po->po_number }}
                                 </a>
                                 <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">
-                                    {{ $po->order_date->format('M d, Y') }}
+                                    {{ $po->order_date->toVendorTimezone()->format('M d, Y') }}
                                     @if($po->expected_delivery_date)
-                                        • <span title="{{ __('Expected Delivery') }}"><i class="fa-solid fa-calendar-day"></i> {{ $po->expected_delivery_date->format('M d') }}</span>
+                                        • <span title="{{ __('Expected Delivery') }}"><i class="fa-solid fa-calendar-day"></i> {{ $po->expected_delivery_date->toVendorTimezone()->format('M d') }}</span>
                                     @endif
                                 </div>
                             </td>
@@ -176,7 +176,7 @@
                             </td>
 
                             <td style="padding: 1rem 1.25rem; font-family: monospace; font-weight: 800; font-size: 0.95rem; color: var(--text-main);">
-                                ${{ number_format($po->total_amount, 2) }}
+                                {{ number_format($po->total_amount, 2) }} {{ Auth::user()->vendor->currency }}
                             </td>
 
                             <td style="padding: 1rem 1.25rem;">

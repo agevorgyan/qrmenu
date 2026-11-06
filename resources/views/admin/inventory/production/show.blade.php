@@ -134,20 +134,20 @@
                 <div>
                     <div style="font-size: 0.75rem; color: var(--text-muted);">{{ __('Total Cost') }}</div>
                     <div style="font-size: 1.35rem; font-weight: 800; color: var(--text-main);">
-                        {{ number_format((float)$productionOrder->total_cost, 2) }} {{ Auth::user()->vendor->currency ?? 'AMD' }}
+                        {{ number_format((float)$productionOrder->total_cost, 2) }} {{ Auth::user()->vendor->currency }}
                     </div>
                 </div>
                 <div style="text-align: right;">
                     <div style="font-size: 0.75rem; color: var(--text-muted);">{{ __('Unit Cost') }}</div>
                     <div style="font-size: 1.15rem; font-weight: 700; color: #10b981;">
-                        {{ number_format((float)$productionOrder->unit_cost, 2) }} / {{ $productionOrder->unit->code }}
+                        {{ number_format((float)$productionOrder->unit_cost, 2) }} {{ Auth::user()->vendor->currency }} / {{ $productionOrder->unit->code }}
                     </div>
                 </div>
             </div>
             <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-color); font-size: 0.75rem; color: var(--text-muted); display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.25rem;">
-                <div>{{ __('Materials') }}: <strong style="color: var(--text-main);">{{ number_format((float)$productionOrder->material_cost, 2) }}</strong></div>
-                <div>{{ __('Labor') }}: <strong style="color: var(--text-main);">{{ number_format((float)$productionOrder->labor_cost, 2) }}</strong></div>
-                <div>{{ __('Overhead') }}: <strong style="color: var(--text-main);">{{ number_format((float)$productionOrder->overhead_cost, 2) }}</strong></div>
+                <div>{{ __('Materials') }}: <strong style="color: var(--text-main);">{{ number_format((float)$productionOrder->material_cost, 2) }} {{ Auth::user()->vendor->currency }}</strong></div>
+                <div>{{ __('Labor') }}: <strong style="color: var(--text-main);">{{ number_format((float)$productionOrder->labor_cost, 2) }} {{ Auth::user()->vendor->currency }}</strong></div>
+                <div>{{ __('Overhead') }}: <strong style="color: var(--text-main);">{{ number_format((float)$productionOrder->overhead_cost, 2) }} {{ Auth::user()->vendor->currency }}</strong></div>
             </div>
         </div>
     </div>
@@ -223,10 +223,10 @@
                                 @endif
                             </td>
                             <td style="padding: 1rem; text-align: right;">
-                                {{ number_format((float)$item->unit_cost, 2) }}
+                                {{ number_format((float)$item->unit_cost, 2) }} {{ Auth::user()->vendor->currency }}
                             </td>
                             <td style="padding: 1rem; text-align: right; font-weight: 700; color: var(--text-main);">
-                                {{ number_format((float)$item->total_cost, 2) }}
+                                {{ number_format((float)$item->total_cost, 2) }} {{ Auth::user()->vendor->currency }}
                             </td>
                             <td style="padding: 1rem 1.25rem; text-align: center;">
                                 @php $uVar = $item->calculateUsageVariance(); @endphp
@@ -260,8 +260,8 @@
                             <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-size: 0.7rem; text-transform: uppercase;">{{ $batch->status }}</span>
                         </div>
                         <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; justify-content: space-between;">
-                            <span>{{ __('Produced') }}: {{ $batch->production_date?->format('M d, Y') ?? '-' }}</span>
-                            <span>{{ __('Expires') }}: <strong style="color: var(--text-main);">{{ $batch->expiry_date?->format('M d, Y') ?? __('N/A') }}</strong></span>
+                            <span>{{ __('Produced') }}: {{ $batch->production_date ? $batch->production_date->toVendorTimezone()->format('M d, Y') : '-' }}</span>
+                            <span>{{ __('Expires') }}: <strong style="color: var(--text-main);">{{ $batch->expiry_date ? $batch->expiry_date->toVendorTimezone()->format('M d, Y') : __('N/A') }}</strong></span>
                         </div>
                     </div>
                 @endforeach
@@ -330,22 +330,22 @@
 
                     <div>
                         <label class="form-label" style="font-weight: 600;">{{ __('Batch / Lot #') }}</label>
-                        <input type="text" name="batch_number" class="form-control" value="{{ 'LOT-' . date('Ymd') . '-' . str_pad($productionOrder->id, 4, '0', STR_PAD_LEFT) }}">
+                        <input type="text" name="batch_number" class="form-control" value="{{ 'LOT-' . Auth::user()->vendor->getLocalTime()->format('Ymd') . '-' . str_pad($productionOrder->id, 4, '0', STR_PAD_LEFT) }}">
                     </div>
 
                     <div>
                         <label class="form-label" style="font-weight: 600;">{{ __('Expiry Date') }}</label>
-                        <input type="date" name="expiry_date" class="form-control" value="{{ $productionOrder->recipe->shelf_life_hours ? now()->addHours($productionOrder->recipe->shelf_life_hours)->toDateString() : '' }}">
+                        <input type="date" name="expiry_date" class="form-control" value="{{ $productionOrder->recipe->shelf_life_hours ? Auth::user()->vendor->getLocalTime()->addHours($productionOrder->recipe->shelf_life_hours)->toDateString() : '' }}">
                     </div>
 
                     <div>
-                        <label class="form-label" style="font-weight: 600;">{{ __('Actual Labor Cost') }}</label>
+                        <label class="form-label" style="font-weight: 600;">{{ __('Actual Labor Cost') }} ({{ Auth::user()->vendor->currency }})</label>
                         <input type="number" step="0.01" min="0" name="labor_cost" class="form-control" value="{{ (float)$productionOrder->labor_cost }}">
                     </div>
                 </div>
 
                 <div style="margin-bottom: 1.25rem;">
-                    <label class="form-label" style="font-weight: 600;">{{ __('Actual Overhead Cost') }}</label>
+                    <label class="form-label" style="font-weight: 600;">{{ __('Actual Overhead Cost') }} ({{ Auth::user()->vendor->currency }})</label>
                     <input type="number" step="0.01" min="0" name="overhead_cost" class="form-control" value="{{ (float)$productionOrder->overhead_cost }}">
                 </div>
 

@@ -127,7 +127,7 @@
             <div style="font-size: 1.4rem; font-weight: 800; color: #3b82f6;">
                 {{ number_format($variance['theoretical_food_cost'], 2) }} {{ Auth::user()->vendor->currency }}
             </div>
-            <small style="color: var(--text-muted);">{{ $variance['theoretical_cost_percentage'] }}% of revenue</small>
+            <small style="color: var(--text-muted);">{{ __(':percent% of revenue', ['percent' => $variance['theoretical_cost_percentage']]) }}</small>
         </div>
 
         <div style="background: var(--bg-hover); padding: 1.25rem; border-radius: 12px;">
@@ -135,7 +135,7 @@
             <div style="font-size: 1.4rem; font-weight: 800; color: {{ $variance['cost_variance'] > 0 ? '#ef4444' : '#10b981' }};">
                 {{ number_format($variance['actual_food_cost'], 2) }} {{ Auth::user()->vendor->currency }}
             </div>
-            <small style="color: var(--text-muted);">{{ $variance['actual_cost_percentage'] }}% of revenue</small>
+            <small style="color: var(--text-muted);">{{ __(':percent% of revenue', ['percent' => $variance['actual_cost_percentage']]) }}</small>
         </div>
 
         <div style="background: var(--bg-hover); padding: 1.25rem; border-radius: 12px;">
@@ -143,7 +143,7 @@
             <div style="font-size: 1.4rem; font-weight: 800; color: #ef4444;">
                 {{ number_format($waste['total_loss_cost'], 2) }} {{ Auth::user()->vendor->currency }}
             </div>
-            <small style="color: var(--text-muted);">{{ $waste['total_records'] }} write-off incidents</small>
+            <small style="color: var(--text-muted);">{{ __(':count write-off incidents', ['count' => $waste['total_records']]) }}</small>
         </div>
     </div>
 </div>

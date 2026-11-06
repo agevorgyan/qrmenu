@@ -15,7 +15,7 @@
                 </span>
             </div>
             <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0.35rem 0 0;">
-                {{ __('Recorded on') }} {{ $wasteLog->logged_at ? $wasteLog->logged_at->format('M d, Y H:i') : $wasteLog->created_at->format('M d, Y H:i') }}
+                {{ __('Recorded on') }} {{ ($wasteLog->logged_at ?? $wasteLog->created_at)?->toVendorTimezone()->format('M d, Y H:i') }}
             </p>
         </div>
         <a href="{{ route('admin.inventory.waste.index') }}" class="btn btn-outline-secondary" style="border-radius: 10px;">
@@ -30,7 +30,7 @@
             <div>
                 <small style="text-transform: uppercase; font-size: 0.75rem; color: var(--text-muted); font-weight: 700; display: block; margin-bottom: 0.25rem;">{{ __('Item / Raw Material') }}</small>
                 <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-main);">{{ $wasteLog->ingredient->name }}</div>
-                <small style="color: var(--text-muted); font-family: monospace;">SKU: {{ $wasteLog->ingredient->sku ?? 'N/A' }}</small>
+                <small style="color: var(--text-muted); font-family: monospace;">{{ __('SKU') }}: {{ $wasteLog->ingredient->sku ?? __('N/A') }}</small>
             </div>
 
             <!-- Warehouse -->
@@ -130,7 +130,7 @@
                                 -{{ number_format((float) $wasteLog->quantity, 2) }} {{ $wasteLog->unit?->symbol ?? 'kg' }}
                             </td>
                             <td style="padding: 1rem 1.5rem; text-align: right; color: var(--text-muted); font-size: 0.85rem;">
-                                {{ $wasteLog->inventoryTransaction->transacted_at ? $wasteLog->inventoryTransaction->transacted_at->format('M d, Y H:i:s') : 'N/A' }}
+                                {{ $wasteLog->inventoryTransaction->transacted_at ? $wasteLog->inventoryTransaction->transacted_at->toVendorTimezone()->format('M d, Y H:i:s') : 'N/A' }}
                             </td>
                         </tr>
                     </tbody>

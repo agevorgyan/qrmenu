@@ -112,8 +112,8 @@
                     <strong style="color: var(--text-main); display: block; margin-bottom: 0.5rem;">
                         <i class="fa-solid fa-calendar-day" style="color: #f59e0b; margin-right: 0.35rem;"></i> {{ __('Production & Expiry') }}
                     </strong>
-                    <div>{{ __('Produced / Received') }}: <strong>{{ $batch->production_date?->format('M d, Y') ?? '-' }}</strong></div>
-                    <div>{{ __('Expiry Date') }}: <strong style="color: {{ $batch->isExpired() ? '#ef4444' : '#10b981' }};">{{ $batch->expiry_date?->format('M d, Y') ?? __('N/A') }}</strong></div>
+                    <div>{{ __('Produced / Received') }}: <strong>{{ $batch->production_date ? $batch->production_date->toVendorTimezone()->format('M d, Y') : '-' }}</strong></div>
+                    <div>{{ __('Expiry Date') }}: <strong style="color: {{ $batch->isExpired() ? '#ef4444' : '#10b981' }};">{{ $batch->expiry_date ? $batch->expiry_date->toVendorTimezone()->format('M d, Y') : __('N/A') }}</strong></div>
                     <div>{{ __('Status') }}: <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; text-transform: uppercase;">{{ $batch->status }}</span></div>
                 </div>
 
@@ -122,8 +122,8 @@
                     <strong style="color: var(--text-main); display: block; margin-bottom: 0.5rem;">
                         <i class="fa-solid fa-coins" style="color: #10b981; margin-right: 0.35rem;"></i> {{ __('Cost Accounting') }}
                     </strong>
-                    <div>{{ __('Unit Cost') }}: <strong>{{ number_format((float)$batch->unit_cost, 2) }} / {{ $batch->unit->code }}</strong></div>
-                    <div>{{ __('Total Current Value') }}: <strong>{{ number_format((float)($batch->remaining_quantity * $batch->unit_cost), 2) }} {{ Auth::user()->vendor->currency ?? 'AMD' }}</strong></div>
+                    <div>{{ __('Unit Cost') }}: <strong>{{ number_format((float)$batch->unit_cost, 2) }} {{ Auth::user()->vendor->currency }} / {{ $batch->unit->code }}</strong></div>
+                    <div>{{ __('Total Current Value') }}: <strong>{{ number_format((float)($batch->remaining_quantity * $batch->unit_cost), 2) }} {{ Auth::user()->vendor->currency }}</strong></div>
                 </div>
             </div>
         </div>
@@ -177,7 +177,7 @@
                                     </span>
                                 </td>
                                 <td style="padding: 1rem 1.25rem; text-align: right; font-size: 0.85rem; color: var(--text-muted);">
-                                    {{ $order->created_at->format('M d, Y H:i') }}
+                                    {{ $order->created_at->toVendorTimezone()->format('M d, Y H:i') }}
                                 </td>
                             </tr>
                         @empty

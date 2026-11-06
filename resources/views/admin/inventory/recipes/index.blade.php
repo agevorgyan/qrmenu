@@ -210,7 +210,7 @@
 
                             <td style="padding: 1rem 1.25rem; font-family: monospace; font-weight: 700; color: var(--text-main);">
                                 @can('recipes.cost.view')
-                                    ${{ number_format($portionCost, 2) }}
+                                    {{ number_format($portionCost, 2) }} {{ Auth::user()->vendor->currency }}
                                 @else
                                     <span style="color: var(--text-muted); font-size: 0.8rem;">***</span>
                                 @endcan
@@ -218,7 +218,7 @@
 
                             <td style="padding: 1rem 1.25rem; font-family: monospace; font-weight: 700; color: var(--text-main);">
                                 @if($sellingPrice > 0)
-                                    ${{ number_format($sellingPrice, 2) }}
+                                    {{ number_format($sellingPrice, 2) }} {{ Auth::user()->vendor->currency }}
                                 @else
                                     <span style="color: var(--text-muted); font-weight: 400;">—</span>
                                 @endif

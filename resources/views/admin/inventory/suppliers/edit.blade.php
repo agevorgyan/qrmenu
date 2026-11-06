@@ -115,7 +115,7 @@
 
                 <div>
                     <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem; display: block;">
-                        {{ __('Minimum Order Amount ($)') }}
+                        {{ __('Minimum Order Amount') }} ({{ Auth::user()->vendor->currency }})
                     </label>
                     <input type="number" step="0.01" name="minimum_order_amount" value="{{ old('minimum_order_amount', $supplier->minimum_order_amount) }}" class="form-input" style="width: 100%; border-radius: 10px;">
                 </div>
@@ -162,7 +162,7 @@
                     <thead>
                         <tr style="border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.02);">
                             <th style="padding: 0.5rem;">{{ __('Ingredient') }}</th>
-                            <th style="padding: 0.5rem; width: 140px;">{{ __('Contract Price ($)') }}</th>
+                            <th style="padding: 0.5rem; width: 140px;">{{ __('Contract Price') }} ({{ Auth::user()->vendor->currency }})</th>
                             <th style="padding: 0.5rem; width: 130px;">{{ __('Unit') }}</th>
                             <th style="padding: 0.5rem; width: 140px;">{{ __('Supplier SKU') }}</th>
                             <th style="padding: 0.5rem; width: 100px; text-align: center;">{{ __('Primary?') }}</th>

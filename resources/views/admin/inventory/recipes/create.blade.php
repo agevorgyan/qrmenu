@@ -93,7 +93,7 @@
                         <option value="">{{ __('No linked menu product') }}</option>
                         @foreach($products as $prod)
                             <option value="{{ $prod->id }}" {{ old('product_id') == $prod->id ? 'selected' : '' }}>
-                                {{ $prod->name }} (${{ number_format($prod->price, 2) }})
+                                {{ $prod->name }} ({{ number_format($prod->price, 2) }} {{ Auth::user()->vendor->currency }})
                             </option>
                         @endforeach
                     </select>
@@ -169,30 +169,30 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 1rem;">
                     <div>
                         <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">
-                            {{ __('Selling Price ($)') }}
+                            {{ __('Selling Price') }} ({{ Auth::user()->vendor->currency }})
                         </label>
-                        <input type="number" step="0.01" name="selling_price" value="{{ old('selling_price') }}" placeholder="{{ __('0.00') }}" class="form-input" style="width: 100%; border-radius: 8px;">
+                        <input type="number" step="0.01" name="selling_price" value="{{ old('selling_price') }}" placeholder="0.00" class="form-input" style="width: 100%; border-radius: 8px;">
                     </div>
 
                     <div>
                         <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">
                             {{ __('Target Food Cost %') }}
                         </label>
-                        <input type="number" step="0.01" name="target_food_cost_percent" value="{{ old('target_food_cost_percent', '28.00') }}" placeholder="{{ __('28.00') }}" class="form-input" style="width: 100%; border-radius: 8px;">
+                        <input type="number" step="0.01" name="target_food_cost_percent" value="{{ old('target_food_cost_percent', '28.00') }}" placeholder="28.00" class="form-input" style="width: 100%; border-radius: 8px;">
                     </div>
 
                     <div>
                         <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">
                             {{ __('Prep Time (min)') }}
                         </label>
-                        <input type="number" name="prep_time_minutes" value="{{ old('prep_time_minutes') }}" placeholder="{{ __('15') }}" class="form-input" style="width: 100%; border-radius: 8px;">
+                        <input type="number" name="prep_time_minutes" value="{{ old('prep_time_minutes') }}" placeholder="15" class="form-input" style="width: 100%; border-radius: 8px;">
                     </div>
 
                     <div>
                         <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">
                             {{ __('Cook Time (min)') }}
                         </label>
-                        <input type="number" name="cook_time_minutes" value="{{ old('cook_time_minutes') }}" placeholder="{{ __('20') }}" class="form-input" style="width: 100%; border-radius: 8px;">
+                        <input type="number" name="cook_time_minutes" value="{{ old('cook_time_minutes') }}" placeholder="20" class="form-input" style="width: 100%; border-radius: 8px;">
                     </div>
                 </div>
             </div>
@@ -386,14 +386,14 @@
                     <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem; display: block;">
                         {{ __('Culinary Preparation Process / Steps') }}
                     </label>
-                    <textarea name="instructions" rows="5" class="form-input" style="width: 100%; border-radius: 10px; font-family: inherit;" placeholder="{{ __('1. Cut beef into thin strips 3x1 cm.\n2. Sauté onions in butter until golden.\n3. Add beef and sear over high heat for 3 minutes...') }}">{{ old('instructions') }}</textarea>
+                    <textarea name="instructions" rows="5" class="form-input" style="width: 100%; border-radius: 10px; font-family: inherit;" placeholder="{{ __('e.g., 1. Cut beef into thin strips, sauté onions, sear over high heat...') }}">{{ old('instructions') }}</textarea>
                 </div>
 
                 <div>
                     <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem; display: block;">
                         {{ __('Critical Control Points (CCP) / HACCP Requirements') }}
                     </label>
-                    <textarea name="critical_control_points" rows="5" class="form-input" style="width: 100%; border-radius: 10px; font-family: inherit;" placeholder="{{ __('CCP 1: Internal cooking temperature must reach at least 74°C (165°F).\nCCP 2: Rapid chill to < 4°C within 90 minutes.') }}">{{ old('critical_control_points') }}</textarea>
+                    <textarea name="critical_control_points" rows="5" class="form-input" style="width: 100%; border-radius: 10px; font-family: inherit;" placeholder="{{ __('e.g., CCP 1: Internal cooking temperature >= 74°C. CCP 2: Rapid chill to < 4°C within 90 minutes.') }}">{{ old('critical_control_points') }}</textarea>
                 </div>
             </div>
 

@@ -94,7 +94,7 @@
                         <option value="">{{ __('No linked menu product') }}</option>
                         @foreach($products as $prod)
                             <option value="{{ $prod->id }}" {{ old('product_id', $recipe->product_id) == $prod->id ? 'selected' : '' }}>
-                                {{ $prod->name }} (${{ number_format($prod->price, 2) }})
+                                {{ $prod->name }} ({{ number_format($prod->price, 2) }} {{ Auth::user()->vendor->currency }})
                             </option>
                         @endforeach
                     </select>
@@ -167,7 +167,7 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 1rem;">
                     <div>
                         <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">
-                            {{ __('Selling Price ($)') }}
+                            {{ __('Selling Price') }} ({{ Auth::user()->vendor->currency }})
                         </label>
                         <input type="number" step="0.01" name="selling_price" value="{{ old('selling_price', $recipe->selling_price) }}" class="form-input" style="width: 100%; border-radius: 8px;">
                     </div>

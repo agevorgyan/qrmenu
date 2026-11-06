@@ -101,7 +101,7 @@
                     <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem; display: block;">
                         {{ __('Order Date') }} <span style="color: #ef4444;">*</span>
                     </label>
-                    <input type="date" name="order_date" value="{{ old('order_date', date('Y-m-d')) }}" required class="form-input" style="width: 100%; border-radius: 10px;">
+                    <input type="date" name="order_date" value="{{ old('order_date', Auth::user()->vendor->getLocalTime()->format('Y-m-d')) }}" required class="form-input" style="width: 100%; border-radius: 10px;">
                 </div>
 
                 <div>
@@ -139,9 +139,9 @@
                             <th style="padding: 0.65rem 0.5rem; font-weight: 700; color: var(--text-main);">{{ __('Ingredient') }}</th>
                             <th style="padding: 0.65rem 0.5rem; font-weight: 700; color: var(--text-muted); width: 130px;">{{ __('Quantity') }}</th>
                             <th style="padding: 0.65rem 0.5rem; font-weight: 700; color: var(--text-muted); width: 110px;">{{ __('Unit') }}</th>
-                            <th style="padding: 0.65rem 0.5rem; font-weight: 700; color: var(--text-muted); width: 130px; text-align: right;">{{ __('Price ($)') }}</th>
+                            <th style="padding: 0.65rem 0.5rem; font-weight: 700; color: var(--text-muted); width: 130px; text-align: right;">{{ __('Price') }} ({{ Auth::user()->vendor->currency }})</th>
                             <th style="padding: 0.65rem 0.5rem; font-weight: 700; color: var(--text-muted); width: 95px; text-align: right;">{{ __('Tax %') }}</th>
-                            <th style="padding: 0.65rem 0.5rem; font-weight: 700; color: var(--text-main); width: 130px; text-align: right;">{{ __('Total ($)') }}</th>
+                            <th style="padding: 0.65rem 0.5rem; font-weight: 700; color: var(--text-main); width: 130px; text-align: right;">{{ __('Total') }} ({{ Auth::user()->vendor->currency }})</th>
                             <th style="padding: 0.65rem 0.5rem; width: 45px; text-align: center;"></th>
                         </tr>
                     </thead>

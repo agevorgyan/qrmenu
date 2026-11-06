@@ -52,7 +52,7 @@
         </div>
         <div>
             <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">{{ __('Total Accounts Payable') }}</div>
-            <div style="font-size: 1.35rem; font-weight: 800; color: #ef4444; font-family: monospace;">${{ number_format($totalDebt, 2) }}</div>
+            <div style="font-size: 1.35rem; font-weight: 800; color: #ef4444; font-family: monospace;">{{ number_format($totalDebt, 2) }} {{ Auth::user()->vendor->currency }}</div>
         </div>
     </div>
 </div>
@@ -172,9 +172,9 @@
 
                             <td style="padding: 1rem 1.25rem; font-family: monospace; font-weight: 800; font-size: 0.95rem;">
                                 @if((float) $supplier->current_balance > 0)
-                                    <span style="color: #ef4444;">${{ number_format($supplier->current_balance, 2) }}</span>
+                                    <span style="color: #ef4444;">{{ number_format($supplier->current_balance, 2) }} {{ Auth::user()->vendor->currency }}</span>
                                 @else
-                                    <span style="color: #10b981;">$0.00</span>
+                                    <span style="color: #10b981;">0.00 {{ Auth::user()->vendor->currency }}</span>
                                 @endif
                             </td>
 

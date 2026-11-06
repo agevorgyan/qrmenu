@@ -42,7 +42,7 @@
                 <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.4rem;">
                     {{ __('Ingredient Name') }} <span style="color: #ef4444;">*</span>
                 </label>
-                <input type="text" name="name" value="{{ old('name') }}" required placeholder="e.g. Flour, Olive Oil, Tomato Paste" class="form-input" style="width: 100%; border-radius: 10px;">
+                <input type="text" name="name" value="{{ old('name') }}" required placeholder="{{ __('e.g. Flour, Olive Oil, Tomato Paste') }}" class="form-input" style="width: 100%; border-radius: 10px;">
             </div>
 
             <div>
@@ -179,7 +179,7 @@
                 <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.4rem;">
                     {{ __('Density (kg / Liter)') }}
                 </label>
-                <input type="number" step="0.0001" name="density_kg_per_l" value="{{ old('density_kg_per_l') }}" placeholder="e.g. 0.92 for oil" class="form-input" style="width: 100%; border-radius: 10px;">
+                <input type="number" step="0.0001" name="density_kg_per_l" value="{{ old('density_kg_per_l') }}" placeholder="{{ __('e.g. 0.92 for oil') }}" class="form-input" style="width: 100%; border-radius: 10px;">
                 <span style="font-size: 0.72rem; color: var(--text-muted);">{{ __('Required for Mass-to-Volume recipe conversions') }}</span>
             </div>
         </div>

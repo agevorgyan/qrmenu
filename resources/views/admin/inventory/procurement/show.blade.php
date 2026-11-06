@@ -101,8 +101,8 @@
                 <i class="fa-solid fa-warehouse" style="color: #3b82f6;"></i> {{ $purchaseOrder->warehouse->name }}
             </div>
             <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
-                <div><strong>{{ __('Order Date:') }}</strong> {{ $purchaseOrder->order_date->format('M d, Y') }}</div>
-                <div><strong>{{ __('Expected Delivery:') }}</strong> {{ $purchaseOrder->expected_delivery_date ? $purchaseOrder->expected_delivery_date->format('M d, Y') : __('Not specified') }}</div>
+                <div><strong>{{ __('Order Date:') }}</strong> {{ $purchaseOrder->order_date->toVendorTimezone()->format('M d, Y') }}</div>
+                <div><strong>{{ __('Expected Delivery:') }}</strong> {{ $purchaseOrder->expected_delivery_date ? $purchaseOrder->expected_delivery_date->toVendorTimezone()->format('M d, Y') : __('Not specified') }}</div>
                 @if($purchaseOrder->approver)
                     <div><strong>{{ __('Approved by:') }}</strong> {{ $purchaseOrder->approver->name }}</div>
                 @endif
@@ -112,11 +112,11 @@
         <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; box-shadow: var(--shadow-card);">
             <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem;">{{ __('Order Valuation') }}</div>
             <div style="font-size: 1.6rem; font-weight: 800; font-family: monospace; color: var(--text-main); margin-bottom: 0.35rem;">
-                ${{ number_format($purchaseOrder->total_amount, 2) }}
+                {{ number_format($purchaseOrder->total_amount, 2) }} {{ Auth::user()->vendor->currency }}
             </div>
             <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">
-                <div>{{ __('Subtotal:') }} ${{ number_format($purchaseOrder->subtotal, 2) }}</div>
-                <div>{{ __('Tax / VAT:') }} ${{ number_format($purchaseOrder->tax_amount, 2) }}</div>
+                <div>{{ __('Subtotal:') }} {{ number_format($purchaseOrder->subtotal, 2) }} {{ Auth::user()->vendor->currency }}</div>
+                <div>{{ __('Tax / VAT:') }} {{ number_format($purchaseOrder->tax_amount, 2) }} {{ Auth::user()->vendor->currency }}</div>
             </div>
         </div>
     </div>
@@ -168,10 +168,10 @@
                                 <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem;">{{ $pct }}%</div>
                             </td>
                             <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: monospace;">
-                                ${{ number_format($item->unit_price, 2) }}
+                                {{ number_format($item->unit_price, 2) }} {{ Auth::user()->vendor->currency }}
                             </td>
                             <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: monospace; font-weight: 800; color: var(--text-main);">
-                                ${{ number_format($item->total_amount, 2) }}
+                                {{ number_format($item->total_amount, 2) }} {{ Auth::user()->vendor->currency }}
                             </td>
                         </tr>
                     @endforeach
@@ -208,11 +208,11 @@
                                         {{ $inv->invoice_number }}
                                     </a>
                                 </td>
-                                <td style="padding: 0.6rem; color: var(--text-muted);">{{ $inv->invoice_date->format('Y-m-d') }}</td>
-                                <td style="padding: 0.6rem; text-align: right; font-family: monospace;">${{ number_format($inv->total_amount, 2) }}</td>
-                                <td style="padding: 0.6rem; text-align: right; font-family: monospace; color: #10b981;">${{ number_format($inv->paid_amount, 2) }}</td>
+                                <td style="padding: 0.6rem; color: var(--text-muted);">{{ $inv->invoice_date->toVendorTimezone()->format('Y-m-d') }}</td>
+                                <td style="padding: 0.6rem; text-align: right; font-family: monospace;">{{ number_format($inv->total_amount, 2) }} {{ Auth::user()->vendor->currency }}</td>
+                                <td style="padding: 0.6rem; text-align: right; font-family: monospace; color: #10b981;">{{ number_format($inv->paid_amount, 2) }} {{ Auth::user()->vendor->currency }}</td>
                                 <td style="padding: 0.6rem; text-align: right; font-family: monospace; font-weight: 800; color: {{ (float) $inv->remaining_balance > 0 ? '#ef4444' : '#10b981' }};">
-                                    ${{ number_format($inv->remaining_balance, 2) }}
+                                    {{ number_format($inv->remaining_balance, 2) }} {{ Auth::user()->vendor->currency }}
                                 </td>
                                 <td style="padding: 0.6rem; text-align: center;">
                                     <span style="font-size: 0.75rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 6px; background: rgba(0,0,0,0.05);">

@@ -70,8 +70,8 @@
                 <i class="fa-solid fa-warehouse" style="color: #3b82f6;"></i> {{ $supplierInvoice->warehouse->name }}
             </div>
             <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
-                <div><strong>{{ __('Invoice Date:') }}</strong> {{ $supplierInvoice->invoice_date->format('M d, Y') }}</div>
-                <div><strong>{{ __('Due Date:') }}</strong> {{ $supplierInvoice->due_date->format('M d, Y') }}</div>
+                <div><strong>{{ __('Invoice Date:') }}</strong> {{ $supplierInvoice->invoice_date->toVendorTimezone()->format('M d, Y') }}</div>
+                <div><strong>{{ __('Due Date:') }}</strong> {{ $supplierInvoice->due_date->toVendorTimezone()->format('M d, Y') }}</div>
                 @if($supplierInvoice->purchaseOrder)
                     <div>
                         <strong>{{ __('PO:') }}</strong>
@@ -86,11 +86,11 @@
         <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; box-shadow: var(--shadow-card);">
             <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem;">{{ __('Debt & Balance') }}</div>
             <div style="font-size: 1.6rem; font-weight: 800; font-family: monospace; color: {{ (float) $supplierInvoice->remaining_balance > 0 ? '#ef4444' : '#10b981' }}; margin-bottom: 0.35rem;">
-                ${{ number_format($supplierInvoice->remaining_balance, 2) }}
+                {{ number_format($supplierInvoice->remaining_balance, 2) }} {{ Auth::user()->vendor->currency }}
             </div>
             <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">
-                <div>{{ __('Total Invoiced:') }} ${{ number_format($supplierInvoice->total_amount, 2) }}</div>
-                <div>{{ __('Amount Paid:') }} ${{ number_format($supplierInvoice->paid_amount, 2) }}</div>
+                <div>{{ __('Total Invoiced:') }} {{ number_format($supplierInvoice->total_amount, 2) }} {{ Auth::user()->vendor->currency }}</div>
+                <div>{{ __('Amount Paid:') }} {{ number_format($supplierInvoice->paid_amount, 2) }} {{ Auth::user()->vendor->currency }}</div>
             </div>
         </div>
     </div>
@@ -117,11 +117,11 @@
                     @forelse($supplierInvoice->payments as $pay)
                         <tr style="border-bottom: 1px solid var(--border-color);">
                             <td style="padding: 0.6rem; font-family: monospace; font-weight: 700;">{{ $pay->payment_number }}</td>
-                            <td style="padding: 0.6rem; color: var(--text-muted);">{{ $pay->payment_date->format('Y-m-d') }}</td>
+                            <td style="padding: 0.6rem; color: var(--text-muted);">{{ $pay->payment_date->toVendorTimezone()->format('Y-m-d') }}</td>
                             <td style="padding: 0.6rem; text-transform: capitalize;">{{ str_replace('_', ' ', $pay->payment_method) }}</td>
                             <td style="padding: 0.6rem; color: var(--text-muted); font-family: monospace;">{{ $pay->reference_number ?: '—' }}</td>
                             <td style="padding: 0.6rem; text-align: right; font-family: monospace; font-weight: 800; color: #10b981;">
-                                ${{ number_format($pay->amount, 2) }}
+                                {{ number_format($pay->amount, 2) }} {{ Auth::user()->vendor->currency }}
                             </td>
                         </tr>
                     @empty
@@ -145,7 +145,7 @@
             <span>{{ __('Pay Invoice #') }}{{ $supplierInvoice->invoice_number }}</span>
         </h3>
         <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0 0 1.25rem;">
-            {{ __('Remaining unpaid balance:') }} <strong>${{ number_format($supplierInvoice->remaining_balance, 2) }}</strong>
+            {{ __('Remaining unpaid balance:') }} <strong>{{ number_format($supplierInvoice->remaining_balance, 2) }} {{ Auth::user()->vendor->currency }}</strong>
         </p>
 
         <form method="POST" action="{{ route('admin.inventory.payments.store') }}">
@@ -155,7 +155,7 @@
 
             <div style="margin-bottom: 1rem;">
                 <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">
-                    {{ __('Disbursement Amount ($)') }} <span style="color: #ef4444;">*</span>
+                    {{ __('Disbursement Amount') }} ({{ Auth::user()->vendor->currency }}) <span style="color: #ef4444;">*</span>
                 </label>
                 <input type="number" step="0.01" name="amount" value="{{ $supplierInvoice->remaining_balance }}" required class="form-input" style="width: 100%; border-radius: 8px;">
             </div>

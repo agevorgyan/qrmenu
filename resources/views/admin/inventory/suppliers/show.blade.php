@@ -53,7 +53,7 @@
         <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem; box-shadow: var(--shadow-card);">
             <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">{{ __('Outstanding AP Debt') }}</div>
             <div style="font-size: 1.6rem; font-weight: 800; font-family: monospace; margin: 0.25rem 0; color: {{ (float) $supplier->current_balance > 0 ? '#ef4444' : '#10b981' }};">
-                ${{ number_format($supplier->current_balance, 2) }}
+                {{ number_format($supplier->current_balance, 2) }} {{ Auth::user()->vendor->currency }}
             </div>
             <div style="font-size: 0.78rem; color: var(--text-muted);">
                 {{ __('Terms:') }} {{ ucfirst(str_replace('_', ' ', $supplier->payment_terms)) }}
@@ -63,7 +63,7 @@
         <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem; box-shadow: var(--shadow-card);">
             <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">{{ __('Total Invoiced') }}</div>
             <div style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); font-family: monospace; margin: 0.25rem 0;">
-                ${{ number_format($supplier->invoices->sum('total_amount'), 2) }}
+                {{ number_format($supplier->invoices->sum('total_amount'), 2) }} {{ Auth::user()->vendor->currency }}
             </div>
             <div style="font-size: 0.78rem; color: var(--text-muted);">
                 {{ $supplier->invoices->count() }} {{ __('Total Invoices') }}
@@ -73,7 +73,7 @@
         <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem; box-shadow: var(--shadow-card);">
             <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">{{ __('Total Paid') }}</div>
             <div style="font-size: 1.6rem; font-weight: 800; color: #10b981; font-family: monospace; margin: 0.25rem 0;">
-                ${{ number_format($supplier->payments->sum('amount'), 2) }}
+                {{ number_format($supplier->payments->sum('amount'), 2) }} {{ Auth::user()->vendor->currency }}
             </div>
             <div style="font-size: 0.78rem; color: var(--text-muted);">
                 {{ $supplier->payments->count() }} {{ __('Disbursements') }}
@@ -164,7 +164,7 @@
                                 {{ $si->unit?->code }}
                             </td>
                             <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: monospace; font-weight: 800; color: var(--text-main);">
-                                ${{ number_format($si->price, 2) }}
+                                {{ number_format($si->price, 2) }} {{ Auth::user()->vendor->currency }}
                             </td>
                             <td style="padding: 0.65rem 0.5rem; text-align: center;">
                                 @if($si->is_primary_supplier)
@@ -216,12 +216,12 @@
                                 </a>
                             </td>
                             <td style="padding: 0.65rem 0.5rem; color: var(--text-muted); font-size: 0.82rem;">
-                                {{ $inv->invoice_date->format('Y-m-d') }} • <span style="color: {{ $inv->due_date->isPast() && $inv->payment_status !== 'paid' ? '#ef4444' : 'inherit' }}">{{ __('Due:') }} {{ $inv->due_date->format('Y-m-d') }}</span>
+                                {{ $inv->invoice_date->toVendorTimezone()->format('Y-m-d') }} • <span style="color: {{ $inv->due_date->isPast() && $inv->payment_status !== 'paid' ? '#ef4444' : 'inherit' }}">{{ __('Due:') }} {{ $inv->due_date->toVendorTimezone()->format('Y-m-d') }}</span>
                             </td>
-                            <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: monospace;">${{ number_format($inv->total_amount, 2) }}</td>
-                            <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: monospace; color: #10b981;">${{ number_format($inv->paid_amount, 2) }}</td>
+                            <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: monospace;">{{ number_format($inv->total_amount, 2) }} {{ Auth::user()->vendor->currency }}</td>
+                            <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: monospace; color: #10b981;">{{ number_format($inv->paid_amount, 2) }} {{ Auth::user()->vendor->currency }}</td>
                             <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: monospace; font-weight: 800; color: {{ (float) $inv->remaining_balance > 0 ? '#ef4444' : '#10b981' }};">
-                                ${{ number_format($inv->remaining_balance, 2) }}
+                                {{ number_format($inv->remaining_balance, 2) }} {{ Auth::user()->vendor->currency }}
                             </td>
                             <td style="padding: 0.65rem 0.5rem; text-align: center;">
                                 @php
@@ -259,7 +259,7 @@
             <span>{{ __('Record Supplier Payment') }}</span>
         </h3>
         <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0 0 1.25rem;">
-            {{ __('Record a payment disbursement to') }} <strong>{{ $supplier->name }}</strong>. {{ __('Current Debt:') }} ${{ number_format($supplier->current_balance, 2) }}
+            {{ __('Record a payment disbursement to') }} <strong>{{ $supplier->name }}</strong>. {{ __('Current Debt:') }} {{ number_format($supplier->current_balance, 2) }} {{ Auth::user()->vendor->currency }}
         </p>
 
         <form method="POST" action="{{ route('admin.inventory.payments.store') }}">
@@ -268,7 +268,7 @@
 
             <div style="margin-bottom: 1rem;">
                 <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">
-                    {{ __('Payment Amount ($)') }} <span style="color: #ef4444;">*</span>
+                    {{ __('Payment Amount') }} ({{ Auth::user()->vendor->currency }}) <span style="color: #ef4444;">*</span>
                 </label>
                 <input type="number" step="0.01" name="amount" value="{{ $supplier->current_balance > 0 ? $supplier->current_balance : '' }}" required class="form-input" style="width: 100%; border-radius: 8px;">
             </div>
@@ -341,7 +341,7 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
                     <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">
-                        {{ __('Contract Price ($)') }} <span style="color: #ef4444;">*</span>
+                        {{ __('Contract Price') }} ({{ Auth::user()->vendor->currency }}) <span style="color: #ef4444;">*</span>
                     </label>
                     <input type="number" step="0.01" name="price" required class="form-input" style="width: 100%; border-radius: 8px;">
                 </div>

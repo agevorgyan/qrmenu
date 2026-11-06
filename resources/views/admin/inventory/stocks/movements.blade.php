@@ -98,7 +98,7 @@
                     @foreach($transactions as $tx)
                         <tr style="border-bottom: 1px solid var(--border-color);">
                             <td style="padding: 0.85rem 1rem; color: var(--text-muted); font-size: 0.82rem; white-space: nowrap;">
-                                {{ $tx->date->format('Y-m-d') }}
+                                {{ $tx->date ? $tx->date->toVendorTimezone()->format('Y-m-d') : '' }}
                             </td>
                             <td style="padding: 0.85rem 1rem; font-family: monospace; font-weight: 700; color: var(--text-main);">
                                 {{ $tx->transaction_number }}
@@ -124,7 +124,7 @@
                                         &bull; <strong>{{ $item->ingredient?->name }}</strong>:
                                         <span style="font-family: monospace;">{{ $item->quantity > 0 ? '+'.$item->quantity : $item->quantity }} {{ $item->unit?->code }}</span>
                                         @if((float) $item->unit_cost > 0)
-                                            <span style="font-size: 0.75rem; color: var(--text-muted);">(@ {{ number_format((float) $item->unit_cost, 2) }})</span>
+                                            <span style="font-size: 0.75rem; color: var(--text-muted);">(@ {{ number_format((float) $item->unit_cost, 2) }} {{ Auth::user()->vendor->currency }})</span>
                                         @endif
                                     </div>
                                 @endforeach
@@ -138,7 +138,7 @@
                                 {{ $tx->user?->name ?: __('System') }}
                             </td>
                             <td style="padding: 0.85rem 1rem; text-align: right; font-weight: 800; color: var(--text-main);">
-                                {{ number_format((float) $tx->total_amount, 2) }}
+                                {{ number_format((float) $tx->total_amount, 2) }} {{ Auth::user()->vendor->currency }}
                             </td>
                         </tr>
                     @endforeach

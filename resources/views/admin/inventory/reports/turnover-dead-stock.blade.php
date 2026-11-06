@@ -110,7 +110,7 @@
                     <tr style="border-bottom: 1px solid var(--table-row-border);">
                         <td style="padding: 1rem 1.5rem;">
                             <strong style="color: var(--text-main); display: block;">{{ $item['name'] }}</strong>
-                            <small style="color: var(--text-muted); font-family: monospace;">SKU: {{ $item['sku'] ?? 'N/A' }}</small>
+                            <small style="color: var(--text-muted); font-family: monospace;">{{ __('SKU') }}: {{ $item['sku'] ?? __('N/A') }}</small>
                         </td>
                         <td style="padding: 1rem; text-align: right; font-weight: 700; color: var(--text-main);">
                             {{ number_format($item['stock'], 2) }} {{ $item['unit'] }}

@@ -109,7 +109,7 @@
             @csrf
             <div style="margin-bottom: 1rem;">
                 <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">{{ __('Category Name') }} <span style="color: #ef4444;">*</span></label>
-                <input type="text" name="name" required placeholder="e.g. Dairy & Cheeses" class="form-input" style="width: 100%; border-radius: 10px;">
+                <input type="text" name="name" required placeholder="{{ __('e.g. Dairy & Cheeses') }}" class="form-input" style="width: 100%; border-radius: 10px;">
             </div>
 
             <div style="margin-bottom: 1rem;">

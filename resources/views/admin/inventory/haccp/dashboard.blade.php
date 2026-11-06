@@ -145,7 +145,7 @@
                             </td>
                             <td style="padding: 0.75rem; text-align: center;">
                                 <span class="badge" style="background: {{ $isExpired ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)' }}; color: {{ $isExpired ? '#ef4444' : '#f59e0b' }}; font-weight: 700;">
-                                    {{ $batch->expiry_date->format('M d, Y') }}
+                                    {{ $batch->expiry_date->toVendorTimezone()->format('M d, Y') }}
                                     ({{ $isExpired ? __('EXPIRED') : $batch->expiry_date->diffForHumans() }})
                                 </span>
                             </td>
@@ -212,7 +212,7 @@
                                 @endif
                             </td>
                             <td style="padding: 0.75rem 1rem; text-align: right; color: var(--text-muted); font-size: 0.75rem;">
-                                {{ $log->logged_at->format('H:i') }}
+                                {{ $log->logged_at->toVendorTimezone()->format('H:i') }}
                             </td>
                         </tr>
                     @empty

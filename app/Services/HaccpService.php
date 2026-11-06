@@ -154,7 +154,7 @@ class HaccpService
             'is_breached' => $isBreached,
             'corrective_action_taken' => $isBreached ? ($data['corrective_action_taken'] ?? null) : null,
             'logged_by' => $user?->id,
-            'logged_at' => isset($data['logged_at']) ? Carbon::parse($data['logged_at']) : now(),
+            'logged_at' => isset($data['logged_at']) ? Carbon::parse($data['logged_at'], $vendor->getTimezone())->utc() : now(),
             'notes' => $data['notes'] ?? null,
         ]);
     }
@@ -194,8 +194,8 @@ class HaccpService
      */
     public function getExpiringBatches(Vendor $vendor, int $days = 7): array
     {
-        $today = now()->startOfDay();
-        $threshold = now()->addDays($days)->endOfDay();
+        $today = $vendor->getLocalTime()->startOfDay();
+        $threshold = $vendor->getLocalTime()->addDays($days)->endOfDay();
 
         $batches = InventoryBatch::where('vendor_id', $vendor->id)
             ->where('remaining_quantity', '>', 0)

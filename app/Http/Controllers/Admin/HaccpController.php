@@ -27,6 +27,8 @@ class HaccpController extends Controller
         $vendor = $request->user()->vendor;
         $expiring = $this->haccpService->getExpiringBatches($vendor, 7);
 
+        $localNow = $vendor->getLocalTime();
+
         $recentLogs = HaccpTemperatureLog::where('vendor_id', $vendor->id)
             ->with(['ccp', 'warehouse', 'loggedBy'])
             ->orderBy('logged_at', 'desc')
@@ -35,11 +37,11 @@ class HaccpController extends Controller
 
         $breachesCount = HaccpTemperatureLog::where('vendor_id', $vendor->id)
             ->where('is_breached', true)
-            ->where('logged_at', '>=', now()->subDays(7))
+            ->where('logged_at', '>=', $localNow->copy()->subDays(7)->startOfDay()->utc())
             ->count();
 
         $todayChecklists = HaccpChecklist::where('vendor_id', $vendor->id)
-            ->whereDate('completed_at', now()->toDateString())
+            ->whereDate('completed_at', $localNow->toDateString())
             ->with('completedBy')
             ->get();
 
@@ -168,13 +170,14 @@ class HaccpController extends Controller
         }
 
         if ($request->filled('filter')) {
-            $today = now()->toDateString();
+            $localNow = $vendor->getLocalTime();
+            $today = $localNow->toDateString();
             if ($request->filter === 'expired') {
                 $query->where('expiry_date', '<', $today);
             } elseif ($request->filter === 'critical') {
-                $query->where('expiry_date', '>=', $today)->where('expiry_date', '<=', now()->addDays(3)->toDateString());
+                $query->where('expiry_date', '>=', $today)->where('expiry_date', '<=', $localNow->copy()->addDays(3)->toDateString());
             } elseif ($request->filter === 'warning') {
-                $query->where('expiry_date', '>', now()->addDays(3)->toDateString())->where('expiry_date', '<=', now()->addDays(7)->toDateString());
+                $query->where('expiry_date', '>', $localNow->copy()->addDays(3)->toDateString())->where('expiry_date', '<=', $localNow->copy()->addDays(7)->toDateString());
             }
         }
 

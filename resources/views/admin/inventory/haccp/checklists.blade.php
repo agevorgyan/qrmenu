@@ -87,7 +87,7 @@
                                 {{ $cl->completedBy?->name ?? __('Staff') }}
                             </td>
                             <td style="padding: 1rem 1.25rem; text-align: right; font-size: 0.85rem; color: var(--text-muted);">
-                                {{ $cl->completed_at?->format('M d, Y H:i') ?? '-' }}
+                                {{ $cl->completed_at ? $cl->completed_at->toVendorTimezone()->format('M d, Y H:i') : '-' }}
                             </td>
                         </tr>
                     @empty

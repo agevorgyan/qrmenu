@@ -92,7 +92,7 @@ class ProductionService
                 'planned_quantity' => $plannedQuantity,
                 'unit_id' => $unitId,
                 'status' => ProductionOrder::STATUS_DRAFT,
-                'planned_start_at' => isset($data['planned_start_at']) ? Carbon::parse($data['planned_start_at']) : now(),
+                'planned_start_at' => isset($data['planned_start_at']) ? Carbon::parse($data['planned_start_at'], $vendor->getTimezone())->utc() : now(),
                 'produced_by' => $data['produced_by'] ?? $user?->id,
                 'labor_cost' => (float) ($data['labor_cost'] ?? 0.0),
                 'overhead_cost' => (float) ($data['overhead_cost'] ?? 0.0),
@@ -256,11 +256,12 @@ class ProductionService
 
             // Stock produced item in destination warehouse if output ingredient is designated
             $receiptTransaction = null;
-            $batchNumber = $data['batch_number'] ?? $order->batch_number ?? ('LOT-'.date('Ymd').'-'.str_pad((string) $order->id, 4, '0', STR_PAD_LEFT));
+            $vendor = $order->vendor;
+            $batchNumber = $data['batch_number'] ?? $order->batch_number ?? ('LOT-'.$vendor->getLocalTime()->format('Ymd').'-'.str_pad((string) $order->id, 4, '0', STR_PAD_LEFT));
             $expiryDate = $data['expiry_date'] ?? null;
 
             if (! $expiryDate && $order->recipe->shelf_life_hours) {
-                $expiryDate = now()->addHours((int) $order->recipe->shelf_life_hours)->toDateString();
+                $expiryDate = $vendor->getLocalTime()->addHours((int) $order->recipe->shelf_life_hours)->toDateString();
             }
 
             if ($order->produced_ingredient_id) {

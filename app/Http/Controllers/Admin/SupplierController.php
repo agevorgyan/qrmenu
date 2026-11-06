@@ -192,7 +192,12 @@ class SupplierController extends Controller
         $this->authorizePermission(Permission::SUPPLIERS_DELETE);
 
         if ((float) $supplier->current_balance > 0) {
-            return back()->with('error', __('Cannot delete supplier with an outstanding unpaid balance of $:amount.', ['amount' => number_format($supplier->current_balance, 2)]));
+            $currency = Auth::user()?->vendor?->currency ?? 'AMD';
+
+            return back()->with('error', __('Cannot delete supplier with an outstanding unpaid balance of :amount :currency.', [
+                'amount' => number_format($supplier->current_balance, 2),
+                'currency' => $currency,
+            ]));
         }
 
         $supplier->delete();

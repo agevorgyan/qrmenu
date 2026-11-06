@@ -106,17 +106,17 @@
                 <!-- Planned Start Date -->
                 <div>
                     <label class="form-label" style="font-weight: 600;">{{ __('Planned Start Date & Time') }}</label>
-                    <input type="datetime-local" name="planned_start_at" class="form-control" style="border-radius: 10px;" value="{{ old('planned_start_at', now()->format('Y-m-d\TH:i')) }}">
+                    <input type="datetime-local" name="planned_start_at" class="form-control" style="border-radius: 10px;" value="{{ old('planned_start_at', Auth::user()->vendor->getLocalTime()->format('Y-m-d\TH:i')) }}">
                 </div>
 
                 <!-- Labor & Overhead Estimates -->
                 <div>
-                    <label class="form-label" style="font-weight: 600;">{{ __('Est. Direct Labor Cost') }}</label>
+                    <label class="form-label" style="font-weight: 600;">{{ __('Est. Direct Labor Cost') }} ({{ Auth::user()->vendor->currency }})</label>
                     <input type="number" step="0.01" min="0" name="labor_cost" class="form-control" style="border-radius: 10px;" x-model.number="laborCost">
                 </div>
 
                 <div>
-                    <label class="form-label" style="font-weight: 600;">{{ __('Est. Overhead Cost') }}</label>
+                    <label class="form-label" style="font-weight: 600;">{{ __('Est. Overhead Cost') }} ({{ Auth::user()->vendor->currency }})</label>
                     <input type="number" step="0.01" min="0" name="overhead_cost" class="form-control" style="border-radius: 10px;" x-model.number="overheadCost">
                 </div>
             </div>
@@ -155,7 +155,7 @@
                             <th style="padding: 0.75rem;">{{ __('Type') }}</th>
                             <th style="padding: 0.75rem; text-align: right;">{{ __('Standard BOM Gross') }}</th>
                             <th style="padding: 0.75rem; text-align: right;">{{ __('Scaled Order Qty') }}</th>
-                            <th style="padding: 0.75rem 1.25rem; text-align: right;">{{ __('Est. Item Cost') }}</th>
+                            <th style="padding: 0.75rem 1.25rem; text-align: right;">{{ __('Est. Item Cost') }} ({{ Auth::user()->vendor->currency }})</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -261,7 +261,7 @@ function productionForm() {
         },
 
         formatCurrency(num) {
-            return (parseFloat(num) || 0).toFixed(2);
+            return (parseFloat(num) || 0).toFixed(2) + ' ' + '{{ Auth::user()->vendor->currency }}';
         }
     };
 }
