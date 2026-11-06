@@ -268,6 +268,44 @@ class PermissionCatalog
                 'is_system' => true,
             ],
 
+            // Loyalty & Digital Wallet
+            [
+                'key' => Permission::LOYALTY_VIEW,
+                'module' => 'loyalty',
+                'action' => 'view',
+                'description' => 'View loyalty programs, rules, rewards, customer points, and wallet passes.',
+                'risk_level' => 'low',
+                'is_sensitive' => false,
+                'is_system' => true,
+            ],
+            [
+                'key' => Permission::LOYALTY_MANAGE,
+                'module' => 'loyalty',
+                'action' => 'manage',
+                'description' => 'Configure loyalty earning rules, rewards catalog, membership tiers, campaigns, and digital wallet designs.',
+                'risk_level' => 'high',
+                'is_sensitive' => false,
+                'is_system' => true,
+            ],
+            [
+                'key' => Permission::LOYALTY_OPERATE,
+                'module' => 'loyalty',
+                'action' => 'operate',
+                'description' => 'Scan customer QR codes, look up member accounts, issue points and stamps, and process redemptions.',
+                'risk_level' => 'medium',
+                'is_sensitive' => false,
+                'is_system' => true,
+            ],
+            [
+                'key' => Permission::LOYALTY_ADJUST,
+                'module' => 'loyalty',
+                'action' => 'adjust',
+                'description' => 'Manually adjust customer points/cashback balances, override tiers, and issue transaction reversals.',
+                'risk_level' => 'critical',
+                'is_sensitive' => true,
+                'is_system' => true,
+            ],
+
             // 7. Payments
             [
                 'key' => Permission::PAYMENTS_CREATE,

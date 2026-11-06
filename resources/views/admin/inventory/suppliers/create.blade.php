@@ -59,6 +59,13 @@
 
                 <div>
                     <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem; display: block;">
+                        {{ __('VAT Number') }}
+                    </label>
+                    <input type="text" name="vat_number" value="{{ old('vat_number') }}" placeholder="{{ __('e.g., 01234567/1') }}" class="form-input" style="width: 100%; border-radius: 10px; font-family: monospace;">
+                </div>
+
+                <div>
+                    <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem; display: block;">
                         {{ __('Supplier Internal Code') }}
                     </label>
                     <input type="text" name="code" value="{{ old('code', 'SUP-' . strtoupper(Str::random(5))) }}" class="form-input" style="width: 100%; border-radius: 10px; font-family: monospace;">
@@ -124,6 +131,13 @@
 
                 <div>
                     <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem; display: block;">
+                        {{ __('Supplier Default Discount %') }}
+                    </label>
+                    <input type="number" step="0.01" min="0" max="100" name="discount_percent" value="{{ old('discount_percent', '0.00') }}" class="form-input" style="width: 100%; border-radius: 10px;">
+                </div>
+
+                <div>
+                    <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem; display: block;">
                         {{ __('Bank Name') }}
                     </label>
                     <input type="text" name="bank_name" value="{{ old('bank_name') }}" placeholder="{{ __('e.g., Ameriabank CJSC') }}" class="form-input" style="width: 100%; border-radius: 10px;">
@@ -168,6 +182,7 @@
                         <tr style="border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.02);">
                             <th style="padding: 0.5rem;">{{ __('Ingredient') }}</th>
                             <th style="padding: 0.5rem; width: 140px;">{{ __('Contract Price') }} ({{ Auth::user()->vendor->currency }})</th>
+                            <th style="padding: 0.5rem; width: 110px;">{{ __('Discount %') }}</th>
                             <th style="padding: 0.5rem; width: 130px;">{{ __('Unit') }}</th>
                             <th style="padding: 0.5rem; width: 140px;">{{ __('Supplier SKU') }}</th>
                             <th style="padding: 0.5rem; width: 100px; text-align: center;">{{ __('Primary?') }}</th>
@@ -189,6 +204,9 @@
                                 </td>
                                 <td style="padding: 0.5rem;">
                                     <input type="number" step="0.01" :name="`ingredients[${index}][price]`" x-model.number="row.price" required class="form-input" style="font-size: 0.8rem; border-radius: 6px; width: 100%;">
+                                </td>
+                                <td style="padding: 0.5rem;">
+                                    <input type="number" step="0.01" min="0" max="100" placeholder="0" :name="`ingredients[${index}][discount_percent]`" x-model.number="row.discount_percent" class="form-input" style="font-size: 0.8rem; border-radius: 6px; width: 100%;">
                                 </td>
                                 <td style="padding: 0.5rem;">
                                     <select :name="`ingredients[${index}][unit_id]`" x-model="row.unit_id" class="form-select" required style="font-size: 0.8rem; border-radius: 6px; width: 100%;">
@@ -239,6 +257,7 @@ function supplierForm() {
             this.items.push({
                 ingredient_id: '',
                 price: 0.0,
+                discount_percent: 0.0,
                 unit_id: '{{ $units->firstWhere('code', 'kg')?->id ?? $units->first()?->id }}',
                 supplier_sku: '',
                 is_primary_supplier: false

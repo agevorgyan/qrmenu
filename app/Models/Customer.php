@@ -84,4 +84,39 @@ class Customer extends Model
     {
         return $this->hasMany(PosCustomerLoyaltyTransaction::class)->latest();
     }
+
+    public function pointsAccount()
+    {
+        return $this->hasOne(\App\Domains\Loyalty\Models\LoyaltyPointsAccount::class);
+    }
+
+    public function cashbackAccount()
+    {
+        return $this->hasOne(\App\Domains\Loyalty\Models\LoyaltyCashbackAccount::class);
+    }
+
+    public function stampCards()
+    {
+        return $this->hasMany(\App\Domains\Loyalty\Models\LoyaltyStampCard::class)->latest();
+    }
+
+    public function walletPasses()
+    {
+        return $this->hasMany(\App\Domains\Loyalty\Models\WalletPass::class)->latest();
+    }
+
+    public function rewardRedemptions()
+    {
+        return $this->hasMany(\App\Domains\Loyalty\Models\LoyaltyRewardRedemption::class)->latest();
+    }
+
+    public function tierHistories()
+    {
+        return $this->hasMany(\App\Domains\Loyalty\Models\LoyaltyTierHistory::class)->latest();
+    }
+
+    public function referrals()
+    {
+        return $this->hasMany(\App\Domains\Loyalty\Models\LoyaltyReferral::class, 'referrer_customer_id')->latest();
+    }
 }

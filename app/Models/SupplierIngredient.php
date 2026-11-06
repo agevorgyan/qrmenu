@@ -18,6 +18,7 @@ class SupplierIngredient extends Model
         'supplier_sku',
         'unit_id',
         'price',
+        'discount_percent',
         'is_primary_supplier',
         'lead_time_days',
         'minimum_order_quantity',
@@ -26,6 +27,7 @@ class SupplierIngredient extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'discount_percent' => 'decimal:2',
         'is_primary_supplier' => 'boolean',
         'lead_time_days' => 'integer',
         'minimum_order_quantity' => 'decimal:4',

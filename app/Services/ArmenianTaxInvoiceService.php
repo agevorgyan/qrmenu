@@ -162,16 +162,23 @@ class ArmenianTaxInvoiceService
         $items = [];
         if (isset($signable->GoodsInfo->Good)) {
             foreach ($signable->GoodsInfo->Good as $good) {
+                $qty = (float) ($good->Amount ?? 0);
+                $totalPrice = (float) ($good->TotalPrice ?? 0);
+                // Unit price including VAT: total price divided by quantity
+                $unitPriceGross = ($qty > 0 && $totalPrice > 0)
+                    ? round($totalPrice / $qty, 4)
+                    : (float) ($good->PricePerUnit ?? 0);
+
                 $items[] = [
                     'description' => trim((string) ($good->Description ?? '')),
                     'classifier_code' => trim((string) ($good->ClassifierCode ?? '')),
                     'unit_name' => trim((string) ($good->Unit ?? '')),
-                    'quantity' => (float) ($good->Amount ?? 0),
-                    'unit_price' => (float) ($good->PricePerUnit ?? 0),
+                    'quantity' => $qty,
+                    'unit_price' => $unitPriceGross,
                     'price' => (float) ($good->Price ?? 0),
                     'vat_rate' => (float) ($good->VATRate ?? 0),
                     'vat_amount' => (float) ($good->VAT ?? 0),
-                    'total_price' => (float) ($good->TotalPrice ?? 0),
+                    'total_price' => $totalPrice,
                 ];
             }
         }
@@ -381,7 +388,11 @@ class ArmenianTaxInvoiceService
                 $description = $item['description'];
                 $classifierCode = $item['classifier_code'] ?: null;
                 $qty = (float) $item['quantity'];
-                $unitPrice = (float) $item['unit_price'];
+                $totalPrice = (float) ($item['total_price'] ?? 0);
+                // Unit price including VAT: total price divided by quantity
+                $unitPrice = ($qty > 0 && $totalPrice > 0)
+                    ? round($totalPrice / $qty, 4)
+                    : (float) $item['unit_price'];
 
                 if ($qty <= 0) {
                     continue;

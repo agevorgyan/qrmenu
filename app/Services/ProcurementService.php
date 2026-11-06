@@ -156,6 +156,109 @@ class ProcurementService
     }
 
     /**
+     * Update an existing purchase order and its line items.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function updatePurchaseOrder(PurchaseOrder $po, array $data, ?User $user = null): PurchaseOrder
+    {
+        if (
+            $po->status === PurchaseOrder::STATUS_RECEIVED ||
+            $po->status === PurchaseOrder::STATUS_PARTIALLY_RECEIVED ||
+            $po->items()->where('quantity_received', '>', 0)->exists()
+        ) {
+            throw new InvalidArgumentException(__('Cannot edit a purchase order that has already received stock.'));
+        }
+
+        return DB::transaction(function () use ($po, $data) {
+            $po->supplier_id = $data['supplier_id'];
+            $po->warehouse_id = $data['warehouse_id'];
+            $po->order_date = $data['order_date'] ?? $po->order_date;
+            $po->expected_delivery_date = $data['expected_delivery_date'] ?? null;
+            $po->notes = $data['notes'] ?? null;
+
+            // Delete old line items
+            $po->items()->delete();
+
+            $subtotal = 0.0;
+            $lineDiscountTotal = 0.0;
+            $totalTax = 0.0;
+
+            foreach ($data['items'] as $itemData) {
+                if (empty($itemData['ingredient_id']) || empty($itemData['quantity'])) {
+                    continue;
+                }
+
+                $qty = (float) $itemData['quantity'];
+                $price = (float) $itemData['unit_price'];
+                $lineBase = $qty * $price;
+                $discPercent = (float) ($itemData['discount_percent'] ?? 0.0);
+                $discAmount = round($lineBase * ($discPercent / 100.0), 2);
+                $netBase = max(0.0, $lineBase - $discAmount);
+
+                $taxPercent = (float) ($itemData['tax_percent'] ?? 0.0);
+                $taxAmount = round($netBase * ($taxPercent / 100.0), 2);
+                $total = round($netBase + $taxAmount, 2);
+
+                PurchaseOrderItem::create([
+                    'vendor_id' => $po->vendor_id,
+                    'purchase_order_id' => $po->id,
+                    'ingredient_id' => $itemData['ingredient_id'],
+                    'classifier_code' => $itemData['classifier_code'] ?? null,
+                    'quantity_ordered' => $qty,
+                    'quantity_received' => 0,
+                    'unit_id' => $itemData['unit_id'],
+                    'unit_price' => $price,
+                    'discount_percent' => $discPercent,
+                    'discount_amount' => $discAmount,
+                    'tax_percent' => $taxPercent,
+                    'tax_amount' => $taxAmount,
+                    'total_amount' => $total,
+                    'notes' => $itemData['notes'] ?? null,
+                ]);
+
+                $subtotal += $lineBase;
+                $lineDiscountTotal += $discAmount;
+                $totalTax += $taxAmount;
+            }
+
+            $orderDiscPercent = (float) ($data['discount_percent'] ?? 0.0);
+            $orderDiscAmount = $orderDiscPercent > 0 ? round(($subtotal - $lineDiscountTotal) * ($orderDiscPercent / 100.0), 2) : 0.0;
+            $finalDiscount = round($lineDiscountTotal + $orderDiscAmount, 2);
+
+            $po->subtotal = round($subtotal, 2);
+            $po->discount_percent = $orderDiscPercent;
+            $po->discount_amount = $finalDiscount;
+            $po->tax_amount = round($totalTax, 2);
+            $po->total_amount = max(0.0, round($subtotal - $finalDiscount + $totalTax, 2));
+            $po->save();
+
+            return $po;
+        });
+    }
+
+    /**
+     * Delete an unreceived purchase order.
+     */
+    public function deletePurchaseOrder(PurchaseOrder $po, ?User $user = null): bool
+    {
+        if (
+            $po->status === PurchaseOrder::STATUS_RECEIVED ||
+            $po->status === PurchaseOrder::STATUS_PARTIALLY_RECEIVED ||
+            $po->items()->where('quantity_received', '>', 0)->exists() ||
+            $po->invoices()->exists()
+        ) {
+            throw new InvalidArgumentException(__('Cannot delete a purchase order that has already received goods or linked invoices.'));
+        }
+
+        return DB::transaction(function () use ($po) {
+            $po->items()->delete();
+
+            return (bool) $po->delete();
+        });
+    }
+
+    /**
      * Approve a Purchase Order.
      */
     public function approvePurchaseOrder(PurchaseOrder $po, User $user): PurchaseOrder

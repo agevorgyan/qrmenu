@@ -158,6 +158,50 @@ class SupplierAndProcurementTest extends TestCase
         $this->assertEquals(14.50, (float) $supplier->supplierIngredients->first()->price);
     }
 
+    public function test_can_render_supplier_edit_view_without_parse_errors(): void
+    {
+        $response = $this->actingAs($this->ownerA)->get(route('admin.inventory.suppliers.edit', $this->supplierA));
+
+        $response->assertOk();
+        $response->assertSee('Artisan Roasters LLC');
+        $response->assertSee('supplierEditForm');
+    }
+
+    public function test_can_update_supplier_with_vat_and_discounts(): void
+    {
+        $payload = [
+            'name' => 'Artisan Roasters LLC Updated',
+            'tax_id' => '11223344',
+            'vat_number' => '11223344/1',
+            'discount_percent' => 7.5,
+            'payment_terms' => 'net_30',
+            'ingredients' => [
+                [
+                    'ingredient_id' => $this->coffee->id,
+                    'price' => 13.50,
+                    'discount_percent' => 5.0,
+                    'unit_id' => $this->kg->id,
+                    'supplier_sku' => 'ART-COF-01',
+                    'is_primary_supplier' => true,
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($this->ownerA)->put(route('admin.inventory.suppliers.update', $this->supplierA), $payload);
+
+        $response->assertRedirect();
+        $this->supplierA->refresh();
+        $this->assertEquals('Artisan Roasters LLC Updated', $this->supplierA->name);
+        $this->assertEquals('11223344/1', $this->supplierA->vat_number);
+        $this->assertEquals(7.5, (float) $this->supplierA->discount_percent);
+
+        $si = $this->supplierA->supplierIngredients->first();
+        $this->assertNotNull($si);
+        $this->assertEquals(13.50, (float) $si->price);
+        $this->assertEquals(5.0, (float) $si->discount_percent);
+        $this->assertEquals('ART-COF-01', $si->supplier_sku);
+    }
+
     public function test_cannot_delete_supplier_with_unpaid_balance(): void
     {
         $this->supplierA->current_balance = 250.00;
@@ -431,13 +475,126 @@ XML;
         $item1 = $invoice->items->where('classifier_code', '1101')->firstOrFail();
         $this->assertEquals('Ալյուր 10կգ', $item1->description);
         $this->assertEquals(10.0, (float) $item1->quantity);
+        $this->assertEquals(1940.0, (float) $item1->unit_price); // 19400 / 10 = 1940.0 (including VAT)
         $this->assertEquals(19400.0, (float) $item1->total_price);
 
         // 4. Check Warehouse Stock Intake
         $flourIngredient = Ingredient::where('vendor_id', $this->vendorA->id)->where('name', 'Ալյուր 10կգ')->firstOrFail();
+        $this->assertEquals(1940.0, (float) $flourIngredient->current_cost);
+        $this->assertEquals(1940.0, (float) $flourIngredient->last_purchase_price);
         $balance = InventoryBalance::where('warehouse_id', $this->warehouseA->id)
             ->where('ingredient_id', $flourIngredient->id)
             ->firstOrFail();
         $this->assertEquals(10.0, (float) $balance->quantity_on_hand);
+    }
+
+    public function test_can_render_purchase_order_edit_view(): void
+    {
+        $po = PurchaseOrder::create([
+            'vendor_id' => $this->vendorA->id,
+            'po_number' => 'PO-EDIT-001',
+            'supplier_id' => $this->supplierA->id,
+            'warehouse_id' => $this->warehouseA->id,
+            'order_date' => now()->toDateString(),
+            'status' => PurchaseOrder::STATUS_DRAFT,
+            'subtotal' => 150.0,
+            'total_amount' => 150.0,
+        ]);
+
+        $response = $this->actingAs($this->ownerA)->get(route('admin.inventory.procurement.edit', $po));
+
+        $response->assertOk();
+        $response->assertSee('PO-EDIT-001');
+        $response->assertSee('poEditForm');
+    }
+
+    public function test_can_update_purchase_order_items_and_discounts(): void
+    {
+        $po = PurchaseOrder::create([
+            'vendor_id' => $this->vendorA->id,
+            'po_number' => 'PO-UPDATE-002',
+            'supplier_id' => $this->supplierA->id,
+            'warehouse_id' => $this->warehouseA->id,
+            'order_date' => now()->toDateString(),
+            'status' => PurchaseOrder::STATUS_DRAFT,
+            'subtotal' => 100.0,
+            'total_amount' => 100.0,
+        ]);
+
+        $updatePayload = [
+            'supplier_id' => $this->supplierA->id,
+            'warehouse_id' => $this->warehouseA->id,
+            'order_date' => now()->toDateString(),
+            'discount_percent' => 10.0, // 10% order discount
+            'notes' => 'Updated notes for shipment',
+            'items' => [
+                [
+                    'ingredient_id' => $this->coffee->id,
+                    'quantity' => 20.0,
+                    'unit_id' => $this->kg->id,
+                    'unit_price' => 500.0, // 20 * 500 = 10,000
+                    'discount_percent' => 5.0, // 5% = 500. Net = 9,500
+                    'tax_percent' => 0.0,
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($this->ownerA)->put(route('admin.inventory.procurement.update', $po), $updatePayload);
+
+        $response->assertRedirect();
+        $po->refresh();
+
+        $this->assertEquals(10000.0, (float) $po->subtotal);
+        $this->assertEquals(10.0, (float) $po->discount_percent);
+        // Line discount = 500. Remaining net = 9500. Order discount (10% of 9500) = 950. Total discount = 1450.
+        $this->assertEquals(1450.0, (float) $po->discount_amount);
+        $this->assertEquals(8550.0, (float) $po->total_amount);
+        $this->assertEquals('Updated notes for shipment', $po->notes);
+        $this->assertCount(1, $po->items);
+        $this->assertEquals(20.0, (float) $po->items->first()->quantity_ordered);
+    }
+
+    public function test_cannot_edit_or_delete_received_purchase_order(): void
+    {
+        $po = PurchaseOrder::create([
+            'vendor_id' => $this->vendorA->id,
+            'po_number' => 'PO-RECEIVED-003',
+            'supplier_id' => $this->supplierA->id,
+            'warehouse_id' => $this->warehouseA->id,
+            'order_date' => now()->toDateString(),
+            'status' => PurchaseOrder::STATUS_RECEIVED,
+            'subtotal' => 500.0,
+            'total_amount' => 500.0,
+        ]);
+
+        // Attempt edit
+        $resEdit = $this->actingAs($this->ownerA)->get(route('admin.inventory.procurement.edit', $po));
+        $resEdit->assertRedirect(route('admin.inventory.procurement.show', $po));
+        $resEdit->assertSessionHas('error');
+
+        // Attempt delete
+        $resDelete = $this->actingAs($this->ownerA)->delete(route('admin.inventory.procurement.destroy', $po));
+        $resDelete->assertRedirect();
+        $resDelete->assertSessionHas('error');
+        $this->assertDatabaseHas('purchase_orders', ['id' => $po->id, 'deleted_at' => null]);
+    }
+
+    public function test_can_delete_unreceived_purchase_order(): void
+    {
+        $po = PurchaseOrder::create([
+            'vendor_id' => $this->vendorA->id,
+            'po_number' => 'PO-DEL-004',
+            'supplier_id' => $this->supplierA->id,
+            'warehouse_id' => $this->warehouseA->id,
+            'order_date' => now()->toDateString(),
+            'status' => PurchaseOrder::STATUS_DRAFT,
+            'subtotal' => 200.0,
+            'total_amount' => 200.0,
+        ]);
+
+        $response = $this->actingAs($this->ownerA)->delete(route('admin.inventory.procurement.destroy', $po));
+
+        $response->assertRedirect(route('admin.inventory.procurement.index'));
+        $this->assertSoftDeleted('purchase_orders', ['id' => $po->id]);
     }
 }

@@ -19,6 +19,16 @@
                         {{ __('Tax ID:') }} {{ $supplier->tax_id }}
                     </span>
                 @endif
+                @if($supplier->vat_number)
+                    <span style="font-family: monospace; background: rgba(99, 102, 241, 0.12); color: #6366f1; padding: 0.2rem 0.5rem; border-radius: 6px; font-weight: 700; font-size: 0.85rem;">
+                        {{ __('VAT:') }} {{ $supplier->vat_number }}
+                    </span>
+                @endif
+                @if((float) $supplier->discount_percent > 0)
+                    <span style="background: rgba(16, 185, 129, 0.12); color: #10b981; padding: 0.2rem 0.6rem; border-radius: 6px; font-weight: 700; font-size: 0.85rem;">
+                        <i class="fa-solid fa-tag"></i> {{ __('Discount:') }} {{ (float) $supplier->discount_percent }}%
+                    </span>
+                @endif
                 @if($supplier->code)
                     <span style="background: rgba(6, 182, 212, 0.12); color: #06b6d4; padding: 0.2rem 0.6rem; border-radius: 6px; font-weight: 700; font-size: 0.78rem;">
                         #{{ $supplier->code }}

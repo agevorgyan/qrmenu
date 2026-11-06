@@ -4856,5 +4856,22 @@
     "Select": "Выбрать",
     "Showing :count items": "Показано :count позиций",
     "No packaging items registered yet. Click \"Create New Packaging Material\" to quickly add containers, boxes, or bags.": "Упаковочные материалы еще не зарегистрированы. Нажмите «Создать новый упаковочный материал», чтобы добавить контейнеры, коробки или пакеты.",
-    "No packaging added. Click \"+ Add Packaging\" if this dish requires delivery containers, bags, or boxes.": "Упаковка не добавлена. Нажмите «+ Добавить упаковку», если для доставки этого блюда требуются контейнеры, коробки или пакеты."
+    "No packaging added. Click \"+ Add Packaging\" if this dish requires delivery containers, bags, or boxes.": "Упаковка не добавлена. Нажмите «+ Добавить упаковку», если для доставки этого блюда требуются контейнеры, коробки или пакеты.",
+    "VAT Number": "Номер плательщика НДС",
+    "e.g., 01234567\/1": "напр., 01234567\/1",
+    "Supplier Default Discount %": "Основная скидка поставщика %",
+    "VAT:": "НДС:",
+    "Unit Price (incl. VAT)": "Цена за ед. (с НДС)",
+    "Edit Purchase Order": "Редактировать заказ на закупку",
+    "Back to Purchase Order": "Назад к заказу на закупку",
+    "All Purchase Orders": "Все заказы на закупку",
+    "Are you sure you want to delete this purchase order? This action cannot be undone.": "Вы уверены, что хотите удалить этот заказ на закупку? Это действие нельзя отменить.",
+    "Delete Order": "Удалить заказ",
+    "Modify supplier, dates, items, quantities and agreed discounts before receiving stock.": "Изменяйте поставщика, даты, товары, количества и согласованные скидки до оприходования.",
+    "Update Purchase Order": "Обновить заказ на закупку",
+    "Delete Purchase Order": "Удалить заказ на закупку",
+    "Purchase Order #:number updated successfully.": "Заказ на закупку #:number успешно обновлен.",
+    "Purchase Order #:number deleted successfully.": "Заказ на закупку #:number успешно удален.",
+    "Cannot edit a purchase order that has already received stock.": "Нельзя редактировать заказ на закупку, по которому уже оприходован товар.",
+    "Cannot delete a purchase order that has already received goods or linked invoices.": "Нельзя удалить заказ на закупку, по которому уже приняты товары или сформированы накладные."
 }

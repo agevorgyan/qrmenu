@@ -213,6 +213,12 @@ class Permission
 
     public const CUSTOMERS_MANAGE = 'customers.manage';
 
+    // Loyalty permissions
+    public const LOYALTY_VIEW = 'loyalty.view';
+    public const LOYALTY_MANAGE = 'loyalty.manage';
+    public const LOYALTY_OPERATE = 'loyalty.operate';
+    public const LOYALTY_ADJUST = 'loyalty.adjust';
+
     public const ROLES_VIEW = 'roles.view';
 
     public const ROLES_MANAGE = 'roles.manage';
@@ -451,6 +457,10 @@ class Permission
             self::HACCP_LOG,
             self::HACCP_MANAGE,
             self::HACCP_REPORTS,
+            self::LOYALTY_VIEW,
+            self::LOYALTY_MANAGE,
+            self::LOYALTY_OPERATE,
+            self::LOYALTY_ADJUST,
         ];
     }
 
@@ -641,6 +651,10 @@ class Permission
                 self::HACCP_LOG,
                 self::HACCP_MANAGE,
                 self::HACCP_REPORTS,
+                self::LOYALTY_VIEW,
+                self::LOYALTY_MANAGE,
+                self::LOYALTY_OPERATE,
+                self::LOYALTY_ADJUST,
                 self::PROFILE_VIEW_OWN,
                 self::PROFILE_UPDATE_OWN,
                 self::PASSWORD_CHANGE_OWN,
@@ -715,6 +729,10 @@ class Permission
                 self::RECIPES_APPROVE,
                 self::RECIPES_COST_VIEW,
                 self::RECIPES_EXPORT,
+                self::LOYALTY_VIEW,
+                self::LOYALTY_MANAGE,
+                self::LOYALTY_OPERATE,
+                self::LOYALTY_ADJUST,
                 self::PROFILE_VIEW_OWN,
                 self::PROFILE_UPDATE_OWN,
                 self::PASSWORD_CHANGE_OWN,
@@ -724,6 +742,7 @@ class Permission
                 self::POS_ACCESS,
                 self::POS_ORDERS,
                 self::MENU_VIEW,
+                self::LOYALTY_OPERATE,
                 self::ORDERS_VIEW_OWN,
                 self::ORDERS_CREATE,
                 self::ORDERS_UPDATE_OWN,
@@ -738,6 +757,7 @@ class Permission
                 self::POS_ACCESS,
                 self::POS_ORDERS,
                 self::MENU_VIEW,
+                self::LOYALTY_OPERATE,
                 self::ORDERS_VIEW_OWN,
                 self::ORDERS_CREATE,
                 self::ORDERS_UPDATE_OWN,
@@ -784,6 +804,8 @@ class Permission
                 self::POS_PAYMENTS,
                 self::POS_CASH_DRAWER,
                 self::POS_DISCOUNTS,
+                self::LOYALTY_VIEW,
+                self::LOYALTY_OPERATE,
                 self::MENU_VIEW,
                 self::ORDERS_VIEW,
                 self::ORDERS_SEARCH,

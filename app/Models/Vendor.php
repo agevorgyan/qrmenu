@@ -2981,4 +2981,19 @@ class Vendor extends Model
 
         return (bool) $this->getSplitBillSetting()->is_enabled;
     }
+
+    public function loyaltyProgram(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\App\Domains\Loyalty\Models\LoyaltyProgram::class);
+    }
+
+    public function walletIssuer(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\App\Domains\Loyalty\Models\WalletIssuer::class);
+    }
+
+    public function walletPassDesign(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\App\Domains\Loyalty\Models\WalletPassDesign::class);
+    }
 }

@@ -134,7 +134,7 @@
                             <th style="padding: 0.65rem 0.5rem; color: var(--text-muted);">{{ __('Classifier (ԱՏԳ ԱԱ)') }}</th>
                             <th style="padding: 0.65rem 0.5rem; text-align: right;">{{ __('Quantity') }}</th>
                             <th style="padding: 0.65rem 0.5rem;">{{ __('Unit') }}</th>
-                            <th style="padding: 0.65rem 0.5rem; text-align: right;">{{ __('Price (excl. VAT)') }}</th>
+                            <th style="padding: 0.65rem 0.5rem; text-align: right;">{{ __('Unit Price (incl. VAT)') }}</th>
                             <th style="padding: 0.65rem 0.5rem; text-align: right;">{{ __('VAT %') }}</th>
                             <th style="padding: 0.65rem 0.5rem; text-align: right;">{{ __('VAT Amount') }}</th>
                             <th style="padding: 0.65rem 0.5rem; text-align: right; font-weight: 700;">{{ __('Total') }}</th>

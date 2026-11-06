@@ -36,6 +36,14 @@
                 <i class="fa-solid fa-print"></i> {{ __('Print PO') }}
             </button>
 
+            @can('procurement.create')
+                @if(!in_array($purchaseOrder->status, [\App\Models\PurchaseOrder::STATUS_RECEIVED, \App\Models\PurchaseOrder::STATUS_PARTIALLY_RECEIVED]))
+                    <a href="{{ route('admin.inventory.procurement.edit', $purchaseOrder) }}" class="btn btn-secondary" style="border-radius: 10px; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-pen-to-square"></i> {{ __('Edit') }}
+                    </a>
+                @endif
+            @endcan
+
             @can('procurement.approve')
                 @if($purchaseOrder->status === \App\Models\PurchaseOrder::STATUS_DRAFT)
                     <form method="POST" action="{{ route('admin.inventory.procurement.approve', $purchaseOrder) }}" style="display: inline;">
@@ -68,6 +76,18 @@
                         @csrf
                         <button type="submit" class="btn btn-secondary" style="border-radius: 10px; font-weight: 600; color: #ef4444;">
                             <i class="fa-solid fa-ban"></i> {{ __('Cancel') }}
+                        </button>
+                    </form>
+                @endif
+            @endcan
+
+            @can('procurement.create')
+                @if(!in_array($purchaseOrder->status, [\App\Models\PurchaseOrder::STATUS_RECEIVED, \App\Models\PurchaseOrder::STATUS_PARTIALLY_RECEIVED]))
+                    <form method="POST" action="{{ route('admin.inventory.procurement.destroy', $purchaseOrder) }}" onsubmit="return confirm('{{ __('Are you sure you want to delete this purchase order? This action cannot be undone.') }}');" style="display: inline;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-secondary" style="border-radius: 10px; font-weight: 600; color: #ef4444; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fa-solid fa-trash"></i> {{ __('Delete') }}
                         </button>
                     </form>
                 @endif

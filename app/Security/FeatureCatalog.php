@@ -151,6 +151,18 @@ class FeatureCatalog
 
     public const MARKETING_APPLE_WALLET = 'marketing.apple_wallet';
 
+    public const MARKETING_GOOGLE_WALLET = 'marketing.google_wallet';
+
+    public const MARKETING_CASHBACK = 'marketing.cashback';
+
+    public const MARKETING_TIERS = 'marketing.tiers';
+
+    public const MARKETING_REFERRALS = 'marketing.referrals';
+
+    public const MARKETING_STAMP_CARDS = 'marketing.stamp_cards';
+
+    public const MARKETING_CAMPAIGNS = 'marketing.campaigns';
+
     public const MARKETING_CUSTOMERS = 'marketing.customers';
 
     public const MARKETING_SEGMENTATION = 'marketing.segmentation';

@@ -97,6 +97,7 @@ class SupplierController extends Controller
                     'ingredient_id' => $item['ingredient_id'],
                     'unit_id' => $item['unit_id'],
                     'price' => (float) $item['price'],
+                    'discount_percent' => (float) ($item['discount_percent'] ?? 0),
                     'supplier_sku' => $item['supplier_sku'] ?? null,
                     'is_primary_supplier' => ! empty($item['is_primary_supplier']),
                 ]);
@@ -144,7 +145,16 @@ class SupplierController extends Controller
 
         $supplier->load('supplierIngredients');
 
-        return view('admin.inventory.suppliers.edit', compact('supplier', 'ingredients', 'units'));
+        $supplierIngredientsData = old('ingredients', $supplier->supplierIngredients->map(fn ($si) => [
+            'ingredient_id' => (string) $si->ingredient_id,
+            'price' => (float) $si->price,
+            'unit_id' => (string) $si->unit_id,
+            'discount_percent' => (float) ($si->discount_percent ?? 0),
+            'supplier_sku' => $si->supplier_sku ?? '',
+            'is_primary_supplier' => (bool) $si->is_primary_supplier,
+        ])->values()->all());
+
+        return view('admin.inventory.suppliers.edit', compact('supplier', 'ingredients', 'units', 'supplierIngredientsData'));
     }
 
     /**
@@ -173,6 +183,7 @@ class SupplierController extends Controller
                         'ingredient_id' => $item['ingredient_id'],
                         'unit_id' => $item['unit_id'],
                         'price' => (float) $item['price'],
+                        'discount_percent' => (float) ($item['discount_percent'] ?? 0),
                         'supplier_sku' => $item['supplier_sku'] ?? null,
                         'is_primary_supplier' => ! empty($item['is_primary_supplier']),
                     ]);

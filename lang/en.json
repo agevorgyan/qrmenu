@@ -4856,5 +4856,22 @@
     "Select": "Select",
     "Showing :count items": "Showing :count items",
     "No packaging items registered yet. Click \"Create New Packaging Material\" to quickly add containers, boxes, or bags.": "No packaging items registered yet. Click \"Create New Packaging Material\" to quickly add containers, boxes, or bags.",
-    "No packaging added. Click \"+ Add Packaging\" if this dish requires delivery containers, bags, or boxes.": "No packaging added. Click \"+ Add Packaging\" if this dish requires delivery containers, bags, or boxes."
+    "No packaging added. Click \"+ Add Packaging\" if this dish requires delivery containers, bags, or boxes.": "No packaging added. Click \"+ Add Packaging\" if this dish requires delivery containers, bags, or boxes.",
+    "VAT Number": "VAT Number",
+    "e.g., 01234567\/1": "e.g., 01234567\/1",
+    "Supplier Default Discount %": "Supplier Default Discount %",
+    "VAT:": "VAT:",
+    "Unit Price (incl. VAT)": "Unit Price (incl. VAT)",
+    "Edit Purchase Order": "Edit Purchase Order",
+    "Back to Purchase Order": "Back to Purchase Order",
+    "All Purchase Orders": "All Purchase Orders",
+    "Are you sure you want to delete this purchase order? This action cannot be undone.": "Are you sure you want to delete this purchase order? This action cannot be undone.",
+    "Delete Order": "Delete Order",
+    "Modify supplier, dates, items, quantities and agreed discounts before receiving stock.": "Modify supplier, dates, items, quantities and agreed discounts before receiving stock.",
+    "Update Purchase Order": "Update Purchase Order",
+    "Delete Purchase Order": "Delete Purchase Order",
+    "Purchase Order #:number updated successfully.": "Purchase Order #:number updated successfully.",
+    "Purchase Order #:number deleted successfully.": "Purchase Order #:number deleted successfully.",
+    "Cannot edit a purchase order that has already received stock.": "Cannot edit a purchase order that has already received stock.",
+    "Cannot delete a purchase order that has already received goods or linked invoices.": "Cannot delete a purchase order that has already received goods or linked invoices."
 }

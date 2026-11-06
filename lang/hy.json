@@ -4856,5 +4856,22 @@
     "Select": "Ընտրել",
     "Showing :count items": "Ցուցադրված է :count ապրանք",
     "No packaging items registered yet. Click \"Create New Packaging Material\" to quickly add containers, boxes, or bags.": "Փաթեթավորման նյութեր դեռ գրանցված չեն։ Սեղմեք «Ստեղծել նոր փաթեթավորման նյութ»՝ տարաներ, տուփեր կամ տոպրակներ արագ ավելացնելու համար։",
-    "No packaging added. Click \"+ Add Packaging\" if this dish requires delivery containers, bags, or boxes.": "Փաթեթավորում ավելացված չէ։ Սեղմեք «+ Ավելացնել փաթեթավորում», եթե այս ուտեստի առաքման համար պահանջվում են տարաներ, տուփեր կամ տոպրակներ։"
+    "No packaging added. Click \"+ Add Packaging\" if this dish requires delivery containers, bags, or boxes.": "Փաթեթավորում ավելացված չէ։ Սեղմեք «+ Ավելացնել փաթեթավորում», եթե այս ուտեստի առաքման համար պահանջվում են տարաներ, տուփեր կամ տոպրակներ։",
+    "VAT Number": "ԱԱՀ վճարողի համար",
+    "e.g., 01234567\/1": "օր.՝ 01234567\/1",
+    "Supplier Default Discount %": "Մատակարարի հիմնական զեղչ %",
+    "VAT:": "ԱԱՀ՝",
+    "Unit Price (incl. VAT)": "Միավորի գին (ներառյալ ԱԱՀ)",
+    "Edit Purchase Order": "Խմբագրել Գնման Պատվերը",
+    "Back to Purchase Order": "Վերադառնալ Գնման Պատվերին",
+    "All Purchase Orders": "Բոլոր Գնման Պատվերները",
+    "Are you sure you want to delete this purchase order? This action cannot be undone.": "Վստա՞հ եք, որ ցանկանում եք հեռացնել այս գնման պատվերը: Այս գործողությունը հնարավոր չէ չեղարկել:",
+    "Delete Order": "Հեռացնել Պատվերը",
+    "Modify supplier, dates, items, quantities and agreed discounts before receiving stock.": "Փոփոխեք մատակարարին, ժամկետները, ապրանքները, քանակները և զեղչերը՝ մինչև ապրանքների ընդունումը:",
+    "Update Purchase Order": "Թարմացնել Գնման Պատվերը",
+    "Delete Purchase Order": "Հեռացնել Գնման Պատվերը",
+    "Purchase Order #:number updated successfully.": "Գնման պատվեր #:number-ը հաջողությամբ թարմացվեց։",
+    "Purchase Order #:number deleted successfully.": "Գնման պատվեր #:number-ը հաջողությամբ հեռացվեց։",
+    "Cannot edit a purchase order that has already received stock.": "Հնարավոր չէ խմբագրել արդեն մուտքագրված ապրանքներով գնման պատվերը։",
+    "Cannot delete a purchase order that has already received goods or linked invoices.": "Հնարավոր չէ հեռացնել գնման պատվերը, որն արդեն ստացել է ապրանքներ կամ ունի կցված հաշիվներ։"
 }

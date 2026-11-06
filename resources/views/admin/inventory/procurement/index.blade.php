@@ -200,10 +200,24 @@
                             </td>
 
                             <td style="padding: 1rem 1.25rem; text-align: right;">
-                                <div style="display: flex; gap: 0.4rem; justify-content: flex-end;">
+                                <div style="display: flex; gap: 0.4rem; justify-content: flex-end; align-items: center;">
                                     <a href="{{ route('admin.inventory.procurement.show', $po) }}" class="btn btn-secondary btn-sm" title="{{ __('View Purchase Order') }}" style="border-radius: 8px; padding: 0.4rem 0.65rem;">
                                         <i class="fa-solid fa-eye"></i>
                                     </a>
+
+                                    @if(!in_array($po->status, [\App\Models\PurchaseOrder::STATUS_RECEIVED, \App\Models\PurchaseOrder::STATUS_PARTIALLY_RECEIVED]))
+                                        <a href="{{ route('admin.inventory.procurement.edit', $po) }}" class="btn btn-secondary btn-sm" title="{{ __('Edit Purchase Order') }}" style="border-radius: 8px; padding: 0.4rem 0.65rem;">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                        </a>
+
+                                        <form method="POST" action="{{ route('admin.inventory.procurement.destroy', $po) }}" onsubmit="return confirm('{{ __('Are you sure you want to delete this purchase order? This action cannot be undone.') }}');" style="display: inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-secondary btn-sm" title="{{ __('Delete Purchase Order') }}" style="border-radius: 8px; padding: 0.4rem 0.65rem; color: #ef4444;">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

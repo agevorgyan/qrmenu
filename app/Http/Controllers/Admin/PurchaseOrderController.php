@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ReceiveGoodsRequest;
 use App\Http\Requests\StorePurchaseOrderRequest;
+use App\Http\Requests\UpdatePurchaseOrderRequest;
 use App\Models\Ingredient;
 use App\Models\IngredientCategory;
 use App\Models\PurchaseOrder;
@@ -158,6 +159,132 @@ class PurchaseOrderController extends Controller
 
         return redirect()->route('admin.inventory.procurement.show', $po)
             ->with('success', __('Purchase Order created successfully as draft.'));
+    }
+
+    /**
+     * Show form for editing an existing purchase order.
+     */
+    public function edit(PurchaseOrder $purchaseOrder): View|RedirectResponse
+    {
+        $this->authorizePermission(Permission::PROCUREMENT_CREATE);
+
+        if (
+            $purchaseOrder->status === PurchaseOrder::STATUS_RECEIVED ||
+            $purchaseOrder->status === PurchaseOrder::STATUS_PARTIALLY_RECEIVED ||
+            $purchaseOrder->items()->where('quantity_received', '>', 0)->exists()
+        ) {
+            return redirect()->route('admin.inventory.procurement.show', $purchaseOrder)
+                ->with('error', __('Cannot edit a purchase order that has already received stock.'));
+        }
+
+        $purchaseOrder->load(['supplier', 'warehouse', 'items.ingredient.unit', 'items.unit']);
+
+        $vendor = Auth::user()->vendor;
+        $suppliers = Supplier::where('vendor_id', $vendor->id)->where('is_active', true)->orderBy('name')->get();
+        $warehouses = Warehouse::where('vendor_id', $vendor->id)->where('is_active', true)->orderBy('name')->get();
+        $categories = IngredientCategory::where('vendor_id', $vendor->id)->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
+        $ingredients = Ingredient::where('vendor_id', $vendor->id)->where('is_active', true)->with(['unit', 'category'])->orderBy('name')->get();
+        $units = Unit::forCurrentVendor()->where('is_active', true)->orderBy('name')->get();
+
+        $suggestedItems = $this->procurementService->suggestReplenishment($vendor);
+
+        $supplierIngredients = SupplierIngredient::where('vendor_id', $vendor->id)
+            ->with(['ingredient.unit', 'unit'])
+            ->get();
+
+        $supplierIngredientsData = [];
+        foreach ($supplierIngredients as $si) {
+            $sId = (string) $si->supplier_id;
+            if (! isset($supplierIngredientsData[$sId])) {
+                $supplierIngredientsData[$sId] = [];
+            }
+            $supplierIngredientsData[$sId][] = [
+                'ingredient_id' => (string) $si->ingredient_id,
+                'name' => $si->ingredient?->name ?? '',
+                'unit_id' => (string) ($si->unit_id ?? $si->ingredient?->unit_id ?? ''),
+                'unit_code' => $si->unit?->code ?? $si->ingredient?->unit?->code ?? '',
+                'price' => (float) ($si->price ?? $si->ingredient?->last_purchase_price ?? $si->ingredient?->current_cost ?? 0),
+                'discount_percent' => (float) ($si->discount_percent ?? 0),
+                'supplier_sku' => $si->supplier_sku ?? '',
+            ];
+        }
+
+        $ingredientsData = $ingredients->map(fn ($ing) => [
+            'id' => (string) $ing->id,
+            'name' => $ing->name,
+            'sku' => $ing->sku,
+            'unit_id' => (string) $ing->unit_id,
+            'unit_code' => $ing->unit?->code ?? '',
+            'category_id' => (string) ($ing->category_id ?? ''),
+            'category_name' => $ing->category?->name ?? '',
+            'cost' => (float) ($ing->last_purchase_price ?? $ing->current_cost ?? 0),
+        ])->values()->all();
+
+        $suppliersData = $suppliers->map(fn ($s) => [
+            'id' => (string) $s->id,
+            'name' => $s->name,
+            'discount_percent' => (float) ($s->discount_percent ?? 0),
+            'tax_id' => $s->tax_id ?? '',
+        ])->values()->all();
+
+        $existingItemsData = old('items', $purchaseOrder->items->map(fn ($item) => [
+            'ingredient_id' => (string) $item->ingredient_id,
+            'ingredient_name' => $item->ingredient?->name ?? '',
+            'category_name' => $item->ingredient?->category?->name ?? '',
+            'quantity' => (float) $item->quantity_ordered,
+            'unit_id' => (string) $item->unit_id,
+            'unit_price' => (float) $item->unit_price,
+            'discount_percent' => (float) ($item->discount_percent ?? 0),
+            'tax_percent' => (float) ($item->tax_percent ?? 0),
+        ])->values()->all());
+
+        return view('admin.inventory.procurement.edit', compact(
+            'purchaseOrder',
+            'suppliers',
+            'warehouses',
+            'categories',
+            'ingredients',
+            'units',
+            'suggestedItems',
+            'supplierIngredientsData',
+            'ingredientsData',
+            'suppliersData',
+            'existingItemsData'
+        ));
+    }
+
+    /**
+     * Update an existing purchase order.
+     */
+    public function update(UpdatePurchaseOrderRequest $request, PurchaseOrder $purchaseOrder): RedirectResponse
+    {
+        try {
+            $po = $this->procurementService->updatePurchaseOrder($purchaseOrder, $request->validated(), Auth::user());
+
+            return redirect()->route('admin.inventory.procurement.show', $po)
+                ->with('success', __('Purchase Order #:number updated successfully.', ['number' => $po->po_number]));
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete an unreceived purchase order.
+     */
+    public function destroy(PurchaseOrder $purchaseOrder): RedirectResponse
+    {
+        $this->authorizePermission(Permission::PROCUREMENT_CREATE);
+
+        $poNumber = $purchaseOrder->po_number;
+
+        try {
+            $this->procurementService->deletePurchaseOrder($purchaseOrder, Auth::user());
+
+            return redirect()->route('admin.inventory.procurement.index')
+                ->with('success', __('Purchase Order #:number deleted successfully.', ['number' => $poNumber]));
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     /**
