@@ -45,6 +45,8 @@ Schedule::call(function () {
  */
 Schedule::command('privacy:prune')->daily()->name('privacy-retention-prune');
 
+Schedule::command('loyalty:process-automations')->dailyAt('02:00')->name('loyalty-process-automations');
+
 /**
  * Dispatch upcoming customer and restaurant reservation reminders every 5 minutes.
  */

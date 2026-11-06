@@ -16,9 +16,11 @@ use App\Services\CrmAutomationService;
 use App\Services\CustomerSyncService;
 use App\Services\OrderDispatchService;
 use App\Services\OrderPricingService;
+use App\Services\OrderStockDepletionService;
 use App\Services\QuotaService;
 use App\Services\TipRatingService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -428,6 +430,12 @@ class CreateOrderAction
                     }
                     $table->markOccupied($order, $dto->waiterId ? User::find($dto->waiterId) : null);
                 }
+            }
+
+            try {
+                app(OrderStockDepletionService::class)->depleteOrder($order);
+            } catch (\Throwable $e) {
+                Log::warning("OrderStockDepletion failed for Order #{$order->id}: ".$e->getMessage());
             }
         });
 

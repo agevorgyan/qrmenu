@@ -99,6 +99,91 @@ class Permission
 
     public const POS_CASH_DRAWER = 'pos.cash_drawer';
 
+    // Ingredients & Inventory Permissions
+    public const INGREDIENTS_VIEW = 'ingredients.view';
+
+    public const INGREDIENTS_CREATE = 'ingredients.create';
+
+    public const INGREDIENTS_UPDATE = 'ingredients.update';
+
+    public const INGREDIENTS_DELETE = 'ingredients.delete';
+
+    public const INGREDIENTS_EXPORT = 'ingredients.export';
+
+    public const INVENTORY_VIEW = 'inventory.view';
+
+    public const INVENTORY_RECEIPT = 'inventory.receipt';
+
+    public const INVENTORY_ISSUE = 'inventory.issue';
+
+    public const INVENTORY_TRANSFER = 'inventory.transfer';
+
+    public const INVENTORY_ADJUST = 'inventory.adjust';
+
+    public const INVENTORY_COUNT = 'inventory.count';
+
+    public const INVENTORY_APPROVE = 'inventory.approve';
+
+    public const INVENTORY_WASTE = 'inventory.waste';
+
+    public const INVENTORY_REPORTS = 'inventory.reports';
+
+    // Recipe & Costing Permissions
+    public const RECIPES_VIEW = 'recipes.view';
+
+    public const RECIPES_CREATE = 'recipes.create';
+
+    public const RECIPES_UPDATE = 'recipes.update';
+
+    public const RECIPES_DELETE = 'recipes.delete';
+
+    public const RECIPES_APPROVE = 'recipes.approve';
+
+    public const RECIPES_COST_VIEW = 'recipes.cost.view';
+
+    public const RECIPES_EXPORT = 'recipes.export';
+
+    // Supplier & Procurement Permissions
+    public const SUPPLIERS_VIEW = 'suppliers.view';
+
+    public const SUPPLIERS_CREATE = 'suppliers.create';
+
+    public const SUPPLIERS_UPDATE = 'suppliers.update';
+
+    public const SUPPLIERS_DELETE = 'suppliers.delete';
+
+    public const PROCUREMENT_VIEW = 'procurement.view';
+
+    public const PROCUREMENT_CREATE = 'procurement.create';
+
+    public const PROCUREMENT_APPROVE = 'procurement.approve';
+
+    public const PROCUREMENT_RECEIVE = 'procurement.receive';
+
+    public const PROCUREMENT_PAY = 'procurement.pay';
+
+    // Production & Processing Permissions
+    public const PRODUCTION_VIEW = 'production.view';
+
+    public const PRODUCTION_CREATE = 'production.create';
+
+    public const PRODUCTION_START = 'production.start';
+
+    public const PRODUCTION_COMPLETE = 'production.complete';
+
+    public const PRODUCTION_CANCEL = 'production.cancel';
+
+    public const PRODUCTION_DELETE = 'production.delete';
+
+    // HACCP & Food Safety Permissions
+    public const HACCP_VIEW = 'haccp.view';
+
+    public const HACCP_LOG = 'haccp.log';
+
+    public const HACCP_MANAGE = 'haccp.manage';
+
+    public const HACCP_REPORTS = 'haccp.reports';
+
     public const POS_REFUNDS = 'pos.refunds';
 
     public const POS_DISCOUNTS = 'pos.discounts';
@@ -127,6 +212,15 @@ class Permission
     public const RESERVATIONS_MANAGE = 'reservations.manage';
 
     public const CUSTOMERS_MANAGE = 'customers.manage';
+
+    // Loyalty permissions
+    public const LOYALTY_VIEW = 'loyalty.view';
+
+    public const LOYALTY_MANAGE = 'loyalty.manage';
+
+    public const LOYALTY_OPERATE = 'loyalty.operate';
+
+    public const LOYALTY_ADJUST = 'loyalty.adjust';
 
     public const ROLES_VIEW = 'roles.view';
 
@@ -326,6 +420,50 @@ class Permission
             self::SECURITY_VIEW,
             self::SECURITY_MANAGE,
             self::AI_MENU_BUILDER,
+            self::INGREDIENTS_VIEW,
+            self::INGREDIENTS_CREATE,
+            self::INGREDIENTS_UPDATE,
+            self::INGREDIENTS_DELETE,
+            self::INGREDIENTS_EXPORT,
+            self::INVENTORY_VIEW,
+            self::INVENTORY_RECEIPT,
+            self::INVENTORY_ISSUE,
+            self::INVENTORY_TRANSFER,
+            self::INVENTORY_ADJUST,
+            self::INVENTORY_COUNT,
+            self::INVENTORY_APPROVE,
+            self::INVENTORY_WASTE,
+            self::INVENTORY_REPORTS,
+            self::RECIPES_VIEW,
+            self::RECIPES_CREATE,
+            self::RECIPES_UPDATE,
+            self::RECIPES_DELETE,
+            self::RECIPES_APPROVE,
+            self::RECIPES_COST_VIEW,
+            self::RECIPES_EXPORT,
+            self::SUPPLIERS_VIEW,
+            self::SUPPLIERS_CREATE,
+            self::SUPPLIERS_UPDATE,
+            self::SUPPLIERS_DELETE,
+            self::PROCUREMENT_VIEW,
+            self::PROCUREMENT_CREATE,
+            self::PROCUREMENT_APPROVE,
+            self::PROCUREMENT_RECEIVE,
+            self::PROCUREMENT_PAY,
+            self::PRODUCTION_VIEW,
+            self::PRODUCTION_CREATE,
+            self::PRODUCTION_START,
+            self::PRODUCTION_COMPLETE,
+            self::PRODUCTION_CANCEL,
+            self::PRODUCTION_DELETE,
+            self::HACCP_VIEW,
+            self::HACCP_LOG,
+            self::HACCP_MANAGE,
+            self::HACCP_REPORTS,
+            self::LOYALTY_VIEW,
+            self::LOYALTY_MANAGE,
+            self::LOYALTY_OPERATE,
+            self::LOYALTY_ADJUST,
         ];
     }
 
@@ -476,6 +614,50 @@ class Permission
                 self::ORDERS_CANCEL_REQUEST,
                 self::TABLES_VIEW_ASSIGNED,
                 self::TIPS_VIEW_OWN,
+                self::INGREDIENTS_VIEW,
+                self::INGREDIENTS_CREATE,
+                self::INGREDIENTS_UPDATE,
+                self::INGREDIENTS_DELETE,
+                self::INGREDIENTS_EXPORT,
+                self::INVENTORY_VIEW,
+                self::INVENTORY_RECEIPT,
+                self::INVENTORY_ISSUE,
+                self::INVENTORY_TRANSFER,
+                self::INVENTORY_ADJUST,
+                self::INVENTORY_COUNT,
+                self::INVENTORY_APPROVE,
+                self::INVENTORY_WASTE,
+                self::INVENTORY_REPORTS,
+                self::RECIPES_VIEW,
+                self::RECIPES_CREATE,
+                self::RECIPES_UPDATE,
+                self::RECIPES_DELETE,
+                self::RECIPES_APPROVE,
+                self::RECIPES_COST_VIEW,
+                self::RECIPES_EXPORT,
+                self::SUPPLIERS_VIEW,
+                self::SUPPLIERS_CREATE,
+                self::SUPPLIERS_UPDATE,
+                self::SUPPLIERS_DELETE,
+                self::PROCUREMENT_VIEW,
+                self::PROCUREMENT_CREATE,
+                self::PROCUREMENT_APPROVE,
+                self::PROCUREMENT_RECEIVE,
+                self::PROCUREMENT_PAY,
+                self::PRODUCTION_VIEW,
+                self::PRODUCTION_CREATE,
+                self::PRODUCTION_START,
+                self::PRODUCTION_COMPLETE,
+                self::PRODUCTION_CANCEL,
+                self::PRODUCTION_DELETE,
+                self::HACCP_VIEW,
+                self::HACCP_LOG,
+                self::HACCP_MANAGE,
+                self::HACCP_REPORTS,
+                self::LOYALTY_VIEW,
+                self::LOYALTY_MANAGE,
+                self::LOYALTY_OPERATE,
+                self::LOYALTY_ADJUST,
                 self::PROFILE_VIEW_OWN,
                 self::PROFILE_UPDATE_OWN,
                 self::PASSWORD_CHANGE_OWN,
@@ -531,6 +713,29 @@ class Permission
                 self::TABLES_MANAGE,
                 self::SHIFTS_VIEW_ALL,
                 self::AUDIT_LOGS_VIEW,
+                self::INGREDIENTS_VIEW,
+                self::INGREDIENTS_CREATE,
+                self::INGREDIENTS_UPDATE,
+                self::INGREDIENTS_DELETE,
+                self::INGREDIENTS_EXPORT,
+                self::INVENTORY_VIEW,
+                self::INVENTORY_RECEIPT,
+                self::INVENTORY_ISSUE,
+                self::INVENTORY_TRANSFER,
+                self::INVENTORY_ADJUST,
+                self::INVENTORY_COUNT,
+                self::INVENTORY_APPROVE,
+                self::RECIPES_VIEW,
+                self::RECIPES_CREATE,
+                self::RECIPES_UPDATE,
+                self::RECIPES_DELETE,
+                self::RECIPES_APPROVE,
+                self::RECIPES_COST_VIEW,
+                self::RECIPES_EXPORT,
+                self::LOYALTY_VIEW,
+                self::LOYALTY_MANAGE,
+                self::LOYALTY_OPERATE,
+                self::LOYALTY_ADJUST,
                 self::PROFILE_VIEW_OWN,
                 self::PROFILE_UPDATE_OWN,
                 self::PASSWORD_CHANGE_OWN,
@@ -540,6 +745,7 @@ class Permission
                 self::POS_ACCESS,
                 self::POS_ORDERS,
                 self::MENU_VIEW,
+                self::LOYALTY_OPERATE,
                 self::ORDERS_VIEW_OWN,
                 self::ORDERS_CREATE,
                 self::ORDERS_UPDATE_OWN,
@@ -554,6 +760,7 @@ class Permission
                 self::POS_ACCESS,
                 self::POS_ORDERS,
                 self::MENU_VIEW,
+                self::LOYALTY_OPERATE,
                 self::ORDERS_VIEW_OWN,
                 self::ORDERS_CREATE,
                 self::ORDERS_UPDATE_OWN,
@@ -572,6 +779,13 @@ class Permission
                 self::MENU_VIEW,
                 self::ORDERS_VIEW,
                 self::ORDERS_UPDATE, // For kitchen prep status transitions (e.g. preparing -> ready)
+                self::INGREDIENTS_VIEW,
+                self::INVENTORY_VIEW,
+                self::INVENTORY_ISSUE,
+                self::RECIPES_VIEW,
+                self::RECIPES_CREATE,
+                self::RECIPES_UPDATE,
+                self::RECIPES_COST_VIEW,
                 self::PROFILE_VIEW_OWN,
                 self::PASSWORD_CHANGE_OWN,
                 self::PIN_MANAGE_OWN,
@@ -582,6 +796,7 @@ class Permission
                 self::MENU_VIEW,
                 self::ORDERS_VIEW,
                 self::ORDERS_UPDATE,
+                self::RECIPES_VIEW,
                 self::PROFILE_VIEW_OWN,
                 self::PASSWORD_CHANGE_OWN,
                 self::PIN_MANAGE_OWN,
@@ -592,6 +807,8 @@ class Permission
                 self::POS_PAYMENTS,
                 self::POS_CASH_DRAWER,
                 self::POS_DISCOUNTS,
+                self::LOYALTY_VIEW,
+                self::LOYALTY_OPERATE,
                 self::MENU_VIEW,
                 self::ORDERS_VIEW,
                 self::ORDERS_SEARCH,

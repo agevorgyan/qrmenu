@@ -8,6 +8,8 @@
            reservationsOpen: {{ (request()->routeIs('admin.reservations.*') || request()->routeIs('admin.event_inquiries.*') || request()->routeIs('admin.settings.reservations*')) ? 'true' : 'false' }},
            tablesOpen: {{ (request()->routeIs('admin.floor_plan.*') || request()->routeIs('admin.tables.*') || request()->routeIs('admin.qr.*')) ? 'true' : 'false' }},
            aiOpen: {{ (request()->routeIs('admin.ai.*') || request()->routeIs('admin.settings.ai*')) ? 'true' : 'false' }},
+           inventoryOpen: {{ request()->routeIs('admin.inventory.*') ? 'true' : 'false' }},
+           loyaltyOpen: {{ request()->routeIs('admin.loyalty.*') ? 'true' : 'false' }},
            settingsOpen: {{ (request()->routeIs('admin.settings.*') || request()->routeIs('admin.profile')) ? 'true' : 'false' }},
            currentSettingsTab: '{{ request()->query('tab', 'profile') }}',
            isSettingsPage: {{ request()->routeIs('admin.settings.index') ? 'true' : 'false' }},
@@ -95,6 +97,14 @@
             </a>
         </div>
 
+        @if(!Auth::user()?->isSuperAdmin())
+            <!-- Quick Support Link for Mobile Drawer -->
+            <a href="mailto:{{ \App\Models\SystemSetting::get('contact_email') ?: 'support@elab.am' }}" class="sidebar-quick-action-btn" style="width: 100%; justify-content: center;" title="{{ __('Help & Support') }}">
+                <i class="fa-solid fa-headset" style="color: var(--primary); font-size: 0.95rem;"></i>
+                <span>{{ __('Help & Support') }}</span>
+            </a>
+        @endif
+
         <!-- Language Switcher Segmented Pills -->
         <div class="sidebar-lang-selector">
             <a href="{{ route('lang.switch', 'hy') }}" class="sidebar-lang-pill {{ app()->getLocale() === 'hy' ? 'active' : '' }}">
@@ -164,6 +174,18 @@
             <a href="{{ route('superadmin.emails.settings.index') }}" class="nav-item {{ request()->routeIs('superadmin.emails.settings.*') ? 'active' : '' }}">
                 <i class="fa-solid fa-gear" style="color: #94a3b8;"></i> <span>{{ __('Email Settings') }}</span>
             </a>
+
+            <!-- SuperAdmin Core Platform System Status Card -->
+            <div class="sidebar-widget" style="text-align: left; padding: 0.85rem 1rem; margin: 1.25rem 0.35rem 0.5rem;">
+                <div style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.4rem;">
+                    <i class="fa-solid fa-server" style="color: #6366f1;"></i> Core Platform
+                </div>
+                <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-main);">Laravel 13 & Reverb</div>
+                <div style="font-size: 0.72rem; color: #10b981; margin-top: 0.25rem; display: flex; align-items: center; gap: 0.35rem;">
+                    <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span>
+                    <span>WebSocket: Port 8080 Active</span>
+                </div>
+            </div>
         @else
             @php 
                 $v = Auth::user()?->vendor;
@@ -303,6 +325,150 @@
             @endcan
 
             <!-- ========================================== -->
+            <!-- INVENTORY & PRODUCTION                     -->
+            <!-- ========================================== -->
+            <div class="menu-category">{{ __('Inventory & Production') }}</div>
+
+            <div class="nav-group">
+                <button type="button" 
+                        class="nav-group-header {{ request()->routeIs('admin.inventory.*') ? 'active' : '' }}"
+                        @click="inventoryOpen = !inventoryOpen"
+                        aria-expanded="inventoryOpen"
+                        title="{{ __('Inventory & Production') }}">
+                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                        <i class="fa-solid fa-boxes-stacked" style="color: #10b981;"></i>
+                        <span>{{ __('Inventory & Production') }}</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down nav-chevron" :class="inventoryOpen ? 'rotate-180' : ''"></i>
+                </button>
+
+                <div class="nav-group-children" x-show="inventoryOpen" x-transition.opacity.duration.200ms style="display: {{ request()->routeIs('admin.inventory.*') ? 'flex' : 'none' }};">
+                    <a href="{{ route('admin.inventory.dashboard') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.dashboard') ? 'active' : '' }}" title="{{ __('Dashboard') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-chart-pie" style="font-size: 0.85rem; color: #10b981;"></i>
+                            <span>{{ __('Dashboard') }}</span>
+                        </span>
+                    </a>
+
+                    @can('ingredients.view')
+                        <a href="{{ route('admin.inventory.ingredients.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.ingredients.*') ? 'active' : '' }}" title="{{ __('Ingredients & Catalog') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-wheat-awn" style="font-size: 0.85rem; color: #f59e0b;"></i>
+                                <span>{{ __('Ingredients & Catalog') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.inventory.categories.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.categories.*') ? 'active' : '' }}" title="{{ __('Categories') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-folder-tree" style="font-size: 0.85rem; color: #06b6d4;"></i>
+                                <span>{{ __('Categories') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.inventory.units.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.units.*') ? 'active' : '' }}" title="{{ __('Units & Conversions') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-scale-balanced" style="font-size: 0.85rem; color: #8b5cf6;"></i>
+                                <span>{{ __('Units & Conversions') }}</span>
+                            </span>
+                        </a>
+                    @endcan
+
+                    @can('inventory.view')
+                        <a href="{{ route('admin.inventory.warehouses.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.warehouses.*') ? 'active' : '' }}" title="{{ __('Warehouses') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-warehouse" style="font-size: 0.85rem; color: #3b82f6;"></i>
+                                <span>{{ __('Warehouses') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.inventory.stocks.overview') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.stocks.overview') ? 'active' : '' }}" title="{{ __('Stock Overview') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-cubes-stacked" style="font-size: 0.85rem; color: #10b981;"></i>
+                                <span>{{ __('Stock Overview') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.inventory.stocks.movements') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.stocks.movements') ? 'active' : '' }}" title="{{ __('Stock Movements') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-timeline" style="font-size: 0.85rem; color: #ec4899;"></i>
+                                <span>{{ __('Stock Movements') }}</span>
+                            </span>
+                        </a>
+                    @endcan
+
+                    @can('recipes.view')
+                        <a href="{{ route('admin.inventory.recipes.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.recipes.*') ? 'active' : '' }}" title="{{ __('Recipes & Costing') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-utensils" style="font-size: 0.85rem; color: #f59e0b;"></i>
+                                <span>{{ __('Recipes & Costing') }}</span>
+                            </span>
+                        </a>
+                    @endcan
+
+                    @can('production.view')
+                        <a href="{{ route('admin.inventory.production.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.production.*') ? 'active' : '' }}" title="{{ __('Production Orders') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-industry" style="font-size: 0.85rem; color: #f97316;"></i>
+                                <span>{{ __('Production Orders') }}</span>
+                            </span>
+                        </a>
+                    @endcan
+
+                    @can('suppliers.view')
+                        <a href="{{ route('admin.inventory.suppliers.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.suppliers.*') ? 'active' : '' }}" title="{{ __('Suppliers') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-truck-field" style="font-size: 0.85rem; color: #06b6d4;"></i>
+                                <span>{{ __('Suppliers') }}</span>
+                            </span>
+                        </a>
+                    @endcan
+
+                    @can('procurement.view')
+                        <a href="{{ route('admin.inventory.procurement.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.procurement.*') ? 'active' : '' }}" title="{{ __('Purchase Orders') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-cart-shopping" style="font-size: 0.85rem; color: #6366f1;"></i>
+                                <span>{{ __('Purchase Orders') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.inventory.invoices.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.invoices.*') ? 'active' : '' }}" title="{{ __('Invoices & AP') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-file-invoice-dollar" style="font-size: 0.85rem; color: #10b981;"></i>
+                                <span>{{ __('Invoices & AP') }}</span>
+                            </span>
+                        </a>
+                    @endcan
+
+                    @can('haccp.view')
+                        <a href="{{ route('admin.inventory.haccp.dashboard') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.haccp.*') ? 'active' : '' }}" title="{{ __('HACCP & Food Safety') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-shield-virus" style="font-size: 0.85rem; color: #10b981;"></i>
+                                <span>{{ __('HACCP & Food Safety') }}</span>
+                            </span>
+                        </a>
+                    @endcan
+
+                    @can('inventory.view')
+                        <a href="{{ route('admin.inventory.waste.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.waste.*') ? 'active' : '' }}" title="{{ __('Waste & Loss') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-trash-can" style="font-size: 0.85rem; color: #ef4444;"></i>
+                                <span>{{ __('Waste & Loss') }}</span>
+                            </span>
+                        </a>
+                    @endcan
+
+                    @can('reports.view')
+                        <a href="{{ route('admin.inventory.reports.inventory.index') }}" class="nav-sub-item {{ request()->routeIs('admin.inventory.reports.*') ? 'active' : '' }}" title="{{ __('Costing & Analytics') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-chart-pie" style="font-size: 0.85rem; color: #6366f1;"></i>
+                                <span>{{ __('Costing & Analytics') }}</span>
+                            </span>
+                        </a>
+                    @endcan
+                </div>
+            </div>
+
+            <!-- ========================================== -->
             <!-- C. CUSTOMER EXPERIENCE & GROWTH            -->
             <!-- ========================================== -->
             <div class="menu-category">{{ __('Customer Experience & Growth') }}</div>
@@ -377,6 +543,121 @@
                     @endif
                 </a>
             @endcan
+
+            <!-- Loyalty & Digital Wallet (Enterprise) -->
+            <div class="nav-group">
+                <button type="button" 
+                        class="nav-group-header {{ request()->routeIs('admin.loyalty.*') ? 'active' : '' }}"
+                        @click="loyaltyOpen = !loyaltyOpen"
+                        aria-expanded="loyaltyOpen"
+                        title="{{ __('Loyalty & Digital Wallet') }}">
+                    <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                        <i class="fa-solid fa-gift" style="color: #ec4899;"></i>
+                        <span>{{ __('Loyalty & Digital Wallet') }}</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down nav-chevron" :class="loyaltyOpen ? 'rotate-180' : ''"></i>
+                </button>
+
+                <div class="nav-group-children" x-show="loyaltyOpen" x-transition.opacity.duration.200ms style="display: {{ request()->routeIs('admin.loyalty.*') ? 'flex' : 'none' }};">
+                    <a href="{{ route('admin.loyalty.index') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.index') ? 'active' : '' }}" title="{{ __('Overview') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-chart-line" style="font-size: 0.85rem; color: #ec4899;"></i>
+                            <span>{{ __('Overview') }}</span>
+                        </span>
+                    </a>
+
+                    <a href="{{ route('admin.loyalty.staff') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.staff') ? 'active' : '' }}" title="{{ __('Staff Scanner') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-qrcode" style="font-size: 0.85rem; color: #6366f1;"></i>
+                            <span>{{ __('Staff Scanner') }}</span>
+                        </span>
+                    </a>
+
+                    <a href="{{ route('admin.loyalty.customers') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.customers') ? 'active' : '' }}" title="{{ __('Members & Balances') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-users" style="font-size: 0.85rem; color: #3b82f6;"></i>
+                            <span>{{ __('Members & Balances') }}</span>
+                        </span>
+                    </a>
+
+                    <a href="{{ route('admin.loyalty.rules') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.rules') ? 'active' : '' }}" title="{{ __('Earning Rules') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-sliders" style="font-size: 0.85rem; color: #f59e0b;"></i>
+                            <span>{{ __('Earning Rules') }}</span>
+                        </span>
+                    </a>
+
+                    <a href="{{ route('admin.loyalty.rewards') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.rewards') ? 'active' : '' }}" title="{{ __('Rewards Catalog') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-award" style="font-size: 0.85rem; color: #10b981;"></i>
+                            <span>{{ __('Rewards Catalog') }}</span>
+                        </span>
+                    </a>
+
+                    <a href="{{ route('admin.loyalty.tiers') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.tiers') ? 'active' : '' }}" title="{{ __('Membership Tiers') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-layer-group" style="font-size: 0.85rem; color: #8b5cf6;"></i>
+                            <span>{{ __('Membership Tiers') }}</span>
+                        </span>
+                    </a>
+
+                    <a href="{{ route('admin.loyalty.stamps') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.stamps') ? 'active' : '' }}" title="{{ __('Digital Stamp Cards') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-stamp" style="font-size: 0.85rem; color: #06b6d4;"></i>
+                            <span>{{ __('Digital Stamp Cards') }}</span>
+                        </span>
+                    </a>
+
+                    <a href="{{ route('admin.loyalty.referrals') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.referrals') ? 'active' : '' }}" title="{{ __('Referral Program') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-user-plus" style="font-size: 0.85rem; color: #f97316;"></i>
+                            <span>{{ __('Referral Program') }}</span>
+                        </span>
+                    </a>
+
+                    <a href="{{ route('admin.loyalty.campaigns') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.campaigns') ? 'active' : '' }}" title="{{ __('Marketing Campaigns') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-bullhorn" style="font-size: 0.85rem; color: #ec4899;"></i>
+                            <span>{{ __('Marketing Campaigns') }}</span>
+                        </span>
+                    </a>
+
+                    <a href="{{ route('admin.loyalty.designer') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.designer') ? 'active' : '' }}" title="{{ __('Card Designer') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-palette" style="font-size: 0.85rem; color: #a855f7;"></i>
+                            <span>{{ __('Card Designer') }}</span>
+                        </span>
+                    </a>
+
+                    <a href="{{ route('admin.loyalty.wallet_settings') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.wallet_settings') ? 'active' : '' }}" title="{{ __('Wallet Settings') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-brands fa-apple" style="font-size: 0.85rem; color: #64748b;"></i>
+                            <span>{{ __('Wallet Settings') }}</span>
+                        </span>
+                    </a>
+
+                    <a href="{{ route('admin.loyalty.transactions') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.transactions') ? 'active' : '' }}" title="{{ __('Transactions') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-receipt" style="font-size: 0.85rem; color: #14b8a6;"></i>
+                            <span>{{ __('Transactions') }}</span>
+                        </span>
+                    </a>
+
+                    <a href="{{ route('admin.loyalty.settings') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.settings') ? 'active' : '' }}" title="{{ __('Program Settings') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-gear" style="font-size: 0.85rem; color: #6b7280;"></i>
+                            <span>{{ __('Program Settings') }}</span>
+                        </span>
+                    </a>
+
+                    <a href="{{ route('admin.loyalty.audit_logs') }}" class="nav-sub-item {{ request()->routeIs('admin.loyalty.audit_logs') ? 'active' : '' }}" title="{{ __('Audit Logs') }}">
+                        <span style="display: flex; align-items: center; gap: 0.6rem;">
+                            <i class="fa-solid fa-shield-halved" style="font-size: 0.85rem; color: #dc2626;"></i>
+                            <span>{{ __('Audit Logs') }}</span>
+                        </span>
+                    </a>
+                </div>
+            </div>
 
             @can('tips.view')
                 <a href="{{ route('admin.tips_ratings.reports') }}" class="nav-item {{ request()->routeIs('admin.tips_ratings.*') ? 'active' : '' }}" title="{{ __('Tips & Service Ratings') }}">
@@ -636,29 +917,4 @@
             @endif
         @endif
     </nav>
-
-    <!-- Sidebar Help & Support Desk Widget -->
-    @if(Auth::user()?->isSuperAdmin())
-        <div class="sidebar-widget" style="text-align: left; padding: 0.85rem 1rem; margin: 0.75rem 0.85rem 1.25rem;">
-            <div style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.4rem;">
-                <i class="fa-solid fa-server" style="color: #6366f1;"></i> Core Platform
-            </div>
-            <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-main);">Laravel 13 & Reverb</div>
-            <div style="font-size: 0.72rem; color: #10b981; margin-top: 0.25rem; display: flex; align-items: center; gap: 0.35rem;">
-                <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span>
-                <span>WebSocket: Port 8080 Active</span>
-            </div>
-        </div>
-    @else
-        <div class="sidebar-widget">
-            <div style="font-weight: 700; font-size: 0.8rem; color: var(--text-main); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.45rem;">
-                <i class="fa-solid fa-headset" style="color: var(--primary);"></i>
-                <span>{{ __('Help & Support') }}</span>
-            </div>
-            <p>{{ __('Need help or custom menu translation?') }}</p>
-            <a href="mailto:{{ \App\Models\SystemSetting::get('contact_email') ?: 'support@elab.am' }}" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.75rem; border-radius: 8px; width: 100%; text-decoration: none; justify-content: center;">
-                {{ __('Get Support') }}
-            </a>
-        </div>
-    @endif
 </aside>

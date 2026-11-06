@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domains\Loyalty\Services\CustomerLoyaltyService;
 use App\Models\Customer;
 use App\Models\Location;
 use App\Models\Order;
@@ -44,8 +45,14 @@ class CustomerController extends Controller
 
         $search = $request->get('search');
         $consentFilter = $request->get('marketing');
+        $tierFilter = $request->get('tier');
 
-        $query = Customer::where('vendor_id', $vendor->id)->with('location');
+        $query = Customer::where('vendor_id', $vendor->id)
+            ->with(['location', 'pointsAccount', 'cashbackAccount']);
+
+        if ($tierFilter && $tierFilter !== 'all') {
+            $query->where('loyalty_tier', $tierFilter);
+        }
 
         if ($activeLocationId && $activeLocationId !== 'all') {
             $query->where(function ($q) use ($activeLocationId) {
@@ -115,6 +122,7 @@ class CustomerController extends Controller
             'totalRevenue',
             'search',
             'consentFilter',
+            'tierFilter',
             'upcomingBirthdays'
         ));
     }
@@ -124,13 +132,31 @@ class CustomerController extends Controller
         $this->authorize('view', $customer);
 
         $vendor = Auth::user()->vendor;
-        $customer->load('location');
+        $customer->load(['location', 'pointsAccount', 'cashbackAccount']);
         $this->customerService->recalculateStats($customer);
         $orders = $customer->orders()->with('items', 'location')->paginate(20);
         $reservations = $customer->reservations()->with(['location', 'restaurantTable', 'preOrder'])->latest('reservation_date')->latest('reservation_time')->get();
         $eventInquiries = $customer->eventInquiries()->with('location')->latest('event_date')->get();
 
-        return view('admin.customers.show', compact('vendor', 'customer', 'orders', 'reservations', 'eventInquiries'));
+        // Loyalty & Digital Wallet CRM Integration
+        $loyaltyOverview = app(CustomerLoyaltyService::class)->getCustomerLoyaltyOverview($customer);
+        $loyaltyTransactions = $customer->pointsAccount?->transactions()->take(10)->get() ?? collect();
+        $cashbackTransactions = $customer->cashbackAccount?->transactions()->take(10)->get() ?? collect();
+        $stampCards = $customer->stampCards()->with('program')->latest()->get();
+        $walletPasses = $customer->walletPasses()->with('deviceRegistrations')->latest()->get();
+
+        return view('admin.customers.show', compact(
+            'vendor',
+            'customer',
+            'orders',
+            'reservations',
+            'eventInquiries',
+            'loyaltyOverview',
+            'loyaltyTransactions',
+            'cashbackTransactions',
+            'stampCards',
+            'walletPasses'
+        ));
     }
 
     public function store(Request $request)

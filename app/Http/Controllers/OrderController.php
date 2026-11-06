@@ -8,6 +8,7 @@ use App\Mail\OrderReceiptMail;
 use App\Models\Order;
 use App\Models\WaiterCall;
 use App\Services\OrderService;
+use App\Services\OrderStockDepletionService;
 use App\Services\ThermalPrinterService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -109,6 +110,18 @@ class OrderController extends Controller
 
         $previousStatus = $order->status;
         $order->update(['status' => $validated['status']]);
+
+        // Inventory Stock Depletion & Reversals (Phase 5)
+        try {
+            $depletionService = app(OrderStockDepletionService::class);
+            if (in_array($newStatus, ['cancelled', 'refunded'], true)) {
+                $depletionService->reverseOrderDepletion($order, "Status updated to {$newStatus}");
+            } elseif (in_array($newStatus, ['confirmed', 'preparing', 'completed'], true)) {
+                $depletionService->depleteOrder($order);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Order inventory sync failed: '.$e->getMessage());
+        }
 
         // Broadcast real-time status update for kitchen screens & customer tracker
         try {

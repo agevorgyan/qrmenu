@@ -137,20 +137,20 @@ class SubscriptionPlanSeeder extends Seeder
         if ($advancedPlan) {
             $legacyPlanIds = SubscriptionPlan::whereNotIn('slug', ['basic', 'pro', 'advanced'])->pluck('id')->toArray();
             if (! empty($legacyPlanIds)) {
-                \App\Models\Vendor::withoutGlobalScopes()
+                Vendor::withoutGlobalScopes()
                     ->whereIn('subscription_plan_id', $legacyPlanIds)
                     ->update([
                         'subscription_plan_id' => $advancedPlan->id,
                         'subscription_plan' => 'advanced',
                     ]);
-                \App\Models\Subscription::withoutGlobalScopes()
+                Subscription::withoutGlobalScopes()
                     ->whereIn('subscription_plan_id', $legacyPlanIds)
                     ->update([
                         'subscription_plan_id' => $advancedPlan->id,
                         'plan_version_id' => $advancedPlan->current_version_id,
                         'plan_version_number' => $advancedPlan->current_version_number ?? 1,
                     ]);
-                \App\Models\SubscriptionPayment::withoutGlobalScopes()
+                SubscriptionPayment::withoutGlobalScopes()
                     ->whereIn('subscription_plan_id', $legacyPlanIds)
                     ->update(['subscription_plan_id' => $advancedPlan->id]);
                 SubscriptionPlanPrice::whereIn('subscription_plan_id', $legacyPlanIds)->delete();

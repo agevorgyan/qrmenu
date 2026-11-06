@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Customer;
+use App\Models\EventInquiry;
 use App\Models\Location;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
@@ -209,5 +210,59 @@ class CustomerManagementTest extends TestCase
         $phoneResponse->assertStatus(200);
         $phoneResponse->assertSee('Sona Sargsyan');
         $phoneResponse->assertDontSee('Armen Petrosyan');
+    }
+
+    public function test_admin_can_view_customer_profile_with_loyalty_and_event_inquiries(): void
+    {
+        $plan = SubscriptionPlan::where('slug', 'pro')->first();
+
+        $vendor = Vendor::create([
+            'name' => 'Profile Vendor',
+            'slug' => 'profile-vendor',
+            'email' => 'profile@vendor.com',
+            'password' => bcrypt('password'),
+            'subscription_plan' => 'pro',
+            'subscription_plan_id' => $plan->id,
+            'subscription_expires_at' => now()->addDays(30),
+            'is_active' => true,
+        ]);
+
+        $user = User::create([
+            'name' => 'Owner',
+            'email' => 'profile@vendor.com',
+            'password' => bcrypt('password'),
+            'vendor_id' => $vendor->id,
+            'role' => 'vendor_owner',
+        ]);
+
+        $customer = Customer::create([
+            'vendor_id' => $vendor->id,
+            'name' => 'David Hakobyan',
+            'phone' => '094556677',
+            'email' => 'david@example.com',
+            'loyalty_points' => 350,
+            'loyalty_tier' => 'Gold',
+        ]);
+
+        EventInquiry::create([
+            'vendor_id' => $vendor->id,
+            'customer_id' => $customer->id,
+            'customer_name' => 'David Hakobyan',
+            'customer_phone' => '094556677',
+            'reference' => 'EVT-999',
+            'status' => 'confirmed',
+            'event_type' => 'birthday',
+            'event_date' => now()->addDays(3)->format('Y-m-d'),
+            'guest_count' => 12,
+            'budget' => 150000,
+            'budget_currency' => 'AMD',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.customers.show', $customer->id));
+
+        $response->assertStatus(200);
+        $response->assertSee('David Hakobyan');
+        $response->assertSee('EVT-999');
+        $response->assertSee('Gold');
     }
 }

@@ -1,6 +1,34 @@
 <?php
 
+use App\Domains\Loyalty\Http\Controllers\Admin\LoyaltyCampaignsController;
+use App\Domains\Loyalty\Http\Controllers\Admin\LoyaltyDashboardController;
+use App\Domains\Loyalty\Http\Controllers\Admin\LoyaltyProgramController;
+use App\Domains\Loyalty\Http\Controllers\Admin\LoyaltyReferralsController;
+use App\Domains\Loyalty\Http\Controllers\Admin\LoyaltyRewardsController;
+use App\Domains\Loyalty\Http\Controllers\Admin\LoyaltyRulesController;
+use App\Domains\Loyalty\Http\Controllers\Admin\LoyaltyStampCardsController;
+use App\Domains\Loyalty\Http\Controllers\Admin\LoyaltyTiersController;
+use App\Domains\Loyalty\Http\Controllers\Admin\WalletDesignerController;
+use App\Domains\Loyalty\Http\Controllers\Admin\WalletSettingsController;
+use App\Domains\Loyalty\Http\Controllers\Customer\CustomerLoyaltyAuthController;
+use App\Domains\Loyalty\Http\Controllers\Customer\CustomerLoyaltyPortalController;
+use App\Domains\Loyalty\Http\Controllers\Customer\CustomerWalletController;
+use App\Domains\Loyalty\Http\Controllers\Staff\StaffLoyaltyOperationsController;
+use App\Domains\Loyalty\Http\Controllers\Webhooks\ApplePassKitWebserviceController;
 use App\Http\Controllers\Admin\AccessControlController;
+use App\Http\Controllers\Admin\HaccpController;
+use App\Http\Controllers\Admin\IngredientCategoryController;
+use App\Http\Controllers\Admin\IngredientController;
+use App\Http\Controllers\Admin\InventoryReportController;
+use App\Http\Controllers\Admin\InventoryStockController;
+use App\Http\Controllers\Admin\ProductionOrderController;
+use App\Http\Controllers\Admin\PurchaseOrderController;
+use App\Http\Controllers\Admin\RecipeController;
+use App\Http\Controllers\Admin\SupplierController;
+use App\Http\Controllers\Admin\SupplierInvoiceController;
+use App\Http\Controllers\Admin\UnitController;
+use App\Http\Controllers\Admin\WarehouseController;
+use App\Http\Controllers\Admin\WasteController;
 use App\Http\Controllers\AdminEventInquiryController;
 use App\Http\Controllers\AdminReservationController;
 use App\Http\Controllers\AdminSplitBillController;
@@ -126,6 +154,26 @@ Route::get('/api/m/{vendor_slug}/bill/{token}', [ClientStorefrontController::cla
 Route::post('/api/m/{vendor_slug}/bill/{token}/split', [ClientStorefrontController::class, 'submitSplitPayment'])
     ->middleware('throttle:30,1')
     ->name('client.bill.split');
+
+// Customer Loyalty Storefront & Digital Wallet Routes
+Route::get('/m/{vendor_slug}/loyalty/login', [CustomerLoyaltyAuthController::class, 'showLogin'])->name('client.loyalty.login');
+Route::post('/api/m/{vendor_slug}/loyalty/otp/send', [CustomerLoyaltyAuthController::class, 'sendOtp'])->name('client.loyalty.otp.send');
+Route::post('/api/m/{vendor_slug}/loyalty/otp/verify', [CustomerLoyaltyAuthController::class, 'verifyOtp'])->name('client.loyalty.otp.verify');
+Route::get('/m/{vendor_slug}/loyalty/logout', [CustomerLoyaltyAuthController::class, 'logout'])->name('client.loyalty.logout');
+Route::get('/m/{vendor_slug}/loyalty', [CustomerLoyaltyPortalController::class, 'index'])->name('client.loyalty.portal');
+Route::post('/api/m/{vendor_slug}/loyalty/rewards/{reward}/claim', [CustomerLoyaltyPortalController::class, 'claimReward'])->name('client.loyalty.rewards.claim');
+Route::post('/api/m/{vendor_slug}/loyalty/referral/apply', [CustomerLoyaltyPortalController::class, 'applyReferral'])->name('client.loyalty.referral.apply');
+Route::get('/m/{vendor_slug}/loyalty/wallet/apple', [CustomerWalletController::class, 'downloadApplePass'])->name('client.loyalty.wallet.apple');
+Route::get('/m/{vendor_slug}/loyalty/wallet/google', [CustomerWalletController::class, 'addToGoogleWallet'])->name('client.loyalty.wallet.google');
+
+// Apple PassKit Web Service Endpoints (RFC 6750 / PassKit specification)
+Route::prefix('api/v1')->group(function () {
+    Route::post('/devices/{deviceLibraryIdentifier}/registrations/{passTypeIdentifier}/{serialNumber}', [ApplePassKitWebserviceController::class, 'registerDevice']);
+    Route::delete('/devices/{deviceLibraryIdentifier}/registrations/{passTypeIdentifier}/{serialNumber}', [ApplePassKitWebserviceController::class, 'unregisterDevice']);
+    Route::get('/devices/{deviceLibraryIdentifier}/registrations/{passTypeIdentifier}', [ApplePassKitWebserviceController::class, 'getSerialNumbersForDevice']);
+    Route::get('/passes/{passTypeIdentifier}/{serialNumber}', [ApplePassKitWebserviceController::class, 'deliverPass']);
+    Route::post('/log', [ApplePassKitWebserviceController::class, 'log']);
+});
 
 Route::get('/m/{vendor_slug}/{location_slug?}', [ClientStorefrontController::class, 'showMenu'])
     ->middleware('throttle:120,1')
@@ -489,6 +537,92 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', E
     Route::post('/menu/products/{product}/override', [MenuBuilderController::class, 'saveOverride'])->name('menu.products.override');
     Route::delete('/menu/products/{product}', [MenuBuilderController::class, 'destroyProduct'])->name('menu.products.destroy');
 
+    // ==========================================
+    // Inventory, Procurement & Production (Phase 1 Foundation)
+    // ==========================================
+    Route::prefix('inventory')->name('inventory.')->group(function () {
+        Route::get('/dashboard', [InventoryStockController::class, 'dashboard'])->name('dashboard');
+
+        // Ingredients Catalog
+        Route::get('/ingredients/template', [IngredientController::class, 'template'])->name('ingredients.template');
+        Route::post('/ingredients/import', [IngredientController::class, 'import'])->name('ingredients.import');
+        Route::get('/ingredients/export', [IngredientController::class, 'export'])->name('ingredients.export');
+        Route::resource('ingredients', IngredientController::class);
+
+        // Ingredient Categories
+        Route::resource('categories', IngredientCategoryController::class)->except(['create', 'show', 'edit']);
+
+        // Units & Conversions
+        Route::get('/units', [UnitController::class, 'index'])->name('units.index');
+        Route::post('/units', [UnitController::class, 'store'])->name('units.store');
+        Route::post('/units/conversions', [UnitController::class, 'storeConversion'])->name('units.conversions.store');
+        Route::delete('/units/conversions/{conversion}', [UnitController::class, 'destroyConversion'])->name('units.conversions.destroy');
+
+        // Warehouses
+        Route::post('/warehouses/{warehouse}/default', [WarehouseController::class, 'setDefault'])->name('warehouses.default');
+        Route::resource('warehouses', WarehouseController::class);
+
+        // Stock Balances & Movements Ledger
+        Route::get('/stocks', [InventoryStockController::class, 'overview'])->name('stocks.overview');
+        Route::get('/movements', [InventoryStockController::class, 'movements'])->name('stocks.movements');
+        Route::post('/transactions', [InventoryStockController::class, 'storeTransaction'])->name('stocks.transactions.store');
+
+        // Recipes & Technical Cards (Phase 2)
+        Route::post('/recipes/quick-packaging', [RecipeController::class, 'quickStorePackaging'])->name('recipes.quick-packaging');
+        Route::post('/recipes/{recipe}/approve', [RecipeController::class, 'approve'])->name('recipes.approve');
+        Route::post('/recipes/{recipe}/recalculate', [RecipeController::class, 'recalculate'])->name('recipes.recalculate');
+        Route::resource('recipes', RecipeController::class);
+
+        // Suppliers & Price Lists (Phase 3)
+        Route::post('/suppliers/{supplier}/prices', [SupplierController::class, 'savePrices'])->name('suppliers.prices.save');
+        Route::resource('suppliers', SupplierController::class);
+
+        // Procurement & Purchase Orders (Phase 3)
+        Route::get('/procurement/suggestions', [PurchaseOrderController::class, 'suggestions'])->name('procurement.suggestions');
+        Route::post('/procurement/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve'])->name('procurement.approve');
+        Route::post('/procurement/{purchaseOrder}/send', [PurchaseOrderController::class, 'markSent'])->name('procurement.send');
+        Route::post('/procurement/{purchaseOrder}/receive', [PurchaseOrderController::class, 'receive'])->name('procurement.receive');
+        Route::post('/procurement/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel'])->name('procurement.cancel');
+        Route::resource('procurement', PurchaseOrderController::class)->parameters(['procurement' => 'purchaseOrder']);
+
+        // Accounts Payable Invoices & Payments (Phase 3)
+        Route::post('/invoices/tax-import', [SupplierInvoiceController::class, 'importTaxInvoice'])->name('invoices.tax-import');
+        Route::get('/invoices', [SupplierInvoiceController::class, 'index'])->name('invoices.index');
+        Route::get('/invoices/{supplierInvoice}', [SupplierInvoiceController::class, 'show'])->name('invoices.show');
+        Route::post('/invoices/{supplierInvoice}/convert-item/{item}', [SupplierInvoiceController::class, 'convertItem'])->name('invoices.convert-item');
+        Route::post('/payments', [SupplierInvoiceController::class, 'storePayment'])->name('payments.store');
+
+        // Production & Semi-Finished Processing (Phase 4)
+        Route::post('/production/{productionOrder}/start', [ProductionOrderController::class, 'start'])->name('production.start');
+        Route::post('/production/{productionOrder}/complete', [ProductionOrderController::class, 'complete'])->name('production.complete');
+        Route::post('/production/{productionOrder}/cancel', [ProductionOrderController::class, 'cancel'])->name('production.cancel');
+        Route::resource('production', ProductionOrderController::class)->parameters(['production' => 'productionOrder']);
+
+        // HACCP, Food Safety & Traceability (Phase 6)
+        Route::get('/haccp', [HaccpController::class, 'dashboard'])->name('haccp.dashboard');
+        Route::get('/haccp/temperatures', [HaccpController::class, 'temperatureLogs'])->name('haccp.temperatures');
+        Route::post('/haccp/temperatures', [HaccpController::class, 'storeTemperature'])->name('haccp.temperatures.store');
+        Route::get('/haccp/checklists', [HaccpController::class, 'checklists'])->name('haccp.checklists');
+        Route::post('/haccp/checklists', [HaccpController::class, 'storeChecklist'])->name('haccp.checklists.store');
+        Route::get('/haccp/ccps', [HaccpController::class, 'ccps'])->name('haccp.ccps');
+        Route::post('/haccp/ccps/seed', [HaccpController::class, 'seedCcps'])->name('haccp.ccps.seed');
+        Route::get('/haccp/batches', [HaccpController::class, 'batches'])->name('haccp.batches');
+        Route::get('/haccp/traceability', [HaccpController::class, 'traceability'])->name('haccp.traceability');
+
+        // Waste & Loss Management (Phase 7)
+        Route::get('/waste', [WasteController::class, 'index'])->name('waste.index');
+        Route::get('/waste/create', [WasteController::class, 'create'])->name('waste.create');
+        Route::post('/waste', [WasteController::class, 'store'])->name('waste.store');
+        Route::get('/waste/{wasteLog}', [WasteController::class, 'show'])->name('waste.show');
+
+        // Inventory Reports & Business Intelligence (Phase 7)
+        Route::get('/reports/inventory', [InventoryReportController::class, 'index'])->name('reports.inventory.index');
+        Route::get('/reports/inventory/food-cost', [InventoryReportController::class, 'foodCostVariance'])->name('reports.inventory.food-cost');
+        Route::get('/reports/inventory/abc-analysis', [InventoryReportController::class, 'abcAnalysis'])->name('reports.inventory.abc-analysis');
+        Route::get('/reports/inventory/turnover', [InventoryReportController::class, 'turnover'])->name('reports.inventory.turnover');
+        Route::get('/reports/inventory/waste', [InventoryReportController::class, 'wasteAnalysis'])->name('reports.inventory.waste');
+    });
+
     // AI Tools (Business Plan Feature)
     Route::middleware([EnsurePlanHasFeature::class.':ai.menu_builder'])->group(function () {
         Route::get('/ai/import', [AiMenuController::class, 'showImportForm'])->name('ai.import');
@@ -630,6 +764,69 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', E
         Route::post('/settings/split-bill', [AdminSplitBillController::class, 'updateSettings'])->name('settings.split_bill.update');
         Route::get('/orders/{order}/split-bill', [AdminSplitBillController::class, 'showOrderSplit'])->name('orders.split_bill');
         Route::post('/split-bill-payments/{payment}/approve', [AdminSplitBillController::class, 'approvePayment'])->name('split_bill.approve_payment');
+    });
+
+    // Loyalty & Digital Wallet Module (Enterprise)
+    Route::prefix('loyalty')->name('loyalty.')->group(function () {
+        Route::get('/', [LoyaltyDashboardController::class, 'index'])->name('index');
+        Route::get('/customers', [LoyaltyDashboardController::class, 'customers'])->name('customers');
+        Route::post('/adjust-balance', [LoyaltyDashboardController::class, 'adjustBalance'])->name('adjust_balance');
+        Route::get('/transactions', [LoyaltyDashboardController::class, 'transactions'])->name('transactions');
+        Route::get('/transactions/export', [LoyaltyDashboardController::class, 'exportTransactions'])->name('transactions.export');
+        Route::post('/reconcile', [LoyaltyDashboardController::class, 'reconcile'])->name('reconcile');
+        Route::get('/audit-logs', [LoyaltyDashboardController::class, 'auditLogs'])->name('audit_logs');
+
+        // Program Settings
+        Route::get('/settings', [LoyaltyProgramController::class, 'index'])->name('settings');
+        Route::post('/settings', [LoyaltyProgramController::class, 'update'])->name('settings.update');
+
+        // Rules
+        Route::get('/rules', [LoyaltyRulesController::class, 'index'])->name('rules');
+        Route::post('/rules', [LoyaltyRulesController::class, 'store'])->name('rules.store');
+        Route::post('/rules/{rule}/toggle', [LoyaltyRulesController::class, 'toggle'])->name('rules.toggle');
+        Route::delete('/rules/{rule}', [LoyaltyRulesController::class, 'destroy'])->name('rules.destroy');
+
+        // Rewards
+        Route::get('/rewards', [LoyaltyRewardsController::class, 'index'])->name('rewards');
+        Route::post('/rewards', [LoyaltyRewardsController::class, 'store'])->name('rewards.store');
+        Route::post('/rewards/{reward}/toggle', [LoyaltyRewardsController::class, 'toggle'])->name('rewards.toggle');
+        Route::delete('/rewards/{reward}', [LoyaltyRewardsController::class, 'destroy'])->name('rewards.destroy');
+
+        // Tiers
+        Route::get('/tiers', [LoyaltyTiersController::class, 'index'])->name('tiers');
+        Route::post('/tiers/{tier}', [LoyaltyTiersController::class, 'update'])->name('tiers.update');
+
+        // Stamps
+        Route::get('/stamps', [LoyaltyStampCardsController::class, 'index'])->name('stamps');
+        Route::post('/stamps', [LoyaltyStampCardsController::class, 'store'])->name('stamps.store');
+        Route::post('/stamps/{program}/toggle', [LoyaltyStampCardsController::class, 'toggle'])->name('stamps.toggle');
+        Route::delete('/stamps/{program}', [LoyaltyStampCardsController::class, 'destroy'])->name('stamps.destroy');
+
+        // Referrals
+        Route::get('/referrals', [LoyaltyReferralsController::class, 'index'])->name('referrals');
+        Route::post('/referrals/settings', [LoyaltyReferralsController::class, 'updateSettings'])->name('referrals.settings.update');
+
+        // Campaigns
+        Route::get('/campaigns', [LoyaltyCampaignsController::class, 'index'])->name('campaigns');
+        Route::post('/campaigns', [LoyaltyCampaignsController::class, 'store'])->name('campaigns.store');
+        Route::post('/campaigns/{campaign}/toggle', [LoyaltyCampaignsController::class, 'toggle'])->name('campaigns.toggle');
+        Route::delete('/campaigns/{campaign}', [LoyaltyCampaignsController::class, 'destroy'])->name('campaigns.destroy');
+
+        // Wallet Designer & Settings
+        Route::get('/designer', [WalletDesignerController::class, 'index'])->name('designer');
+        Route::post('/designer', [WalletDesignerController::class, 'update'])->name('designer.update');
+        Route::get('/designer/preview-data', [WalletDesignerController::class, 'previewData'])->name('designer.preview');
+        Route::get('/wallet-settings', [WalletSettingsController::class, 'index'])->name('wallet_settings');
+        Route::post('/wallet-settings', [WalletSettingsController::class, 'update'])->name('wallet_settings.update');
+
+        // Staff Operations
+        Route::get('/staff', [StaffLoyaltyOperationsController::class, 'index'])->name('staff');
+        Route::post('/staff/lookup', [StaffLoyaltyOperationsController::class, 'lookup'])->name('staff.lookup');
+        Route::post('/staff/points/issue', [StaffLoyaltyOperationsController::class, 'issuePoints'])->name('staff.points.issue');
+        Route::post('/staff/points/redeem', [StaffLoyaltyOperationsController::class, 'redeemPoints'])->name('staff.points.redeem');
+        Route::post('/staff/rewards/redeem', [StaffLoyaltyOperationsController::class, 'redeemRewardVoucher'])->name('staff.rewards.redeem');
+        Route::post('/staff/stamps/issue', [StaffLoyaltyOperationsController::class, 'issueStamp'])->name('staff.stamps.issue');
+        Route::post('/staff/stamps/{card}/redeem', [StaffLoyaltyOperationsController::class, 'redeemStampCard'])->name('staff.stamps.redeem');
     });
 
     // User Profile & 2FA Security

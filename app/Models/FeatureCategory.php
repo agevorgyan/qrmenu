@@ -63,4 +63,3 @@ class FeatureCategory extends Model
             ?? $this->description;
     }
 }
-

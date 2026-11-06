@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsurePlanHasFeature;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\IdentifyTenant;
 use App\Http\Middleware\SecurityHeaders;
@@ -49,6 +50,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->alias([
             'role' => EnsureRole::class,
+            'feature' => EnsurePlanHasFeature::class,
+            'feature' => EnsurePlanHasFeature::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             'api/webhooks/*',

@@ -93,4 +93,3 @@ class SubscriptionAddon extends Model
         return in_array(strtolower(trim($planSlug)), array_map('strtolower', $slugs), true);
     }
 }
-

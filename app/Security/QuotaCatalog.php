@@ -40,10 +40,43 @@ class QuotaCatalog
 
     public const KEY_CURRENCIES_COUNT = 'currencies.count';
 
+    public const KEY_WAREHOUSES_COUNT = 'warehouses.count';
+
+    public const KEY_INGREDIENTS_COUNT = 'ingredients.count';
+
+    public const KEY_RECIPES_COUNT = 'recipes.count';
+
+    public const KEY_SUPPLIERS_COUNT = 'suppliers.count';
+
+    public const KEY_PURCHASE_ORDERS_COUNT = 'purchase_orders.count';
+
+    public const KEY_PRODUCTION_ORDERS_COUNT = 'production_orders.count';
+
+    public const KEY_CUSTOMERS_COUNT = 'customers.count';
+
+    public const KEY_ACTIVE_CAMPAIGNS_COUNT = 'active_campaigns.count';
+
+    public const KEY_REWARDS_COUNT = 'rewards.count';
+
+    public const KEY_WALLET_PASSES_COUNT = 'wallet_passes.count';
+
     /**
      * Aliases map for legacy or conversational keys.
      */
     protected const ALIASES = [
+        'warehouses' => self::KEY_WAREHOUSES_COUNT,
+        'warehouse' => self::KEY_WAREHOUSES_COUNT,
+        'warehouses.limit' => self::KEY_WAREHOUSES_COUNT,
+        'ingredients' => self::KEY_INGREDIENTS_COUNT,
+        'ingredient' => self::KEY_INGREDIENTS_COUNT,
+        'ingredients.limit' => self::KEY_INGREDIENTS_COUNT,
+        'recipes' => self::KEY_RECIPES_COUNT,
+        'recipe' => self::KEY_RECIPES_COUNT,
+        'recipes.limit' => self::KEY_RECIPES_COUNT,
+        'suppliers' => self::KEY_SUPPLIERS_COUNT,
+        'supplier' => self::KEY_SUPPLIERS_COUNT,
+        'purchase_orders' => self::KEY_PURCHASE_ORDERS_COUNT,
+
         'products' => self::KEY_PRODUCTS_COUNT,
         'product' => self::KEY_PRODUCTS_COUNT,
         'dishes' => self::KEY_PRODUCTS_COUNT,

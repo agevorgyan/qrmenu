@@ -159,6 +159,16 @@
             </select>
         </div>
 
+        <div style="min-width: min(100%, 160px); flex-shrink: 0;">
+            <select name="tier" onchange="this.form.submit()" style="width: 100%; box-sizing: border-box; padding: 0.65rem 0.9rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 0.88rem; outline: none; font-weight: 600;">
+                <option value="all" {{ ($tierFilter ?? 'all') === 'all' ? 'selected' : '' }}>👑 {{ __('All Tiers') }}</option>
+                <option value="Bronze" {{ ($tierFilter ?? '') === 'Bronze' ? 'selected' : '' }}>🥉 {{ __('Bronze') }}</option>
+                <option value="Silver" {{ ($tierFilter ?? '') === 'Silver' ? 'selected' : '' }}>🥈 {{ __('Silver') }}</option>
+                <option value="Gold" {{ ($tierFilter ?? '') === 'Gold' ? 'selected' : '' }}>🥇 {{ __('Gold') }}</option>
+                <option value="Platinum" {{ ($tierFilter ?? '') === 'Platinum' ? 'selected' : '' }}>💎 {{ __('Platinum') }}</option>
+            </select>
+        </div>
+
         <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
             <button type="submit" class="btn btn-secondary" style="font-size: 0.88rem; font-weight: 600; padding: 0.65rem 1.1rem; border-radius: 12px;">
                 <i class="fa-solid fa-filter"></i> {{ __('Filter') }}
@@ -184,6 +194,7 @@
                     <th style="padding: 1rem 1.25rem;">{{ __('Email') }}</th>
                     <th style="padding: 1rem 1.25rem;">{{ __('Orders') }}</th>
                     <th style="padding: 1rem 1.25rem;">{{ __('Total Spent') }}</th>
+                    <th style="padding: 1rem 1.25rem;">{{ __('Loyalty & Wallet') }}</th>
                     <th style="padding: 1rem 1.25rem;">{{ __('Marketing') }}</th>
                     <th style="padding: 1rem 1.25rem;">{{ __('Last Order') }}</th>
                     <th style="padding: 1rem 1.25rem; text-align: right;">{{ __('Actions') }}</th>
@@ -228,6 +239,30 @@
                         </td>
                         <td style="padding: 1rem 1.25rem; font-weight: 800; color: #10b981; font-family: 'Outfit', sans-serif; font-size: 1rem; white-space: nowrap;">
                             {{ number_format($c->total_spent) }} {{ $vendor->currency }}
+                        </td>
+                        <td style="padding: 1rem 1.25rem; white-space: nowrap;">
+                            @php
+                                $tierName = $c->loyalty_tier ?? 'Bronze';
+                                $tierColor = match(strtolower($tierName)) {
+                                    'platinum' => '#6366f1',
+                                    'gold' => '#eab308',
+                                    'silver' => '#94a3b8',
+                                    default => '#cd7f32'
+                                };
+                                $pts = $c->pointsAccount?->current_balance ?? (int) $c->loyalty_points;
+                                $cb = $c->cashbackAccount?->current_balance ?? 0.00;
+                            @endphp
+                            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                <span class="badge" style="background: {{ $tierColor }}22; color: {{ $tierColor }}; border: 1px solid {{ $tierColor }}44; font-weight: 700; font-size: 0.72rem; padding: 0.15rem 0.45rem; border-radius: 6px; width: fit-content; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                    <i class="fa-solid fa-crown"></i> {{ __($tierName) }}
+                                </span>
+                                <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">
+                                    <span style="color: #6366f1;">{{ number_format($pts) }}</span> <span style="font-size: 0.7rem; color: var(--text-muted);">{{ __('pts') }}</span>
+                                    @if($cb > 0)
+                                        &bull; <span style="color: #10b981;">{{ number_format($cb, 2) }}</span> <span style="font-size: 0.7rem; color: var(--text-muted);">{{ $vendor->currency }}</span>
+                                    @endif
+                                </div>
+                            </div>
                         </td>
                         <td style="padding: 1rem 1.25rem; white-space: nowrap;">
                             @if($c->marketing_opt_in)

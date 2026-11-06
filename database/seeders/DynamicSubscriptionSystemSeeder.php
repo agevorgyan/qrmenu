@@ -11,4 +11,3 @@ class DynamicSubscriptionSystemSeeder extends Seeder
         $this->call(SubscriptionPlanSeeder::class);
     }
 }
-

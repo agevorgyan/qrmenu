@@ -72,7 +72,7 @@
             </div>
             <div style="min-width: 0;">
                 <h1 style="font-family: 'Outfit', sans-serif; font-size: clamp(1.3rem, 2.5vw, 1.75rem); font-weight: 800; color: var(--text-main); margin: 0; word-break: break-word;">
-                    {{ $customer->name ?? 'Guest Customer' }}
+                    {{ $customer->name ?? __('Guest') }}
                 </h1>
                 <div style="display: flex; gap: 0.85rem; color: var(--text-muted); font-size: 0.85rem; margin-top: 0.4rem; flex-wrap: wrap; align-items: center;">
                     @if($customer->phone)
@@ -83,28 +83,28 @@
                     @endif
                     @if($customer->birthdate)
                         <span style="color: #ec4899; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
-                            <i class="fa-solid fa-cake-candles"></i> {{ $customer->birthdate->format('d M Y') }} ({{ $customer->birthdate->age }} yrs)
+                            <i class="fa-solid fa-cake-candles"></i> {{ $customer->birthdate->format('d M Y') }} ({{ $customer->birthdate->age }} {{ __('yrs') }})
                         </span>
                     @endif
                     @if($customer->address)
                         <span style="display: inline-flex; align-items: center; gap: 0.35rem;"><i class="fa-solid fa-map-pin" style="color: #f59e0b;"></i> {{ $customer->address }}</span>
                     @endif
-                    <span style="display: inline-flex; align-items: center; gap: 0.35rem;"><i class="fa-solid fa-calendar-day"></i> Registered: {{ $customer->created_at->format('M Y') }}</span>
+                    <span style="display: inline-flex; align-items: center; gap: 0.35rem;"><i class="fa-solid fa-calendar-day"></i> {{ __('Registered') }}: {{ $customer->created_at->format('M Y') }}</span>
                 </div>
             </div>
         </div>
 
         <div style="display: flex; gap: 0.65rem; align-items: center; flex-wrap: wrap;">
             <span style="background: rgba(79, 70, 229, 0.15); color: #6366f1; border: 1px solid rgba(79, 70, 229, 0.3); padding: 0.4rem 0.85rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
-                <i class="fa-solid fa-location-dot"></i> {{ $customer->location?->name ?? 'All Locations' }}
+                <i class="fa-solid fa-location-dot"></i> {{ $customer->location?->name ?? __('All Locations') }}
             </span>
             @if($customer->marketing_opt_in)
                 <span style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.4rem 0.85rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
-                    <i class="fa-solid fa-check-double"></i> Marketing Subscribed
+                    <i class="fa-solid fa-check-double"></i> {{ __('Marketing Subscribed') }}
                 </span>
             @else
                 <span style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.4rem 0.85rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
-                    <i class="fa-solid fa-xmark"></i> Disabled
+                    <i class="fa-solid fa-xmark"></i> {{ __('Disabled') }}
                 </span>
             @endif
         </div>
@@ -112,7 +112,7 @@
 
     @if($customer->notes)
         <div style="margin-top: 1.25rem; padding: 0.85rem 1.1rem; background: var(--bg-body); border-left: 4px solid var(--primary); border-radius: 10px; font-size: 0.88rem; color: var(--text-main); word-break: break-word;">
-            <i class="fa-solid fa-note-sticky" style="color: var(--primary); margin-right: 0.45rem;"></i> <strong>Notes:</strong> {{ $customer->notes }}
+            <i class="fa-solid fa-note-sticky" style="color: var(--primary); margin-right: 0.45rem;"></i> <strong>{{ __('Notes') }}:</strong> {{ $customer->notes }}
         </div>
     @endif
 </div>
@@ -120,32 +120,256 @@
 <!-- Key Performance Stat Cards -->
 <div class="grid-4" style="margin-bottom: 2rem;">
     <div class="card kpi-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 1.2rem; text-align: center; box-shadow: var(--shadow-card);">
-        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Total Orders</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">{{ __('Total Orders') }}</div>
         <div style="font-family: 'Outfit', sans-serif; font-size: 1.65rem; font-weight: 800; color: var(--text-main); margin-top: 0.2rem;">{{ $customer->total_orders_count }}</div>
     </div>
     <div class="card kpi-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 1.2rem; text-align: center; box-shadow: var(--shadow-card);">
-        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Total Spent (LTV)</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">{{ __('Total Spent (LTV)') }}</div>
         <div style="font-family: 'Outfit', sans-serif; font-size: 1.65rem; font-weight: 800; color: #10b981; margin-top: 0.2rem;">{{ number_format($customer->total_spent) }} {{ $vendor->currency }}</div>
     </div>
     <div class="card kpi-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 1.2rem; text-align: center; box-shadow: var(--shadow-card);">
-        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Average Order Value (AOV)</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">{{ __('Average Order Value (AOV)') }}</div>
         <div style="font-family: 'Outfit', sans-serif; font-size: 1.65rem; font-weight: 800; color: #f59e0b; margin-top: 0.2rem;">
             {{ $customer->total_orders_count > 0 ? number_format($customer->total_spent / $customer->total_orders_count) : 0 }} {{ $vendor->currency }}
         </div>
     </div>
     <div class="card kpi-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 1.2rem; text-align: center; box-shadow: var(--shadow-card);">
-        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Last Activity</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">{{ __('Last Activity') }}</div>
         <div style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-top: 0.35rem;">
-            {{ $customer->last_order_at ? $customer->last_order_at->diffForHumans() : 'Never' }}
+            {{ $customer->last_order_at ? $customer->last_order_at->diffForHumans() : __('Never') }}
         </div>
     </div>
 </div>
 
-<!-- Order History Timeline -->
+</div>
+
+<!-- Loyalty & Digital Wallet CRM Card -->
+<div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.25rem, 3vw, 1.85rem); margin-bottom: 2rem; box-shadow: var(--shadow-card);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.25rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(99, 102, 241, 0.15); color: #6366f1; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                <i class="fa-solid fa-crown"></i>
+            </div>
+            <div>
+                <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>{{ __('Loyalty & Digital Wallet Profile') }}</span>
+                    @php
+                        $tierName = $customer->loyalty_tier ?? 'Bronze';
+                        $tierColor = match(strtolower($tierName)) {
+                            'platinum' => '#6366f1',
+                            'gold' => '#eab308',
+                            'silver' => '#94a3b8',
+                            default => '#cd7f32'
+                        };
+                    @endphp
+                    <span class="badge" style="background: {{ $tierColor }}; color: #fff; font-weight: 700; font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 12px;">
+                        <i class="fa-solid fa-crown mr-1"></i> {{ __($tierName) }} {{ __('Tier') }}
+                    </span>
+                </h2>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.2rem 0 0 0;">
+                    {{ __('Real-time balance, membership tier, stamp cards, and Apple/Google Wallet pass telemetry.') }}
+                </p>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 0.6rem; align-items: center;">
+            <button type="button" class="btn btn-secondary" onclick="openCustomerAdjustModal()" style="font-size: 0.82rem; font-weight: 600; padding: 0.5rem 0.85rem; border-radius: 10px;">
+                <i class="fa-solid fa-scale-balanced mr-1"></i> {{ __('Adjust Balance') }}
+            </button>
+            <a href="{{ route('admin.loyalty.staff', ['search' => $customer->phone ?: $customer->id]) }}" class="btn btn-primary" style="font-size: 0.82rem; font-weight: 600; padding: 0.5rem 0.85rem; border-radius: 10px;">
+                <i class="fa-solid fa-qrcode mr-1"></i> {{ __('Staff Scanner') }}
+            </a>
+        </div>
+    </div>
+
+    <!-- Loyalty KPIs -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        
+        <!-- Points Balance -->
+        <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.1rem;">
+            <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); display: block;">
+                {{ __('Points Balance') }}
+            </span>
+            <div style="font-family: 'Outfit', sans-serif; font-size: 1.75rem; font-weight: 900; color: #6366f1; margin: 0.2rem 0;">
+                {{ number_format($customer->pointsAccount?->current_balance ?? $customer->loyalty_points) }} <span style="font-size: 0.85rem; font-weight: 600;">{{ __('pts') }}</span>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">
+                {{ __('Lifetime earned:') }} {{ number_format($customer->pointsAccount?->lifetime_earned ?? $customer->loyalty_points) }} {{ __('pts') }}
+            </div>
+        </div>
+
+        <!-- Cashback Balance -->
+        <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.1rem;">
+            <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); display: block;">
+                {{ __('Cashback Balance') }}
+            </span>
+            <div style="font-family: 'Outfit', sans-serif; font-size: 1.75rem; font-weight: 900; color: #10b981; margin: 0.2rem 0;">
+                {{ number_format($customer->cashbackAccount?->current_balance ?? 0.00, 2) }} <span style="font-size: 0.85rem; font-weight: 600;">{{ $vendor->currency }}</span>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">
+                {{ __('Lifetime earned:') }} {{ number_format($customer->cashbackAccount?->lifetime_earned ?? 0.00, 2) }} {{ $vendor->currency }}
+            </div>
+        </div>
+
+        <!-- Wallet Passes Status -->
+        <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.1rem;">
+            <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); display: block;">
+                {{ __('Digital Wallet Status') }}
+            </span>
+            <div style="display: flex; gap: 0.75rem; align-items: center; margin-top: 0.6rem;">
+                @php
+                    $applePass = $walletPasses?->first();
+                @endphp
+                @if($applePass)
+                    <span class="badge" style="background: #000; color: #fff; font-weight: 700; font-size: 0.75rem; padding: 0.3rem 0.6rem; border-radius: 8px;">
+                        <i class="fa-brands fa-apple mr-1"></i> {{ __('Apple Pass') }}
+                    </span>
+                    <span class="badge" style="background: #4285f4; color: #fff; font-weight: 700; font-size: 0.75rem; padding: 0.3rem 0.6rem; border-radius: 8px;">
+                        <i class="fa-brands fa-google mr-1"></i> {{ __('Google Pass') }}
+                    </span>
+                @else
+                    <span style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">
+                        {{ __('No pass issued yet') }}
+                    </span>
+                @endif
+            </div>
+            @if($applePass)
+                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.4rem; font-family: monospace;">
+                    {{ $applePass->serial_number }}
+                </div>
+            @endif
+        </div>
+
+        <!-- Active Stamp Card Summary -->
+        <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.1rem;">
+            <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); display: block;">
+                {{ __('Stamp Card Progress') }}
+            </span>
+            @php
+                $activeCard = $stampCards?->firstWhere('status', \App\Domains\Loyalty\Enums\StampStatus::Active);
+            @endphp
+            @if($activeCard)
+                <div style="font-family: 'Outfit', sans-serif; font-size: 1.35rem; font-weight: 800; color: #06b6d4; margin: 0.2rem 0;">
+                    {{ $activeCard->stamps_collected }} / {{ $activeCard->stamps_required }} <span style="font-size: 0.8rem; font-weight: 600;">{{ __('stamps') }}</span>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">
+                    {{ $activeCard->program?->name }}
+                </div>
+            @else
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem; font-style: italic;">
+                    {{ __('No active punch card') }}
+                </div>
+            @endif
+        </div>
+
+    </div>
+
+    <!-- Recent Loyalty Ledger Activity -->
+    @if(!empty($loyaltyTransactions) && $loyaltyTransactions->count() > 0)
+        <div style="border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.03em;">
+                    <i class="fa-solid fa-list-check mr-1 text-primary"></i> {{ __('Recent Loyalty Transactions') }}
+                </span>
+                <a href="{{ route('admin.loyalty.transactions', ['search' => $customer->phone ?: $customer->id]) }}" style="font-size: 0.75rem; color: var(--primary); text-decoration: none; font-weight: 600;">
+                    {{ __('View Full Ledger') }} &rarr;
+                </a>
+            </div>
+
+            <div class="responsive-table-wrapper">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border-color); text-align: left; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase;">
+                            <th style="padding: 0.5rem 0.75rem;">{{ __('Date') }}</th>
+                            <th style="padding: 0.5rem 0.75rem;">{{ __('Type') }}</th>
+                            <th style="padding: 0.5rem 0.75rem; text-align: right;">{{ __('Points Change') }}</th>
+                            <th style="padding: 0.5rem 0.75rem; text-align: right;">{{ __('New Balance') }}</th>
+                            <th style="padding: 0.5rem 0.75rem;">{{ __('Notes') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($loyaltyTransactions->take(5) as $ltx)
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <td style="padding: 0.5rem 0.75rem; color: var(--text-muted);">{{ $ltx->created_at->format('M d, H:i') }}</td>
+                                <td style="padding: 0.5rem 0.75rem;">
+                                    <span class="badge" style="background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 4px;">
+                                        {{ str_replace('_', ' ', $ltx->type->value) }}
+                                    </span>
+                                </td>
+                                <td style="padding: 0.5rem 0.75rem; text-align: right; font-weight: 700; color: {{ $ltx->points >= 0 ? '#10b981' : '#ef4444' }};">
+                                    {{ $ltx->points >= 0 ? '+' : '' }}{{ number_format($ltx->points) }} {{ __('pts') }}
+                                </td>
+                                <td style="padding: 0.5rem 0.75rem; text-align: right; font-weight: 600;">{{ number_format($ltx->balance_after) }}</td>
+                                <td style="padding: 0.5rem 0.75rem; color: var(--text-muted);">{{ $ltx->notes }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
+</div>
+
+<!-- Modal: Adjust Balance Direct from CRM Profile -->
+<div id="customerAdjustModal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; width: 100%; max-width: 480px; padding: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin: 0;">
+                <i class="fa-solid fa-scale-balanced text-primary mr-1"></i> {{ __('Adjust Customer Balance') }}
+            </h3>
+            <button type="button" onclick="closeCustomerAdjustModal()" style="background: none; border: none; font-size: 1.25rem; color: var(--text-muted); cursor: pointer;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{{ route('admin.loyalty.adjust_balance') }}">
+            @csrf
+            <input type="hidden" name="customer_id" value="{{ $customer->id }}">
+
+            <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                <div>
+                    <label class="form-label">{{ __('Account Type') }}</label>
+                    <select name="type" class="form-control" required>
+                        <option value="points">{{ __('Loyalty Points') }}</option>
+                        <option value="cashback">{{ __('Cashback Currency') }} ({{ $vendor->currency }})</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="form-label">{{ __('Adjustment Amount (Use negative value to deduct)') }}</label>
+                    <input type="number" step="0.01" name="amount" class="form-control" placeholder="e.g. 100 or -50" required>
+                </div>
+
+                <div>
+                    <label class="form-label">{{ __('Audit Reason / Notes') }}</label>
+                    <input type="text" name="notes" class="form-control" placeholder="{{ __('e.g. Loyalty compensation or offline spend') }}" required maxlength="255">
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.5rem;">
+                    <button type="button" onclick="closeCustomerAdjustModal()" class="btn btn-secondary">
+                        {{ __('Cancel') }}
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-check mr-1"></i> {{ __('Submit Adjustment') }}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openCustomerAdjustModal() {
+    document.getElementById('customerAdjustModal').style.display = 'flex';
+}
+function closeCustomerAdjustModal() {
+    document.getElementById('customerAdjustModal').style.display = 'none';
+}
+</script>
 <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: clamp(1.25rem, 3vw, 1.85rem); box-shadow: var(--shadow-card);">
     <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin: 0 0 1.25rem 0; display: flex; align-items: center; gap: 0.6rem;">
         <span style="color: var(--primary);"><i class="fa-solid fa-clock-rotate-left"></i></span>
-        <span>Orders Timeline</span>
+        <span>{{ __('Orders Timeline') }}</span>
     </h2>
 
     @if($orders->count() > 0)
@@ -168,10 +392,10 @@
                                 <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
                                     <span><i class="fa-solid fa-calendar"></i> {{ $order->created_at->format('d M Y, H:i') }} ({{ $order->created_at->diffForHumans() }})</span>
                                     <span>•</span>
-                                    <span><i class="fa-solid fa-location-dot"></i> {{ $order->location?->name ?? 'Main Branch' }}</span>
+                                    <span><i class="fa-solid fa-location-dot"></i> {{ $order->location?->name ?? __('Main Branch') }}</span>
                                     @if($order->table_number)
                                         <span>•</span>
-                                        <span style="font-weight: 700; color: var(--primary);">Table: {{ $order->table_number }}</span>
+                                        <span style="font-weight: 700; color: var(--primary);">{{ __('Table') }}: {{ $order->table_number }}</span>
                                     @endif
                                 </div>
                             </div>
@@ -208,7 +432,7 @@
             <div style="width: 54px; height: 54px; border-radius: 14px; background: rgba(245, 158, 11, 0.1); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 0.75rem;">
                 <i class="fa-solid fa-clock-rotate-left"></i>
             </div>
-            <p style="margin: 0; font-size: 0.95rem; font-weight: 600;">No orders recorded for this customer yet.</p>
+            <p style="margin: 0; font-size: 0.95rem; font-weight: 600;">{{ __('No orders recorded for this customer yet.') }}</p>
         </div>
     @endif
 </div>
@@ -347,7 +571,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.75rem;">
                             <div>
                                 <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                                    <a href="{{ route('admin.reservations.events.show', $inq->id) }}" style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: var(--primary); text-decoration: none;">
+                                    <a href="{{ route('admin.event_inquiries.show', $inq->id) }}" style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: var(--primary); text-decoration: none;">
                                         #{{ $inq->reference }}
                                     </a>
                                     @php
@@ -390,7 +614,7 @@
                                 </div>
                             </div>
 
-                            <a href="{{ route('admin.reservations.events.show', $inq->id) }}" class="btn btn-sm btn-secondary" style="font-size: 0.8rem; font-weight: 600; border-radius: 8px;">
+                            <a href="{{ route('admin.event_inquiries.show', $inq->id) }}" class="btn btn-sm btn-secondary" style="font-size: 0.8rem; font-weight: 600; border-radius: 8px;">
                                 {{ __('View Inquiry') }} &rarr;
                             </a>
                         </div>

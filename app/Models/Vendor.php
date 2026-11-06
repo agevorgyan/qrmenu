@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Domains\Loyalty\Models\LoyaltyProgram;
+use App\Domains\Loyalty\Models\WalletIssuer;
+use App\Domains\Loyalty\Models\WalletPassDesign;
 use App\DTOs\QuotaStatus;
 use App\Security\FeatureCatalog;
 use App\Services\CredentialService;
@@ -1071,6 +1074,44 @@ class Vendor extends Model
         $tz = $this->getTimezone();
 
         return $now ? $now->copy()->setTimezone($tz) : Carbon::now($tz);
+    }
+
+    /**
+     * Format an amount using the vendor's primary currency.
+     */
+    public function formatCurrency(float|int|string|null $amount, int $decimals = 2): string
+    {
+        return number_format((float) ($amount ?? 0), $decimals).' '.$this->currency;
+    }
+
+    /**
+     * Format a DateTime instance using the vendor's configured timezone.
+     */
+    public function formatDateTime(?\DateTimeInterface $date, string $format = 'M d, Y H:i'): string
+    {
+        if (! $date) {
+            return '-';
+        }
+
+        $carbon = $date instanceof Carbon ? $date : Carbon::instance($date);
+
+        return $carbon->copy()->setTimezone($this->getTimezone())->format($format);
+    }
+
+    /**
+     * Format a Date using the vendor's configured timezone.
+     */
+    public function formatDate(?\DateTimeInterface $date, string $format = 'M d, Y'): string
+    {
+        return $this->formatDateTime($date, $format);
+    }
+
+    /**
+     * Format a Time using the vendor's configured timezone.
+     */
+    public function formatTime(?\DateTimeInterface $date, string $format = 'H:i'): string
+    {
+        return $this->formatDateTime($date, $format);
     }
 
     public function featuredProduct()
@@ -2942,5 +2983,20 @@ class Vendor extends Model
         }
 
         return (bool) $this->getSplitBillSetting()->is_enabled;
+    }
+
+    public function loyaltyProgram(): HasOne
+    {
+        return $this->hasOne(LoyaltyProgram::class);
+    }
+
+    public function walletIssuer(): HasOne
+    {
+        return $this->hasOne(WalletIssuer::class);
+    }
+
+    public function walletPassDesign(): HasOne
+    {
+        return $this->hasOne(WalletPassDesign::class);
     }
 }
