@@ -37,9 +37,9 @@
         </div>
 
         <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
-            <button onclick="window.print();" class="btn btn-secondary" style="border-radius: 10px; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+            <a href="{{ route('admin.inventory.recipes.print', $recipe) }}" target="_blank" class="btn btn-secondary" style="border-radius: 10px; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; text-decoration: none;">
                 <i class="fa-solid fa-print"></i> {{ __('Print Card') }}
-            </button>
+            </a>
 
             @can('recipes.update')
                 <button type="button" onclick="document.getElementById('recalculateModal').showModal();" class="btn btn-secondary" style="border-radius: 10px; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">

@@ -261,6 +261,36 @@ class RecipeController extends Controller
     }
 
     /**
+     * Print culinary technological card document.
+     */
+    public function print(Recipe $recipe): View
+    {
+        $this->authorizePermission(Permission::RECIPES_VIEW);
+
+        $recipe->load([
+            'yieldUnit',
+            'portionUnit',
+            'category',
+            'product',
+            'producedIngredient',
+            'items.ingredient.unit',
+            'items.subRecipe.yieldUnit',
+            'items.unit',
+            'packagings.ingredient.unit',
+            'packagings.unit',
+            'costs',
+            'latestCost',
+            'approver',
+            'creator',
+        ]);
+
+        $canViewCost = Auth::user()->hasPermission(Permission::RECIPES_COST_VIEW);
+        $allergens = $recipe->allergens;
+
+        return view('admin.inventory.recipes.print', compact('recipe', 'canViewCost', 'allergens'));
+    }
+
+    /**
      * Show form for editing recipe.
      */
     public function edit(Recipe $recipe): View

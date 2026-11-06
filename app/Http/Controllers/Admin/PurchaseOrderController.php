@@ -309,6 +309,25 @@ class PurchaseOrderController extends Controller
     }
 
     /**
+     * Print official purchase order document.
+     */
+    public function print(PurchaseOrder $purchaseOrder): View
+    {
+        $this->authorizePermission(Permission::PROCUREMENT_VIEW);
+
+        $purchaseOrder->load([
+            'supplier',
+            'warehouse',
+            'items.ingredient.unit',
+            'items.unit',
+            'approver',
+            'creator',
+        ]);
+
+        return view('admin.inventory.procurement.print', compact('purchaseOrder'));
+    }
+
+    /**
      * Approve purchase order.
      */
     public function approve(PurchaseOrder $purchaseOrder): RedirectResponse

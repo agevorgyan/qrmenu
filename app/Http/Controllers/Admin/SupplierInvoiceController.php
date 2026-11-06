@@ -139,6 +139,26 @@ class SupplierInvoiceController extends Controller
     }
 
     /**
+     * Print official goods receipt act & invoice document.
+     */
+    public function print(SupplierInvoice $supplierInvoice): View
+    {
+        $this->authorizePermission(Permission::PROCUREMENT_VIEW);
+
+        $supplierInvoice->load([
+            'supplier',
+            'warehouse',
+            'purchaseOrder',
+            'payments',
+            'receiver',
+            'items.ingredient.unit',
+            'items.unit',
+        ]);
+
+        return view('admin.inventory.invoices.print', compact('supplierInvoice'));
+    }
+
+    /**
      * Convert an imported invoice item to another ingredient, quantity and unit price.
      */
     public function convertItem(

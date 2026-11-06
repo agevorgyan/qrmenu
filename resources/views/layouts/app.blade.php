@@ -987,6 +987,54 @@
             outline: 2px solid var(--primary);
             outline-offset: 2px;
         }
+
+        /* Print Safeguards: Hide navigation chrome, sidebar, and headers during any print */
+        @media print {
+            aside,
+            .sidebar,
+            nav,
+            header,
+            .app-header,
+            .top-header,
+            .btn,
+            button,
+            footer,
+            dialog,
+            .no-print,
+            [role="navigation"],
+            .sidebar-quick-actions,
+            .mobile-bottom-nav {
+                display: none !important;
+            }
+
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .main-content,
+            .content-wrapper,
+            main {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            .card {
+                border: 1px solid #d1d5db !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
     </style>
     @yield('styles')
 </head>

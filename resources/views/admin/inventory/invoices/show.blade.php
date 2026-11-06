@@ -31,9 +31,9 @@
         </div>
 
         <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
-            <button onclick="window.print();" class="btn btn-secondary" style="border-radius: 10px; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+            <a href="{{ route('admin.inventory.invoices.print', $supplierInvoice) }}" target="_blank" class="btn btn-secondary" style="border-radius: 10px; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; text-decoration: none;">
                 <i class="fa-solid fa-print"></i> {{ __('Print Invoice') }}
-            </button>
+            </a>
 
             @can('procurement.pay')
                 @if((float) $supplierInvoice->remaining_balance > 0)

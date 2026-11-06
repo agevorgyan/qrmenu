@@ -119,6 +119,29 @@ class ProductionOrderController extends Controller
         return view('admin.inventory.production.show', compact('productionOrder'));
     }
 
+    /**
+     * Print production and batch completion act.
+     */
+    public function print(ProductionOrder $productionOrder, Request $request): View
+    {
+        $this->authorizePermission(Permission::PRODUCTION_VIEW);
+        $this->ensureTenantOwnership($productionOrder, $request->user());
+
+        $productionOrder->load([
+            'recipe.yieldUnit',
+            'producedIngredient.unit',
+            'sourceWarehouse',
+            'destinationWarehouse',
+            'unit',
+            'producedBy',
+            'items.ingredient.unit',
+            'items.subRecipe.yieldUnit',
+            'items.unit',
+        ]);
+
+        return view('admin.inventory.production.print', compact('productionOrder'));
+    }
+
     public function start(ProductionOrder $productionOrder, Request $request): RedirectResponse
     {
         $this->authorizePermission(Permission::PRODUCTION_START);

@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Ingredient;
 use App\Models\InventoryBalance;
+use App\Models\ProductionOrder;
 use App\Models\PurchaseOrder;
+use App\Models\Recipe;
 use App\Models\Supplier;
 use App\Models\SupplierIngredient;
 use App\Models\SupplierInvoice;
@@ -13,6 +15,7 @@ use App\Models\Unit;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Models\Warehouse;
+use App\Models\WasteLog;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
@@ -931,5 +934,165 @@ XML;
         $this->assertEquals('2026-11-01', $invoice->supply_date->toDateString());
         // 2026-11-01 + 15 days = 2026-11-16
         $this->assertEquals('2026-11-16', $invoice->due_date->toDateString());
+    }
+
+    public function test_can_render_official_purchase_order_printable_document(): void
+    {
+        $po = PurchaseOrder::create([
+            'vendor_id' => $this->vendorA->id,
+            'po_number' => 'PO-TEST-901',
+            'supplier_id' => $this->supplierA->id,
+            'warehouse_id' => $this->warehouseA->id,
+            'created_by' => $this->ownerA->id,
+            'order_date' => now()->toDateString(),
+            'status' => PurchaseOrder::STATUS_APPROVED,
+            'total_amount' => 15000,
+        ]);
+
+        $po->items()->create([
+            'vendor_id' => $this->vendorA->id,
+            'ingredient_id' => $this->coffee->id,
+            'quantity_ordered' => 10,
+            'unit_id' => $this->kg->id,
+            'unit_price' => 1500,
+            'total_price' => 1500,
+        ]);
+
+        $response = $this->actingAs($this->ownerA)->get(route('admin.inventory.procurement.print', $po));
+        $response->assertOk();
+        $response->assertViewIs('admin.inventory.procurement.print');
+        $response->assertSee($po->po_number);
+        $response->assertSee($this->supplierA->name);
+        $response->assertSee($this->coffee->name);
+    }
+
+    public function test_can_render_official_supplier_invoice_printable_document(): void
+    {
+        $invoice = SupplierInvoice::create([
+            'vendor_id' => $this->vendorA->id,
+            'supplier_id' => $this->supplierA->id,
+            'warehouse_id' => $this->warehouseA->id,
+            'invoice_number' => 'INV-TEST-999',
+            'series' => 'TAX',
+            'number' => 'ARM-888',
+            'invoice_date' => now()->toDateString(),
+            'due_date' => now()->addDays(15)->toDateString(),
+            'total_amount' => 30000,
+            'remaining_balance' => 30000,
+            'payment_status' => 'unpaid',
+        ]);
+
+        $invoice->items()->create([
+            'vendor_id' => $this->vendorA->id,
+            'ingredient_id' => $this->coffee->id,
+            'description' => 'Coffee Beans Arabica',
+            'quantity' => 10,
+            'unit_id' => $this->kg->id,
+            'price' => 3000,
+            'unit_price' => 3000,
+            'total_price' => 30000,
+        ]);
+
+        $response = $this->actingAs($this->ownerA)->get(route('admin.inventory.invoices.print', $invoice));
+        $response->assertOk();
+        $response->assertViewIs('admin.inventory.invoices.print');
+        $response->assertSee('INV-TEST-999');
+        $response->assertSee('TAX');
+        $response->assertSee('ARM-888');
+        $response->assertSee('Coffee Beans Arabica');
+    }
+
+    public function test_can_render_official_recipe_technological_card_printable_document(): void
+    {
+        $recipe = Recipe::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Signature Espresso Shot',
+            'code' => 'TECH-ESP-01',
+            'type' => 'dish',
+            'yield_quantity' => 1,
+            'yield_unit_id' => $this->kg->id,
+            'status' => 'approved',
+            'version' => 1,
+            'instructions' => 'Grind 18g of beans at 9 bars pressure.',
+            'created_by' => $this->ownerA->id,
+        ]);
+
+        $recipe->items()->create([
+            'vendor_id' => $this->vendorA->id,
+            'ingredient_id' => $this->coffee->id,
+            'quantity' => 0.018,
+            'quantity_gross' => 0.018,
+            'quantity_net' => 0.018,
+            'unit_id' => $this->kg->id,
+            'unit_cost' => 5000,
+            'total_cost' => 90,
+        ]);
+
+        $response = $this->actingAs($this->ownerA)->get(route('admin.inventory.recipes.print', $recipe));
+        $response->assertOk();
+        $response->assertViewIs('admin.inventory.recipes.print');
+        $response->assertSee('Signature Espresso Shot');
+        $response->assertSee('TECH-ESP-01');
+        $response->assertSee('Grind 18g of beans');
+    }
+
+    public function test_can_render_official_production_order_printable_document(): void
+    {
+        $recipe = Recipe::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Signature Espresso Shot',
+            'code' => 'TECH-ESP-02',
+            'type' => 'dish',
+            'yield_quantity' => 1,
+            'yield_unit_id' => $this->kg->id,
+            'status' => 'approved',
+            'version' => 1,
+            'created_by' => $this->ownerA->id,
+        ]);
+
+        $production = ProductionOrder::create([
+            'vendor_id' => $this->vendorA->id,
+            'recipe_id' => $recipe->id,
+            'order_number' => 'PRD-TEST-901',
+            'batch_number' => 'BATCH-2026-001',
+            'produced_ingredient_id' => $this->coffee->id,
+            'source_warehouse_id' => $this->warehouseA->id,
+            'destination_warehouse_id' => $this->warehouseA->id,
+            'unit_id' => $this->kg->id,
+            'planned_quantity' => 5,
+            'actual_quantity' => 5,
+            'total_cost' => 25000,
+            'status' => 'completed',
+            'completed_at' => now(),
+            'produced_by' => $this->ownerA->id,
+        ]);
+
+        $response = $this->actingAs($this->ownerA)->get(route('admin.inventory.production.print', $production));
+        $response->assertOk();
+        $response->assertViewIs('admin.inventory.production.print');
+        $response->assertSee('BATCH-2026-001');
+    }
+
+    public function test_can_render_official_waste_log_printable_document(): void
+    {
+        $waste = WasteLog::create([
+            'vendor_id' => $this->vendorA->id,
+            'waste_number' => 'WST-TEST-901',
+            'warehouse_id' => $this->warehouseA->id,
+            'ingredient_id' => $this->coffee->id,
+            'unit_id' => $this->kg->id,
+            'quantity' => 2.5,
+            'unit_cost' => 3000,
+            'total_cost' => 7500,
+            'reason' => 'expired',
+            'logged_by' => $this->ownerA->id,
+            'notes' => 'Beans expired during storage',
+        ]);
+
+        $response = $this->actingAs($this->ownerA)->get(route('admin.inventory.waste.print', $waste));
+        $response->assertOk();
+        $response->assertViewIs('admin.inventory.waste.print');
+        $response->assertSee($waste->waste_number);
+        $response->assertSee('Beans expired during storage');
     }
 }

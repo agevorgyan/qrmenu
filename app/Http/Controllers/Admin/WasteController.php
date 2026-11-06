@@ -119,6 +119,23 @@ class WasteController extends Controller
         return view('admin.inventory.waste.show', compact('wasteLog'));
     }
 
+    /**
+     * Print official waste and spoilage write-off act.
+     */
+    public function print(WasteLog $wasteLog): View
+    {
+        $this->authorizePermission(Permission::INVENTORY_VIEW);
+
+        $vendor = auth()->user()->vendor;
+        if ($wasteLog->vendor_id !== $vendor->id) {
+            abort(403, 'Cross-tenant access forbidden.');
+        }
+
+        $wasteLog->load(['ingredient.unit', 'warehouse', 'unit', 'batch', 'loggedBy', 'authorizedBy']);
+
+        return view('admin.inventory.waste.print', compact('wasteLog'));
+    }
+
     protected function authorizePermission(string $permission): void
     {
         if (! auth()->user() || ! auth()->user()->hasPermission($permission)) {

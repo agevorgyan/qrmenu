@@ -29,9 +29,9 @@
         </div>
 
         <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
-            <button type="button" class="btn btn-outline-secondary" onclick="window.print()" style="border-radius: 10px; font-weight: 600;">
+            <a href="{{ route('admin.inventory.production.print', $productionOrder) }}" target="_blank" class="btn btn-outline-secondary" style="border-radius: 10px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
                 <i class="fa-solid fa-print"></i> {{ __('Print Sheet') }}
-            </button>
+            </a>
 
             @if($productionOrder->isDraft())
                 <form method="POST" action="{{ route('admin.inventory.production.start', $productionOrder) }}" style="display: inline;">

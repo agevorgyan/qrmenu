@@ -568,6 +568,7 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', E
         Route::post('/transactions', [InventoryStockController::class, 'storeTransaction'])->name('stocks.transactions.store');
 
         // Recipes & Technical Cards (Phase 2)
+        Route::get('/recipes/{recipe}/print', [RecipeController::class, 'print'])->name('recipes.print');
         Route::post('/recipes/quick-packaging', [RecipeController::class, 'quickStorePackaging'])->name('recipes.quick-packaging');
         Route::post('/recipes/{recipe}/approve', [RecipeController::class, 'approve'])->name('recipes.approve');
         Route::post('/recipes/{recipe}/recalculate', [RecipeController::class, 'recalculate'])->name('recipes.recalculate');
@@ -579,6 +580,7 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', E
 
         // Procurement & Purchase Orders (Phase 3)
         Route::get('/procurement/suggestions', [PurchaseOrderController::class, 'suggestions'])->name('procurement.suggestions');
+        Route::get('/procurement/{purchaseOrder}/print', [PurchaseOrderController::class, 'print'])->name('procurement.print');
         Route::post('/procurement/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve'])->name('procurement.approve');
         Route::post('/procurement/{purchaseOrder}/send', [PurchaseOrderController::class, 'markSent'])->name('procurement.send');
         Route::post('/procurement/{purchaseOrder}/receive', [PurchaseOrderController::class, 'receive'])->name('procurement.receive');
@@ -589,10 +591,12 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', E
         Route::post('/invoices/tax-import', [SupplierInvoiceController::class, 'importTaxInvoice'])->name('invoices.tax-import');
         Route::get('/invoices', [SupplierInvoiceController::class, 'index'])->name('invoices.index');
         Route::get('/invoices/{supplierInvoice}', [SupplierInvoiceController::class, 'show'])->name('invoices.show');
+        Route::get('/invoices/{supplierInvoice}/print', [SupplierInvoiceController::class, 'print'])->name('invoices.print');
         Route::post('/invoices/{supplierInvoice}/convert-item/{item}', [SupplierInvoiceController::class, 'convertItem'])->name('invoices.convert-item');
         Route::post('/payments', [SupplierInvoiceController::class, 'storePayment'])->name('payments.store');
 
         // Production & Semi-Finished Processing (Phase 4)
+        Route::get('/production/{productionOrder}/print', [ProductionOrderController::class, 'print'])->name('production.print');
         Route::post('/production/{productionOrder}/start', [ProductionOrderController::class, 'start'])->name('production.start');
         Route::post('/production/{productionOrder}/complete', [ProductionOrderController::class, 'complete'])->name('production.complete');
         Route::post('/production/{productionOrder}/cancel', [ProductionOrderController::class, 'cancel'])->name('production.cancel');
@@ -614,6 +618,7 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', E
         Route::get('/waste/create', [WasteController::class, 'create'])->name('waste.create');
         Route::post('/waste', [WasteController::class, 'store'])->name('waste.store');
         Route::get('/waste/{wasteLog}', [WasteController::class, 'show'])->name('waste.show');
+        Route::get('/waste/{wasteLog}/print', [WasteController::class, 'print'])->name('waste.print');
 
         // Inventory Reports & Business Intelligence (Phase 7)
         Route::get('/reports/inventory', [InventoryReportController::class, 'index'])->name('reports.inventory.index');

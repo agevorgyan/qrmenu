@@ -18,9 +18,14 @@
                 {{ __('Recorded on') }} {{ ($wasteLog->logged_at ?? $wasteLog->created_at)?->toVendorTimezone()->format('M d, Y H:i') }}
             </p>
         </div>
-        <a href="{{ route('admin.inventory.waste.index') }}" class="btn btn-outline-secondary" style="border-radius: 10px;">
-            <i class="fa-solid fa-arrow-left"></i> {{ __('Back to List') }}
-        </a>
+        <div style="display: flex; gap: 0.6rem; align-items: center;">
+            <a href="{{ route('admin.inventory.waste.print', $wasteLog) }}" target="_blank" class="btn btn-outline-secondary" style="border-radius: 10px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-print"></i> {{ __('Print / Save PDF') }}
+            </a>
+            <a href="{{ route('admin.inventory.waste.index') }}" class="btn btn-outline-secondary" style="border-radius: 10px;">
+                <i class="fa-solid fa-arrow-left"></i> {{ __('Back to List') }}
+            </a>
+        </div>
     </div>
 
     <!-- Main Detail Card -->
