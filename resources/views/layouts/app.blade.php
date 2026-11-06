@@ -187,7 +187,7 @@
             display: flex;
             flex-direction: column;
             position: fixed;
-            top: 0;
+            top: var(--sub-banner-h, 0px);
             bottom: 0;
             left: 0;
             z-index: 50;
@@ -367,6 +367,7 @@
         /* Main Container */
         .main-wrapper {
             margin-left: 260px;
+            padding-top: var(--sub-banner-h, 0px);
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -388,7 +389,7 @@
             justify-content: space-between;
             padding: 0 1.75rem;
             position: sticky;
-            top: 0;
+            top: var(--sub-banner-h, 0px);
             z-index: 40;
             gap: 1rem;
         }
@@ -823,6 +824,7 @@
         .sidebar-overlay {
             position: fixed;
             inset: 0;
+            top: var(--sub-banner-h, 0px);
             background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
@@ -987,10 +989,200 @@
             outline: 2px solid var(--primary);
             outline-offset: 2px;
         }
+
+        /* Top Subscription Alert Banner */
+        :root {
+            --sub-banner-h: 0px;
+        }
+        body.has-sub-reminder {
+            --sub-banner-h: 38px;
+        }
+        .subscription-top-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            height: var(--sub-banner-h, 38px);
+            z-index: 60;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            font-size: 0.8rem;
+            line-height: 1;
+            background: linear-gradient(90deg, #9a3412 0%, #b45309 35%, #d97706 70%, #9a3412 100%);
+            color: #ffffff;
+            border-bottom: 1px solid rgba(251, 191, 36, 0.35);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+            box-sizing: border-box;
+            user-select: none;
+        }
+        html[data-theme="light"] .subscription-top-banner {
+            background: linear-gradient(90deg, #b45309 0%, #d97706 50%, #b45309 100%);
+            border-bottom: 1px solid rgba(180, 83, 9, 0.35);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        .sub-banner-left {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            min-width: 0;
+        }
+        .sub-banner-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fef08a;
+            font-size: 0.82rem;
+            flex-shrink: 0;
+        }
+        .sub-banner-icon.sub-urgent {
+            background: rgba(239, 68, 68, 0.35);
+            color: #ffffff;
+            animation: subAlertPulse 2s infinite ease-in-out;
+        }
+        @keyframes subAlertPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.85; }
+        }
+        .sub-banner-text {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.8rem;
+            color: #ffffff;
+            white-space: nowrap;
+            min-width: 0;
+        }
+        .sub-banner-title-short {
+            display: none;
+        }
+        .sub-banner-pill {
+            background: rgba(0, 0, 0, 0.28);
+            color: #fef08a;
+            padding: 0.15rem 0.55rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 0.76rem;
+            letter-spacing: 0.01em;
+            border: 1px solid rgba(254, 240, 138, 0.25);
+            display: inline-flex;
+            align-items: center;
+        }
+        .sub-banner-pill.pill-urgent {
+            background: rgba(239, 68, 68, 0.35);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        .sub-banner-status {
+            opacity: 0.88;
+            font-size: 0.76rem;
+            font-weight: 500;
+        }
+        .sub-banner-right {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            margin-left: 0.75rem;
+        }
+        .sub-banner-btn {
+            background: #ffffff;
+            color: #9a3412;
+            font-weight: 700;
+            font-size: 0.74rem;
+            padding: 0.24rem 0.75rem;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            text-decoration: none;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+            white-space: nowrap;
+        }
+        .sub-banner-btn:hover {
+            background: #fef3c7;
+            color: #7c2d12;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+        }
+        .sub-banner-btn-text-short {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .subscription-top-banner {
+                padding: 0 0.85rem;
+            }
+            .sub-banner-status {
+                display: none !important;
+            }
+        }
+        @media (max-width: 520px) {
+            .subscription-top-banner {
+                padding: 0 0.65rem;
+            }
+            .sub-banner-title-full {
+                display: none !important;
+            }
+            .sub-banner-title-short {
+                display: inline !important;
+            }
+            .sub-banner-btn-text-full {
+                display: none !important;
+            }
+            .sub-banner-btn-text-short {
+                display: inline !important;
+            }
+        }
     </style>
     @yield('styles')
 </head>
-<body x-data="themeApp()">
+@php
+    $showSubReminder = Auth::user()?->vendor 
+        && !Auth::user()?->isSuperAdmin() 
+        && Auth::user()->vendor->daysLeft() <= 3 
+        && !request()->routeIs('admin.subscription*');
+@endphp
+<body x-data="themeApp()" class="{{ $showSubReminder ? 'has-sub-reminder' : '' }}">
+
+    @if($showSubReminder)
+        @php
+            $subVendor = Auth::user()->vendor;
+            $subDaysLeft = $subVendor->daysLeft();
+            $subIsUrgent = $subDaysLeft <= 0 || $subVendor->isExpired();
+        @endphp
+        <aside class="subscription-top-banner" role="alert" aria-label="{{ __('Subscription Reminder:') }}">
+            <div class="sub-banner-left">
+                <span class="sub-banner-icon {{ $subIsUrgent ? 'sub-urgent' : '' }}">
+                    @if($subIsUrgent)
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    @else
+                        <i class="fa-solid fa-clock"></i>
+                    @endif
+                </span>
+                <div class="sub-banner-text">
+                    <strong class="sub-banner-title-full">{{ __('Subscription Reminder:') }}</strong>
+                    <strong class="sub-banner-title-short">{{ __('Subscription:') }}</strong>
+                    <span class="sub-banner-pill {{ $subIsUrgent ? 'pill-urgent' : '' }}">
+                        {{ $subDaysLeft }} {{ __('days left') }}
+                    </span>
+                    <span class="sub-banner-status">({{ $subVendor->subscription_status_label }})</span>
+                </div>
+            </div>
+            <div class="sub-banner-right">
+                <a href="{{ route('admin.subscription') }}" class="sub-banner-btn">
+                    <span class="sub-banner-btn-text-full">{{ __('Details / Extend') }}</span>
+                    <span class="sub-banner-btn-text-short">{{ __('Extend') }}</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+        </aside>
+    @endif
 
     <!-- Mobile Overlay Backdrop -->
     <div class="sidebar-overlay" :class="{ 'mobile-open': mobileOpen }" @click="mobileOpen = false" aria-hidden="true"></div>
@@ -1190,18 +1382,6 @@
                 <div class="alert" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444;">
                     <span style="display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-circle-exclamation"></i> {{ __(session('error')) }}</span>
                     <button onclick="this.parentElement.remove()" style="background:none; border:none; color:inherit; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-            @endif
-
-            @if(Auth::user()?->vendor && !Auth::user()?->isSuperAdmin() && Auth::user()->vendor->daysLeft() <= 3 && !request()->routeIs('admin.subscription'))
-                <div style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #f59e0b; padding: 0.85rem 1.25rem; border-radius: 14px; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <i class="fa-solid fa-clock"></i>
-                        <span><strong>{{ __('Subscription Reminder:') }}</strong> {{ Auth::user()->vendor->daysLeft() }} {{ __('days left') }} ({{ Auth::user()->vendor->subscription_status_label }})</span>
-                    </div>
-                    <a href="{{ route('admin.subscription') }}" class="btn btn-primary" style="font-size: 0.78rem; padding: 0.35rem 0.75rem;">
-                        {{ __('Details / Extend') }}
-                    </a>
                 </div>
             @endif
 
