@@ -185,7 +185,151 @@
             border-color: var(--primary);
         }
 
-        /* Mode Switcher Tabs (Segmented Control) */
+        /* Mode Switcher Dropdown (iOS-style sleek selector) */
+        .pos-mode-dropdown-wrap {
+            position: relative;
+            z-index: 60;
+        }
+
+        .pos-mode-dropdown-trigger {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 5px 12px 5px 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-main);
+            font-size: 0.84rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: var(--card-shadow);
+            touch-action: manipulation;
+        }
+
+        .pos-mode-dropdown-trigger:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-color-strong);
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        .pos-mode-trigger-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: var(--bg-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+        }
+
+        .pos-mode-trigger-info {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+            line-height: 1.15;
+        }
+
+        .pos-mode-trigger-label {
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+
+        .pos-mode-trigger-current {
+            font-size: 0.84rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .pos-mode-chevron {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            transition: transform 0.2s ease;
+            margin-left: 2px;
+        }
+
+        .pos-mode-chevron.open {
+            transform: rotate(180deg);
+        }
+
+        .pos-mode-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            width: 240px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            z-index: 100;
+            backdrop-filter: blur(16px);
+        }
+
+        .pos-mode-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            padding: 8px 10px;
+            border-radius: 9px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.12s ease;
+            text-align: left;
+            width: 100%;
+        }
+
+        .pos-mode-dropdown-item:hover {
+            background: var(--bg-subtle);
+        }
+
+        .pos-mode-dropdown-item.selected {
+            background: var(--bg-subtle);
+        }
+
+        .pos-mode-item-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .pos-mode-item-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .pos-mode-item-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .pos-mode-item-desc {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+
+        .pos-mode-check {
+            color: var(--primary);
+            font-size: 0.82rem;
+        }
+
+        /* Mode Switcher Tabs (Segmented Control - Fallback) */
         .pos-mode-switcher {
             display: flex;
             align-items: center;
@@ -668,6 +812,89 @@
         .search-clear-btn:hover {
             color: var(--text-main);
             background: var(--border-color-strong);
+        }
+
+        /* Unified Table & Dining Context Pill (Single Intuitive Entry Point) */
+        .pos-dining-context {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            padding: 4px 12px 4px 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: var(--card-shadow);
+            touch-action: manipulation;
+            user-select: none;
+            min-height: 38px;
+        }
+
+        .pos-dining-context:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-color-strong);
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        .dining-context-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            background: var(--bg-subtle);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            transition: all 0.15s ease;
+        }
+
+        .dining-context-icon.table-active {
+            background: rgba(16, 185, 129, 0.12);
+            color: #10b981;
+        }
+
+        .dining-context-details {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.15;
+            text-align: left;
+        }
+
+        .dining-context-label {
+            font-size: 0.60rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 700;
+            letter-spacing: 0.03em;
+        }
+
+        .dining-context-value {
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: var(--text-main);
+            white-space: nowrap;
+        }
+
+        .dining-context-action {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 6px;
+            padding-left: 8px;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .dining-action-badge {
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .dining-chevron {
+            font-size: 0.65rem;
+            color: var(--text-subtle);
         }
 
         .table-context-chip {
@@ -1280,6 +1507,204 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
         }
 
+        /* Cart Loyalty Bar & Delivery Customer Details */
+        .pos-cart-loyalty-bar {
+            padding: 0.5rem 0.85rem;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .cart-loyalty-trigger-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px dashed var(--border-color);
+            background: var(--bg-subtle);
+            color: var(--text-muted);
+            font-size: 0.76rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .cart-loyalty-trigger-btn:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--primary);
+            color: var(--text-main);
+        }
+
+        .cart-loyalty-input-box {
+            position: relative;
+        }
+
+        .cart-loyalty-results-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            max-height: 180px;
+            overflow-y: auto;
+            z-index: 40;
+            margin-top: 4px;
+            padding: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .cart-loyalty-result-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 6px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.1s ease;
+        }
+
+        .cart-loyalty-result-item:hover {
+            background: var(--bg-subtle);
+        }
+
+        .loyalty-item-avatar {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #000;
+            font-size: 0.75rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .loyalty-points-badge {
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: #f59e0b;
+        }
+
+        .cart-customer-attached-card {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 5px 8px;
+            border-radius: 8px;
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+        }
+
+        .customer-card-avatar {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #000;
+            font-size: 0.75rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .customer-card-info {
+            flex: 1;
+            min-width: 0;
+            line-height: 1.15;
+        }
+
+        .customer-card-name {
+            font-size: 0.80rem;
+            font-weight: 800;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .customer-card-meta {
+            font-size: 0.68rem;
+            display: flex;
+            gap: 6px;
+            margin-top: 2px;
+        }
+
+        .customer-card-tier {
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .customer-card-remove-btn {
+            border: none;
+            background: transparent;
+            color: var(--text-subtle);
+            cursor: pointer;
+            padding: 2px 4px;
+            font-size: 0.85rem;
+        }
+
+        .customer-card-remove-btn:hover {
+            color: var(--danger);
+        }
+
+        /* Order Context Delivery Details Form in Cart */
+        .pos-order-context-form {
+            padding: 0.6rem 0.85rem;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .context-form-header {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 0.45rem;
+        }
+
+        .context-form-body {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .form-row-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.35rem;
+        }
+
+        .pos-input-compact {
+            width: 100%;
+            height: 32px;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: 7px;
+            padding: 0 8px;
+            font-size: 0.76rem;
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.15s ease;
+        }
+
+        .pos-input-compact:focus {
+            border-color: var(--primary);
+            background: var(--bg-card);
+        }
+
         /* Cart Items Scrollable List */
         .cart-items-list {
             flex: 1;
@@ -1430,12 +1855,13 @@
             background: var(--bg-card);
             display: flex;
             gap: 0.5rem;
+            align-items: center;
         }
 
         .cart-btn-primary {
             flex: 2;
             height: 48px;
-            border-radius: 10px;
+            border-radius: 12px;
             border: none;
             background: var(--primary-gradient);
             color: #ffffff;
@@ -1447,7 +1873,9 @@
             gap: 0.5rem;
             cursor: pointer;
             box-shadow: 0 4px 15px var(--primary-glow);
-            transition: all 0.15s ease;
+            transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+            touch-action: manipulation;
         }
 
         .cart-btn-primary:active {
@@ -1457,22 +1885,29 @@
         .cart-btn-secondary {
             flex: 1;
             height: 48px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            background: var(--bg-subtle);
             border: 1px solid var(--border-color);
             color: var(--text-main);
             font-size: 0.85rem;
-            font-weight: 600;
+            font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 0.4rem;
             cursor: pointer;
             transition: all 0.15s ease;
+            user-select: none;
+            touch-action: manipulation;
         }
 
         .cart-btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--bg-card-hover);
+            border-color: var(--border-color-strong);
+        }
+
+        .cart-btn-secondary:active {
+            transform: scale(0.98);
         }
 
         /* Empty Cart State */
@@ -1729,27 +2164,34 @@
             color: #000;
         }
 
-        /* Toast notifications */
+        /* Toast notifications (Dynamic Island / Floating Top Capsule - Never blocks cart) */
         .pos-toast {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 12px 18px;
-            color: #fff;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: auto;
+            right: auto;
+            background: rgba(15, 23, 42, 0.94);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 999px;
+            padding: 9px 20px;
+            color: #ffffff;
             display: flex;
             align-items: center;
-            gap: 10px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-            z-index: 200;
-            animation: slide-up 0.3s ease;
+            gap: 9px;
+            box-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
+            z-index: 300;
+            animation: toast-drop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(14px);
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
         }
 
-        @keyframes slide-up {
-            from { transform: translateY(100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        @keyframes toast-drop {
+            from { transform: translate(-50%, -15px); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
         }
 
         /* Form Controls */
@@ -2121,75 +2563,77 @@
             </div>
         </div>
 
-        <!-- Mode Switcher (Segmented Control) -->
-        @if(count($allowedModes ?? []) > 1)
-        <div class="pos-mode-switcher">
-            @if(in_array('waiter', $allowedModes ?? []))
+        <!-- Mode Switcher (Modern iOS Dropdown) -->
+        <div class="pos-mode-dropdown-wrap" x-data="{ modeDropdownOpen: false }" @click.outside="modeDropdownOpen = false">
+            @if(count($allowedModes ?? []) > 1)
             <button type="button" 
-                    class="pos-mode-btn" 
-                    :class="{ 'active': activeMode === 'waiter' }"
-                    @click="setMode('waiter')">
-                <i class="fa-solid fa-user-tie" :style="activeMode === 'waiter' ? 'color: #10b981;' : ''"></i>
-                <span>{{ __('Waiter Mode') }}</span>
+                    class="pos-mode-dropdown-trigger" 
+                    @click="modeDropdownOpen = !modeDropdownOpen"
+                    aria-label="{{ __('Switch Mode') }}">
+                <div class="pos-mode-trigger-icon" :style="'color:' + activeModeColor + '; background:' + activeModeBgColor + ';'">
+                    <i class="fa-solid" :class="activeModeIcon"></i>
+                </div>
+                <div class="pos-mode-trigger-info">
+                    <span class="pos-mode-trigger-label">{{ __('Mode') }}</span>
+                    <span class="pos-mode-trigger-current" x-text="activeModeTitle"></span>
+                </div>
+                <i class="fa-solid fa-chevron-down pos-mode-chevron" :class="{ 'open': modeDropdownOpen }"></i>
             </button>
-            @endif
-            @if(in_array('cashier', $allowedModes ?? []))
-            <button type="button" 
-                    class="pos-mode-btn" 
-                    :class="{ 'active': activeMode === 'cashier' }"
-                    @click="setMode('cashier')">
-                <i class="fa-solid fa-receipt" :style="activeMode === 'cashier' ? 'color: #6366f1;' : ''"></i>
-                <span>{{ __('Cashier Mode') }}</span>
-            </button>
-            @endif
-            @if(in_array('manager', $allowedModes ?? []))
-            <button type="button" 
-                    class="pos-mode-btn" 
-                    :class="{ 'active': activeMode === 'manager' }"
-                    @click="setMode('manager')">
-                <i class="fa-solid fa-chart-line" :style="activeMode === 'manager' ? 'color: #f59e0b;' : ''"></i>
-                <span>{{ __('Manager Mode') }}</span>
-            </button>
-            @endif
-        </div>
-        @else
-        <div class="pos-header-capsule">
-            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.8rem;">
-                <i class="fa-solid" :class="activeMode === 'waiter' ? 'fa-user-tie' : (activeMode === 'cashier' ? 'fa-receipt' : 'fa-chart-line')" :style="activeMode === 'waiter' ? 'color: #10b981;' : (activeMode === 'cashier' ? 'color: #6366f1;' : 'color: #f59e0b;')"></i>
-                <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-main);" x-text="activeMode === 'waiter' ? '{{ __('Waiter Mode') }}' : (activeMode === 'cashier' ? '{{ __('Cashier Mode') }}' : '{{ __('Manager Mode') }}')"></span>
+
+            <div class="pos-mode-dropdown-menu" x-show="modeDropdownOpen" x-cloak x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+                @if(in_array('waiter', $allowedModes ?? []))
+                <button type="button" class="pos-mode-dropdown-item" :class="{ 'selected': activeMode === 'waiter' }" @click="setMode('waiter'); modeDropdownOpen = false;">
+                    <div class="pos-mode-item-icon" style="background: rgba(16, 185, 129, 0.12); color: #10b981;">
+                        <i class="fa-solid fa-user-tie"></i>
+                    </div>
+                    <div class="pos-mode-item-text">
+                        <div class="pos-mode-item-title">{{ __('Waiter Mode') }}</div>
+                        <div class="pos-mode-item-desc">{{ __('Ordering & Tables') }}</div>
+                    </div>
+                    <i class="fa-solid fa-check pos-mode-check" x-show="activeMode === 'waiter'"></i>
+                </button>
+                @endif
+                @if(in_array('cashier', $allowedModes ?? []))
+                <button type="button" class="pos-mode-dropdown-item" :class="{ 'selected': activeMode === 'cashier' }" @click="setMode('cashier'); modeDropdownOpen = false;">
+                    <div class="pos-mode-item-icon" style="background: rgba(99, 102, 241, 0.12); color: #6366f1;">
+                        <i class="fa-solid fa-receipt"></i>
+                    </div>
+                    <div class="pos-mode-item-text">
+                        <div class="pos-mode-item-title">{{ __('Cashier Mode') }}</div>
+                        <div class="pos-mode-item-desc">{{ __('Bills & Settlements') }}</div>
+                    </div>
+                    <i class="fa-solid fa-check pos-mode-check" x-show="activeMode === 'cashier'"></i>
+                </button>
+                @endif
+                @if(in_array('manager', $allowedModes ?? []))
+                <button type="button" class="pos-mode-dropdown-item" :class="{ 'selected': activeMode === 'manager' }" @click="setMode('manager'); modeDropdownOpen = false;">
+                    <div class="pos-mode-item-icon" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b;">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <div class="pos-mode-item-text">
+                        <div class="pos-mode-item-title">{{ __('Manager Mode') }}</div>
+                        <div class="pos-mode-item-desc">{{ __('Reports & Exceptions') }}</div>
+                    </div>
+                    <i class="fa-solid fa-check pos-mode-check" x-show="activeMode === 'manager'"></i>
+                </button>
+                @endif
             </div>
+            @else
+            <div class="pos-mode-dropdown-trigger" style="cursor: default;">
+                <div class="pos-mode-trigger-icon" :style="'color:' + activeModeColor + '; background:' + activeModeBgColor + ';'">
+                    <i class="fa-solid" :class="activeModeIcon"></i>
+                </div>
+                <div class="pos-mode-trigger-info">
+                    <span class="pos-mode-trigger-label">{{ __('Mode') }}</span>
+                    <span class="pos-mode-trigger-current" x-text="activeModeTitle"></span>
+                </div>
+            </div>
+            @endif
         </div>
-        @endif
 
         <!-- Right System Indicators & Consolidated Action Capsules -->
         <div class="pos-actions-group">
-            <!-- Capsule 1: Connectivity & Language -->
-            <div class="pos-header-capsule pos-connectivity-capsule">
-                <!-- Online / Offline Status Badge -->
-                <div class="status-pill" :class="{ 'offline': !isOnline }" :title="isOnline ? '{{ __('Connected') }}' : '{{ __('Offline Mode') }}'">
-                    <span class="status-dot"></span>
-                    <span class="status-label" x-text="isOnline ? '{{ __('Online') }}' : '{{ __('Offline') }}'"></span>
-                </div>
-
-                <!-- Unsynced Operations Badge -->
-                <template x-if="offlineQueue && offlineQueue.length > 0">
-                    <button type="button" class="pos-capsule-btn alert-sync" @click="syncOfflineQueue()" title="{{ __('Sync Offline Data') }}">
-                        <i class="fa-solid fa-cloud-arrow-up" :class="{ 'fa-spin': isSyncing }"></i>
-                        <span x-text="offlineQueue.length"></span>
-                    </button>
-                </template>
-
-                <div class="pos-capsule-divider"></div>
-
-                <!-- Language Switcher -->
-                <div class="pos-lang-switch" title="{{ __('Language') }}">
-                    <a href="{{ route('lang.switch', 'hy') }}" class="pos-lang-btn {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">HY</a>
-                    <a href="{{ route('lang.switch', 'ru') }}" class="pos-lang-btn {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">RU</a>
-                    <a href="{{ route('lang.switch', 'en') }}" class="pos-lang-btn {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">EN</a>
-                </div>
-            </div>
-
-            <!-- Capsule 2: Live Activity & Operations Hub (Waiter Calls, Online Orders, Reservations, Kitchen) -->
+            <!-- Capsule 1: Live Activity & Operations Hub (Waiter Calls, Online Orders, Reservations, Kitchen) -->
             <div class="pos-header-capsule pos-activity-capsule">
                 <!-- Waiter Calls Indicator -->
                 <button type="button" 
@@ -2330,12 +2774,6 @@
                         <span>{{ __('My Tips') }}</span>
                     </button>
                 </div>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <button type="button" class="pos-table-map-btn" @click="openTableModal()">
-                        <i class="fa-solid fa-chair" style="color: #10b981;"></i> 
-                        <span x-text="selectedTable ? ('{{ __('Table') }} ' + selectedTable.table_number) : '{{ __('Floor Plan') }}'"></span>
-                    </button>
-                </div>
             </div>
 
             <!-- Waiter SubTab 1: Home (Catalog & Order taking) -->
@@ -2370,10 +2808,19 @@
                         </button>
                     </div>
 
-                    <!-- Table Chip Button -->
-                    <div class="table-context-chip" :class="{ 'has-table': selectedTable }" @click="openTableModal()">
-                        <i class="fa-solid" :class="selectedTable ? 'fa-chair' : 'fa-bolt'" :style="selectedTable ? 'color: #10b981;' : 'color: var(--primary);'"></i>
-                        <span x-text="selectedTable ? ('{{ __('Table') }} ' + selectedTable.table_number) : '{{ __('Quick Sale / Counter') }}'"></span>
+                    <!-- Unified Table & Dining Context (Single Intuitive Entry Point) -->
+                    <div class="pos-dining-context" @click="openTableModal()" title="{{ __('Select Table or Dining Mode') }}">
+                        <div class="dining-context-icon" :class="{ 'table-active': selectedTable }">
+                            <i class="fa-solid" :class="selectedTable ? 'fa-chair' : 'fa-bolt'"></i>
+                        </div>
+                        <div class="dining-context-details">
+                            <span class="dining-context-label">{{ __('Active Table') }}</span>
+                            <span class="dining-context-value" x-text="selectedTable ? ('{{ __('Table') }} ' + selectedTable.table_number + (selectedTable.floor_name ? ' · ' + selectedTable.floor_name : '')) : '{{ __('Quick Sale / Counter') }}'"></span>
+                        </div>
+                        <div class="dining-context-action">
+                            <span class="dining-action-badge">{{ __('Change') }}</span>
+                            <i class="fa-solid fa-chevron-right dining-chevron"></i>
+                        </div>
                     </div>
 
                     <!-- Guest Count -->
@@ -2513,6 +2960,114 @@
                     </div>
                 </div>
 
+                <!-- 1. Loyalty Card Bar (Direct swipe / barcode / phone lookup in cart) -->
+                <div class="pos-cart-loyalty-bar">
+                    <!-- If customer is attached -->
+                    <template x-if="orderCustomer">
+                        <div class="cart-customer-attached-card">
+                            <div class="customer-card-avatar" x-text="orderCustomer.name.charAt(0).toUpperCase()"></div>
+                            <div class="customer-card-info">
+                                <div class="customer-card-name" x-text="orderCustomer.name"></div>
+                                <div class="customer-card-meta">
+                                    <span class="customer-card-tier" x-text="orderCustomer.loyalty_tier || 'standard'"></span>
+                                    <span>•</span>
+                                    <span class="loyalty-points-badge" x-text="(orderCustomer.loyalty_points || 0) + ' {{ __('pts') }}'"></span>
+                                    <template x-if="orderCustomer.phone">
+                                        <span style="color: var(--text-muted);" x-text="'📞 ' + orderCustomer.phone"></span>
+                                    </template>
+                                </div>
+                            </div>
+                            <button type="button" class="customer-card-remove-btn" @click="removeCartCustomer()" title="{{ __('Remove Customer') }}">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    </template>
+
+                    <!-- If customer is NOT attached -->
+                    <template x-if="!orderCustomer">
+                        <div>
+                            <div x-show="!showCartLoyaltyInput">
+                                <button type="button" class="cart-loyalty-trigger-btn" @click="showCartLoyaltyInput = true; $nextTick(() => { document.getElementById('cartLoyaltyInput')?.focus() })">
+                                    <i class="fa-solid fa-id-card" style="color: var(--primary);"></i>
+                                    <span>{{ __('Swipe / Scan Loyalty Card or Phone') }}</span>
+                                </button>
+                            </div>
+
+                            <div x-show="showCartLoyaltyInput" class="cart-loyalty-input-box" @click.outside="if(!cartLoyaltyQuery) showCartLoyaltyInput = false">
+                                <div style="display: flex; gap: 4px; align-items: center;">
+                                    <div style="position: relative; flex: 1;">
+                                        <input type="text"
+                                               id="cartLoyaltyInput"
+                                               class="pos-input-compact"
+                                               x-model="cartLoyaltyQuery"
+                                               @input.debounce.300ms="searchCartLoyalty()"
+                                               @keydown.enter.prevent="searchCartLoyalty()"
+                                               placeholder="{{ __('Enter Card No, Phone or Name...') }}"
+                                               autocomplete="off"
+                                               data-lpignore="true">
+                                        <i class="fa-solid fa-magnifying-glass" style="position: absolute; right: 8px; top: 9px; font-size: 0.72rem; color: var(--text-muted);" :class="{ 'fa-spin fa-spinner': isSearchingLoyalty }"></i>
+                                    </div>
+                                    <button type="button" class="pos-tool-btn" style="width: 30px; height: 30px; flex-shrink: 0;" @click="showCartLoyaltyInput = false; cartLoyaltyQuery = ''; cartLoyaltyResults = []">
+                                        <i class="fa-solid fa-xmark" style="font-size: 0.75rem;"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Quick Results Dropdown -->
+                                <div class="cart-loyalty-results-dropdown" x-show="cartLoyaltyResults.length > 0">
+                                    <template x-for="c in cartLoyaltyResults" :key="c.id">
+                                        <div class="cart-loyalty-result-item" @click="selectCartCustomer(c)">
+                                            <div class="loyalty-item-avatar" x-text="c.name.charAt(0).toUpperCase()"></div>
+                                            <div style="flex: 1; min-width: 0;">
+                                                <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);" x-text="c.name"></div>
+                                                <div style="font-size: 0.68rem; color: var(--text-muted);" x-text="(c.phone || '') + (c.email ? ' · ' + c.email : '')"></div>
+                                            </div>
+                                            <div class="loyalty-points-badge" x-text="(c.loyalty_points || 0) + ' pts'"></div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- 2. Customer & Delivery Info Form (When orderType is 'delivery' or 'takeaway') -->
+                <div class="pos-order-context-form" x-show="orderType === 'delivery' || orderType === 'takeaway'">
+                    <div class="context-form-header">
+                        <i class="fa-solid" :class="orderType === 'delivery' ? 'fa-truck-fast' : 'fa-bag-shopping'" style="color: var(--primary);"></i>
+                        <span x-text="orderType === 'delivery' ? '{{ __('Delivery Details') }}' : '{{ __('Takeaway Customer Details') }}'"></span>
+                    </div>
+                    <div class="context-form-body">
+                        <div class="form-row-2col">
+                            <input type="text" 
+                                   class="pos-input-compact" 
+                                   x-model="orderCustomerName" 
+                                   placeholder="{{ __('Customer Name') }} *" 
+                                   autocomplete="off" 
+                                   data-lpignore="true">
+                            <input type="tel" 
+                                   class="pos-input-compact" 
+                                   x-model="orderCustomerPhone" 
+                                   placeholder="{{ __('Phone Number') }} *" 
+                                   autocomplete="off" 
+                                   data-lpignore="true">
+                        </div>
+                        <template x-if="orderType === 'delivery'">
+                            <input type="text" 
+                                   class="pos-input-compact" 
+                                   x-model="orderDeliveryAddress" 
+                                   placeholder="{{ __('Delivery Address (Street, Apt, Intercom)') }} *" 
+                                   autocomplete="off" 
+                                   data-lpignore="true">
+                        </template>
+                        <input type="text" 
+                               class="pos-input-compact" 
+                               x-model="orderNotes" 
+                               placeholder="{{ __('Order notes (e.g. deliver by 19:30, extra napkins)') }}" 
+                               autocomplete="off" 
+                               data-lpignore="true">
+                    </div>
+                </div>
+
                 <!-- Cart Items List -->
                 <div class="cart-items-list">
                     <template x-if="cart.length === 0">
@@ -2581,11 +3136,11 @@
 
                 <!-- Order Action Buttons -->
                 <div class="cart-actions" x-show="cart.length > 0">
-                    <button type="button" class="cart-btn-secondary" @click="holdCurrentOrder()" title="{{ __('Hold Order') }}">
+                    <button type="button" class="cart-btn-secondary" @click="holdCurrentOrder()" title="{{ __('Hold Order') }}" style="max-width: 95px;">
                         <i class="fa-solid fa-pause"></i>
                         <span>{{ __('Hold') }}</span>
                     </button>
-                    <button type="button" class="cart-btn-secondary" @click="openDiscountModal()" title="{{ __('Add Discount') }}">
+                    <button type="button" class="cart-btn-secondary" @click="openDiscountModal()" title="{{ __('Add Discount') }}" style="max-width: 52px; padding: 0;">
                         <i class="fa-solid fa-tag"></i>
                     </button>
                     <button type="button" class="cart-btn-primary" @click="submitOrderToKitchen()">
@@ -3914,6 +4469,33 @@
                     </button>
                 </div>
 
+                <!-- Connectivity & Language Settings Widget -->
+                <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.65rem 0.9rem; margin-top: 0.75rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
+                    <!-- Online / Offline Status -->
+                    <div style="display: flex; align-items: center; gap: 0.6rem;">
+                        <div class="status-pill" :class="{ 'offline': !isOnline }" :title="isOnline ? '{{ __('Connected') }}' : '{{ __('Offline Mode') }}'">
+                            <span class="status-dot"></span>
+                            <span class="status-label" x-text="isOnline ? '{{ __('Online') }}' : '{{ __('Offline') }}'"></span>
+                        </div>
+                        <template x-if="offlineQueue && offlineQueue.length > 0">
+                            <button type="button" class="pos-capsule-btn alert-sync" @click="syncOfflineQueue()" title="{{ __('Sync Offline Data') }}">
+                                <i class="fa-solid fa-cloud-arrow-up" :class="{ 'fa-spin': isSyncing }"></i>
+                                <span x-text="offlineQueue.length"></span>
+                            </button>
+                        </template>
+                    </div>
+
+                    <!-- Language Switcher -->
+                    <div style="display: flex; align-items: center; gap: 0.45rem;">
+                        <span style="font-size: 0.74rem; font-weight: 600; color: var(--text-muted);">{{ __('Language') }}:</span>
+                        <div class="pos-lang-switch" title="{{ __('Language') }}">
+                            <a href="{{ route('lang.switch', 'hy') }}" class="pos-lang-btn {{ app()->getLocale() === 'hy' ? 'active' : '' }}" title="Հայերեն">HY</a>
+                            <a href="{{ route('lang.switch', 'ru') }}" class="pos-lang-btn {{ app()->getLocale() === 'ru' ? 'active' : '' }}" title="Русский">RU</a>
+                            <a href="{{ route('lang.switch', 'en') }}" class="pos-lang-btn {{ app()->getLocale() === 'en' ? 'active' : '' }}" title="English">EN</a>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Tabs: Profile Details, Change PIN, Change Password, Active Sessions -->
                 <div style="display: flex; gap: 0.35rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color); overflow-x: auto;">
                     <button type="button" class="pos-mode-btn" :class="{ 'active': profileTab === 'info' }" @click="profileTab = 'info'" style="font-size: 0.78rem; padding: 0.35rem 0.75rem;">
@@ -4440,6 +5022,15 @@
                 discountAmount: 0,
                 discountReason: '',
                 tempDiscountAmount: 0,
+                orderCustomerName: '',
+                orderCustomerPhone: '',
+                orderDeliveryAddress: '',
+                orderNotes: '',
+                orderCustomer: null,
+                showCartLoyaltyInput: false,
+                cartLoyaltyQuery: '',
+                cartLoyaltyResults: [],
+                isSearchingLoyalty: false,
 
                 // Modals
                 customizingProduct: null,
@@ -5195,7 +5786,75 @@
                     this.cart = [];
                     this.discountAmount = 0;
                     this.discountReason = '';
+                    this.orderCustomer = null;
+                    this.orderCustomerName = '';
+                    this.orderCustomerPhone = '';
+                    this.orderDeliveryAddress = '';
+                    this.orderNotes = '';
+                    this.showCartLoyaltyInput = false;
+                    this.cartLoyaltyQuery = '';
+                    this.cartLoyaltyResults = [];
                     this.showMobileCart = false;
+                },
+
+                // Active Mode Getters
+                get activeModeTitle() {
+                    if (this.activeMode === 'waiter') return '{{ __('Waiter Mode') }}';
+                    if (this.activeMode === 'cashier') return '{{ __('Cashier Mode') }}';
+                    return '{{ __('Manager Mode') }}';
+                },
+                get activeModeIcon() {
+                    if (this.activeMode === 'waiter') return 'fa-user-tie';
+                    if (this.activeMode === 'cashier') return 'fa-receipt';
+                    return 'fa-chart-line';
+                },
+                get activeModeColor() {
+                    if (this.activeMode === 'waiter') return '#10b981';
+                    if (this.activeMode === 'cashier') return '#6366f1';
+                    return '#f59e0b';
+                },
+                get activeModeBgColor() {
+                    if (this.activeMode === 'waiter') return 'rgba(16, 185, 129, 0.12)';
+                    if (this.activeMode === 'cashier') return 'rgba(99, 102, 241, 0.12)';
+                    return 'rgba(245, 158, 11, 0.12)';
+                },
+
+                // Cart Loyalty Search & Selection Methods
+                async searchCartLoyalty() {
+                    if (!this.cartLoyaltyQuery || this.cartLoyaltyQuery.trim().length < 2) {
+                        this.cartLoyaltyResults = [];
+                        return;
+                    }
+                    this.isSearchingLoyalty = true;
+                    try {
+                        const res = await fetch(`/pos/api/integrations/customers/search?query=${encodeURIComponent(this.cartLoyaltyQuery.trim())}`);
+                        const data = await res.json();
+                        if (data.success) {
+                            this.cartLoyaltyResults = data.customers || [];
+                        }
+                    } catch (e) {
+                        console.error('Error searching customer:', e);
+                    } finally {
+                        this.isSearchingLoyalty = false;
+                    }
+                },
+
+                selectCartCustomer(customer) {
+                    this.orderCustomer = customer;
+                    this.orderCustomerName = customer.name || '';
+                    if (customer.phone) {
+                        this.orderCustomerPhone = customer.phone;
+                    }
+                    this.showCartLoyaltyInput = false;
+                    this.cartLoyaltyQuery = '';
+                    this.cartLoyaltyResults = [];
+                    this.showToast('{{ __('Loyalty customer attached!') }}');
+                },
+
+                removeCartCustomer() {
+                    this.orderCustomer = null;
+                    this.orderCustomerName = '';
+                    this.orderCustomerPhone = '';
                 },
 
                 get cartTotalQuantity() {
@@ -5500,12 +6159,27 @@
                 async submitOrderToKitchen() {
                     if (this.cart.length === 0) return;
 
+                    if (this.orderType === 'delivery') {
+                        if (!this.orderDeliveryAddress || !this.orderDeliveryAddress.trim()) {
+                            this.showToast('{{ __('Please enter delivery address') }}');
+                            return;
+                        }
+                        if (!this.orderCustomerPhone && !this.orderCustomerName) {
+                            this.showToast('{{ __('Please enter customer contact details') }}');
+                            return;
+                        }
+                    }
+
                     const payload = {
                         location_id: this.activeLocationId,
                         type: this.orderType,
                         table_number: this.selectedTable ? this.selectedTable.table_number : 'Counter',
                         restaurant_table_id: this.selectedTable ? this.selectedTable.id : null,
                         guest_count: this.guestCount,
+                        customer_name: this.orderCustomerName || (this.orderCustomer ? this.orderCustomer.name : null),
+                        customer_phone: this.orderCustomerPhone || (this.orderCustomer ? this.orderCustomer.phone : null),
+                        delivery_address: this.orderDeliveryAddress || null,
+                        notes: this.orderNotes || null,
                         discount_amount: this.discountAmount,
                         discount_reason: this.discountReason,
                         tax_amount: this.taxAmount,

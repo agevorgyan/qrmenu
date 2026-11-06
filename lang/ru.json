@@ -5251,5 +5251,19 @@
     "✓ SMTP connection, authentication, and transport delivery are working successfully.": "✓ SMTP-соединение, аутентификация и доставка почты работают успешно.",
     "✨ AI settings saved successfully.": "✨ Настройки ИИ успешно сохранены.",
     "✨ All menu items, descriptions, and categories were successfully translated to [:target] via AI.": "✨ Все позиции меню, описания и категории были успешно переведены на [:target] с помощью ИИ.",
-    "✨ All menu items, descriptions, and categories were successfully translated to [🇫🇷 French] via AI.": "✨ Все позиции меню, описания и категории были успешно переведены на [🇫🇷 Французский] с помощью ИИ."
+    "✨ All menu items, descriptions, and categories were successfully translated to [🇫🇷 French] via AI.": "✨ Все позиции меню, описания и категории были успешно переведены на [🇫🇷 Французский] с помощью ИИ.",
+    "Current Mode": "Текущий режим",
+    "Ordering & Tables": "Заказы и столы",
+    "Bills & Settlements": "Счета и расчеты",
+    "Reports & Exceptions": "Отчеты и исключения",
+    "Active Table": "Активный стол",
+    "Order Mode": "Режим заказа",
+    "Swipe / Scan Loyalty Card or Phone": "Провести карту лояльности или телефон",
+    "Enter Card No, Phone or Name...": "Введите номер карты, телефон или имя...",
+    "Delivery Details": "Данные доставки",
+    "Takeaway Customer Details": "Данные клиента навынос",
+    "Delivery Address (Street, Apt, Intercom)": "Адрес доставки (Улица, кв., домофон)",
+    "Order notes (e.g. deliver by 19:30, extra napkins)": "Примечания к заказу",
+    "Loyalty customer attached!": "Клиент программы лояльности привязан!",
+    "Remove Customer": "Удалить клиента"
 }

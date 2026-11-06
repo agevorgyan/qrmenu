@@ -190,6 +190,7 @@ class PosController extends Controller
             'customer_name' => 'nullable|string|max:100',
             'customer_phone' => 'nullable|string|max:30',
             'customer_email' => 'nullable|email|max:100',
+            'delivery_address' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:500',
             'payment_method' => 'nullable|string|max:30',
             'discount_amount' => 'nullable|numeric|min:0',

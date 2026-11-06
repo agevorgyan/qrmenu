@@ -5251,5 +5251,19 @@
     "✓ SMTP connection, authentication, and transport delivery are working successfully.": "✓ SMTP միացումը, իսկորոշումը (authentication) և տրանսպորտային առաքումը հաջողությամբ աշխատում են։",
     "✨ AI settings saved successfully.": "✨ AI կարգավորումները հաջողությամբ պահպանվեցին:",
     "✨ All menu items, descriptions, and categories were successfully translated to [:target] via AI.": "✨ Մենյուի բոլոր ապրանքները, նկարագրությունները և կատեգորիաները հաջողությամբ թարգմանվեցին [:target] AI-ի միջոցով։",
-    "✨ All menu items, descriptions, and categories were successfully translated to [🇫🇷 French] via AI.": "✨ Մենյուի բոլոր ապրանքները, նկարագրությունները և կատեգորիաները հաջողությամբ թարգմանվեցին [🇫🇷 Ֆրանսերեն] AI-ի միջոցով։"
+    "✨ All menu items, descriptions, and categories were successfully translated to [🇫🇷 French] via AI.": "✨ Մենյուի բոլոր ապրանքները, նկարագրությունները և կատեգորիաները հաջողությամբ թարգմանվեցին [🇫🇷 Ֆրանսերեն] AI-ի միջոցով։",
+    "Current Mode": "Ընթացիկ ռեժիմ",
+    "Ordering & Tables": "Սպասարկում և սեղաններ",
+    "Bills & Settlements": "Հաշիվներ և վճարումներ",
+    "Reports & Exceptions": "Հաշվետվություններ և բացառություններ",
+    "Active Table": "Ակտիվ սեղան",
+    "Order Mode": "Պատվերի ռեժիմ",
+    "Swipe / Scan Loyalty Card or Phone": "Անցկացնել լոյալության քարտը կամ հեռախոսահամարը",
+    "Enter Card No, Phone or Name...": "Գրել քարտի համարը, հեռախոսը կամ անունը...",
+    "Delivery Details": "Առաքման տվյալներ",
+    "Takeaway Customer Details": "Տանելու հաճախորդի տվյալներ",
+    "Delivery Address (Street, Apt, Intercom)": "Առաքման հասցե (Փողոց, բն., դոմոֆոն)",
+    "Order notes (e.g. deliver by 19:30, extra napkins)": "Պատվերի նշումներ (օր.՝ հասցնել մինչև 19:30)",
+    "Loyalty customer attached!": "Լոյալության հաճախորդը կցվեց:",
+    "Remove Customer": "Հեռացնել հաճախորդին"
 }
