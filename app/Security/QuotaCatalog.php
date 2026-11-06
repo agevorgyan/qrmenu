@@ -52,6 +52,14 @@ class QuotaCatalog
 
     public const KEY_PRODUCTION_ORDERS_COUNT = 'production_orders.count';
 
+    public const KEY_CUSTOMERS_COUNT = 'customers.count';
+
+    public const KEY_ACTIVE_CAMPAIGNS_COUNT = 'active_campaigns.count';
+
+    public const KEY_REWARDS_COUNT = 'rewards.count';
+
+    public const KEY_WALLET_PASSES_COUNT = 'wallet_passes.count';
+
     /**
      * Aliases map for legacy or conversational keys.
      */

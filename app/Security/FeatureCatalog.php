@@ -236,6 +236,18 @@ class FeatureCatalog
         'customer' => self::CUSTOMERS_CRM,
         'crm' => self::CUSTOMERS_CRM,
 
+        // Loyalty & Wallet aliases
+        'loyalty' => self::MARKETING_LOYALTY,
+        'points' => self::MARKETING_LOYALTY,
+        'cashback' => self::MARKETING_CASHBACK,
+        'apple_wallet' => self::MARKETING_APPLE_WALLET,
+        'google_wallet' => self::MARKETING_GOOGLE_WALLET,
+        'tiers' => self::MARKETING_TIERS,
+        'referrals' => self::MARKETING_REFERRALS,
+        'stamp_cards' => self::MARKETING_STAMP_CARDS,
+        'stamps' => self::MARKETING_STAMP_CARDS,
+        'campaigns' => self::MARKETING_CAMPAIGNS,
+
         // Branches & Locations aliases
         'locations' => self::BRANCHES_MULTIPLE,
         'location' => self::BRANCHES_MULTIPLE,
@@ -447,6 +459,14 @@ class FeatureCatalog
                 self::TIPS_RATINGS,
                 self::BILLS_SPLIT,
                 self::POS_ACCESS,
+                self::MARKETING_LOYALTY,
+                self::MARKETING_APPLE_WALLET,
+                self::MARKETING_GOOGLE_WALLET,
+                self::MARKETING_CASHBACK,
+                self::MARKETING_TIERS,
+                self::MARKETING_REFERRALS,
+                self::MARKETING_STAMP_CARDS,
+                self::MARKETING_CAMPAIGNS,
             ],
             'pro' => [
                 self::MENU_BASE,
@@ -463,6 +483,11 @@ class FeatureCatalog
                 self::TIPS_RATINGS,
                 self::BILLS_SPLIT,
                 self::POS_ACCESS,
+                self::MARKETING_LOYALTY,
+                self::MARKETING_APPLE_WALLET,
+                self::MARKETING_GOOGLE_WALLET,
+                self::MARKETING_CASHBACK,
+                self::MARKETING_TIERS,
             ],
             default => [
                 self::MENU_BASE,
@@ -498,6 +523,9 @@ class FeatureCatalog
             self::ANALYTICS_FULL_REPORTING,
             self::ANALYTICS_BUSINESS,
             self::MARKETING_SEGMENTATION,
+            self::MARKETING_REFERRALS,
+            self::MARKETING_STAMP_CARDS,
+            self::MARKETING_CAMPAIGNS,
             self::ORDERS_ADVANCED_WORKFLOWS,
             self::DELIVERY_ADVANCED_SCHEDULING,
         ], true)) {
@@ -530,6 +558,9 @@ class FeatureCatalog
             self::MARKETING_COUPONS,
             self::MARKETING_LOYALTY,
             self::MARKETING_APPLE_WALLET,
+            self::MARKETING_GOOGLE_WALLET,
+            self::MARKETING_CASHBACK,
+            self::MARKETING_TIERS,
             self::ANALYTICS_EXPORT,
         ], true)) {
             return 'Pro';

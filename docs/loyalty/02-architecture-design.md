@@ -252,3 +252,4 @@ sequenceDiagram
 ## 6. Verification and Testability
 
 All calculation services (`PointsCalculator`, `TierService`, `ReferralService`, `PointsLedgerService`, `CashbackService`) will have 100% unit test coverage isolated from database state, followed by full database-backed feature tests testing concurrency, isolation, and rollbacks.
+

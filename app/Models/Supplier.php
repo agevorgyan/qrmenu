@@ -80,6 +80,26 @@ class Supplier extends Model
     }
 
     /**
+     * Get payment credit days based on payment_terms (e.g. 'net_30' -> 30, 'net_7' -> 7, 'cash' -> 0).
+     */
+    public function getPaymentCreditDays(): int
+    {
+        $terms = (string) $this->payment_terms;
+
+        if (is_numeric($terms)) {
+            return max(0, (int) $terms);
+        }
+
+        return match ($terms) {
+            'net_7' => 7,
+            'net_15' => 15,
+            'net_30' => 30,
+            'cash', 'prepayment' => 0,
+            default => 30,
+        };
+    }
+
+    /**
      * Recalculate and update the supplier's outstanding balance ledger.
      */
     public function recalculateBalance(): float

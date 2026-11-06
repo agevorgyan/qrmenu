@@ -51,3 +51,4 @@ When an order is refunded (partially or fully):
 - **Audit Logging**: Every staff-initiated adjustment, manual redemption, and reversal writes to `loyalty_audit_logs`.
 - **APNs & Google Wallet Telemetry**: Delivery failures are logged in `wallet_events` and surfaced in the admin Wallet Settings dashboard.
 - **Ledger Invariant Checks**: Automated health check asserts that `SUM(points)` from `loyalty_ledger_transactions` matches `current_balance` for every active account.
+

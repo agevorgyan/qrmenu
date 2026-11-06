@@ -407,6 +407,14 @@ class PlanVersionService
             'integrations.custom_domain' => FeatureCatalog::BRANDING_CUSTOM_DOMAIN,
             'integrations.api' => FeatureCatalog::API_ACCESS,
             'pos.enabled' => FeatureCatalog::POS_ACCESS,
+            'marketing.loyalty' => FeatureCatalog::MARKETING_LOYALTY,
+            'marketing.apple_wallet' => FeatureCatalog::MARKETING_APPLE_WALLET,
+            'marketing.google_wallet' => FeatureCatalog::MARKETING_GOOGLE_WALLET,
+            'marketing.cashback' => FeatureCatalog::MARKETING_CASHBACK,
+            'marketing.tiers' => FeatureCatalog::MARKETING_TIERS,
+            'marketing.referrals' => FeatureCatalog::MARKETING_REFERRALS,
+            'marketing.stamp_cards' => FeatureCatalog::MARKETING_STAMP_CARDS,
+            'marketing.campaigns' => FeatureCatalog::MARKETING_CAMPAIGNS,
         ];
 
         foreach ($enabledCodes as $code) {

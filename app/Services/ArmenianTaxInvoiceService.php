@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Ingredient;
+use App\Models\InventoryTransaction;
 use App\Models\Supplier;
 use App\Models\SupplierIngredient;
 use App\Models\SupplierInvoice;
@@ -356,7 +357,7 @@ class ArmenianTaxInvoiceService
                     'address' => $supplierData['address'] ?: null,
                     'bank_name' => $supplierData['bank_name'] ?: null,
                     'bank_account' => $supplierData['bank_account'] ?: null,
-                    'payment_terms' => 30,
+                    'payment_terms' => 'net_30',
                     'is_active' => true,
                 ]);
             } else {
@@ -401,55 +402,94 @@ class ArmenianTaxInvoiceService
                 // Match unit
                 $unit = $this->resolveUnit($item['unit_name'], $units, $defaultUnit);
 
-                // Match or create Ingredient
-                $ingredient = null;
-                if ($classifierCode) {
-                    $ingredient = Ingredient::where('vendor_id', $vendor->id)
-                        ->where('classifier_code', $classifierCode)
-                        ->first();
-                }
+                // Check if this supplier already has a mapped ingredient (with potential conversion factor)
+                $supplierMapping = SupplierIngredient::where('vendor_id', $vendor->id)
+                    ->where('supplier_id', $supplier->id)
+                    ->where(function ($q) use ($classifierCode, $description) {
+                        if ($classifierCode) {
+                            $q->where('supplier_sku', $classifierCode);
+                        }
+                        $q->orWhere('supplier_sku', $description);
+                    })
+                    ->with('ingredient.unit')
+                    ->first();
 
-                if (! $ingredient) {
-                    $ingredient = Ingredient::where('vendor_id', $vendor->id)
-                        ->whereRaw('LOWER(name) = ?', [mb_strtolower($description)])
-                        ->first();
-                }
+                $conversionFactor = null;
+                $originalQty = null;
+                $originalUnitName = null;
+                $isConverted = false;
 
-                if (! $ingredient) {
-                    $ingredient = Ingredient::create([
-                        'vendor_id' => $vendor->id,
-                        'name' => $description,
-                        'sku' => 'ING-'.strtoupper(Str::random(6)),
-                        'classifier_code' => $classifierCode,
-                        'type' => Ingredient::TYPE_RAW_MATERIAL,
-                        'unit_id' => $unit->id,
-                        'current_cost' => $unitPrice,
-                        'last_purchase_price' => $unitPrice,
-                        'min_stock' => 0,
-                        'is_active' => true,
-                    ]);
-                } else {
+                if ($supplierMapping && $supplierMapping->ingredient) {
+                    $ingredient = $supplierMapping->ingredient;
+                    $unit = $ingredient->unit ?? $unit;
+                    $packageSize = (float) $supplierMapping->package_size;
+
+                    if ($packageSize > 0 && $packageSize != 1.0) {
+                        $conversionFactor = $packageSize;
+                        $originalQty = $qty;
+                        $originalUnitName = $item['unit_name'];
+                        $qty = round($qty * $packageSize, 4);
+                        $unitPrice = ($qty > 0 && $totalPrice > 0) ? round($totalPrice / $qty, 4) : $unitPrice;
+                        $isConverted = true;
+                    }
+
                     $ingredient->last_purchase_price = $unitPrice;
                     $ingredient->current_cost = $unitPrice;
                     if (! $ingredient->classifier_code && $classifierCode) {
                         $ingredient->classifier_code = $classifierCode;
                     }
                     $ingredient->save();
-                }
+                } else {
+                    // Match or create Ingredient
+                    $ingredient = null;
+                    if ($classifierCode) {
+                        $ingredient = Ingredient::where('vendor_id', $vendor->id)
+                            ->where('classifier_code', $classifierCode)
+                            ->first();
+                    }
 
-                // Associate ingredient with supplier in supplier_ingredients
-                SupplierIngredient::firstOrCreate(
-                    [
-                        'vendor_id' => $vendor->id,
-                        'supplier_id' => $supplier->id,
-                        'ingredient_id' => $ingredient->id,
-                    ],
-                    [
-                        'unit_id' => $unit->id,
-                        'price' => $unitPrice,
-                        'is_primary_supplier' => true,
-                    ]
-                );
+                    if (! $ingredient) {
+                        $ingredient = Ingredient::where('vendor_id', $vendor->id)
+                            ->whereRaw('LOWER(name) = ?', [mb_strtolower($description)])
+                            ->first();
+                    }
+
+                    if (! $ingredient) {
+                        $ingredient = Ingredient::create([
+                            'vendor_id' => $vendor->id,
+                            'name' => $description,
+                            'sku' => 'ING-'.strtoupper(Str::random(6)),
+                            'classifier_code' => $classifierCode,
+                            'type' => Ingredient::TYPE_RAW_MATERIAL,
+                            'unit_id' => $unit->id,
+                            'current_cost' => $unitPrice,
+                            'last_purchase_price' => $unitPrice,
+                            'min_stock' => 0,
+                            'is_active' => true,
+                        ]);
+                    } else {
+                        $ingredient->last_purchase_price = $unitPrice;
+                        $ingredient->current_cost = $unitPrice;
+                        if (! $ingredient->classifier_code && $classifierCode) {
+                            $ingredient->classifier_code = $classifierCode;
+                        }
+                        $ingredient->save();
+                    }
+
+                    // Associate ingredient with supplier in supplier_ingredients
+                    SupplierIngredient::firstOrCreate(
+                        [
+                            'vendor_id' => $vendor->id,
+                            'supplier_id' => $supplier->id,
+                            'ingredient_id' => $ingredient->id,
+                        ],
+                        [
+                            'unit_id' => $unit->id,
+                            'price' => $unitPrice,
+                            'is_primary_supplier' => true,
+                        ]
+                    );
+                }
 
                 $ledgerReceiptItems[] = [
                     'ingredient_id' => $ingredient->id,
@@ -465,20 +505,25 @@ class ArmenianTaxInvoiceService
                     'description' => $description,
                     'classifier_code' => $classifierCode,
                     'unit_id' => $unit->id,
-                    'unit_name' => $item['unit_name'],
+                    'unit_name' => $isConverted ? ($unit->name ?? $unit->code) : $item['unit_name'],
                     'quantity' => $qty,
                     'unit_price' => $unitPrice,
                     'price' => (float) $item['price'],
                     'vat_rate' => (float) $item['vat_rate'],
                     'vat_amount' => (float) $item['vat_amount'],
                     'total_price' => (float) $item['total_price'],
+                    'original_quantity' => $originalQty,
+                    'original_unit_name' => $originalUnitName,
+                    'conversion_factor' => $conversionFactor,
+                    'is_converted' => $isConverted,
                 ];
             }
 
             // 4. Create SupplierInvoice
             $totals = $invoiceData['totals'];
             $supplyDate = $invoiceData['supply_date'] ? Carbon::parse($invoiceData['supply_date'])->toDateString() : now()->toDateString();
-            $dueDate = Carbon::parse($supplyDate)->addDays($supplier->payment_terms ?: 30)->toDateString();
+            $creditDays = $supplier ? $supplier->getPaymentCreditDays() : 30;
+            $dueDate = Carbon::parse($supplyDate)->addDays($creditDays)->toDateString();
 
             $invoice = SupplierInvoice::create([
                 'vendor_id' => $vendor->id,
@@ -526,6 +571,191 @@ class ArmenianTaxInvoiceService
             $supplier->recalculateBalance();
 
             return $invoice;
+        });
+    }
+
+    /**
+     * Convert an imported invoice line item into another ingredient, quantity and unit price.
+     * For example: 15 sacks (10kg each) -> 150 kg of Flour, or 6 bottles (5L each) -> 30 L of Sunflower Oil.
+     */
+    public function convertInvoiceItem(
+        SupplierInvoiceItem $item,
+        int $targetIngredientId,
+        float $newQuantity,
+        ?float $conversionFactor = null,
+        bool $rememberMapping = true,
+        ?User $user = null
+    ): SupplierInvoiceItem {
+        return DB::transaction(function () use ($item, $targetIngredientId, $newQuantity, $conversionFactor, $rememberMapping, $user) {
+            $invoice = $item->invoice;
+            $warehouse = $invoice?->warehouse;
+            $oldIngredient = $item->ingredient;
+            $targetIngredient = Ingredient::where('vendor_id', $item->vendor_id)->findOrFail($targetIngredientId);
+
+            if ($newQuantity <= 0) {
+                throw new InvalidArgumentException(__('Quantity must be greater than zero.'));
+            }
+
+            $oldQuantity = (float) $item->quantity;
+            $oldUnitId = $item->unit_id;
+            $totalPrice = (float) $item->total_price;
+            $newUnitPrice = round($totalPrice / $newQuantity, 4);
+
+            // Save original values
+            $originalQuantity = $item->original_quantity ?? $oldQuantity;
+            $originalUnitName = $item->original_unit_name ?? $item->unit_name;
+            $factor = $conversionFactor ?: ($originalQuantity > 0 ? round($newQuantity / $originalQuantity, 4) : 1.0);
+
+            // 1. Stock Adjustment in Warehouse
+            if ($warehouse) {
+                // Deduct old ingredient if different from target
+                if ($oldIngredient && $oldIngredient->id !== $targetIngredient->id) {
+                    $this->ledgerService->recordIssue(
+                        warehouse: $warehouse,
+                        items: [
+                            [
+                                'ingredient_id' => $oldIngredient->id,
+                                'quantity' => $oldQuantity,
+                                'unit_id' => $oldUnitId,
+                                'notes' => __('Converted to :target (:qty :unit)', [
+                                    'target' => $targetIngredient->name,
+                                    'qty' => $newQuantity,
+                                    'unit' => $targetIngredient->unit->code ?? '',
+                                ]),
+                            ],
+                        ],
+                        type: InventoryTransaction::TYPE_ADJUSTMENT,
+                        user: $user,
+                        notes: __('Conversion adjustment for invoice #:number', ['number' => $invoice->invoice_number]),
+                        referenceType: 'supplier_invoice_item',
+                        referenceId: $item->id,
+                        allowNegative: true
+                    );
+                } elseif ($oldIngredient && $oldIngredient->id === $targetIngredient->id && $oldQuantity !== $newQuantity) {
+                    $diff = $newQuantity - $oldQuantity;
+                    if ($diff < 0) {
+                        $this->ledgerService->recordIssue(
+                            warehouse: $warehouse,
+                            items: [
+                                [
+                                    'ingredient_id' => $oldIngredient->id,
+                                    'quantity' => abs($diff),
+                                    'unit_id' => $oldUnitId,
+                                    'notes' => __('Conversion quantity reduction'),
+                                ],
+                            ],
+                            type: InventoryTransaction::TYPE_ADJUSTMENT,
+                            user: $user,
+                            notes: __('Conversion reduction for invoice #:number', ['number' => $invoice->invoice_number]),
+                            referenceType: 'supplier_invoice_item',
+                            referenceId: $item->id,
+                            allowNegative: true
+                        );
+                    }
+                }
+
+                // Credit target ingredient
+                if (! $oldIngredient || $oldIngredient->id !== $targetIngredient->id) {
+                    $this->ledgerService->recordReceipt(
+                        warehouse: $warehouse,
+                        items: [
+                            [
+                                'ingredient_id' => $targetIngredient->id,
+                                'quantity' => $newQuantity,
+                                'unit_id' => $targetIngredient->unit_id,
+                                'unit_cost' => $newUnitPrice,
+                                'notes' => __('Invoice #:number converted from :source', [
+                                    'number' => $invoice->invoice_number,
+                                    'source' => $item->description,
+                                ]),
+                            ],
+                        ],
+                        user: $user,
+                        notes: __('Converted from :source (:qty :unit)', [
+                            'source' => $item->description,
+                            'qty' => $originalQuantity,
+                            'unit' => $originalUnitName,
+                        ]),
+                        referenceType: 'supplier_invoice_item',
+                        referenceId: $item->id
+                    );
+                } elseif ($oldIngredient->id === $targetIngredient->id && $newQuantity > $oldQuantity) {
+                    $diff = $newQuantity - $oldQuantity;
+                    $this->ledgerService->recordReceipt(
+                        warehouse: $warehouse,
+                        items: [
+                            [
+                                'ingredient_id' => $targetIngredient->id,
+                                'quantity' => $diff,
+                                'unit_id' => $targetIngredient->unit_id,
+                                'unit_cost' => $newUnitPrice,
+                                'notes' => __('Invoice #:number conversion delta', [
+                                    'number' => $invoice->invoice_number,
+                                ]),
+                            ],
+                        ],
+                        user: $user,
+                        notes: __('Conversion delta for :source', ['source' => $item->description]),
+                        referenceType: 'supplier_invoice_item',
+                        referenceId: $item->id
+                    );
+                }
+            }
+
+            // 2. Update SupplierInvoiceItem record
+            $targetUnit = $targetIngredient->unit;
+            $item->update([
+                'ingredient_id' => $targetIngredient->id,
+                'unit_id' => $targetIngredient->unit_id,
+                'unit_name' => $targetUnit ? ($targetUnit->name ?: $targetUnit->code) : $item->unit_name,
+                'quantity' => $newQuantity,
+                'unit_price' => $newUnitPrice,
+                'original_quantity' => $originalQuantity,
+                'original_unit_name' => $originalUnitName,
+                'conversion_factor' => $factor,
+                'is_converted' => true,
+            ]);
+
+            // 3. Update target ingredient costing
+            $targetIngredient->update([
+                'last_purchase_price' => $newUnitPrice,
+                'current_cost' => $newUnitPrice,
+            ]);
+
+            // 4. Safely deactivate old auto-created ingredient if it has no stock and no other uses
+            if ($oldIngredient && $oldIngredient->id !== $targetIngredient->id) {
+                $otherItems = SupplierInvoiceItem::where('ingredient_id', $oldIngredient->id)
+                    ->where('id', '!=', $item->id)
+                    ->exists();
+                $hasRecipes = $oldIngredient->usedInRecipeItems()->exists();
+
+                if (! $otherItems && ! $hasRecipes) {
+                    $totalStock = $oldIngredient->balances()->sum('quantity_on_hand');
+                    if ($totalStock <= 0.0001) {
+                        $oldIngredient->update(['is_active' => false]);
+                    }
+                }
+            }
+
+            // 5. Remember mapping in supplier_ingredients if requested
+            if ($rememberMapping && $invoice?->supplier_id) {
+                $sku = $item->classifier_code ?: $item->description;
+                SupplierIngredient::updateOrCreate(
+                    [
+                        'vendor_id' => $item->vendor_id,
+                        'supplier_id' => $invoice->supplier_id,
+                        'ingredient_id' => $targetIngredient->id,
+                    ],
+                    [
+                        'supplier_sku' => $sku,
+                        'unit_id' => $targetIngredient->unit_id,
+                        'price' => $newUnitPrice,
+                        'package_size' => $factor,
+                    ]
+                );
+            }
+
+            return $item->fresh(['ingredient.unit', 'unit']);
         });
     }
 

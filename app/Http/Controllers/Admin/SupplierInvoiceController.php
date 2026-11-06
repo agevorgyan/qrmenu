@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSupplierPaymentRequest;
+use App\Models\Ingredient;
 use App\Models\Supplier;
 use App\Models\SupplierInvoice;
+use App\Models\SupplierInvoiceItem;
 use App\Models\Warehouse;
 use App\Security\Permission;
 use App\Services\ArmenianTaxInvoiceService;
@@ -85,6 +87,8 @@ class SupplierInvoiceController extends Controller
     {
         $this->authorizePermission(Permission::PROCUREMENT_VIEW);
 
+        $vendorId = Auth::user()->vendor_id;
+
         $supplierInvoice->load([
             'supplier',
             'warehouse',
@@ -95,7 +99,67 @@ class SupplierInvoiceController extends Controller
             'items.unit',
         ]);
 
-        return view('admin.inventory.invoices.show', compact('supplierInvoice'));
+        $ingredients = Ingredient::where('vendor_id', $vendorId)
+            ->where('is_active', true)
+            ->with(['unit', 'category'])
+            ->orderBy('name')
+            ->get();
+
+        $ingredientsData = $ingredients->map(function ($ing) {
+            return [
+                'id' => $ing->id,
+                'name' => $ing->name,
+                'sku' => $ing->sku,
+                'unit_id' => $ing->unit_id,
+                'unit_name' => $ing->unit?->name ?: $ing->unit?->code,
+                'category_name' => $ing->category?->name ?? '',
+            ];
+        })->values();
+
+        return view('admin.inventory.invoices.show', compact('supplierInvoice', 'ingredients', 'ingredientsData'));
+    }
+
+    /**
+     * Convert an imported invoice item to another ingredient, quantity and unit price.
+     */
+    public function convertItem(
+        Request $request,
+        SupplierInvoice $supplierInvoice,
+        SupplierInvoiceItem $item
+    ): RedirectResponse {
+        $this->authorizePermission(Permission::PROCUREMENT_CREATE);
+
+        $vendorId = Auth::user()->vendor_id;
+        if ($supplierInvoice->vendor_id !== $vendorId || $item->supplier_invoice_id !== $supplierInvoice->id) {
+            abort(404);
+        }
+
+        $request->validate([
+            'target_ingredient_id' => ['required', 'exists:ingredients,id'],
+            'new_quantity' => ['required', 'numeric', 'min:0.0001'],
+            'conversion_factor' => ['nullable', 'numeric', 'min:0.0001'],
+            'remember_mapping' => ['nullable'],
+        ], [
+            'target_ingredient_id.required' => __('Please select the target ingredient.'),
+            'new_quantity.required' => __('Please specify the converted quantity.'),
+        ]);
+
+        try {
+            $rememberMapping = $request->has('remember_mapping') ? (bool) $request->input('remember_mapping') : true;
+
+            $this->taxInvoiceService->convertInvoiceItem(
+                item: $item,
+                targetIngredientId: (int) $request->input('target_ingredient_id'),
+                newQuantity: (float) $request->input('new_quantity'),
+                conversionFactor: $request->filled('conversion_factor') ? (float) $request->input('conversion_factor') : null,
+                rememberMapping: $rememberMapping,
+                user: Auth::user()
+            );
+
+            return back()->with('success', __('Invoice item successfully converted and warehouse inventory recalculated.'));
+        } catch (\Throwable $e) {
+            return back()->with('error', __('Failed to convert invoice item: :msg', ['msg' => $e->getMessage()]));
+        }
     }
 
     /**

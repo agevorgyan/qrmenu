@@ -6,7 +6,9 @@ use App\Models\Ingredient;
 use App\Models\InventoryBalance;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
+use App\Models\SupplierIngredient;
 use App\Models\SupplierInvoice;
+use App\Models\SupplierInvoiceItem;
 use App\Models\Unit;
 use App\Models\User;
 use App\Models\Vendor;
@@ -596,5 +598,338 @@ XML;
 
         $response->assertRedirect(route('admin.inventory.procurement.index'));
         $this->assertSoftDeleted('purchase_orders', ['id' => $po->id]);
+    }
+
+    public function test_can_convert_imported_tax_invoice_item_to_target_ingredient_and_unbundle_quantity(): void
+    {
+        $xmlContent = <<<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<e-InvoicingElectronDocument>
+    <SignedData>
+        <Data>
+            <SignableData>
+                <GeneralInfo>
+                    <InvoiceNumber>
+                        <Series>A</Series>
+                        <Number>88991122</Number>
+                    </InvoiceNumber>
+                    <SupplyDate>2026-11-06</SupplyDate>
+                </GeneralInfo>
+                <SupplierInfo>
+                    <Taxpayer>
+                        <TIN>01234567</TIN>
+                        <Name>Grand Mills LLC</Name>
+                    </Taxpayer>
+                </SupplierInfo>
+                <BuyerInfo>
+                    <Taxpayer>
+                        <TIN>99999999</TIN>
+                        <Name>Test Café</Name>
+                    </Taxpayer>
+                </BuyerInfo>
+                <GoodsInfo>
+                    <Good>
+                        <ClassifierCode>11010001</ClassifierCode>
+                        <Description>Flour 10kg Sacks</Description>
+                        <Unit>փաթեթ</Unit>
+                        <Amount>15.0000</Amount>
+                        <PricePerUnit>1616.6667</PricePerUnit>
+                        <Price>24250.00</Price>
+                        <VATRate>20.00</VATRate>
+                        <VAT>4850.00</VAT>
+                        <TotalPrice>29100.00</TotalPrice>
+                    </Good>
+                    <Total>
+                        <TotalPrice>29100.00</TotalPrice>
+                    </Total>
+                </GoodsInfo>
+            </SignableData>
+        </Data>
+    </SignedData>
+</e-InvoicingElectronDocument>
+XML;
+
+        $file = UploadedFile::fake()->createWithContent('tax_inv.xml', $xmlContent);
+
+        // 1. Import Invoice
+        $importResponse = $this->actingAs($this->ownerA)->post(route('admin.inventory.invoices.tax-import'), [
+            'file' => $file,
+            'warehouse_id' => $this->warehouseA->id,
+        ]);
+        $importResponse->assertSessionHasNoErrors();
+
+        $invoice = SupplierInvoice::where('invoice_number', 'A88991122')->firstOrFail();
+        $invoiceItem = $invoice->items()->firstOrFail();
+
+        // Target ingredient: Existing kitchen ingredient "Ցորենի ալյուր բարձր տեսակի" in kg
+        $kitchenFlour = Ingredient::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Ցորենի ալյուր բարձր տեսակի',
+            'sku' => 'ING-FLOUR-KITCHEN',
+            'type' => Ingredient::TYPE_RAW_MATERIAL,
+            'unit_id' => $this->kg->id,
+            'current_cost' => 0.0,
+            'last_purchase_price' => 0.0,
+            'is_active' => true,
+        ]);
+
+        $oldIngredient = $invoiceItem->ingredient;
+        $oldBalance = InventoryBalance::where('warehouse_id', $this->warehouseA->id)
+            ->where('ingredient_id', $oldIngredient->id)
+            ->first();
+        $this->assertEquals(15.0, (float) $oldBalance->quantity_on_hand);
+
+        // 2. Convert line item: 15 sacks -> 150 kg (factor: 10, total: 29100 => unit_price: 194.0 AMD/kg)
+        $convertResponse = $this->actingAs($this->ownerA)->post(
+            route('admin.inventory.invoices.convert-item', [$invoice, $invoiceItem]),
+            [
+                'target_ingredient_id' => $kitchenFlour->id,
+                'conversion_factor' => 10,
+                'new_quantity' => 150.0,
+                'remember_mapping' => 1,
+            ]
+        );
+
+        $convertResponse->assertRedirect();
+        $convertResponse->assertSessionHas('success');
+
+        $invoiceItem->refresh();
+        $this->assertEquals($kitchenFlour->id, $invoiceItem->ingredient_id);
+        $this->assertEquals(150.0, (float) $invoiceItem->quantity);
+        $this->assertEquals(15.0, (float) $invoiceItem->original_quantity);
+        $this->assertEquals('փաթեթ', $invoiceItem->original_unit_name);
+        $this->assertEquals(10.0, (float) $invoiceItem->conversion_factor);
+        $this->assertEquals(194.0, (float) $invoiceItem->unit_price);
+        $this->assertTrue($invoiceItem->is_converted);
+
+        // Check kitchen ingredient updated costing
+        $kitchenFlour->refresh();
+        $this->assertEquals(194.0, (float) $kitchenFlour->current_cost);
+        $this->assertEquals(194.0, (float) $kitchenFlour->last_purchase_price);
+
+        // Check Warehouse stock balances:
+        // Kitchen flour should have 150 kg
+        $kitchenBalance = InventoryBalance::where('warehouse_id', $this->warehouseA->id)
+            ->where('ingredient_id', $kitchenFlour->id)
+            ->first();
+        $this->assertNotNull($kitchenBalance);
+        $this->assertEquals(150.0, (float) $kitchenBalance->quantity_on_hand);
+
+        // Old package ingredient should have 0 kg
+        $oldBalance->refresh();
+        $this->assertEquals(0.0, (float) $oldBalance->quantity_on_hand);
+
+        // Check SupplierIngredient mapping remembered
+        $mapping = SupplierIngredient::where('supplier_id', $invoice->supplier_id)
+            ->where('ingredient_id', $kitchenFlour->id)
+            ->first();
+        $this->assertNotNull($mapping);
+        $this->assertEquals(10.0, (float) $mapping->package_size);
+        $this->assertEquals('11010001', $mapping->supplier_sku);
+    }
+
+    public function test_subsequent_invoice_import_auto_converts_using_saved_mapping(): void
+    {
+        // Setup saved mapping: supplierA sells to kitchenFlour with package size 10 and sku '11010002'
+        $kitchenFlour = Ingredient::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Ցորենի ալյուր բարձր տեսակի',
+            'sku' => 'ING-FLOUR-AUTO',
+            'type' => Ingredient::TYPE_RAW_MATERIAL,
+            'unit_id' => $this->kg->id,
+            'current_cost' => 0.0,
+            'last_purchase_price' => 0.0,
+            'is_active' => true,
+        ]);
+
+        SupplierIngredient::create([
+            'vendor_id' => $this->vendorA->id,
+            'supplier_id' => $this->supplierA->id,
+            'ingredient_id' => $kitchenFlour->id,
+            'unit_id' => $this->kg->id,
+            'price' => 200.0,
+            'supplier_sku' => '11010002',
+            'package_size' => 10.0,
+        ]);
+
+        $xmlContent = <<<XML
+<?xml version="1.0" encoding="utf-8"?>
+<e-InvoicingElectronDocument>
+    <SignedData>
+        <Data>
+            <SignableData>
+                <GeneralInfo>
+                    <InvoiceNumber>
+                        <Series>B</Series>
+                        <Number>55443322</Number>
+                    </InvoiceNumber>
+                    <SupplyDate>2026-11-06</SupplyDate>
+                </GeneralInfo>
+                <SupplierInfo>
+                    <Taxpayer>
+                        <TIN>{$this->supplierA->tax_id}</TIN>
+                        <Name>{$this->supplierA->name}</Name>
+                    </Taxpayer>
+                </SupplierInfo>
+                <GoodsInfo>
+                    <Good>
+                        <ClassifierCode>11010002</ClassifierCode>
+                        <Description>Flour 10kg Sacks</Description>
+                        <Unit>փաթեթ</Unit>
+                        <Amount>6.0000</Amount>
+                        <PricePerUnit>1666.6667</PricePerUnit>
+                        <Price>10000.00</Price>
+                        <VATRate>20.00</VATRate>
+                        <VAT>2000.00</VAT>
+                        <TotalPrice>12000.00</TotalPrice>
+                    </Good>
+                    <Total>
+                        <TotalPrice>12000.00</TotalPrice>
+                    </Total>
+                </GoodsInfo>
+            </SignableData>
+        </Data>
+    </SignedData>
+</e-InvoicingElectronDocument>
+XML;
+
+        $file = UploadedFile::fake()->createWithContent('tax_inv_auto.xml', $xmlContent);
+
+        $importResponse = $this->actingAs($this->ownerA)->post(route('admin.inventory.invoices.tax-import'), [
+            'file' => $file,
+            'warehouse_id' => $this->warehouseA->id,
+        ]);
+        $importResponse->assertSessionHasNoErrors();
+
+        $invoice = SupplierInvoice::where('invoice_number', 'B55443322')->firstOrFail();
+        $item = $invoice->items()->firstOrFail();
+
+        // Should be automatically converted to 60 kg of $kitchenFlour (6 * 10 = 60 kg)
+        $this->assertEquals($kitchenFlour->id, $item->ingredient_id);
+        $this->assertEquals(60.0, (float) $item->quantity);
+        $this->assertEquals(6.0, (float) $item->original_quantity);
+        $this->assertEquals('փաթեթ', $item->original_unit_name);
+        $this->assertEquals(10.0, (float) $item->conversion_factor);
+        // Unit price = 12000 / 60 = 200 AMD/kg
+        $this->assertEquals(200.0, (float) $item->unit_price);
+        $this->assertTrue($item->is_converted);
+
+        // Warehouse balance
+        $balance = InventoryBalance::where('warehouse_id', $this->warehouseA->id)
+            ->where('ingredient_id', $kitchenFlour->id)
+            ->first();
+        $this->assertEquals(60.0, (float) $balance->quantity_on_hand);
+    }
+
+    public function test_cannot_convert_invoice_item_of_another_vendor(): void
+    {
+        $invoiceB = SupplierInvoice::create([
+            'vendor_id' => $this->vendorB->id,
+            'supplier_id' => Supplier::create([
+                'vendor_id' => $this->vendorB->id,
+                'name' => 'Supplier B',
+                'is_active' => true,
+            ])->id,
+            'warehouse_id' => Warehouse::create([
+                'vendor_id' => $this->vendorB->id,
+                'name' => 'Warehouse B',
+                'is_active' => true,
+            ])->id,
+            'invoice_number' => 'INV-B-999',
+            'invoice_date' => now()->toDateString(),
+            'due_date' => now()->addDays(30)->toDateString(),
+            'total_amount' => 1000.0,
+            'remaining_balance' => 1000.0,
+        ]);
+
+        $itemB = SupplierInvoiceItem::create([
+            'vendor_id' => $this->vendorB->id,
+            'supplier_invoice_id' => $invoiceB->id,
+            'description' => 'Product B',
+            'quantity' => 10.0,
+            'unit_price' => 100.0,
+            'price' => 1000.0,
+            'total_price' => 1000.0,
+        ]);
+
+        // Vendor A attempts to convert Vendor B's invoice item
+        $response = $this->actingAs($this->ownerA)->post(
+            route('admin.inventory.invoices.convert-item', [$invoiceB, $itemB]),
+            [
+                'target_ingredient_id' => $this->coffee->id,
+                'conversion_factor' => 1,
+                'new_quantity' => 10.0,
+            ]
+        );
+
+        $response->assertNotFound();
+    }
+
+    public function test_import_tax_invoice_handles_string_enum_payment_terms(): void
+    {
+        // Supplier with string enum 'net_15'
+        $supplier = Supplier::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Armenian Bakeries CJSC',
+            'tax_id' => '09988776',
+            'payment_terms' => 'net_15',
+            'is_active' => true,
+        ]);
+
+        $xmlContent = <<<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<e-InvoicingElectronDocument>
+    <SignedData>
+        <Data>
+            <SignableData>
+                <GeneralInfo>
+                    <InvoiceNumber>
+                        <Series>D</Series>
+                        <Number>12345678</Number>
+                    </InvoiceNumber>
+                    <SupplyDate>2026-11-01</SupplyDate>
+                </GeneralInfo>
+                <SupplierInfo>
+                    <Taxpayer>
+                        <TIN>09988776</TIN>
+                        <Name>Armenian Bakeries CJSC</Name>
+                    </Taxpayer>
+                </SupplierInfo>
+                <GoodsInfo>
+                    <Good>
+                        <ClassifierCode>11019999</ClassifierCode>
+                        <Description>Baking Yeast</Description>
+                        <Unit>կգ</Unit>
+                        <Amount>5.0000</Amount>
+                        <PricePerUnit>1000.00</PricePerUnit>
+                        <Price>5000.00</Price>
+                        <VATRate>20.00</VATRate>
+                        <VAT>1000.00</VAT>
+                        <TotalPrice>6000.00</TotalPrice>
+                    </Good>
+                    <Total>
+                        <TotalPrice>6000.00</TotalPrice>
+                    </Total>
+                </GoodsInfo>
+            </SignableData>
+        </Data>
+    </SignedData>
+</e-InvoicingElectronDocument>
+XML;
+
+        $file = UploadedFile::fake()->createWithContent('tax_inv_terms.xml', $xmlContent);
+
+        $response = $this->actingAs($this->ownerA)->post(route('admin.inventory.invoices.tax-import'), [
+            'file' => $file,
+            'warehouse_id' => $this->warehouseA->id,
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        $invoice = SupplierInvoice::where('invoice_number', 'D12345678')->firstOrFail();
+        $this->assertEquals('2026-11-01', $invoice->supply_date->toDateString());
+        // 2026-11-01 + 15 days = 2026-11-16
+        $this->assertEquals('2026-11-16', $invoice->due_date->toDateString());
     }
 }

@@ -426,3 +426,4 @@ erDiagram
 - `user_agent`: text NULL
 - `created_at`: timestamp with time zone NOT NULL
 - *Indexes*: `(vendor_id, action, created_at)`
+

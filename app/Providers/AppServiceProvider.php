@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Domains\Loyalty\Listeners\ProcessOrderLoyaltyListener;
+use App\Domains\Loyalty\Listeners\ProcessOrderRefundLoyaltyListener;
 use App\Events\OrderCreated;
+use App\Events\OrderStatusUpdated;
 use App\Events\WaiterCalled;
 use App\Listeners\EmailTrackingSubscriber;
 use App\Listeners\SecurityAuditAuthSubscriber;
@@ -126,6 +129,14 @@ class AppServiceProvider extends ServiceProvider
         // Register Telegram notification event listeners
         Event::listen(OrderCreated::class, SendTelegramOrderNotification::class);
         Event::listen(WaiterCalled::class, SendTelegramWaiterCallNotification::class);
+
+        // Register Loyalty domain listeners
+        Event::listen(OrderStatusUpdated::class, ProcessOrderLoyaltyListener::class);
+        Event::listen(OrderStatusUpdated::class, ProcessOrderRefundLoyaltyListener::class);
+
+        // Register Loyalty domain listeners
+        Event::listen(OrderStatusUpdated::class, ProcessOrderLoyaltyListener::class);
+        Event::listen(OrderStatusUpdated::class, ProcessOrderRefundLoyaltyListener::class);
 
         // Register Security Audit Authentication Subscriber
         Event::subscribe(SecurityAuditAuthSubscriber::class);
