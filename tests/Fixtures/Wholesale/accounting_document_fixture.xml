@@ -1,0 +1,99 @@
+<ExportedAccDocData xmlns="http://www.taxservice.am/tp3/invoice/definitions">
+  <SignedAccDocData>
+    <Data>
+      <SignableData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="1.0" xsi:type="AccountingDocument">
+        <User>khohanots24</User>
+        <Type>1</Type>
+        <Traceable>false</Traceable>
+        <GeneralInfo>
+          <InvoiceNumber>
+            <Number>9771705511</Number>
+            <Series>B</Series>
+          </InvoiceNumber>
+          <DeliveryDate>2026-11-06+04:00</DeliveryDate>
+          <Procedure>1</Procedure>
+          <AdjustmentAccount>false</AdjustmentAccount>
+        </GeneralInfo>
+        <SupplierInfo>
+          <Taxpayer>
+            <TIN>08285927</TIN>
+            <Name>«ԳԱՅԱՆԵԻ ԽՈՀԱՆՈՑ» Սահմանափակ պատասխանատվությամբ ընկերություն (ՍՊԸ)</Name>
+            <Address>ԵՐԵՎԱՆ ԴԱՎԹԱՇԵՆ ԴԱՎԹԱՇԵՆ ԹԱՂԱՄԱՍ ԴԱՎԹԱՇԵՆ 1 ԹՂՄ. 38 7 ԲՆ.</Address>
+            <BankAccount>
+              <BankName>«ԱՄԵՐԻԱԲԱՆԿ» ՓԲԸ</BankName>
+              <BankAccountNumber>1570077654886500</BankAccountNumber>
+            </BankAccount>
+          </Taxpayer>
+          <SupplyLocation>Հայաստան, ԵՐԵՎԱՆ, ԴԱՎԹԱՇԵՆ, ԴԱՎԹԱՇԵՆ ԹԱՂԱՄԱՍ, 2րդ թաղ 37 շենքի դիմաց</SupplyLocation>
+          <SourceIsCar>false</SourceIsCar>
+        </SupplierInfo>
+        <BuyerInfo>
+          <VATNumber>08293072/1</VATNumber>
+          <Taxpayer>
+            <TIN>08293072</TIN>
+            <Name>«ՍԵՅԼՍ ՊԼՅՈՒՍ» Սահմանափակ պատասխանատվությամբ ընկերություն (ՍՊԸ)</Name>
+            <Address>ԵՐԵՎԱՆ ԴԱՎԹԱՇԵՆ ԴԱՎԹԱՇԵՆ 1 ԹՂՄ. 38 7 ԲՆ.</Address>
+            <TinNotRequired>false</TinNotRequired>
+            <IsNatural>false</IsNatural>
+          </Taxpayer>
+          <DeliveryLocation>Հայաստան, ԵՐԵՎԱՆ, ԴԱՎԹԱՇԵՆ, ԴԱՎԹԱՇԵՆ ԹԱՂԱՄԱՍ, 2-րդ թաղ 37շենքի դիմաց</DeliveryLocation>
+        </BuyerInfo>
+        <GoodsInfo>
+          <Good>
+            <Description>- Պելմենի Սիբիրյան (450գր)</Description>
+            <ClassifierCode>1902</ClassifierCode>
+            <Unit>հատ</Unit>
+            <Amount>5</Amount>
+            <PricePerUnit>1600</PricePerUnit>
+            <Price>6400</Price>
+            <Discount>20</Discount>
+            <DealType>SPECIAL_TAX_SYSTEM</DealType>
+            <TotalPrice>6400</TotalPrice>
+          </Good>
+          <Good>
+            <Description>- Պելմենի Ֆիրմային (450գր)</Description>
+            <ClassifierCode>1902</ClassifierCode>
+            <Unit>հատ</Unit>
+            <Amount>5</Amount>
+            <PricePerUnit>1600</PricePerUnit>
+            <Price>6400</Price>
+            <Discount>20</Discount>
+            <DealType>SPECIAL_TAX_SYSTEM</DealType>
+            <TotalPrice>6400</TotalPrice>
+          </Good>
+          <Good>
+            <Description>- Նագեթս հավի կրծքամսով (300գր)</Description>
+            <ClassifierCode>1602</ClassifierCode>
+            <Unit>հատ</Unit>
+            <Amount>5</Amount>
+            <PricePerUnit>1500</PricePerUnit>
+            <Price>6000</Price>
+            <Discount>20</Discount>
+            <DealType>SPECIAL_TAX_SYSTEM</DealType>
+            <TotalPrice>6000</TotalPrice>
+          </Good>
+          <Good>
+            <Description>- Կոտլետ հավի (5 հատ)</Description>
+            <ClassifierCode>1602</ClassifierCode>
+            <Unit>հատ</Unit>
+            <Amount>5</Amount>
+            <PricePerUnit>1700</PricePerUnit>
+            <Price>6800</Price>
+            <Discount>20</Discount>
+            <DealType>SPECIAL_TAX_SYSTEM</DealType>
+            <TotalPrice>6800</TotalPrice>
+          </Good>
+          <Total>
+            <TotalPrice>25600</TotalPrice>
+          </Total>
+        </GoodsInfo>
+      </SignableData>
+    </Data>
+    <Signature>
+      <SignatureType>PKCS7</SignatureType>
+    </Signature>
+    <AccDocMetadata>
+      <SubmissionDate>2026-11-06T13:06:19.18964+04:00</SubmissionDate>
+    </AccDocMetadata>
+  </SignedAccDocData>
+</ExportedAccDocData>

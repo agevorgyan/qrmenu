@@ -1,0 +1,86 @@
+<ExportedData xmlns="http://www.taxservice.am/tp3/invoice/definitions">
+  <SignedData>
+    <Data>
+      <SignableData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="1.0" xsi:type="Invoice">
+        <Type>1</Type>
+        <Traceable>false</Traceable>
+        <User>salesplus25</User>
+        <GeneralInfo>
+          <ParentInvoiceNumber>A3992153793</ParentInvoiceNumber>
+          <ParentInvoiceSubmitDate>2026-06-02+04:00</ParentInvoiceSubmitDate>
+          <InvoiceNumber>
+            <Number>6629988041</Number>
+            <Series>A</Series>
+          </InvoiceNumber>
+          <AdjustmentDiffFlag>-1</AdjustmentDiffFlag>
+          <SupplyDate>2026-11-06+04:00</SupplyDate>
+          <Procedure>2</Procedure>
+          <AdjustmentAccount>true</AdjustmentAccount>
+        </GeneralInfo>
+        <SupplierInfo>
+          <VATNumber>08293072/1</VATNumber>
+          <Taxpayer>
+            <TIN>08293072</TIN>
+            <Name>«ՍԵՅԼՍ ՊԼՅՈՒՍ» Սահմանափակ պատասխանատվությամբ ընկերություն (ՍՊԸ)</Name>
+            <Address>ԵՐԵՎԱՆ ԴԱՎԹԱՇԵՆ ԴԱՎԹԱՇԵՆ 1 ԹՂՄ. 38 7 ԲՆ.</Address>
+          </Taxpayer>
+          <SupplyLocation>Հայաստան, ԿՈՏԱՅՔ, ԶՈՎՈՒՆԻ, ԶՈՎՈՒՆԻ, 30փ 2նրբ 31, 182տար</SupplyLocation>
+          <SourceIsCar>false</SourceIsCar>
+        </SupplierInfo>
+        <OnBehalfOfSupplierInfo>
+          <Taxpayer>
+            <PrincipalTinNotRequired>false</PrincipalTinNotRequired>
+          </Taxpayer>
+        </OnBehalfOfSupplierInfo>
+        <BuyerInfo>
+          <VATNumber>03576728/1</VATNumber>
+          <Taxpayer>
+            <TIN>03576728</TIN>
+            <Name>«ՍԴՍ ՍՈՒՊԵՐՄԱՐԿԵՏ» Սահմանափակ պատասխանատվությամբ ընկերություն (ՍՊԸ)</Name>
+            <Address>ԿՈՏԱՅՔ ԶՈՎՈՒՆԻ ԶՈՎՈՒՆԻ 30 Փ., 2 ՆՐԲ. 31 182 ՏԱՐ.</Address>
+            <TinNotRequired>false</TinNotRequired>
+            <IsNatural>false</IsNatural>
+          </Taxpayer>
+          <DeliveryLocation>Հայաստան, ԵՐԵՎԱՆ, ԴԱՎԹԱՇԵՆ, ԴԱՎԹԱՇԵՆ ԹԱՂԱՄԱՍ, 1-ին թաղ 38շ 7բն</DeliveryLocation>
+        </BuyerInfo>
+        <GoodsInfo>
+          <Good>
+            <GoodParentId>e319a960-7bb5-4d11-8860-a01b0a4e6c4f</GoodParentId>
+            <Description>- Պելմենի Ֆիրմային (450գր)</Description>
+            <ClassifierCode>1602</ClassifierCode>
+            <Unit>հատ</Unit>
+            <Amount>3</Amount>
+            <PricePerUnit>1208.33333</PricePerUnit>
+            <Price>3625</Price>
+            <VATRate>20.0</VATRate>
+            <VAT>725</VAT>
+            <TotalPrice>4350</TotalPrice>
+          </Good>
+          <Good>
+            <GoodParentId>00006a1e-dd23-492e-bd02-a72ba6802e15</GoodParentId>
+            <Description>- Հավի կոտլետ (5 հատ)</Description>
+            <ClassifierCode>1602</ClassifierCode>
+            <Unit>հատ</Unit>
+            <Amount>2</Amount>
+            <PricePerUnit>1291.66667</PricePerUnit>
+            <Price>2583.33</Price>
+            <VATRate>20.0</VATRate>
+            <VAT>516.67</VAT>
+            <TotalPrice>3100</TotalPrice>
+          </Good>
+          <Total>
+            <Price>6208.33</Price>
+            <VAT>1241.67</VAT>
+            <TotalPrice>7450</TotalPrice>
+          </Total>
+        </GoodsInfo>
+      </SignableData>
+    </Data>
+    <Signature>
+      <SignatureType>PKCS7</SignatureType>
+    </Signature>
+    <InvoiceMetadata>
+      <SubmissionDate>2026-11-06T13:46:37.59082+04:00</SubmissionDate>
+    </InvoiceMetadata>
+  </SignedData>
+</ExportedData>
