@@ -40,8 +40,10 @@ class ArmenianHdmFiscalAdapter implements PosFiscalAdapterInterface
                 'name' => $item->product_name ?: 'Dish',
                 'price' => (float) $item->unit_price,
                 'quantity' => (float) $item->quantity,
-                'total' => (float) $item->total_price,
+                'total' => (float) ($item->subtotal ?? ($item->unit_price * $item->quantity)),
                 'vat_rate' => 20,
+                'adg_code' => $item->classifier_code ?: ($item->product?->classifier_code ?: '56.10'),
+                'classifier_code' => $item->classifier_code ?: ($item->product?->classifier_code ?: '56.10'),
             ])->toArray(),
         ];
 

@@ -61,6 +61,14 @@ class MockFiscalAdapter implements PosFiscalAdapterInterface
                 'seq' => $seq,
                 'mode' => 'mock_hdm',
                 'payment_method' => $payment->payment_method,
+                'items' => $order->items->map(fn ($item) => [
+                    'name' => $item->product_name ?: 'Dish',
+                    'price' => (float) $item->unit_price,
+                    'quantity' => (float) $item->quantity,
+                    'total' => (float) ($item->subtotal ?? ($item->unit_price * $item->quantity)),
+                    'adg_code' => $item->classifier_code ?: ($item->product?->classifier_code ?: '56.10'),
+                    'classifier_code' => $item->classifier_code ?: ($item->product?->classifier_code ?: '56.10'),
+                ])->toArray(),
             ]
         );
     }

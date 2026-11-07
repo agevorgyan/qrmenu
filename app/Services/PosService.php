@@ -209,6 +209,7 @@ class PosService
                 'image' => $prod->image ?: Product::DEFAULT_IMAGE,
                 'is_available' => (bool) $prod->is_available,
                 'is_featured' => (bool) $prod->is_featured,
+                'classifier_code' => $prod->classifier_code ?: '56.10',
                 'kitchen_station' => $station,
                 'variations' => $prod->variations->map(fn ($v) => [
                     'id' => $v->id,
@@ -777,6 +778,7 @@ class PosService
                     OrderItem::create([
                         'order_id' => $splitOrder->id,
                         'product_id' => $origItem->product_id,
+                        'classifier_code' => $origItem->classifier_code ?: ($origItem->product?->classifier_code ?: '56.10'),
                         'product_name' => $origItem->product_name,
                         'variation_name' => $origItem->variation_name,
                         'unit_price' => $origItem->unit_price,

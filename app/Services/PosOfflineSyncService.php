@@ -91,6 +91,7 @@ class PosOfflineSyncService
                     'price' => (float) $p->price,
                     'is_available' => (bool) $p->is_available,
                     'is_featured' => (bool) $p->is_featured,
+                    'classifier_code' => $p->classifier_code ?: '56.10',
                     'variations' => $p->variations->map(fn ($v) => [
                         'id' => $v->id,
                         'name' => $v->name,

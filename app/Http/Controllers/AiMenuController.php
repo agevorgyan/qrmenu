@@ -120,6 +120,7 @@ class AiMenuController extends Controller
                     Product::create([
                         'vendor_id' => $vendor->id,
                         'category_id' => $category->id,
+                        'classifier_code' => ! empty($prodData['classifier_code']) ? $prodData['classifier_code'] : '56.10',
                         'name' => $prodData['name'],
                         'name_translations' => ['en' => $prodData['name']],
                         'description' => $prodData['description'] ?? '',

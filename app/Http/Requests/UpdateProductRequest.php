@@ -62,6 +62,9 @@ class UpdateProductRequest extends FormRequest
         if ($this->has('is_available')) {
             $merge['is_available'] = $this->boolean('is_available');
         }
+        if ($this->has('atgaa_code') && ! $this->filled('classifier_code')) {
+            $merge['classifier_code'] = $this->input('atgaa_code');
+        }
         if (! empty($merge)) {
             $this->merge($merge);
         }
@@ -87,6 +90,8 @@ class UpdateProductRequest extends FormRequest
 
         return [
             'category_id' => ['required', Rule::exists('categories', 'id')->where('vendor_id', Auth::user()?->vendor_id)],
+            'classifier_code' => 'nullable|string|max:30',
+            'atgaa_code' => 'nullable|string|max:30',
             'name' => 'required|string|max:255',
             'hy_name' => 'nullable|string',
             'ru_name' => 'nullable|string',

@@ -12,6 +12,7 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id',
         'product_id',
+        'classifier_code',
         'product_name',
         'variation_name',
         'unit_price',
@@ -51,6 +52,11 @@ class OrderItem extends Model
                 throw new \InvalidArgumentException('Order item pricing cannot be negative.');
             }
 
+            if (empty($item->classifier_code)) {
+                $product = $item->product ?: ($item->product_id ? Product::withoutGlobalScopes()->withTrashed()->find($item->product_id) : null);
+                $item->classifier_code = $product?->classifier_code ?: '56.10';
+            }
+
             if ($item->product_id && $item->order_id) {
                 $order = $item->order ?: Order::withoutGlobalScopes()->find($item->order_id);
                 $product = $item->product ?: Product::withoutGlobalScopes()->withTrashed()->find($item->product_id);
@@ -69,5 +75,25 @@ class OrderItem extends Model
     public function product()
     {
         return $this->belongsTo(Product::class)->withTrashed();
+    }
+
+    public function getAtgaaCodeAttribute(): ?string
+    {
+        return $this->classifier_code;
+    }
+
+    public function setAtgaaCodeAttribute(?string $value): void
+    {
+        $this->attributes['classifier_code'] = $value;
+    }
+
+    public function getAdgCodeAttribute(): ?string
+    {
+        return $this->classifier_code;
+    }
+
+    public function setAdgCodeAttribute(?string $value): void
+    {
+        $this->attributes['classifier_code'] = $value;
     }
 }

@@ -139,6 +139,7 @@ class CreateOrderAction
                     $orderItem = new OrderItem([
                         'order_id' => $order->id,
                         'product_id' => $product->id,
+                        'classifier_code' => $product->classifier_code ?: '56.10',
                         'product_name' => $product->name,
                         'variation_name' => $pricing['variation_name'],
                         'unit_price' => $pricing['unit_price'],
@@ -326,6 +327,7 @@ class CreateOrderAction
                 $orderItem = new OrderItem([
                     'order_id' => $order->id,
                     'product_id' => $product->id,
+                    'classifier_code' => $product->classifier_code ?: '56.10',
                     'product_name' => $product->name,
                     'variation_name' => $pricing['variation_name'],
                     'unit_price' => $pricing['unit_price'],

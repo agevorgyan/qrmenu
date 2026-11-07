@@ -704,6 +704,7 @@
             'is_available' => (bool) $avail,
             'is_featured' => (bool) $p->is_featured,
             'is_daily_offer' => (bool) $isDaily,
+            'classifier_code' => (string) ($p->classifier_code ?? '56.10'),
             'image' => (string) $p->image,
             'sort_order' => (int) ($p->sort_order ?? 0),
             'available_for_dine_in' => $p->available_for_dine_in !== false && $p->available_for_dine_in !== 0,
@@ -1265,6 +1266,9 @@
 
                                         <!-- Nutrition, Prep Time & Allergens Footer -->
                                         <div style="display: flex; gap: 0.85rem; align-items: center; margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap;">
+                                            <span style="font-family: monospace; font-weight: 700; color: #4f46e5; background: rgba(79, 70, 229, 0.08); padding: 0.15rem 0.45rem; border-radius: 6px; font-size: 0.72rem;" title="{{ __('ԱՏԳԱԱ ծածկագիր (ՀԴՄ / Tax Classifier)') }}">
+                                                <i class="fa-solid fa-barcode"></i> ԱՏԳԱԱ: {{ $product->classifier_code ?: '56.10' }}
+                                            </span>
                                             @if($product->calories)
                                                 <span><i class="fa-solid fa-fire" style="color: var(--primary);"></i> {{ $product->calories }} {{ __('kcal') }}</span>
                                             @endif
@@ -1456,6 +1460,9 @@
                                         <div>
                                             <strong style="color: var(--text-main); font-weight: 700;" x-text="dish.name"></strong>
                                             <span x-show="dish.is_featured" class="badge badge-amber" style="font-size: 0.65rem; margin-left: 0.35rem;">★</span>
+                                            <div style="font-family: monospace; font-size: 0.72rem; color: #4f46e5; margin-top: 0.15rem;">
+                                                <i class="fa-solid fa-barcode"></i> <span x-text="'ԱՏԳԱԱ: ' + (dish.classifier_code || '56.10')"></span>
+                                            </div>
                                         </div>
                                     </template>
                                 </div>
@@ -2091,6 +2098,26 @@
                     </div>
                 </div>
 
+                <!-- FEACN / ԱՏԳԱԱ Code -->
+                <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; flex-wrap: wrap; gap: 0.35rem;">
+                        <label class="form-label" style="margin-bottom: 0;">
+                            <i class="fa-solid fa-barcode" style="color: var(--primary);"></i> {{ __('ԱՏԳԱԱ ծածկագիր (FEACN Code)') }} *
+                        </label>
+                        <div style="display: flex; gap: 0.35rem; align-items: center; font-size: 0.72rem;">
+                            <span style="color: var(--text-muted);">{{ __('Արագ ընտրություն:') }}</span>
+                            <button type="button" class="badge badge-indigo" style="cursor: pointer; border: none;" onclick="document.getElementById('new_prod_classifier_code').value='56.10'">56.10 (Սնունդ)</button>
+                            <button type="button" class="badge badge-indigo" style="cursor: pointer; border: none;" onclick="document.getElementById('new_prod_classifier_code').value='56.30'">56.30 (Խմիչք)</button>
+                            <button type="button" class="badge badge-indigo" style="cursor: pointer; border: none;" onclick="document.getElementById('new_prod_classifier_code').value='1905.90'">1905 (Աղանդեր)</button>
+                            <button type="button" class="badge badge-indigo" style="cursor: pointer; border: none;" onclick="document.getElementById('new_prod_classifier_code').value='2106.90'">2106 (Պատրաստի)</button>
+                        </div>
+                    </div>
+                    <input type="text" id="new_prod_classifier_code" name="classifier_code" value="56.10" required placeholder="56.10" class="form-input" style="font-family: monospace; font-weight: 600;">
+                    <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 0.25rem;">
+                        {{ __('ՀՀ ՊԵԿ ՀԴՄ և հարկային հաշիվների ԱՏԳԱԱ կոդ (օր.՝ 56.10 հանրային սննդի համար, 56.30 բար/ըմպելիքների)') }}
+                    </small>
+                </div>
+
                 @if(count($secondaryLangs) > 0)
                     <div style="margin-bottom: 1rem; padding: 0.85rem; background: var(--bg-body); border: 1px dashed var(--border-color); border-radius: 12px;">
                         <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.65rem;">
@@ -2481,6 +2508,26 @@
                     </div>
                 </div>
 
+                <!-- FEACN / ԱՏԳԱԱ Code -->
+                <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; flex-wrap: wrap; gap: 0.35rem;">
+                        <label class="form-label" style="margin-bottom: 0;">
+                            <i class="fa-solid fa-barcode" style="color: var(--primary);"></i> {{ __('ԱՏԳԱԱ ծածկագիր (FEACN Code)') }} *
+                        </label>
+                        <div style="display: flex; gap: 0.35rem; align-items: center; font-size: 0.72rem;">
+                            <span style="color: var(--text-muted);">{{ __('Արագ ընտրություն:') }}</span>
+                            <button type="button" class="badge badge-indigo" style="cursor: pointer; border: none;" onclick="document.getElementById('edit_prod_classifier_code').value='56.10'">56.10 (Սնունդ)</button>
+                            <button type="button" class="badge badge-indigo" style="cursor: pointer; border: none;" onclick="document.getElementById('edit_prod_classifier_code').value='56.30'">56.30 (Խմիչք)</button>
+                            <button type="button" class="badge badge-indigo" style="cursor: pointer; border: none;" onclick="document.getElementById('edit_prod_classifier_code').value='1905.90'">1905 (Աղանդեր)</button>
+                            <button type="button" class="badge badge-indigo" style="cursor: pointer; border: none;" onclick="document.getElementById('edit_prod_classifier_code').value='2106.90'">2106 (Պատրաստի)</button>
+                        </div>
+                    </div>
+                    <input type="text" id="edit_prod_classifier_code" name="classifier_code" required placeholder="56.10" class="form-input" style="font-family: monospace; font-weight: 600;">
+                    <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 0.25rem;">
+                        {{ __('ՀՀ ՊԵԿ ՀԴՄ և հարկային հաշիվների ԱՏԳԱԱ կոդ (օր.՝ 56.10 հանրային սննդի համար, 56.30 բար/ըմպելիքների)') }}
+                    </small>
+                </div>
+
                 @if(count($secondaryLangs) > 0)
                     <div style="margin-bottom: 1rem; padding: 0.85rem; background: var(--bg-body); border: 1px dashed var(--border-color); border-radius: 12px;">
                         <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.65rem;">
@@ -2864,6 +2911,7 @@
         document.getElementById('edit_prod_category_id').value = prod.category_id;
         document.getElementById('edit_prod_name').value = prod.name || '';
         document.getElementById('edit_prod_price').value = prod.price || 0;
+        document.getElementById('edit_prod_classifier_code').value = prod.classifier_code || '56.10';
         
         if (activeSecondaryLangs && activeSecondaryLangs.length > 0) {
             activeSecondaryLangs.forEach(lang => {

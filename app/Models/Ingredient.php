@@ -36,6 +36,7 @@ class Ingredient extends Model
         'name_translations',
         'sku',
         'barcode',
+        'classifier_code',
         'type',
         'description',
         'image',
@@ -184,5 +185,25 @@ class Ingredient extends Model
     public function batches(): HasMany
     {
         return $this->hasMany(InventoryBatch::class);
+    }
+
+    public function getAtgaaCodeAttribute(): ?string
+    {
+        return $this->classifier_code;
+    }
+
+    public function setAtgaaCodeAttribute(?string $value): void
+    {
+        $this->attributes['classifier_code'] = $value;
+    }
+
+    public function getAdgCodeAttribute(): ?string
+    {
+        return $this->classifier_code;
+    }
+
+    public function setAdgCodeAttribute(?string $value): void
+    {
+        $this->attributes['classifier_code'] = $value;
     }
 }

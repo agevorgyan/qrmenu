@@ -148,9 +148,14 @@ class MenuManagementService
                 $nameTranslations = $this->extractTranslations($data, 'name');
                 $descTranslations = $this->extractTranslations($data, 'description');
 
+                $classifierCode = ! empty($data['classifier_code'])
+                    ? trim($data['classifier_code'])
+                    : (! empty($data['atgaa_code']) ? trim($data['atgaa_code']) : null);
+
                 $product = Product::create([
                     'vendor_id' => $lockedVendor->id,
                     'category_id' => $data['category_id'],
+                    'classifier_code' => $classifierCode,
                     'name' => $name,
                     'name_translations' => $nameTranslations,
                     'description' => $desc,
@@ -329,6 +334,13 @@ class MenuManagementService
             'preparation_time_min' => $data['preparation_time_min'] ?? null,
             'is_featured' => ! empty($data['is_featured']),
         ];
+
+        if (array_key_exists('classifier_code', $data) || array_key_exists('atgaa_code', $data)) {
+            $code = ! empty($data['classifier_code']) ? trim($data['classifier_code']) : (! empty($data['atgaa_code']) ? trim($data['atgaa_code']) : null);
+            if (! empty($code)) {
+                $updatePayload['classifier_code'] = $code;
+            }
+        }
 
         if (array_key_exists('available_start_time', $data)) {
             $updatePayload['available_start_time'] = ! empty($data['available_start_time']) ? $data['available_start_time'] : null;
@@ -738,6 +750,11 @@ class MenuManagementService
                     $dirty = true;
                 }
 
+                if (array_key_exists('classifier_code', $actions) && $actions['classifier_code'] !== null) {
+                    $product->classifier_code = ! empty($actions['classifier_code']) ? trim((string) $actions['classifier_code']) : '56.10';
+                    $dirty = true;
+                }
+
                 if ($dirty) {
                     $product->save();
                     $updatedIds[] = (int) $product->id;
@@ -791,7 +808,7 @@ class MenuManagementService
      */
     public function inlineUpdateProduct(Product $product, string $field, mixed $value): Product
     {
-        $allowedFields = ['name', 'price', 'is_available', 'sort_order'];
+        $allowedFields = ['name', 'price', 'is_available', 'sort_order', 'classifier_code', 'atgaa_code'];
         if (! in_array($field, $allowedFields, true)) {
             throw ValidationException::withMessages([
                 'field' => __('Field :field is not eligible for inline updates.', ['field' => $field]),
@@ -836,6 +853,13 @@ class MenuManagementService
 
             case 'sort_order':
                 $product->sort_order = max(0, (int) $value);
+                $product->save();
+                break;
+
+            case 'classifier_code':
+            case 'atgaa_code':
+                $code = trim((string) $value);
+                $product->classifier_code = ! empty($code) ? $code : '56.10';
                 $product->save();
                 break;
         }

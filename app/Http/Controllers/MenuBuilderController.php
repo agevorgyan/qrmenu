@@ -313,6 +313,8 @@ class MenuBuilderController extends Controller
             'available_for_takeaway' => 'nullable|boolean',
             'available_for_delivery' => 'nullable|boolean',
             'ai_enabled' => 'nullable|boolean',
+            'classifier_code' => 'nullable|string|max:30',
+            'atgaa_code' => 'nullable|string|max:30',
         ]);
 
         $result = $this->menuService->bulkUpdateProducts(Auth::user()->vendor, $validated['product_ids'], $validated);
@@ -387,7 +389,7 @@ class MenuBuilderController extends Controller
         $this->authorize('update', $product);
 
         $validated = $request->validate([
-            'field' => 'required|string|in:name,price,is_available,sort_order',
+            'field' => 'required|string|in:name,price,is_available,sort_order,classifier_code,atgaa_code',
             'value' => 'required',
         ]);
 

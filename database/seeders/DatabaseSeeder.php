@@ -239,6 +239,7 @@ class DatabaseSeeder extends Seeder
             ['vendor_id' => $vendor1->id, 'name' => 'Truffle Hummus with Warm Pita'],
             [
                 'category_id' => $cat1->id,
+                'classifier_code' => '2106.90.98',
                 'name_translations' => [
                     'hy' => 'Տրյուֆելային Հումուս Տաք Պիտայով',
                     'en' => 'Truffle Hummus with Warm Pita',
@@ -269,6 +270,7 @@ class DatabaseSeeder extends Seeder
             ['vendor_id' => $vendor1->id, 'name' => 'Crispy Calamari Rings'],
             [
                 'category_id' => $cat1->id,
+                'classifier_code' => '0307.49.00',
                 'name_translations' => [
                     'hy' => 'Խրթխրթան Կալամարի Օղակներ',
                     'en' => 'Crispy Calamari Rings',
@@ -314,6 +316,7 @@ class DatabaseSeeder extends Seeder
             ['vendor_id' => $vendor1->id, 'name' => 'Ribeye Steak (350g)'],
             [
                 'category_id' => $cat2->id,
+                'classifier_code' => '0201.20.00',
                 'name_translations' => [
                     'hy' => 'Ռիբայ Սթեյք (350գ)',
                     'en' => 'Ribeye Steak (350g)',
@@ -381,6 +384,7 @@ class DatabaseSeeder extends Seeder
             ['vendor_id' => $vendor1->id, 'name' => 'Grilled Norwegian Salmon'],
             [
                 'category_id' => $cat2->id,
+                'classifier_code' => '0304.81.00',
                 'name_translations' => [
                     'hy' => 'Գրիլ Անված Նորվեգական Սաղմոն',
                     'en' => 'Grilled Norwegian Salmon',
@@ -426,6 +430,7 @@ class DatabaseSeeder extends Seeder
             ['vendor_id' => $vendor1->id, 'name' => 'Pistachio Molten Lava Cake'],
             [
                 'category_id' => $cat3->id,
+                'classifier_code' => '1905.90.90',
                 'name_translations' => [
                     'hy' => 'Պիստակով Լավա Տորթ',
                     'en' => 'Pistachio Molten Lava Cake',
@@ -471,6 +476,7 @@ class DatabaseSeeder extends Seeder
             ['vendor_id' => $vendor1->id, 'name' => 'Pomegranate Smoked Old Fashioned'],
             [
                 'category_id' => $cat4->id,
+                'classifier_code' => '2208.90.69',
                 'name_translations' => [
                     'hy' => 'Նռան Ծխեցված Օլդ Ֆեշն',
                     'en' => 'Pomegranate Smoked Old Fashioned',

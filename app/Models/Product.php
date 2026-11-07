@@ -28,6 +28,15 @@ class Product extends Model
                 throw new \InvalidArgumentException('Product price cannot be negative.');
             }
 
+            if (empty($product->classifier_code)) {
+                $categoryName = mb_strtolower($product->category?->name ?? '');
+                if (str_contains($categoryName, 'bar') || str_contains($categoryName, 'խմիչք') || str_contains($categoryName, 'cocktail') || str_contains($categoryName, 'drink') || str_contains($categoryName, 'beverage')) {
+                    $product->classifier_code = '56.30';
+                } else {
+                    $product->classifier_code = '56.10';
+                }
+            }
+
             if ($product->category_id && $product->vendor_id) {
                 $category = Category::withoutGlobalScopes()->find($product->category_id);
                 if ($category && (int) $category->vendor_id !== (int) $product->vendor_id) {
@@ -114,6 +123,7 @@ class Product extends Model
     protected $fillable = [
         'vendor_id',
         'category_id',
+        'classifier_code',
         'name',
         'name_translations',
         'description',
@@ -636,5 +646,25 @@ class Product extends Model
         return $this->hasOne(Recipe::class, 'product_id')
             ->where('status', Recipe::STATUS_APPROVED)
             ->where('is_active', true);
+    }
+
+    public function getAtgaaCodeAttribute(): ?string
+    {
+        return $this->classifier_code;
+    }
+
+    public function setAtgaaCodeAttribute(?string $value): void
+    {
+        $this->attributes['classifier_code'] = $value;
+    }
+
+    public function getAdgCodeAttribute(): ?string
+    {
+        return $this->classifier_code;
+    }
+
+    public function setAdgCodeAttribute(?string $value): void
+    {
+        $this->attributes['classifier_code'] = $value;
     }
 }
