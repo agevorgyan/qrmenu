@@ -52,7 +52,7 @@ class BankAccountController extends Controller
         );
 
         return redirect()->route('admin.finance.bank_accounts.show', $account)
-            ->with('success', "Bank account '{$account->account_name}' created and linked to Chart of Accounts.");
+            ->with('success', __('Bank account \':name\' created and linked to Chart of Accounts.', ['name' => $account->account_name]));
     }
 
     public function show(BankAccount $bankAccount, Request $request): View
@@ -116,13 +116,17 @@ class BankAccountController extends Controller
         }
 
         if (empty($transactions)) {
-            return back()->with('error', 'No valid transactions found in statement file.');
+            return back()->with('error', __('No valid transactions found in statement file.'));
         }
 
         $result = $this->bankService->importTransactions($bankAccount, $transactions, $request->user());
 
         return redirect()->route('admin.finance.bank_accounts.show', $bankAccount)
-            ->with('success', "Import completed: {$result['imported']} imported, {$result['auto_matched']} auto-matched, {$result['skipped']} duplicates skipped.");
+            ->with('success', __('Import completed: :imported imported, :matched auto-matched, :skipped duplicates skipped.', [
+                'imported' => $result['imported'],
+                'matched' => $result['auto_matched'],
+                'skipped' => $result['skipped'],
+            ]));
     }
 
     public function reconcile(PerformReconciliationRequest $request, BankAccount $bankAccount): RedirectResponse
@@ -145,7 +149,11 @@ class BankAccountController extends Controller
             );
 
             return redirect()->route('admin.finance.bank_accounts.show', $bankAccount)
-                ->with('success', "Bank reconciliation #{$rec->id} recorded. Difference: {$rec->difference} {$bankAccount->currency}.");
+                ->with('success', __('Bank reconciliation #:id recorded. Difference: :diff :currency.', [
+                    'id' => $rec->id,
+                    'diff' => $rec->difference,
+                    'currency' => $bankAccount->currency,
+                ]));
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }

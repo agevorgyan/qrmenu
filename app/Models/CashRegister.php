@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Traits\BelongsToVendor;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,6 +26,7 @@ class CashRegister extends Model
         'pos_device_id',
         'account_id',
         'status', // active, inactive, maintenance
+        'is_active',
         'current_balance',
         'assigned_user_id',
     ];
@@ -93,5 +95,30 @@ class CashRegister extends Model
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('status', 'active');
+    }
+
+    public function getIsActiveAttribute(): bool
+    {
+        return $this->isActive();
+    }
+
+    public function setIsActiveAttribute(mixed $value): void
+    {
+        $this->attributes['status'] = filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 'active' : 'inactive';
+    }
+
+    public function getCurrencyAttribute(): string
+    {
+        return $this->location?->currency ?? $this->vendor?->currency ?? 'AMD';
+    }
+
+    public function getOpeningFloatAttribute(): float
+    {
+        return (float) ($this->activeShift?->opening_float ?? 0.00);
     }
 }

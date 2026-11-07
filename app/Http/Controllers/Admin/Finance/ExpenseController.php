@@ -40,11 +40,18 @@ class ExpenseController extends Controller
         }
 
         if ($request->filled('payment_status')) {
-            $query->where('payment_status', $request->input('payment_status'));
+            $paymentStatus = $request->input('payment_status');
+            if ($paymentStatus === 'unpaid') {
+                $query->where('paid_amount', '<=', 0);
+            } elseif ($paymentStatus === 'partially_paid') {
+                $query->where('paid_amount', '>', 0)->where('remaining_amount', '>', 0);
+            } elseif ($paymentStatus === 'paid') {
+                $query->where('remaining_amount', '<=', 0);
+            }
         }
 
         if ($request->filled('category_id')) {
-            $query->where('financial_category_id', (int) $request->input('category_id'));
+            $query->where('category_id', (int) $request->input('category_id'));
         }
 
         if ($request->filled('location_id')) {
@@ -97,7 +104,7 @@ class ExpenseController extends Controller
             );
 
             return redirect()->route('admin.finance.expenses.show', $expense)
-                ->with('success', "Expense {$expense->expense_number} recorded successfully.");
+                ->with('success', __('Expense :number recorded successfully.', ['number' => $expense->expense_number]));
         } catch (\Exception $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
@@ -114,7 +121,7 @@ class ExpenseController extends Controller
 
         $expense->load(['category', 'supplier', 'location', 'createdByUser', 'approvedByUser', 'payments.bankAccount', 'payments.cashRegister']);
 
-        $registers = CashRegister::where('vendor_id', $vendor->id)->where('is_active', true)->get();
+        $registers = CashRegister::where('vendor_id', $vendor->id)->where('status', 'active')->get();
         $bankAccounts = BankAccount::where('vendor_id', $vendor->id)->where('is_active', true)->get();
 
         return view('admin.finance.expenses.show', compact('expense', 'registers', 'bankAccounts'));
@@ -135,7 +142,7 @@ class ExpenseController extends Controller
             );
 
             return redirect()->route('admin.finance.expenses.show', $expense)
-                ->with('success', 'Expense payment recorded and posted to ledger.');
+                ->with('success', __('Expense payment recorded and posted to ledger.'));
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -153,7 +160,7 @@ class ExpenseController extends Controller
         try {
             $this->expenseService->approveExpense($expense, $request->user());
 
-            return back()->with('success', "Expense {$expense->expense_number} approved.");
+            return back()->with('success', __('Expense :number approved.', ['number' => $expense->expense_number]));
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -175,7 +182,7 @@ class ExpenseController extends Controller
                 $request->input('notes', 'Rejected by manager')
             );
 
-            return back()->with('success', "Expense {$expense->expense_number} rejected.");
+            return back()->with('success', __('Expense :number rejected.', ['number' => $expense->expense_number]));
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }

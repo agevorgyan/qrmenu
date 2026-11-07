@@ -116,6 +116,8 @@ class CashRegisterService
 
         if (isset($data['status'])) {
             $register->status = $data['status'];
+        } elseif (array_key_exists('is_active', $data)) {
+            $register->status = $data['is_active'] ? 'active' : 'inactive';
         }
 
         $register->save();

@@ -622,15 +622,15 @@ class FinancialReportingService
             ->when($locationId, fn ($q) => $q->where('location_id', $locationId));
 
         $totalOrders = (clone $ordersQuery)->count();
-        $totalGrossSales = (float) (clone $ordersQuery)->sum('subtotal_amount');
+        $totalGrossSales = (float) (clone $ordersQuery)->selectRaw('COALESCE(SUM(COALESCE(subtotal, total_amount)), 0) as aggregate')->value('aggregate');
         $totalDiscounts = (float) (clone $ordersQuery)->sum('discount_amount');
         $totalTax = (float) (clone $ordersQuery)->sum('tax_amount');
         $totalNetSales = (float) (clone $ordersQuery)->sum('total_amount');
 
         // Breakdown by Order Type
         $byOrderType = (clone $ordersQuery)
-            ->select('order_type', DB::raw('COUNT(*) as order_count'), DB::raw('SUM(total_amount) as total_revenue'))
-            ->groupBy('order_type')
+            ->select('type as order_type', DB::raw('COUNT(*) as order_count'), DB::raw('SUM(total_amount) as total_revenue'))
+            ->groupBy('type')
             ->get()
             ->map(fn ($r) => [
                 'order_type' => $r->order_type ?? 'dine_in',
@@ -643,7 +643,12 @@ class FinancialReportingService
             ->where('vendor_id', $vendor->id)
             ->where('status', 'completed')
             ->whereBetween('created_at', [$startDate->copy()->startOfDay(), $endDate->copy()->endOfDay()])
-            ->when($locationId, fn ($q) => $q->where('location_id', $locationId));
+            ->when($locationId, fn ($q) => $q->whereExists(function ($sub) use ($locationId) {
+                $sub->select(DB::raw(1))
+                    ->from('orders')
+                    ->whereColumn('orders.id', 'pos_payments.order_id')
+                    ->where('orders.location_id', $locationId);
+            }));
 
         $byPaymentMethod = (clone $paymentsQuery)
             ->select('payment_method', DB::raw('COUNT(*) as payment_count'), DB::raw('SUM(amount) as total_amount'))
@@ -710,7 +715,12 @@ class FinancialReportingService
             ->where('vendor_id', $vendor->id)
             ->where('status', 'completed')
             ->whereBetween('created_at', [$startDate->copy()->startOfDay(), $endDate->copy()->endOfDay()])
-            ->when($locationId, fn ($q) => $q->where('location_id', $locationId))
+            ->when($locationId, fn ($q) => $q->whereExists(function ($sub) use ($locationId) {
+                $sub->select(DB::raw(1))
+                    ->from('orders')
+                    ->whereColumn('orders.id', 'pos_payments.order_id')
+                    ->where('orders.location_id', $locationId);
+            }))
             ->select('payment_method', DB::raw('SUM(amount) as total_amount'))
             ->groupBy('payment_method')
             ->pluck('total_amount', 'payment_method');

@@ -84,7 +84,7 @@ class SplitBillService
         $max = max(2, (int) ($settings->max_participants ?? 10));
 
         if ($participants < 2 || $participants > $max) {
-            throw new InvalidArgumentException(__("Participants count must be between 2 and {$max}."));
+            throw new InvalidArgumentException(__('Participants count must be between 2 and :max.', ['max' => $max]));
         }
 
         $currency = strtoupper($bill->currency ?? '֏');
@@ -206,12 +206,16 @@ class SplitBillService
 
             $avail = $availability->get($itemId);
             if (! $avail) {
-                throw new InvalidArgumentException(__("Invalid order item #{$itemId}."));
+                throw new InvalidArgumentException(__('Invalid order item #:id.', ['id' => $itemId]));
             }
 
             if ($qty > $avail['available_quantity']) {
                 throw new InvalidArgumentException(
-                    __("Requested quantity ({$qty}) exceeds available unclaimed quantity ({$avail['available_quantity']}) for '{$avail['name']}''")
+                    __('Requested quantity (:qty) exceeds available unclaimed quantity (:available) for \':name\'.', [
+                        'qty' => $qty,
+                        'available' => $avail['available_quantity'],
+                        'name' => $avail['name'],
+                    ])
                 );
             }
 
@@ -299,7 +303,10 @@ class SplitBillService
             // Prevent overpayment
             if ($amount > ($currentRemaining + 0.001)) {
                 throw new InvalidArgumentException(
-                    __("Amount ({$amount}) exceeds the remaining payable balance ({$currentRemaining}).")
+                    __('Amount (:amount) exceeds the remaining payable balance (:remaining).', [
+                        'amount' => $amount,
+                        'remaining' => $currentRemaining,
+                    ])
                 );
             }
 

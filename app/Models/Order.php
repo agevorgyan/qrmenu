@@ -214,4 +214,14 @@ class Order extends Model
     {
         return $this->hasOne(SplitBill::class)->where('status', 'active')->latestOfMany();
     }
+
+    public function getSubtotalAmountAttribute(): float
+    {
+        return (float) ($this->subtotal ?? $this->total_amount ?? 0.00);
+    }
+
+    public function getOrderTypeAttribute(): ?string
+    {
+        return $this->type;
+    }
 }

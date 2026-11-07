@@ -68,7 +68,7 @@
                                 {{ number_format($reg->current_balance, 2) }} {{ $reg->currency }}
                             </td>
                             <td>
-                                @if($reg->is_active)
+                                @if($reg->isActive())
                                     <span class="badge badge-emerald">{{ __('Active') }}</span>
                                 @else
                                     <span class="badge badge-rose">{{ __('Inactive') }}</span>
@@ -85,8 +85,8 @@
 
                                     <form method="POST" action="{{ route('admin.finance.registers.toggle', $reg) }}">
                                         @csrf
-                                        <button type="submit" class="btn btn-xs {{ $reg->is_active ? 'btn-rose' : 'btn-emerald' }}">
-                                            {{ $reg->is_active ? __('Deactivate') : __('Activate') }}
+                                        <button type="submit" class="btn btn-xs {{ $reg->isActive() ? 'btn-rose' : 'btn-emerald' }}">
+                                            {{ $reg->isActive() ? __('Deactivate') : __('Activate') }}
                                         </button>
                                     </form>
                                 </div>

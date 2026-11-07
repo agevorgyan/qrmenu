@@ -55,7 +55,7 @@ class CashRegisterController extends Controller
         );
 
         return redirect()->route('admin.finance.registers.index')
-            ->with('success', "Cash Register '{$register->name}' created successfully.");
+            ->with('success', __('Cash Register \':name\' created successfully.', ['name' => $register->name]));
     }
 
     public function update(UpdateCashRegisterRequest $request, CashRegister $register): RedirectResponse
@@ -65,10 +65,10 @@ class CashRegisterController extends Controller
             abort(403);
         }
 
-        $register->update($request->validated());
+        $this->registerService->updateRegister($register, $request->validated(), $request->user());
 
         return redirect()->route('admin.finance.registers.index')
-            ->with('success', "Cash Register '{$register->name}' updated successfully.");
+            ->with('success', __('Cash Register \':name\' updated successfully.', ['name' => $register->name]));
     }
 
     public function toggle(CashRegister $register): RedirectResponse
@@ -80,15 +80,18 @@ class CashRegisterController extends Controller
             abort(403);
         }
 
-        if ($register->is_active && $register->hasActiveShift()) {
-            return back()->with('error', 'Cannot deactivate a register with an open cash shift.');
+        if ($register->isActive() && $register->hasActiveShift()) {
+            return back()->with('error', __('Cannot deactivate a register with an open cash shift.'));
         }
 
-        $register->update(['is_active' => ! $register->is_active]);
+        $newStatus = $register->isActive() ? 'inactive' : 'active';
+        $register->update(['status' => $newStatus]);
 
-        $status = $register->is_active ? 'activated' : 'deactivated';
+        $statusMsg = $newStatus === 'active'
+            ? __('Cash Register \':name\' activated.', ['name' => $register->name])
+            : __('Cash Register \':name\' deactivated.', ['name' => $register->name]);
 
-        return back()->with('success', "Cash Register '{$register->name}' {$status}.");
+        return back()->with('success', $statusMsg);
     }
 
     public function kickDrawer(Request $request, CashRegister $register): RedirectResponse
@@ -106,6 +109,6 @@ class CashRegisterController extends Controller
             $request->input('reason', 'Manual drawer open')
         );
 
-        return back()->with('success', "Cash drawer kick instruction recorded for {$register->name}.");
+        return back()->with('success', __('Cash drawer kick instruction recorded for :name.', ['name' => $register->name]));
     }
 }

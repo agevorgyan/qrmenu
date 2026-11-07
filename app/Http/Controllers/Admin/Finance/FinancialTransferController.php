@@ -41,7 +41,7 @@ class FinancialTransferController extends Controller
 
         $transfers = $query->orderBy('transfer_date', 'desc')->paginate(20);
 
-        $registers = CashRegister::where('vendor_id', $vendor->id)->where('is_active', true)->get();
+        $registers = CashRegister::where('vendor_id', $vendor->id)->where('status', 'active')->get();
         $bankAccounts = BankAccount::where('vendor_id', $vendor->id)->where('is_active', true)->get();
         $locations = Location::where('vendor_id', $vendor->id)->get();
 
@@ -111,6 +111,6 @@ class FinancialTransferController extends Controller
         });
 
         return redirect()->route('admin.finance.transfers.index')
-            ->with('success', 'Internal cash/bank transfer completed and posted to ledger.');
+            ->with('success', __('Internal cash/bank transfer completed and posted to ledger.'));
     }
 }

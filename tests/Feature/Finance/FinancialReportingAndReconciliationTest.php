@@ -311,4 +311,71 @@ class FinancialReportingAndReconciliationTest extends TestCase
         $cardClearing = $this->ledgerService->getAccountByCode($this->vendor, '1030');
         $this->assertEquals(5000.00, $cardClearing->fresh()->current_balance);
     }
+
+    public function test_sales_analytics_report_and_http_endpoint_execute_cleanly(): void
+    {
+        $today = Carbon::today();
+
+        $order = Order::create([
+            'vendor_id' => $this->vendor->id,
+            'location_id' => $this->location->id,
+            'order_number' => 'ORD-SALES-01',
+            'type' => 'dine_in',
+            'status' => 'completed',
+            'subtotal' => 12000.00,
+            'discount_amount' => 1000.00,
+            'tax_amount' => 500.00,
+            'total_amount' => 11500.00,
+        ]);
+
+        PosPayment::create([
+            'vendor_id' => $this->vendor->id,
+            'order_id' => $order->id,
+            'user_id' => $this->manager->id,
+            'payment_method' => 'card',
+            'amount' => 11500.00,
+            'status' => 'completed',
+        ]);
+
+        // 1. Direct Service Call
+        $analytics = $this->reportingService->getSalesAnalytics(
+            $this->vendor,
+            $this->location->id,
+            $today->copy()->startOfDay(),
+            $today->copy()->endOfDay()
+        );
+
+        $this->assertEquals(1, $analytics['summary']['total_orders']);
+        $this->assertEquals(12000.00, $analytics['summary']['gross_sales']);
+        $this->assertEquals(1000.00, $analytics['summary']['discounts']);
+        $this->assertEquals(500.00, $analytics['summary']['tax']);
+        $this->assertEquals(11500.00, $analytics['summary']['net_sales']);
+        $this->assertNotEmpty($analytics['by_order_type']);
+        $this->assertEquals('dine_in', $analytics['by_order_type'][0]['order_type']);
+        $this->assertEquals(11500.00, $analytics['by_order_type'][0]['total_revenue']);
+        $this->assertNotEmpty($analytics['by_payment_method']);
+        $this->assertEquals('card', $analytics['by_payment_method'][0]['payment_method']);
+
+        // 2. HTTP Route Call
+        $this->vendor->update(['subscription_status' => 'active']);
+        $this->manager->update(['email_verified_at' => now()]);
+
+        $response = $this->actingAs($this->manager)->get(route('admin.finance.reports.sales_analytics', [
+            'start_date' => $today->toDateString(),
+            'end_date' => $today->toDateString(),
+            'location_id' => $this->location->id,
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('Multi-Dimensional Sales Analytics');
+        $response->assertSee('Gross Sales');
+        $response->assertSee('12,000.00');
+
+        // Without location filter (consolidated)
+        $responseConsolidated = $this->actingAs($this->manager)->get(route('admin.finance.reports.sales_analytics', [
+            'start_date' => $today->toDateString(),
+            'end_date' => $today->toDateString(),
+        ]));
+        $responseConsolidated->assertStatus(200);
+    }
 }

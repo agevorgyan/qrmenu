@@ -99,7 +99,7 @@ class CashShiftController extends Controller
             );
 
             return redirect()->route('admin.finance.shifts.show', $shift)
-                ->with('success', "Cash shift #{$shift->id} opened on {$register->name}.");
+                ->with('success', __('Cash shift #:id opened on :register.', ['id' => $shift->id, 'register' => $register->name]));
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -121,7 +121,7 @@ class CashShiftController extends Controller
             );
 
             return redirect()->route('admin.finance.shifts.show', $shift)
-                ->with('success', "Cash shift #{$shift->id} closed successfully.");
+                ->with('success', __('Cash shift #:id closed successfully.', ['id' => $shift->id]));
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -147,7 +147,7 @@ class CashShiftController extends Controller
                 $this->movementService->recordSafeDrop($shift, $amount, $reason, $request->user());
             }
 
-            return back()->with('success', 'Cash movement recorded successfully.');
+            return back()->with('success', __('Cash movement recorded successfully.'));
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -169,7 +169,7 @@ class CashShiftController extends Controller
                 $request->input('approval_notes', 'Discrepancy approved by manager.')
             );
 
-            return back()->with('success', 'Shift variance approved and posted to General Ledger.');
+            return back()->with('success', __('Shift variance approved and posted to General Ledger.'));
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }

@@ -20,7 +20,8 @@ class UpdateCashRegisterRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'code' => ['required', 'string', 'max:50'],
-            'is_active' => ['required', 'boolean'],
+            'status' => ['nullable', 'string', 'in:active,inactive,maintenance'],
+            'is_active' => ['nullable', 'boolean'],
             'assigned_user_id' => ['nullable', 'exists:users,id'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];

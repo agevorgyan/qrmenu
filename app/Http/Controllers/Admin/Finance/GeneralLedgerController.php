@@ -118,7 +118,7 @@ class GeneralLedgerController extends Controller
             );
 
             return redirect()->route('admin.finance.ledger.entries.show', $reversal)
-                ->with('success', "Reversal entry {$reversal->entry_number} posted successfully.");
+                ->with('success', __('Reversal entry :number posted successfully.', ['number' => $reversal->entry_number]));
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -131,7 +131,7 @@ class GeneralLedgerController extends Controller
         $vendor = $this->getActiveVendor();
         $this->ledgerService->initializeDefaultAccounts($vendor);
 
-        return back()->with('success', 'Chart of Accounts initialized successfully.');
+        return back()->with('success', __('Chart of Accounts initialized successfully.'));
     }
 
     public function export(Request $request): Response

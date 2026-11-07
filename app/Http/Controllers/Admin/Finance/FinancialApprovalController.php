@@ -53,12 +53,12 @@ class FinancialApprovalController extends Controller
             if ($action === 'approve') {
                 $this->approvalService->approve($approvalRequest, $request->user(), $notes);
 
-                return back()->with('success', 'Financial request approved successfully.');
+                return back()->with('success', __('Financial request approved successfully.'));
             }
 
             $this->approvalService->reject($approvalRequest, $request->user(), $notes ?: 'Rejected by manager.');
 
-            return back()->with('success', 'Financial request rejected.');
+            return back()->with('success', __('Financial request rejected.'));
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }

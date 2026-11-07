@@ -3,6 +3,7 @@
 namespace Tests\Feature\Finance;
 
 use App\Models\BankAccount;
+use App\Models\CashRegister;
 use App\Models\Expense;
 use App\Models\FinancialCategory;
 use App\Models\Income;
@@ -56,6 +57,7 @@ class ExpenseAndIncomeManagementTest extends TestCase
             'slug' => 'exp-bistro',
             'currency' => 'AMD',
             'is_active' => true,
+            'subscription_status' => 'active',
         ]);
 
         $this->location = Location::create([
@@ -69,6 +71,7 @@ class ExpenseAndIncomeManagementTest extends TestCase
         $this->manager = User::factory()->create([
             'vendor_id' => $this->vendor->id,
             'role' => 'vendor_owner',
+            'email_verified_at' => now(),
         ]);
 
         $this->staff = User::factory()->create([
@@ -256,5 +259,112 @@ class ExpenseAndIncomeManagementTest extends TestCase
         // Cr 4100 (Other Income) = 250,000
         $otherIncomeAccount = $this->ledgerService->getAccountByCode($this->vendor, '4100');
         $this->assertEquals(250000.00, $otherIncomeAccount->fresh()->current_balance);
+    }
+
+    public function test_incomes_index_page_loads_with_active_cash_registers_and_bank_accounts(): void
+    {
+        $tillAccount = $this->ledgerService->getAccountByCode($this->vendor, '1010');
+
+        $activeRegister = CashRegister::create([
+            'vendor_id' => $this->vendor->id,
+            'location_id' => $this->location->id,
+            'account_id' => $tillAccount->id,
+            'name' => 'Main Dining Bar Register',
+            'code' => 'REG-MAIN-01',
+            'status' => 'active',
+            'current_balance' => 15000.00,
+        ]);
+
+        $inactiveRegister = CashRegister::create([
+            'vendor_id' => $this->vendor->id,
+            'location_id' => $this->location->id,
+            'account_id' => $tillAccount->id,
+            'name' => 'Storage Till',
+            'code' => 'REG-STORAGE-01',
+            'status' => 'inactive',
+            'current_balance' => 0.00,
+        ]);
+
+        $bankAccount = BankAccount::create([
+            'vendor_id' => $this->vendor->id,
+            'account_id' => $this->ledgerService->getAccountByCode($this->vendor, '1040')->id,
+            'bank_name' => 'Ameriabank',
+            'account_name' => 'Operating Bank',
+            'account_number' => '15700234567800',
+            'currency' => 'AMD',
+            'current_balance' => 100000.00,
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($this->manager)->get(route('admin.finance.incomes.index'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Main Dining Bar Register');
+        $response->assertDontSee('Storage Till');
+
+        // Test filtering by category_id does not throw SQL column errors
+        $filterResponse = $this->actingAs($this->manager)->get(route('admin.finance.incomes.index', [
+            'category_id' => $this->cateringIncomeCategory->id,
+        ]));
+        $filterResponse->assertStatus(200);
+    }
+
+    public function test_cash_register_model_and_toggle_behavior(): void
+    {
+        $tillAccount = $this->ledgerService->getAccountByCode($this->vendor, '1010');
+
+        $register = CashRegister::create([
+            'vendor_id' => $this->vendor->id,
+            'location_id' => $this->location->id,
+            'account_id' => $tillAccount->id,
+            'name' => 'Patio Register',
+            'code' => 'REG-PATIO-01',
+            'is_active' => true,
+        ]);
+
+        $this->assertEquals('active', $register->status);
+        $this->assertTrue($register->isActive());
+        $this->assertTrue($register->is_active);
+        $this->assertEquals(1, CashRegister::active()->where('id', $register->id)->count());
+
+        // Toggle to inactive
+        $response = $this->actingAs($this->manager)->post(route('admin.finance.registers.toggle', $register));
+        $response->assertRedirect();
+
+        $register->refresh();
+        $this->assertEquals('inactive', $register->status);
+        $this->assertFalse($register->isActive());
+        $this->assertFalse($register->is_active);
+        $this->assertEquals(0, CashRegister::active()->where('id', $register->id)->count());
+    }
+
+    public function test_expense_show_and_financial_transfers_index_load_active_registers(): void
+    {
+        $tillAccount = $this->ledgerService->getAccountByCode($this->vendor, '1010');
+
+        $register = CashRegister::create([
+            'vendor_id' => $this->vendor->id,
+            'location_id' => $this->location->id,
+            'account_id' => $tillAccount->id,
+            'name' => 'Front Register',
+            'code' => 'REG-FRONT-01',
+            'status' => 'active',
+        ]);
+
+        $expense = $this->expenseService->createExpense($this->vendor, [
+            'financial_category_id' => $this->utilitiesCategory->id,
+            'title' => 'Water Bill',
+            'amount' => 12000.00,
+            'expense_date' => Carbon::today()->toDateString(),
+        ], $this->manager);
+
+        $expenseResponse = $this->actingAs($this->manager)->get(route('admin.finance.expenses.show', $expense));
+        $expenseResponse->assertStatus(200);
+        $expenseResponse->assertViewHas('registers', fn ($regs) => $regs->contains('id', $register->id));
+        $expenseResponse->assertSee('Front Register');
+
+        $transferResponse = $this->actingAs($this->manager)->get(route('admin.finance.transfers.index'));
+        $transferResponse->assertStatus(200);
+        $transferResponse->assertViewHas('registers', fn ($regs) => $regs->contains('id', $register->id));
     }
 }

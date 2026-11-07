@@ -38,7 +38,7 @@ class IncomeController extends Controller
         }
 
         if ($request->filled('category_id')) {
-            $query->where('financial_category_id', (int) $request->input('category_id'));
+            $query->where('category_id', (int) $request->input('category_id'));
         }
 
         if ($search = $request->input('search')) {
@@ -53,7 +53,7 @@ class IncomeController extends Controller
 
         $categories = FinancialCategory::where('vendor_id', $vendor->id)->where('type', 'income')->get();
         $locations = Location::where('vendor_id', $vendor->id)->get();
-        $registers = CashRegister::where('vendor_id', $vendor->id)->where('is_active', true)->get();
+        $registers = CashRegister::where('vendor_id', $vendor->id)->where('status', 'active')->get();
         $bankAccounts = BankAccount::where('vendor_id', $vendor->id)->where('is_active', true)->get();
 
         return view('admin.finance.incomes.index', compact('incomes', 'categories', 'locations', 'registers', 'bankAccounts'));
@@ -71,7 +71,7 @@ class IncomeController extends Controller
             );
 
             return redirect()->route('admin.finance.incomes.index')
-                ->with('success', "Other Income {$income->income_number} recorded and posted to ledger.");
+                ->with('success', __('Other Income :number recorded and posted to ledger.', ['number' => $income->income_number]));
         } catch (\Exception $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
