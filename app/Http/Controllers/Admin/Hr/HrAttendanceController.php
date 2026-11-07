@@ -25,12 +25,16 @@ class HrAttendanceController extends Controller
         $this->authorize('hr.attendance.view');
 
         $vendor = Auth::user()->vendor;
-        $date = $request->get('date', Carbon::today()->toDateString());
+        $tz = $vendor->getTimezone();
+        $date = $request->get('date', Carbon::now($tz)->toDateString());
         $locId = $request->get('location_id');
         $status = $request->get('status');
 
+        $startOfDay = Carbon::parse($date, $tz)->startOfDay()->utc();
+        $endOfDay = Carbon::parse($date, $tz)->endOfDay()->utc();
+
         $query = AttendanceRecord::where('vendor_id', $vendor->id)
-            ->whereDate('check_in_at', $date)
+            ->whereBetween('check_in_at', [$startOfDay, $endOfDay])
             ->with(['user.employeeProfile.position', 'location', 'adjustments.adjuster'])
             ->latest('check_in_at');
 
@@ -138,11 +142,14 @@ class HrAttendanceController extends Controller
             'reason' => 'required|string|max:500',
         ]);
 
+        $vendor = Auth::user()->vendor;
+        $tz = $vendor->getTimezone();
+
         $this->attendanceService->adjustAttendance(
             record: $record,
             adjuster: Auth::user(),
-            adjustedCheckIn: Carbon::parse($validated['adjusted_check_in']),
-            adjustedCheckOut: Carbon::parse($validated['adjusted_check_out']),
+            adjustedCheckIn: Carbon::parse($validated['adjusted_check_in'], $tz)->utc(),
+            adjustedCheckOut: Carbon::parse($validated['adjusted_check_out'], $tz)->utc(),
             reason: $validated['reason']
         );
 
@@ -169,13 +176,14 @@ class HrAttendanceController extends Controller
 
         $user = User::where('vendor_id', $vendor->id)->findOrFail($validated['user_id']);
         $location = Location::where('vendor_id', $vendor->id)->findOrFail($validated['location_id']);
+        $tz = $vendor->getTimezone();
 
         $record = AttendanceRecord::create([
             'vendor_id' => $vendor->id,
             'location_id' => $location->id,
             'user_id' => $user->id,
-            'check_in_at' => Carbon::parse($validated['check_in_at']),
-            'check_out_at' => Carbon::parse($validated['check_out_at']),
+            'check_in_at' => Carbon::parse($validated['check_in_at'], $tz)->utc(),
+            'check_out_at' => Carbon::parse($validated['check_out_at'], $tz)->utc(),
             'source' => 'manual',
             'status' => 'present',
             'is_verified' => true,

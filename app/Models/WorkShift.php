@@ -57,17 +57,21 @@ class WorkShift extends Model
     /**
      * Get the scheduled start datetime.
      */
-    public function getStartDateTime(): Carbon
+    public function getStartDateTime(?string $timezone = null): Carbon
     {
-        return Carbon::parse("{$this->getShiftDateString()} {$this->start_time}");
+        $tz = $timezone ?? $this->vendor?->getTimezone() ?? config('app.timezone', 'UTC');
+
+        return Carbon::parse("{$this->getShiftDateString()} {$this->start_time}", $tz);
     }
 
     /**
      * Get the scheduled end datetime, accounting for overnight/cross-midnight shifts.
      */
-    public function getEndDateTime(): Carbon
+    public function getEndDateTime(?string $timezone = null): Carbon
     {
-        $end = Carbon::parse("{$this->getShiftDateString()} {$this->end_time}");
+        $tz = $timezone ?? $this->vendor?->getTimezone() ?? config('app.timezone', 'UTC');
+
+        $end = Carbon::parse("{$this->getShiftDateString()} {$this->end_time}", $tz);
         if ($this->cross_midnight) {
             $end->addDay();
         }

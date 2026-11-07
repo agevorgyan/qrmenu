@@ -250,7 +250,8 @@ class AttendanceAndScheduleTest extends TestCase
 
     public function test_attendance_clock_in_and_out_with_scheduled_shift(): void
     {
-        $today = Carbon::today();
+        $tz = $this->vendor->getTimezone();
+        $today = Carbon::today($tz);
 
         $shift = WorkShift::create([
             'vendor_id' => $this->vendor->id,
@@ -265,7 +266,7 @@ class AttendanceAndScheduleTest extends TestCase
             'created_by' => $this->owner->id,
         ]);
 
-        // Clock in at 09:15 (15 min late)
+        // Clock in at 09:15 in vendor's timezone (15 min late)
         Carbon::setTestNow($today->copy()->setHour(9)->setMinute(15));
 
         $inResp = $this->actingAs($this->owner)
@@ -282,7 +283,7 @@ class AttendanceAndScheduleTest extends TestCase
         $this->assertEquals('late', $record->status);
         $this->assertEquals(15, $record->late_minutes);
 
-        // Clock out at 17:30 (30 min early departure)
+        // Clock out at 17:30 in vendor's timezone (30 min early departure)
         Carbon::setTestNow($today->copy()->setHour(17)->setMinute(30));
 
         $outResp = $this->actingAs($this->owner)
@@ -365,5 +366,45 @@ class AttendanceAndScheduleTest extends TestCase
 
         $record->refresh();
         $this->assertEquals(9.5, (float) $record->total_hours);
+    }
+
+    public function test_attendance_displays_in_vendor_timezone_not_utc(): void
+    {
+        $this->assertEquals('Asia/Yerevan', $this->vendor->getTimezone());
+
+        // Server time in UTC is 16:27:00 (which corresponds to 20:27 in Asia/Yerevan)
+        $utcTime = Carbon::create(2026, 11, 7, 16, 27, 0, 'UTC');
+        Carbon::setTestNow($utcTime);
+
+        $response = $this->actingAs($this->owner)
+            ->postJson(route('admin.hr.attendance.punch'), [
+                'action' => 'clock_in',
+                'pin' => '1234',
+                'location_id' => $this->location->id,
+            ]);
+
+        $response->assertOk();
+
+        $record = AttendanceRecord::where('user_id', $this->employee->id)->latest('check_in_at')->first();
+        $this->assertNotNull($record);
+
+        // Raw timestamp in UTC is 16:27
+        $this->assertEquals('16:27', $record->check_in_at->copy()->setTimezone('UTC')->format('H:i'));
+
+        // Converted to vendor timezone is 20:27
+        $this->assertEquals('20:27', $record->check_in_at->toVendorTimezone($this->vendor)->format('H:i'));
+        $this->assertEquals('20:27', $record->localCheckInAt($this->vendor)->format('H:i'));
+
+        // Attendance index page displays 20:27 and NOT 16:27
+        $indexResponse = $this->actingAs($this->owner)
+            ->get(route('admin.hr.attendance.index', [
+                'date' => '2026-11-07',
+            ]));
+
+        $indexResponse->assertOk();
+        $indexResponse->assertSee('20:27');
+        $indexResponse->assertDontSee('16:27');
+
+        Carbon::setTestNow(null);
     }
 }

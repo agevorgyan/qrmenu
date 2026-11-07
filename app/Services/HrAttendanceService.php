@@ -81,7 +81,9 @@ class HrAttendanceService
         ?float $lng = null
     ): AttendanceRecord {
         $vendor = $user->vendor;
+        $tz = $vendor->getTimezone();
         $now = Carbon::now();
+        $localNow = Carbon::now($tz);
 
         // Check if employee already has an open attendance record
         $activeRecord = AttendanceRecord::withoutGlobalScopes()
@@ -95,11 +97,11 @@ class HrAttendanceService
             throw new InvalidArgumentException(__('Employee is already clocked in. Please clock out first.'));
         }
 
-        // Match scheduled work shift for today
+        // Match scheduled work shift for today in vendor local time
         $shift = WorkShift::withoutGlobalScopes()
             ->where('vendor_id', $vendor->id)
             ->where('user_id', $user->id)
-            ->where('shift_date', $now->toDateString())
+            ->where('shift_date', $localNow->toDateString())
             ->whereIn('status', ['scheduled', 'confirmed'])
             ->first();
 
@@ -107,9 +109,9 @@ class HrAttendanceService
         $status = 'present';
 
         if ($shift) {
-            $scheduledStart = $shift->getStartDateTime();
-            if ($now->greaterThan($scheduledStart)) {
-                $diff = $scheduledStart->diffInMinutes($now);
+            $scheduledStart = $shift->getStartDateTime($tz);
+            if ($localNow->greaterThan($scheduledStart)) {
+                $diff = $scheduledStart->diffInMinutes($localNow);
                 // 5-minute grace period
                 if ($diff > 5) {
                     $lateMinutes = $diff;
@@ -139,7 +141,9 @@ class HrAttendanceService
     public function clockOut(User $user): AttendanceRecord
     {
         $vendor = $user->vendor;
+        $tz = $vendor->getTimezone();
         $now = Carbon::now();
+        $localNow = Carbon::now($tz);
 
         $record = AttendanceRecord::withoutGlobalScopes()
             ->where('vendor_id', $vendor->id)
@@ -156,10 +160,10 @@ class HrAttendanceService
         $status = 'completed';
         if ($record->shift) {
             $shift = $record->shift;
-            $scheduledEnd = $shift->getEndDateTime();
+            $scheduledEnd = $shift->getEndDateTime($tz);
 
-            if ($now->lessThan($scheduledEnd)) {
-                $diff = $now->diffInMinutes($scheduledEnd);
+            if ($localNow->lessThan($scheduledEnd)) {
+                $diff = $localNow->diffInMinutes($scheduledEnd);
                 if ($diff > 5) {
                     $earlyDepartureMinutes = $diff;
                     $status = 'early_departure';

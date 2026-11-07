@@ -31,9 +31,13 @@ class HrReportService
      */
     public function getDashboardMetrics(Vendor $vendor): array
     {
-        $today = Carbon::today()->toDateString();
-        $startOfMonth = Carbon::now()->startOfMonth()->toDateString();
-        $endOfMonth = Carbon::now()->endOfMonth()->toDateString();
+        $tz = $vendor->getTimezone();
+        $today = Carbon::now($tz)->toDateString();
+        $startOfMonth = Carbon::now($tz)->startOfMonth()->toDateString();
+        $endOfMonth = Carbon::now($tz)->endOfMonth()->toDateString();
+
+        $todayStartUtc = Carbon::parse($today, $tz)->startOfDay()->utc();
+        $todayEndUtc = Carbon::parse($today, $tz)->endOfDay()->utc();
 
         $totalEmployees = User::withoutGlobalScopes()
             ->where('vendor_id', $vendor->id)
@@ -51,13 +55,13 @@ class HrReportService
 
         $clockedInToday = AttendanceRecord::withoutGlobalScopes()
             ->where('vendor_id', $vendor->id)
-            ->whereDate('check_in_at', $today)
+            ->whereBetween('check_in_at', [$todayStartUtc, $todayEndUtc])
             ->distinct('user_id')
             ->count('user_id');
 
         $lateToday = AttendanceRecord::withoutGlobalScopes()
             ->where('vendor_id', $vendor->id)
-            ->whereDate('check_in_at', $today)
+            ->whereBetween('check_in_at', [$todayStartUtc, $todayEndUtc])
             ->where('status', 'late')
             ->count();
 

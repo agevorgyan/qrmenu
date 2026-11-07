@@ -10,12 +10,12 @@
     adjustItem: { id: null, employee: '', in: '', out: '', reason: '' },
     qrToken: '',
     qrCountdown: 60,
-    openAdjust(att) {
+    openAdjust(id, employee, checkIn, checkOut) {
         this.adjustItem = {
-            id: att.id,
-            employee: att.user ? att.user.name : '',
-            in: att.check_in_at ? att.check_in_at.substring(0, 16) : '',
-            out: att.check_out_at ? att.check_out_at.substring(0, 16) : '',
+            id: id,
+            employee: employee,
+            in: checkIn || '',
+            out: checkOut || '',
             reason: ''
         };
         this.showAdjustModal = true;
@@ -203,7 +203,7 @@
                             </td>
                             <td style="padding: 1rem 1rem;">
                                 <div style="font-weight: 700; color: #22c55e;">
-                                    {{ $rec->check_in_at ? \Carbon\Carbon::parse($rec->check_in_at)->format('H:i') : '—' }}
+                                    {{ $rec->check_in_at ? $rec->check_in_at->toVendorTimezone($vendor)->format('H:i') : '—' }}
                                 </div>
                                 @if($rec->is_late)
                                     <span style="font-size: 0.72rem; color: #ef4444; font-weight: 600;">+{{ $rec->late_minutes }}m {{ __('late') }}</span>
@@ -211,7 +211,7 @@
                             </td>
                             <td style="padding: 1rem 1rem;">
                                 <div style="font-weight: 700; color: {{ $rec->check_out_at ? '#ef4444' : '#10b981' }};">
-                                    {{ $rec->check_out_at ? \Carbon\Carbon::parse($rec->check_out_at)->format('H:i') : __('Active') }}
+                                    {{ $rec->check_out_at ? $rec->check_out_at->toVendorTimezone($vendor)->format('H:i') : __('Active') }}
                                 </div>
                             </td>
                             <td style="padding: 1rem 1rem; font-weight: 800; color: var(--text-main);">
@@ -238,7 +238,7 @@
                             </td>
                             <td style="padding: 1rem 1.25rem; text-align: right;">
                                 @can('hr.attendance.manage')
-                                    <button type="button" @click="openAdjust({{ json_encode($rec) }})" class="btn btn-secondary btn-sm" style="border-radius: 8px;" title="{{ __('Adjust punch times') }}">
+                                    <button type="button" @click="openAdjust({{ $rec->id }}, '{{ addslashes($rec->user?->name ?? '') }}', '{{ $rec->check_in_at ? $rec->check_in_at->toVendorTimezone($vendor)->format('Y-m-d\TH:i') : '' }}', '{{ $rec->check_out_at ? $rec->check_out_at->toVendorTimezone($vendor)->format('Y-m-d\TH:i') : '' }}')" class="btn btn-secondary btn-sm" style="border-radius: 8px;" title="{{ __('Adjust punch times') }}">
                                         <i class="fa-solid fa-wrench"></i> {{ __('Adjust') }}
                                     </button>
                                 @endcan
@@ -300,11 +300,11 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div>
                             <label class="form-label">{{ __('Check In (Date & Time)') }} <span style="color: #ef4444;">*</span></label>
-                            <input type="datetime-local" name="check_in_at" value="{{ date('Y-m-d\T09:00') }}" class="form-control" required style="border-radius: 10px; height: 42px;">
+                            <input type="datetime-local" name="check_in_at" value="{{ \Carbon\Carbon::now($vendor->getTimezone())->format('Y-m-d\T09:00') }}" class="form-control" required style="border-radius: 10px; height: 42px;">
                         </div>
                         <div>
                             <label class="form-label">{{ __('Check Out (Date & Time)') }} <span style="color: #ef4444;">*</span></label>
-                            <input type="datetime-local" name="check_out_at" value="{{ date('Y-m-d\T18:00') }}" class="form-control" required style="border-radius: 10px; height: 42px;">
+                            <input type="datetime-local" name="check_out_at" value="{{ \Carbon\Carbon::now($vendor->getTimezone())->format('Y-m-d\T18:00') }}" class="form-control" required style="border-radius: 10px; height: 42px;">
                         </div>
                     </div>
                     <div>

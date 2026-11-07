@@ -502,9 +502,9 @@
                     <tbody>
                         @forelse($employee->attendanceRecords as $att)
                             <tr>
-                                <td style="font-weight: 700;">{{ \Carbon\Carbon::parse($att->check_in_at)->format('d.m.Y') }}</td>
-                                <td style="color: #22c55e;">{{ \Carbon\Carbon::parse($att->check_in_at)->format('H:i') }}</td>
-                                <td style="color: #ef4444;">{{ $att->check_out_at ? \Carbon\Carbon::parse($att->check_out_at)->format('H:i') : __('Active') }}</td>
+                                <td style="font-weight: 700;">{{ $att->check_in_at ? $att->check_in_at->toVendorTimezone($vendor)->format('d.m.Y') : '—' }}</td>
+                                <td style="color: #22c55e;">{{ $att->check_in_at ? $att->check_in_at->toVendorTimezone($vendor)->format('H:i') : '—' }}</td>
+                                <td style="color: #ef4444;">{{ $att->check_out_at ? $att->check_out_at->toVendorTimezone($vendor)->format('H:i') : __('Active') }}</td>
                                 <td style="font-weight: 700;">{{ $att->total_hours ? number_format((float) $att->total_hours, 2) . 'h' : '—' }}</td>
                                 <td>
                                     @if($att->is_late)

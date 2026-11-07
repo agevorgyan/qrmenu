@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Traits\BelongsToVendor;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -114,5 +115,15 @@ class AttendanceRecord extends Model
     public function getPunchMethodAttribute(): ?string
     {
         return $this->source;
+    }
+
+    public function localCheckInAt(?Vendor $vendor = null): ?Carbon
+    {
+        return $this->check_in_at?->toVendorTimezone($vendor ?? $this->vendor);
+    }
+
+    public function localCheckOutAt(?Vendor $vendor = null): ?Carbon
+    {
+        return $this->check_out_at?->toVendorTimezone($vendor ?? $this->vendor);
     }
 }

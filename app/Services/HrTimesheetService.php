@@ -70,10 +70,14 @@ class HrTimesheetService
         }
 
         // 2. Attendance actual punches
+        $tz = $vendor->getTimezone();
+        $startUtc = Carbon::parse($startDate->toDateString(), $tz)->startOfDay()->utc();
+        $endUtc = Carbon::parse($endDate->toDateString(), $tz)->endOfDay()->utc();
+
         $records = AttendanceRecord::withoutGlobalScopes()
             ->where('vendor_id', $vendor->id)
             ->where('user_id', $employee->id)
-            ->whereBetween('check_in_at', [$startDate->copy()->startOfDay(), $endDate->copy()->endOfDay()])
+            ->whereBetween('check_in_at', [$startUtc, $endUtc])
             ->whereNotNull('check_out_at')
             ->get();
 
@@ -87,8 +91,8 @@ class HrTimesheetService
             $hours = round($netMins / 60, 2);
             $workedHours += $hours;
 
-            // Calculate night hours (22:00 to 06:00)
-            $nightHours += $this->calculateNightShiftHours($record->check_in_at, $record->check_out_at);
+            // Calculate night hours (22:00 to 06:00) using vendor timezone
+            $nightHours += $this->calculateNightShiftHours($record->check_in_at, $record->check_out_at, $tz);
 
             // Daily overtime threshold (standard 8 hours)
             if ($hours > 8.00) {
@@ -148,12 +152,14 @@ class HrTimesheetService
     /**
      * Compute night shift duration (22:00 - 06:00).
      */
-    public function calculateNightShiftHours(Carbon $start, Carbon $end): float
+    public function calculateNightShiftHours(Carbon $start, Carbon $end, ?string $timezone = null): float
     {
+        $tz = $timezone ?? config('app.timezone', 'UTC');
         $nightMinutes = 0;
-        $cursor = $start->copy();
+        $cursor = $start->copy()->setTimezone($tz);
+        $endLocal = $end->copy()->setTimezone($tz);
 
-        while ($cursor->lessThan($end)) {
+        while ($cursor->lessThan($endLocal)) {
             $hour = (int) $cursor->format('G');
             if ($hour >= 22 || $hour < 6) {
                 $nightMinutes++;
