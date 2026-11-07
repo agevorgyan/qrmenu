@@ -39,9 +39,10 @@ class CashRegisterController extends Controller
             ->paginate(20);
 
         $locations = Location::where('vendor_id', $vendor->id)->get();
-        $staffUsers = User::where('vendor_id', $vendor->id)->get();
+        $users = User::where('vendor_id', $vendor->id)->get();
+        $staffUsers = $users;
 
-        return view('admin.finance.registers.index', compact('registers', 'locations', 'staffUsers', 'locationId'));
+        return view('admin.finance.registers.index', compact('registers', 'locations', 'users', 'staffUsers', 'locationId'));
     }
 
     public function store(StoreCashRegisterRequest $request): RedirectResponse

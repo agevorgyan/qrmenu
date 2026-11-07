@@ -279,4 +279,32 @@ class CashRegisterAndShiftManagementTest extends TestCase
         $closedResponse->assertStatus(200);
         $closedResponse->assertSee('*** OFFICIAL Z-REPORT ***');
     }
+
+    public function test_registers_index_page_loads_successfully(): void
+    {
+        $this->vendor->update(['subscription_status' => 'active']);
+        $this->manager->update(['email_verified_at' => now()]);
+
+        $this->registerService->createRegister($this->vendor, [
+            'location_id' => $this->location->id,
+            'name' => 'Main Dining Bar Register',
+            'code' => 'REG-BAR-01',
+            'opening_float' => 15000.00,
+        ], $this->manager);
+
+        $response = $this->actingAs($this->manager)->get(route('admin.finance.registers.index'));
+        $response->assertStatus(200);
+        $response->assertSee('Cash Registers');
+        $response->assertSee('REG-BAR-01');
+    }
+
+    public function test_shifts_index_page_loads_successfully(): void
+    {
+        $this->vendor->update(['subscription_status' => 'active']);
+        $this->manager->update(['email_verified_at' => now()]);
+
+        $response = $this->actingAs($this->manager)->get(route('admin.finance.shifts.index'));
+        $response->assertStatus(200);
+        $response->assertSee('Cash Shifts');
+    }
 }

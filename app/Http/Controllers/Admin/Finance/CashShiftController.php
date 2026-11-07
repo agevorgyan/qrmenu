@@ -10,6 +10,7 @@ use App\Http\Requests\Finance\OpenCashShiftRequest;
 use App\Models\CashRegister;
 use App\Models\Location;
 use App\Models\PosShift;
+use App\Models\User;
 use App\Security\Permission;
 use App\Services\CashMovementService;
 use App\Services\CashShiftService;
@@ -56,8 +57,9 @@ class CashShiftController extends Controller
         $shifts = $query->orderBy('id', 'desc')->paginate(20);
         $locations = Location::where('vendor_id', $vendor->id)->get();
         $registers = CashRegister::where('vendor_id', $vendor->id)->get();
+        $users = User::where('vendor_id', $vendor->id)->get();
 
-        return view('admin.finance.shifts.index', compact('shifts', 'locations', 'registers'));
+        return view('admin.finance.shifts.index', compact('shifts', 'locations', 'registers', 'users'));
     }
 
     public function show(PosShift $shift): View

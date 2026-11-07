@@ -208,7 +208,7 @@
                         <label class="form-label">{{ __('Assigned Cashier / Staff') }}</label>
                         <select name="assigned_user_id" class="form-control">
                             <option value="">{{ __('Any Cashier') }}</option>
-                            @foreach($users as $u)
+                            @foreach($users ?? $staffUsers ?? [] as $u)
                                 <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->role }})</option>
                             @endforeach
                         </select>

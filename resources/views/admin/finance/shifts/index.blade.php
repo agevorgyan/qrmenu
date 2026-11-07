@@ -225,7 +225,7 @@
                 <div>
                     <label class="form-label">{{ __('Cashier / Shift Owner') }} *</label>
                     <select name="user_id" class="form-control" required>
-                        @foreach($users as $u)
+                        @foreach($users ?? [] as $u)
                             <option value="{{ $u->id }}" {{ auth()->id() === $u->id ? 'selected' : '' }}>
                                 {{ $u->name }} ({{ $u->role }})
                             </option>
