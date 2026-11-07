@@ -18,58 +18,145 @@ use Illuminate\Validation\ValidationException;
 class FinancialLedgerService
 {
     /**
-     * Standard default Chart of Accounts template.
+     * Standard default Republic of Armenia Chart of Accounts (ՀՀ Հաշվային Պլան - F&B / Restaurant).
      *
      * @var array<int, array{code: string, name: string, type: string, subtype: string, desc: string}>
      */
     public const DEFAULT_ACCOUNTS = [
-        ['code' => '1010', 'name' => 'Cash in Registers (Petty Cash/Till)', 'type' => 'asset', 'subtype' => 'cash', 'desc' => 'Physical cash notes and coins in registers and cash drawers.'],
-        ['code' => '1015', 'name' => 'Cash in Safe / Vault', 'type' => 'asset', 'subtype' => 'cash', 'desc' => 'Physical cash stored in main restaurant vault/safe.'],
-        ['code' => '1020', 'name' => 'Operating Bank Account', 'type' => 'asset', 'subtype' => 'bank', 'desc' => 'Primary commercial bank checking account.'],
-        ['code' => '1030', 'name' => 'Card Clearing / Undeposited Funds', 'type' => 'asset', 'subtype' => 'clearing', 'desc' => 'POS credit/debit card settlements awaiting bank deposit.'],
-        ['code' => '1040', 'name' => 'Online Gateway Clearing', 'type' => 'asset', 'subtype' => 'clearing', 'desc' => 'Stripe, Idram, Telcell, and online gateway settlements in transit.'],
-        ['code' => '1200', 'name' => 'Accounts Receivable (Customer Tabs)', 'type' => 'asset', 'subtype' => 'accounts_receivable', 'desc' => 'Customer unsettled dining tabs and corporate billing receivables.'],
-        ['code' => '1300', 'name' => 'Food & Beverage Inventory', 'type' => 'asset', 'subtype' => 'inventory', 'desc' => 'Current inventory asset value for ingredients, beverages, and packaging.'],
-        ['code' => '1400', 'name' => 'Employee Advances & Loans', 'type' => 'asset', 'subtype' => 'receivables', 'desc' => 'Salary advances disbursed to employees awaiting payroll deduction.'],
-        ['code' => '2010', 'name' => 'Accounts Payable (Suppliers)', 'type' => 'liability', 'subtype' => 'accounts_payable', 'desc' => 'Unpaid procurement bills and supplier invoices.'],
-        ['code' => '2100', 'name' => 'Tips Payable (Employee Pool)', 'type' => 'liability', 'subtype' => 'tips_payable', 'desc' => 'Collected customer tips awaiting distribution to service staff.'],
-        ['code' => '2200', 'name' => 'Net Salaries Payable', 'type' => 'liability', 'subtype' => 'payroll_payable', 'desc' => 'Net payroll obligations approved and owed to employees.'],
-        ['code' => '2300', 'name' => 'Sales Tax / VAT Payable (Armenia SRC)', 'type' => 'liability', 'subtype' => 'tax_payable', 'desc' => 'Collected VAT and sales taxes owed to the state tax service.'],
-        ['code' => '2350', 'name' => 'Payroll Taxes & Pension Payable', 'type' => 'liability', 'subtype' => 'tax_payable', 'desc' => 'Withheld income tax, social security, pension, and stamp fees.'],
-        ['code' => '3010', 'name' => 'Owner Capital & Equity', 'type' => 'equity', 'subtype' => 'equity', 'desc' => 'Owner contributed capital and initial investment.'],
-        ['code' => '3020', 'name' => 'Retained Earnings', 'type' => 'equity', 'subtype' => 'retained_earnings', 'desc' => 'Accumulated net profit/loss carried forward from prior periods.'],
-        ['code' => '4010', 'name' => 'Food Sales Revenue', 'type' => 'revenue', 'subtype' => 'sales_food', 'desc' => 'Gross sales revenue derived from kitchen and food orders.'],
-        ['code' => '4020', 'name' => 'Beverage Sales Revenue', 'type' => 'revenue', 'subtype' => 'sales_beverage', 'desc' => 'Gross sales revenue derived from bar and beverage orders.'],
-        ['code' => '4030', 'name' => 'Service Charge Revenue', 'type' => 'revenue', 'subtype' => 'sales_service', 'desc' => 'Mandatory restaurant service charges billed to customers.'],
-        ['code' => '4100', 'name' => 'Other Operational Income', 'type' => 'revenue', 'subtype' => 'other_income', 'desc' => 'Ancillary revenue from hall rental, delivery fees, and catering.'],
-        ['code' => '4900', 'name' => 'Sales Returns & Allowances', 'type' => 'revenue', 'subtype' => 'contra_revenue', 'desc' => 'Contra-revenue account tracking customer refunds and returns.'],
-        ['code' => '4910', 'name' => 'Promotional Discounts Allowed', 'type' => 'revenue', 'subtype' => 'contra_revenue', 'desc' => 'Contra-revenue account tracking menu discounts and promo codes.'],
-        ['code' => '5010', 'name' => 'Cost of Goods Sold (Food Cost)', 'type' => 'expense', 'subtype' => 'cost_of_goods_sold', 'desc' => 'Direct cost of ingredients consumed in prepared food dishes.'],
-        ['code' => '5020', 'name' => 'Cost of Goods Sold (Beverage Cost)', 'type' => 'expense', 'subtype' => 'cost_of_goods_sold', 'desc' => 'Direct cost of alcohol and beverages consumed.'],
-        ['code' => '5100', 'name' => 'Wages & Salaries Expense', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Gross base pay, overtime, night hours, and bonuses for staff.'],
-        ['code' => '5150', 'name' => 'Employer Social & Statutory Contributions', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Mandatory employer-paid social and statutory fees.'],
-        ['code' => '5200', 'name' => 'Rent & Facility Expense', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Physical property leases and dining room rent.'],
-        ['code' => '5300', 'name' => 'Utilities (Gas, Electric, Water)', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Electricity, natural gas, municipal water, and sanitation.'],
-        ['code' => '5400', 'name' => 'Repairs & Kitchen Maintenance', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Service equipment repairs, plumbing, HVAC, and refrigeration.'],
-        ['code' => '5500', 'name' => 'General Operating & Cleaning Supplies', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Consumable supplies, napkins, chemicals, and cleaning.'],
-        ['code' => '5600', 'name' => 'Marketing & Advertising', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Promotions, social media ads, food photography, and printing.'],
-        ['code' => '5700', 'name' => 'Bank Fees & Payment Processing', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Card terminal acquirer fees, gateway charges, and bank fees.'],
-        ['code' => '5800', 'name' => 'Cash Over / Short (Till Discrepancy)', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Physical till count variance recorded at shift close.'],
+        // ԴԱՍ 1. ՈՉ ԸՆԹԱՑԻԿ ԱԿՏԻՎՆԵՐ (Non-Current Assets)
+        ['code' => '1114', 'name' => 'Խոհանոցային և ռեստորանային սարքավորումներ (Kitchen Machinery & Equipment)', 'type' => 'asset', 'subtype' => 'fixed_asset', 'desc' => 'Խոհանոցի արտադրական մեքենաներ, վառարաններ, սառնարաններ և սարքավորումներ։'],
+        ['code' => '1116', 'name' => 'Արտադրական և տնտեսական գույք (Restaurant Furniture & Fixtures)', 'type' => 'asset', 'subtype' => 'fixed_asset', 'desc' => 'Դահլիճի և խոհանոցի կահույք, սեղաններ, աթոռներ, բարի կահավորանք։'],
+        ['code' => '1121', 'name' => 'Հիմնական միջոցների մաշվածություն (Accumulated Depreciation - Fixed Assets)', 'type' => 'asset', 'subtype' => 'contra_asset', 'desc' => 'Շահագործվող հիմնական միջոցների կուտակված մաշվածություն (հակակշռային հաշիվ)։'],
+        ['code' => '1311', 'name' => 'Ոչ նյութական ակտիվներ / Ծրագրային ապահովում (Software & Licenses)', 'type' => 'asset', 'subtype' => 'intangible_asset', 'desc' => 'POS ավտոմատացման համակարգի լիցենզիաներ, ծրագրային ապահովում։'],
+
+        // ԴԱՍ 2. ԸՆԹԱՑԻԿ ԱԿՏԻՎՆԵՐ (Current Assets)
+        ['code' => '2111', 'name' => 'Հումք և նյութեր (Kitchen Raw Materials & Food Stock)', 'type' => 'asset', 'subtype' => 'inventory', 'desc' => 'Սննդամթերքի, բաղադրիչների, համեմունքների և խոհանոցային հումքի պաշարներ։'],
+        ['code' => '2114', 'name' => 'Տարա և տարանյութեր (Takeaway Packaging & Disposables)', 'type' => 'asset', 'subtype' => 'inventory', 'desc' => 'Առաքման տուփեր, բաժակներ, փաթեթավորման պարագաներ։'],
+        ['code' => '2152', 'name' => 'Սեփական արտադրության կիսապատրաստուկներ (In-house Food Prep)', 'type' => 'asset', 'subtype' => 'inventory', 'desc' => 'Խոհանոցում նախապես պատրաստված սոուսներ, մարինացված միս, կիսապատրաստուկներ։'],
+        ['code' => '2161', 'name' => 'Ապրանքներ պահեստում (Bar Beverages & Resale Goods)', 'type' => 'asset', 'subtype' => 'inventory', 'desc' => 'Բարի ալկոհոլային և ոչ ալկոհոլային խմիչքներ, ծխախոտ և վերավաճառքի ապրանքներ։'],
+        ['code' => '2211', 'name' => 'Դեբիտորական պարտքեր արտադրանքի, ապրանքների վաճառքների գծով (Accounts Receivable)', 'type' => 'asset', 'subtype' => 'accounts_receivable', 'desc' => 'Հաճախորդների չվճարված հաշիվներ (tabs), կորպորատիվ միջոցառումների գծով պահանջներ։'],
+        ['code' => '2281', 'name' => 'Դեբիտորական պարտքեր առհաշիվ տրված գումարների գծով (Accountable Advances)', 'type' => 'asset', 'subtype' => 'receivables', 'desc' => 'Աշխատակիցներին շուկայից գնումների կամ աշխատավարձի գծով տրված առհաշիվ գումարներ։'],
+        ['code' => '2511', 'name' => 'Ազգային արժույթի դրամարկղ (Cash in POS Registers / Till)', 'type' => 'asset', 'subtype' => 'cash', 'desc' => 'Ֆիզիկական կանխիկ դրամական միջոցներ POS դրամարկղային արկղերում։'],
+        ['code' => '2512', 'name' => 'Գլխավոր դրամարկղ / Պահարան (Cash in Safe / Vault)', 'type' => 'asset', 'subtype' => 'cash', 'desc' => 'Կանխիկ միջոցներ ռեստորանի կենտրոնական չհրկիզվող պահարանում (սեյֆ)։'],
+        ['code' => '2521', 'name' => 'Հաշվարկային հաշիվ (Operating Bank Account - AMD)', 'type' => 'asset', 'subtype' => 'bank', 'desc' => 'Առևտրային բանկում կազմակերպության դրամային հիմնական գործառնական հաշիվ։'],
+        ['code' => '2531', 'name' => 'Արտարժութային հաշիվ (Foreign Currency Bank Accounts)', 'type' => 'asset', 'subtype' => 'bank', 'desc' => 'Արտարժույթով (USD, EUR, RUB) բանկային հաշիվներ։'],
+        ['code' => '2551', 'name' => 'Դրամական միջոցներ ճանապարհին - Էքվայրինգ (Card Acquirer Clearing)', 'type' => 'asset', 'subtype' => 'clearing', 'desc' => 'POS տերմինալներով քարտային վճարումներ բանկային փոխանցման սպասման փուլում։'],
+        ['code' => '2552', 'name' => 'Դրամական միջոցներ ճանապարհին - Օնլայն դարպասներ (Online Payment Gateways)', 'type' => 'asset', 'subtype' => 'clearing', 'desc' => 'Իդրամ, Թելսել, ԻնեկոՓեյ, Սթրայփ օնլայն վճարային հաշվանցումներ։'],
+
+        // ԴԱՍ 3. ՍԵՓԱԿԱՆ ԿԱՊԻՏԱԼ (Equity)
+        ['code' => '3111', 'name' => 'Կանոնադրական (բաժնեհավաք) կապիտալ (Owner Capital & Equity)', 'type' => 'equity', 'subtype' => 'equity', 'desc' => 'Հիմնադիրների ներդրած կանոնադրական կապիտալ և սեփական միջոցներ։'],
+        ['code' => '3411', 'name' => 'Նախորդ տարիների չբաշխված շահույթ / չծածկված վնաս (Retained Earnings)', 'type' => 'equity', 'subtype' => 'retained_earnings', 'desc' => 'Նախորդ ժամանակաշրջաններից կուտակված չբաշխված զուտ շահույթ կամ վնաս։'],
+        ['code' => '3421', 'name' => 'Հաշվետու տարվա զուտ շահույթ (վնաս) (Current Year Net Profit/Loss)', 'type' => 'equity', 'subtype' => 'retained_earnings', 'desc' => 'Ընթացիկ ֆինանսական տարվա գործունեության զուտ արդյունք։'],
+
+        // ԴԱՍ 4. ՈՉ ԸՆԹԱՑԻԿ ՊԱՐՏԱՎՈՐՈՒԹՅՈՒՆՆԵՐ (Non-Current Liabilities)
+        ['code' => '4111', 'name' => 'Երկարաժամկետ բանկային վարկեր (Long-Term Bank Loans)', 'type' => 'liability', 'subtype' => 'long_term_liability', 'desc' => '1 տարուց ավելի մարման ժամկետ ունեցող բանկային վարկային պարտավորություններ։'],
+        ['code' => '4211', 'name' => 'Երկարաժամկետ պարտավորություններ վարձակալության գծով (Long-Term Leases)', 'type' => 'liability', 'subtype' => 'long_term_liability', 'desc' => 'Ֆինանսական վարձակալության (լիզինգ) երկարաժամկետ պարտավորություններ։'],
+
+        // ԴԱՍ 5. ԸՆԹԱՑԻԿ ՊԱՐՏԱՎՈՐՈՒԹՅՈՒՆՆԵՐ (Current Liabilities)
+        ['code' => '5111', 'name' => 'Կարճաժամկետ բանկային վարկեր և օվերդրաֆտներ (Short-Term Bank Loans)', 'type' => 'liability', 'subtype' => 'current_liability', 'desc' => 'Կարճաժամկետ բանկային վարկեր և հաշվարկային հաշվի օվերդրաֆտներ։'],
+        ['code' => '5211', 'name' => 'Կրեդիտորական պարտքեր գնումների գծով - Մատակարարներ (Accounts Payable)', 'type' => 'liability', 'subtype' => 'accounts_payable', 'desc' => 'Ստացված սննդամթերքի, խմիչքների և տնտեսական ապրանքների չվճարված հաշիվներ։'],
+        ['code' => '5213', 'name' => 'Կրեդիտորական պարտքեր ծառայությունների գծով (Payables for Services)', 'type' => 'liability', 'subtype' => 'accounts_payable', 'desc' => 'Կոմունալ, տարածքի վարձակալության, ՏՏ և այլ ծառայությունների գծով պարտքեր։'],
+        ['code' => '5231', 'name' => 'Ստացված ընթացիկ կանխավճարներ (Customer Advance Deposits)', 'type' => 'liability', 'subtype' => 'unearned_revenue', 'desc' => 'Բանկետների, միջոցառումների կամ սեղանների ամրագրման համար ստացված կանխավճարներ։'],
+        ['code' => '5241', 'name' => 'Պարտքեր շահութահարկի գծով (Corporate Profit Tax Payable)', 'type' => 'liability', 'subtype' => 'tax_payable', 'desc' => 'ՀՀ ՊԵԿ պետական բյուջե վճարվելիք շահութահարկ։'],
+        ['code' => '5242', 'name' => 'Պարտքեր եկամտային հարկի գծով (Income Tax Payable - Withheld)', 'type' => 'liability', 'subtype' => 'tax_payable', 'desc' => 'Աշխատակիցների աշխատավարձից պահված և բյուջե վճարվելիք եկամտային հարկ։'],
+        ['code' => '5243', 'name' => 'Պարտքեր ավելացված արժեքի հարկի (ԱԱՀ) գծով (VAT Payable - Armenia SRC)', 'type' => 'liability', 'subtype' => 'tax_payable', 'desc' => 'Իրացումից հաշվարկված և բյուջե վճարման ենթակա ԱԱՀ։'],
+        ['code' => '5248', 'name' => 'Պարտքեր դրոշմանիշային վճարների գծով (Military Insurance Stamp Duty)', 'type' => 'liability', 'subtype' => 'tax_payable', 'desc' => 'Զինծառայողների ապահովագրության հիմնադրամին վճարվելիք դրոշմանիշային վճարներ։'],
+        ['code' => '5249', 'name' => 'Պարտքեր շրջանառության հարկի գծով (Turnover Tax Payable)', 'type' => 'liability', 'subtype' => 'tax_payable', 'desc' => 'Հանրային սննդի ոլորտում հաշվարկված և վճարվելիք շրջանառության հարկ։'],
+        ['code' => '5251', 'name' => 'Պարտքեր պարտադիր կենսաթոշակային վճարների գծով (Mandatory Pension Payable)', 'type' => 'liability', 'subtype' => 'tax_payable', 'desc' => 'Աշխատակիցների պարտադիր կուտակային կենսաթոշակային վճարներ։'],
+        ['code' => '5271', 'name' => 'Պարտքեր աշխատավարձի վճարման գծով (Net Salaries Payable)', 'type' => 'liability', 'subtype' => 'payroll_payable', 'desc' => 'Աշխատակիցներին վճարման ենթակա հաշվարկված զուտ աշխատավարձ։'],
+        ['code' => '5311', 'name' => 'Թեյավճարների գծով ընթացիկ պարտավորություն (Waiter Tips Payable Pool)', 'type' => 'liability', 'subtype' => 'tips_payable', 'desc' => 'Հաճախորդներից քարտով կամ հաշվով հավաքագրված թեյավճարներ՝ անձնակազմին բաշխելու համար։'],
+
+        // ԴԱՍ 6. ԵԿԱՄՈՒՏՆԵՐ (Revenue & Income)
+        ['code' => '6111', 'name' => 'Հասույթ արտադրանքի վաճառքից (Food Sales Revenue)', 'type' => 'revenue', 'subtype' => 'sales_food', 'desc' => 'Խոհանոցում պատրաստված ուտեստների, աղցանների, աղանդերի իրացումից հասույթ։'],
+        ['code' => '6112', 'name' => 'Հասույթ ապրանքների վաճառքից (Beverage & Bar Sales Revenue)', 'type' => 'revenue', 'subtype' => 'sales_beverage', 'desc' => 'Բարի խմիչքների, շշալցված ջրերի, հյութերի և վերավաճառքի ապրանքների հասույթ։'],
+        ['code' => '6114', 'name' => 'Հասույթ ծառայությունների մատուցումից (Service Charge Revenue)', 'type' => 'revenue', 'subtype' => 'sales_service', 'desc' => 'Պարտադիր սպասարկման վճար (service fee) և սեփական առաքման վճարներ։'],
+        ['code' => '6121', 'name' => 'Հետվերադարձված արտադրանք և ապրանքներ (Sales Returns & Allowances)', 'type' => 'revenue', 'subtype' => 'contra_revenue', 'desc' => 'Հետ վերադարձված կամ չեղարկված պատվերների կոնտրա-հասույթի հաշիվ։'],
+        ['code' => '6123', 'name' => 'Տրամադրված առևտրային զեղչեր (Promotional Discounts Allowed)', 'type' => 'revenue', 'subtype' => 'contra_revenue', 'desc' => 'Ակցիաներով, պրոմո-կոդերով և լոյալության քարտերով տրամադրված զեղչեր։'],
+        ['code' => '6143', 'name' => 'Եկամուտներ գույքագրման ավելցուկներից (Inventory & Till Overages)', 'type' => 'revenue', 'subtype' => 'other_income', 'desc' => 'Հերթափոխի փակման ժամանակ դրամարկղի կամ պահեստի գույքագրման ավելցուկներ։'],
+        ['code' => '6144', 'name' => 'Եկամուտներ դահլիճի վարձակալությունից (Hall Rental & Event Income)', 'type' => 'revenue', 'subtype' => 'other_income', 'desc' => 'Հանդիսությունների սրահի վարձակալություն, ֆոտոսեսիաների և միջոցառումների եկամուտ։'],
+        ['code' => '6146', 'name' => 'Այլ գործառնական եկամուտներ (Other Operating Ancillary Income)', 'type' => 'revenue', 'subtype' => 'other_income', 'desc' => 'Ռեստորանի հիմնական գործունեությանը հարակից այլ գործառնական եկամուտներ։'],
+        ['code' => '6211', 'name' => 'Ֆինանսական եկամուտներ բանկային տոկոսներից (Interest Income)', 'type' => 'revenue', 'subtype' => 'other_income', 'desc' => 'Բանկային հաշիվների դրական մնացորդներից կամ ավանդներից հաշվեգրված տոկոսներ։'],
+
+        // ԴԱՍ 7. ԾԱԽՍԵՐ (Expenses)
+        ['code' => '7111', 'name' => 'Իրացված արտադրանքի ինքնարժեք (COGS - Food Cost)', 'type' => 'expense', 'subtype' => 'cost_of_goods_sold', 'desc' => 'Իրացված կերակրատեսակների պատրաստման համար ծախսված հումքի և նյութերի ինքնարժեք։'],
+        ['code' => '7112', 'name' => 'Իրացված ապրանքների ինքնարժեք (COGS - Beverage Cost)', 'type' => 'expense', 'subtype' => 'cost_of_goods_sold', 'desc' => 'Իրացված բարի խմիչքների և վերավաճառքի ապրանքների ձեռքբերման ինքնարժեք։'],
+        ['code' => '7114', 'name' => 'Մատուցված ծառայությունների ինքնարժեք (Cost of Services Rendered)', 'type' => 'expense', 'subtype' => 'cost_of_goods_sold', 'desc' => 'Մատուցված ծառայությունների գծով անմիջականորեն կրած ծախսումներ։'],
+        ['code' => '7121', 'name' => 'Իրացման գծով աշխատակիցների աշխատավարձ (Delivery Staff Wages)', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Առաքիչների, առաքման համակարգողների և վաճառքի անձնակազմի աշխատավարձ։'],
+        ['code' => '7124', 'name' => 'Փոխադրման և առաքման ծախսեր (Delivery Logistics & Packaging)', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Առաքման տրանսպորտային ծախսեր, վառելիք, առաքման մեկանգամյա տարաներ։'],
+        ['code' => '7125', 'name' => 'Գովազդի և մարքեթինգի ծախսեր (Marketing & Advertising Expense)', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'SMM առաջխաղացում, թիրախային գովազդ, պոլիգրաֆիա, մենյուների տպագրություն։'],
+        ['code' => '7126', 'name' => 'Առաքման ծառայությունների միջնորդավճարներ (Delivery Partner Commissions)', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Glovo, Yandex Eats, Menu.am ագրեգատորների միջնորդավճարներ։'],
+        ['code' => '7131', 'name' => 'Վարչական անձնակազմի աշխատանքի վճարման ծախսեր (Administrative Staff Salaries)', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Ռեստորանի կառավարիչների, հաշվապահի, տնօրենի և սպասարկող անձնակազմի աշխատավարձ։'],
+        ['code' => '7132', 'name' => 'Հիմնական միջոցների մաշվածություն (Depreciation & Amortization Expense)', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Խոհանոցային սարքավորումների և գույքի ամսական մաշվածության ծախս։'],
+        ['code' => '7133', 'name' => 'Տարածքի և գույքի վարձակալական ծախսեր (Rent & Facility Lease Expense)', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Ռեստորանի դահլիճի, խոհանոցի և պահեստային տարածքների վարձակալություն։'],
+        ['code' => '7134', 'name' => 'Կոմունալ ծախսեր (Utilities - Electricity, Gas, Water)', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Էլեկտրաէներգիայի, բնական գազի, խմելու ջրի և աղբահանության ծախսեր։'],
+        ['code' => '7135', 'name' => 'Նորոգման և սպասարկման ծախսեր (Repairs & Kitchen Maintenance)', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Խոհանոցի սալօջախների, սառնարանների, սանտեխնիկայի և օդափոխության նորոգում։'],
+        ['code' => '7136', 'name' => 'Գրասենյակային, տնտեսական և մաքրության նյութեր (Cleaning & Supplies)', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Մաքրող նյութեր, ախտահանիչներ, սպասքի լվացման միջոցներ, տնտեսական ապրանքներ։'],
+        ['code' => '7137', 'name' => 'Կապի, ինտերնետի և ՏՏ ծախսեր (Telecommunications & Software)', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Օպտիկամանրաթելային ինտերնետ, IP հեռախոսակապ, POS ամպային ծրագրեր։'],
+        ['code' => '7138', 'name' => 'Բանկային ծառայությունների և էքվայրինգի ծախսեր (Bank & POS Fees)', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Առևտրային բանկերի սպասարկման վճարներ և POS քարտային էքվայրինգի տոկոսներ։'],
+        ['code' => '7139', 'name' => 'Այլ վարչական ծախսեր և տուրքեր (Other Administrative & Licenses)', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Ալկոհոլի և ծխախոտի վաճառքի պետական տուրքեր, սանիտարական թույլտվություններ։'],
+        ['code' => '7144', 'name' => 'Տույժեր, տուգանքներ և դատական ծախսեր (Fines & Penalties Expense)', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Հարկային կամ տեսչական տույժեր, տուգանքներ, ուշացման տոկոսներ։'],
+        ['code' => '7145', 'name' => 'Գույքագրման պակասորդներ, փչացումից կորուստներ (Inventory Spoilage & Shrinkage)', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Սննդամթերքի փչացում, ժամկետանց ապրանքների դուրսգրում և դրամարկղի պակասորդ։'],
+        ['code' => '7148', 'name' => 'Այլ գործառնական ծախսեր (Other Operating Expenses)', 'type' => 'expense', 'subtype' => 'operating_expense', 'desc' => 'Կազմակերպության հիմնական գործունեությանն առնչվող այլ գործառնական ծախսեր։'],
+        ['code' => '7511', 'name' => 'Շահութահարկի գծով ծախս (Corporate Income Tax Expense)', 'type' => 'expense', 'subtype' => 'tax_expense', 'desc' => 'Հաշվետու ժամանակաշրջանի շահութահարկի գծով ընդհանուր ծախս։'],
+        ['code' => '7512', 'name' => 'Շրջանառության հարկի գծով ծախս (Turnover Tax Expense)', 'type' => 'expense', 'subtype' => 'tax_expense', 'desc' => 'Հանրային սննդի գործունեությունից եռամսյակային շրջանառության հարկի ծախս։'],
     ];
 
     /**
-     * Default Financial Categories template.
+     * Map legacy generic account codes to official RA Chart of Accounts codes for seamless backward compatibility.
+     *
+     * @var array<string, string>
+     */
+    public const LEGACY_ALIASES = [
+        '1010' => '2511', // Cash in Registers -> 2511 Ազգային արժույթի դրամարկղ
+        '1015' => '2512', // Cash in Safe -> 2512 Գլխավոր դրամարկղ / Պահարան
+        '1020' => '2521', // Operating Bank Account -> 2521 Հաշվարկային հաշիվ
+        '1030' => '2551', // Card Clearing -> 2551 Դրամական միջոցներ ճանապարհին (էքվայրինգ)
+        '1040' => '2552', // Online Gateway Clearing -> 2552 Դրամական միջոցներ ճանապարհին (դարպասներ)
+        '1200' => '2211', // Accounts Receivable -> 2211 Դեբիտորական պարտքեր վաճառքների գծով
+        '1300' => '2111', // Inventory -> 2111 Հումք և նյութեր (պահեստ)
+        '1400' => '2281', // Employee Advances -> 2281 Առհաշիվ տրված գումարներ
+        '2010' => '5211', // Accounts Payable -> 5211 Կրեդիտորական պարտքեր գնումների գծով
+        '2100' => '5311', // Tips Payable -> 5311 Թեյավճարների գծով պարտավորություն
+        '2200' => '5271', // Net Salaries Payable -> 5271 Պարտքեր աշխատավարձի վճարման գծով
+        '2300' => '5243', // Sales Tax / VAT -> 5243 Պարտքեր ԱԱՀ-ի գծով
+        '2350' => '5242', // Payroll Taxes -> 5242 Պարտքեր եկամտային հարկի գծով
+        '3010' => '3111', // Owner Equity -> 3111 Կանոնադրական (բաժնեհավաք) կապիտալ
+        '3020' => '3411', // Retained Earnings -> 3411 Նախորդ տարիների չբաշխված շահույթ
+        '4010' => '6111', // Food Sales -> 6111 Հասույթ արտադրանքի վաճառքից
+        '4020' => '6112', // Beverage Sales -> 6112 Հասույթ ապրանքների վաճառքից
+        '4030' => '6114', // Service Charge -> 6114 Հասույթ ծառայությունների մատուցումից
+        '4100' => '6144', // Other Income -> 6144 Եկամուտներ դահլիճի վարձակալությունից և այլ գործառնություններից
+        '4900' => '6121', // Sales Returns -> 6121 Հետվերադարձված արտադրանք և ապրանքներ
+        '4910' => '6123', // Discounts Allowed -> 6123 Տրամադրված առևտրային զեղչեր
+        '5010' => '7111', // Food COGS -> 7111 Իրացված արտադրանքի ինքնարժեք
+        '5020' => '7112', // Beverage COGS -> 7112 Իրացված ապրանքների ինքնարժեք
+        '5100' => '7131', // Wages Expense -> 7131 Վարչական անձնակազմի աշխատանքի վճարման ծախսեր
+        '5150' => '7131', // Social Contributions
+        '5200' => '7133', // Rent -> 7133 Տարածքի վարձակալական ծախսեր
+        '5300' => '7134', // Utilities -> 7134 Կոմունալ ծախսեր
+        '5400' => '7135', // Repairs -> 7135 Նորոգման և սպասարկման ծախսեր
+        '5500' => '7136', // General & Cleaning Supplies -> 7136 Գրասենյակային, տնտեսական և մաքրության ծախսեր
+        '5600' => '7125', // Marketing -> 7125 Գովազդի և մարքեթինգի ծախսեր
+        '5700' => '7138', // Bank & Acquirer Fees -> 7138 Բանկային ծառայությունների և էքվայրինգի ծախսեր
+        '5800' => '7145', // Cash Variance -> 7145 Գույքագրման պակասորդներ և կորուստներ
+    ];
+
+    /**
+     * Default Financial Categories template aligned with Republic of Armenia Chart of Accounts.
      */
     public const DEFAULT_CATEGORIES = [
-        ['name' => 'Food & Beverage Supplies', 'code' => 'F_B_SUPPLIES', 'type' => 'expense', 'account_code' => '5010', 'color' => '#10b981', 'icon' => 'fa-utensils'],
-        ['name' => 'Kitchen Equipment & Repairs', 'code' => 'MAINTENANCE', 'type' => 'expense', 'account_code' => '5400', 'color' => '#f59e0b', 'icon' => 'fa-wrench'],
-        ['name' => 'Utilities & Internet', 'code' => 'UTILITIES', 'type' => 'expense', 'account_code' => '5300', 'color' => '#06b6d4', 'icon' => 'fa-bolt'],
-        ['name' => 'Cleaning & Sanitation Supplies', 'code' => 'CLEANING', 'type' => 'expense', 'account_code' => '5500', 'color' => '#3b82f6', 'icon' => 'fa-soap'],
-        ['name' => 'Rent & Lease Payments', 'code' => 'RENT', 'type' => 'expense', 'account_code' => '5200', 'color' => '#8b5cf6', 'icon' => 'fa-building'],
-        ['name' => 'Marketing & Promotions', 'code' => 'MARKETING', 'type' => 'expense', 'account_code' => '5600', 'color' => '#ec4899', 'icon' => 'fa-bullhorn'],
-        ['name' => 'Bank & Merchant Fees', 'code' => 'BANK_FEES', 'type' => 'expense', 'account_code' => '5700', 'color' => '#64748b', 'icon' => 'fa-credit-card'],
-        ['name' => 'Event Hall Rental Income', 'code' => 'HALL_RENTAL', 'type' => 'income', 'account_code' => '4100', 'color' => '#10b981', 'icon' => 'fa-champagne-glasses'],
-        ['name' => 'Catering & Delivery Surcharge', 'code' => 'CATERING', 'type' => 'income', 'account_code' => '4100', 'color' => '#06b6d4', 'icon' => 'fa-truck'],
+        ['name' => 'Food & Kitchen Ingredients', 'code' => 'FOOD_SUPPLIES', 'type' => 'expense', 'account_code' => '7111', 'color' => '#10b981', 'icon' => 'fa-utensils'],
+        ['name' => 'Bar & Beverage Stock', 'code' => 'BAR_SUPPLIES', 'type' => 'expense', 'account_code' => '7112', 'color' => '#8b5cf6', 'icon' => 'fa-wine-bottle'],
+        ['name' => 'Takeaway & Packaging', 'code' => 'PACKAGING', 'type' => 'expense', 'account_code' => '7124', 'color' => '#06b6d4', 'icon' => 'fa-box-open'],
+        ['name' => 'Kitchen Equipment & Maintenance', 'code' => 'MAINTENANCE', 'type' => 'expense', 'account_code' => '7135', 'color' => '#f59e0b', 'icon' => 'fa-wrench'],
+        ['name' => 'Utilities (Electric, Gas, Water)', 'code' => 'UTILITIES', 'type' => 'expense', 'account_code' => '7134', 'color' => '#06b6d4', 'icon' => 'fa-bolt'],
+        ['name' => 'Cleaning & Sanitation Supplies', 'code' => 'CLEANING', 'type' => 'expense', 'account_code' => '7136', 'color' => '#3b82f6', 'icon' => 'fa-soap'],
+        ['name' => 'Rent & Facility Leases', 'code' => 'RENT', 'type' => 'expense', 'account_code' => '7133', 'color' => '#8b5cf6', 'icon' => 'fa-building'],
+        ['name' => 'Marketing, SMM & Promotions', 'code' => 'MARKETING', 'type' => 'expense', 'account_code' => '7125', 'color' => '#ec4899', 'icon' => 'fa-bullhorn'],
+        ['name' => 'Delivery Service Commissions', 'code' => 'DELIVERY_COMMISSION', 'type' => 'expense', 'account_code' => '7126', 'color' => '#f97316', 'icon' => 'fa-motorcycle'],
+        ['name' => 'Bank & Acquirer Card Fees', 'code' => 'BANK_FEES', 'type' => 'expense', 'account_code' => '7138', 'color' => '#64748b', 'icon' => 'fa-credit-card'],
+        ['name' => 'Event Hall & Banquet Rental Income', 'code' => 'HALL_RENTAL', 'type' => 'income', 'account_code' => '6144', 'color' => '#10b981', 'icon' => 'fa-champagne-glasses'],
+        ['name' => 'Catering & Service Fee Income', 'code' => 'CATERING', 'type' => 'income', 'account_code' => '6114', 'color' => '#06b6d4', 'icon' => 'fa-truck'],
     ];
 
     /**
@@ -125,15 +212,30 @@ class FinancialLedgerService
     }
 
     /**
-     * Get account by standard code, auto-initializing if missing.
+     * Get account by standard RA code or legacy alias, auto-initializing if missing.
      */
     public function getAccountByCode(Vendor $vendor, string $code): ChartOfAccount
     {
-        $account = ChartOfAccount::where('vendor_id', $vendor->id)->where('code', $code)->first();
+        $effectiveCode = self::LEGACY_ALIASES[$code] ?? $code;
+
+        // Try effective RA code first, then exact requested code
+        $account = ChartOfAccount::where('vendor_id', $vendor->id)
+            ->where(function ($q) use ($code, $effectiveCode) {
+                $q->where('code', $effectiveCode)
+                    ->orWhere('code', $code);
+            })
+            ->orderByRaw('CASE WHEN code = ? THEN 0 ELSE 1 END', [$effectiveCode])
+            ->first();
 
         if (! $account) {
             $this->initializeDefaultAccounts($vendor);
-            $account = ChartOfAccount::where('vendor_id', $vendor->id)->where('code', $code)->firstOrFail();
+            $account = ChartOfAccount::where('vendor_id', $vendor->id)
+                ->where(function ($q) use ($code, $effectiveCode) {
+                    $q->where('code', $effectiveCode)
+                        ->orWhere('code', $code);
+                })
+                ->orderByRaw('CASE WHEN code = ? THEN 0 ELSE 1 END', [$effectiveCode])
+                ->firstOrFail();
         }
 
         return $account;

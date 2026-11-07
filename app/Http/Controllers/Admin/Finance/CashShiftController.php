@@ -73,8 +73,9 @@ class CashShiftController extends Controller
 
         $expectedBreakdown = $this->shiftService->calculateExpectedCashBreakdown($shift);
         $zReport = $shift->status === 'closed' ? $this->shiftService->generateZReport($shift) : null;
+        $xReport = $shift->status === 'open' ? $this->shiftService->generateXReport($shift) : null;
 
-        return view('admin.finance.shifts.show', compact('shift', 'expectedBreakdown', 'zReport'));
+        return view('admin.finance.shifts.show', compact('shift', 'expectedBreakdown', 'zReport', 'xReport'));
     }
 
     public function open(OpenCashShiftRequest $request): RedirectResponse

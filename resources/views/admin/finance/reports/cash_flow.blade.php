@@ -2,10 +2,29 @@
 
 @section('title', __('Cash Flow Statement') . ' - ' . config('app.name'))
 
+@section('styles')
+<style>
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        .printable-statement {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+    }
+</style>
+@endsection
+
 @section('content')
 <div style="max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem;">
     <!-- Header -->
-    <div class="card" style="padding: 1.5rem;">
+    <div class="card no-print" style="padding: 1.5rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
             <div>
                 <a href="{{ route('admin.finance.reports.index') }}" style="color: var(--text-muted); font-size: 0.85rem; text-decoration: none; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.5rem;">
@@ -43,12 +62,15 @@
     </div>
 
     <!-- Paper Card -->
-    <div class="card" style="padding: 2.5rem; background: var(--card-bg);">
-        <div style="text-align: center; border-bottom: 2px solid var(--border-color); padding-bottom: 1.5rem; margin-bottom: 2rem;">
-            <h2 style="font-size: 1.4rem; font-weight: 800; margin: 0; color: var(--text-main);">{{ auth()->user()?->vendor?->name }}</h2>
-            <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-muted); margin-top: 0.25rem;">{{ __('STATEMENT OF CASH FLOWS') }}</div>
-            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
-                {{ __('For the period from') }} {{ $startDate->format('M d, Y') }} {{ __('to') }} {{ $endDate->format('M d, Y') }}
+    <div class="card printable-statement" style="padding: 2.5rem; background: var(--card-bg);">
+        <div class="statement-header" style="text-align: center; border-bottom: 2px solid var(--border-color); padding-bottom: 1.5rem; margin-bottom: 2rem;">
+            <h2 style="font-size: 1.5rem; font-weight: 800; margin: 0; color: var(--text-main);">{{ auth()->user()?->vendor?->name }}</h2>
+            <div class="statement-title" style="font-size: 1.15rem; font-weight: 700; color: var(--text-muted); margin-top: 0.25rem;">{{ __('STATEMENT OF CASH FLOWS') }}</div>
+            <div class="statement-subtitle" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+                {{ __('For the period from') }} {{ $startDate->format('M d, Y') }} {{ __('to') }} {{ $endDate->format('M d, Y') }} | {{ __('Currency:') }} {{ $cashFlow['currency'] }}
+            </div>
+            <div class="print-only" style="font-size: 0.75rem; color: #666; margin-top: 0.35rem;">
+                {{ __('Generated on:') }} {{ now()->format('Y-m-d H:i') }} | {{ __('Accountant:') }} {{ auth()->user()?->name }}
             </div>
         </div>
 
@@ -157,6 +179,18 @@
             <div style="display: flex; justify-content: space-between; padding: 1rem 0.75rem; font-weight: 900; font-size: 1.25rem; background: rgba(6, 182, 212, 0.12); border-radius: 8px; margin-top: 0.75rem; color: #06b6d4;">
                 <span>{{ __('CASH & BANK BALANCE AT END OF PERIOD') }}</span>
                 <span style="font-family: monospace;">{{ number_format($cashFlow['ending_cash_balance'], 2) }} {{ $cashFlow['currency'] }}</span>
+            </div>
+        </div>
+
+        <!-- Signatures Block for Print -->
+        <div class="print-signatures statement-signatures">
+            <div class="sig-col">
+                <div class="sig-line"></div>
+                <div class="sig-label">{{ __('Prepared by (Accountant):') }} {{ auth()->user()?->name }}</div>
+            </div>
+            <div class="sig-col">
+                <div class="sig-line"></div>
+                <div class="sig-label">{{ __('Approved by (Director / General Manager)') }}</div>
             </div>
         </div>
     </div>

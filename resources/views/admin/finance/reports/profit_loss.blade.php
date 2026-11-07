@@ -3,50 +3,59 @@
 @section('title', __('Profit & Loss Statement') . ' - ' . config('app.name'))
 
 @section('content')
-<div style="max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem;">
+<div style="max-width: 1040px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 1.5rem;">
     <!-- Header -->
-    <div class="card" style="padding: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div class="card" style="padding: 1.5rem; margin-bottom: 0;">
+        <div class="page-header-flex" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem;">
             <div>
-                <a href="{{ route('admin.finance.reports.index') }}" style="color: var(--text-muted); font-size: 0.85rem; text-decoration: none; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.5rem;">
-                    <i class="fa-solid fa-arrow-left"></i> {{ __('Back to Reports') }}
+                <a href="{{ route('admin.finance.reports.index') }}" class="btn btn-xs btn-secondary" style="margin-bottom: 0.65rem; display: inline-flex;">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>{{ __('Back to Reports') }}</span>
                 </a>
-                <h1 style="font-size: 1.5rem; font-weight: 800; margin: 0; color: var(--text-main); display: flex; align-items: center; gap: 0.6rem;">
-                    <i class="fa-solid fa-chart-line" style="color: #10b981;"></i>
-                    {{ __('Profit & Loss Statement (Income Statement)') }}
-                </h1>
-                <p style="margin: 0.25rem 0 0; color: var(--text-muted); font-size: 0.85rem;">
-                    {{ __('Period:') }} {{ $pnl['start_date'] }} {{ __('to') }} {{ $pnl['end_date'] }} | {{ __('Currency:') }} {{ $pnl['currency'] }}
-                </p>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 48px; height: 48px; border-radius: 14px; background: rgba(16, 185, 129, 0.12); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; flex-shrink: 0;">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <h1 style="font-size: clamp(1.25rem, 2.5vw, 1.65rem); font-weight: 800; margin: 0; color: var(--text-main); line-height: 1.2;">
+                            {{ __('Profit & Loss Statement (Income Statement)') }}
+                        </h1>
+                        <p style="margin: 0.35rem 0 0; color: var(--text-muted); font-size: 0.875rem;">
+                            {{ __('Period:') }} {{ $pnl['start_date'] }} {{ __('to') }} {{ $pnl['end_date'] }} | {{ __('Currency:') }} {{ $pnl['currency'] }}
+                        </p>
+                    </div>
+                </div>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div class="page-header-actions" style="display: flex; align-items: center; gap: 0.75rem;">
                 <a href="{{ route('admin.finance.reports.export', ['type' => 'profit-loss', 'start_date' => $startDate->toDateString(), 'end_date' => $endDate->toDateString(), 'location_id' => $locationId]) }}" class="btn btn-secondary">
-                    <i class="fa-solid fa-download"></i> {{ __('Export CSV') }}
+                    <i class="fa-solid fa-download"></i>
+                    <span>{{ __('Export CSV') }}</span>
                 </a>
                 <button type="button" onclick="window.print()" class="btn btn-primary">
-                    <i class="fa-solid fa-print"></i> {{ __('Print Statement') }}
+                    <i class="fa-solid fa-print"></i>
+                    <span>{{ __('Print Statement') }}</span>
                 </button>
             </div>
         </div>
 
         <!-- Date & Location Form -->
-        <form method="GET" action="{{ route('admin.finance.reports.profit_loss') }}" style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
-            <select name="location_id" class="form-control" style="width: auto;">
+        <form method="GET" action="{{ route('admin.finance.reports.profit_loss') }}" class="filter-bar-flex" style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+            <select name="location_id" class="form-control" style="width: auto; font-size: 0.875rem;">
                 <option value="">{{ __('All Branches / Consolidated') }}</option>
                 @foreach($locations as $loc)
                     <option value="{{ $loc->id }}" {{ $locationId == $loc->id ? 'selected' : '' }}>{{ $loc->name }}</option>
                 @endforeach
             </select>
 
-            <input type="date" name="start_date" class="form-control" style="width: auto;" value="{{ $startDate->toDateString() }}">
-            <input type="date" name="end_date" class="form-control" style="width: auto;" value="{{ $endDate->toDateString() }}">
-            <button type="submit" class="btn btn-secondary">{{ __('Update Report') }}</button>
+            <input type="date" name="start_date" class="form-control" style="width: auto; font-size: 0.875rem;" value="{{ $startDate->toDateString() }}">
+            <input type="date" name="end_date" class="form-control" style="width: auto; font-size: 0.875rem;" value="{{ $endDate->toDateString() }}">
+            <button type="submit" class="btn btn-sm btn-primary">{{ __('Update Report') }}</button>
         </form>
     </div>
 
     <!-- Statement Paper Card -->
-    <div class="card" style="padding: 2.5rem; background: var(--card-bg); font-family: system-ui, -apple-system, sans-serif;">
+    <div class="card" style="padding: clamp(1.25rem, 3vw, 2.5rem); background: var(--bg-card); font-family: system-ui, -apple-system, sans-serif; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-card);">
         <!-- Company Header -->
         <div style="text-align: center; border-bottom: 2px solid var(--border-color); padding-bottom: 1.5rem; margin-bottom: 2rem;">
             <h2 style="font-size: 1.4rem; font-weight: 800; margin: 0; color: var(--text-main);">{{ auth()->user()?->vendor?->name }}</h2>
@@ -64,7 +73,7 @@
 
             @foreach($pnl['revenue']['gross_accounts'] as $acc)
                 <div style="display: flex; justify-content: space-between; padding: 0.4rem 0.5rem; font-size: 0.9rem;">
-                    <span><span style="font-family: monospace; color: var(--text-muted);">{{ $acc['code'] }}</span> — {{ $acc['name'] }}</span>
+                    <span><span style="font-family: monospace; color: var(--text-muted);">{{ $acc['code'] }}</span> — {{ __($acc['name']) }}</span>
                     <span style="font-family: monospace; font-weight: 600;">{{ number_format($acc['net_amount'], 2) }}</span>
                 </div>
             @endforeach
@@ -80,14 +89,14 @@
                     <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">{{ __('Less: Discounts & Sales Returns (Contra-Revenue)') }}</div>
                     @foreach($pnl['revenue']['contra_accounts'] as $acc)
                         <div style="display: flex; justify-content: space-between; padding: 0.3rem 0.5rem; font-size: 0.85rem; color: #ef4444;">
-                            <span>{{ $acc['code'] }} — {{ $acc['name'] }}</span>
+                            <span>{{ $acc['code'] }} — {{ __($acc['name']) }}</span>
                             <span style="font-family: monospace;">-{{ number_format(abs($acc['net_amount']), 2) }}</span>
                         </div>
                     @endforeach
                 </div>
             @endif
 
-            <div style="display: flex; justify-content: space-between; padding: 0.75rem 0.5rem; font-weight: 800; font-size: 1.05rem; background: rgba(16, 185, 129, 0.08); border-radius: 6px; margin-top: 0.5rem; color: #10b981;">
+            <div style="display: flex; justify-content: space-between; padding: 0.75rem 0.5rem; font-weight: 800; font-size: 1.05rem; background: rgba(16, 185, 129, 0.08); border-radius: 8px; margin-top: 0.5rem; color: #10b981;">
                 <span>{{ __('NET REVENUE') }}</span>
                 <span style="font-family: monospace;">{{ number_format($pnl['revenue']['net_revenue'], 2) }} {{ $pnl['currency'] }}</span>
             </div>
@@ -101,7 +110,7 @@
 
             @forelse($pnl['cogs']['accounts'] as $acc)
                 <div style="display: flex; justify-content: space-between; padding: 0.4rem 0.5rem; font-size: 0.9rem;">
-                    <span><span style="font-family: monospace; color: var(--text-muted);">{{ $acc['code'] }}</span> — {{ $acc['name'] }}</span>
+                    <span><span style="font-family: monospace; color: var(--text-muted);">{{ $acc['code'] }}</span> — {{ __($acc['name']) }}</span>
                     <span style="font-family: monospace; font-weight: 600;">{{ number_format($acc['net_amount'], 2) }}</span>
                 </div>
             @empty
@@ -116,7 +125,7 @@
             </div>
 
             <!-- Gross Profit Summary -->
-            <div style="display: flex; justify-content: space-between; padding: 0.75rem 0.5rem; font-weight: 800; font-size: 1.05rem; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; margin-top: 0.5rem;">
+            <div style="display: flex; justify-content: space-between; padding: 0.75rem 0.5rem; font-weight: 800; font-size: 1.05rem; background: var(--bg-card-hover); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 0.5rem;">
                 <span>{{ __('GROSS PROFIT') }} <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">({{ __('Margin:') }} {{ $pnl['gross_margin_pct'] }}%)</span></span>
                 <span style="font-family: monospace; color: {{ $pnl['gross_profit'] >= 0 ? '#10b981' : '#ef4444' }};">{{ number_format($pnl['gross_profit'], 2) }} {{ $pnl['currency'] }}</span>
             </div>
@@ -130,7 +139,7 @@
 
             @forelse($pnl['operating_expenses']['accounts'] as $acc)
                 <div style="display: flex; justify-content: space-between; padding: 0.4rem 0.5rem; font-size: 0.9rem;">
-                    <span><span style="font-family: monospace; color: var(--text-muted);">{{ $acc['code'] }}</span> — {{ $acc['name'] }}</span>
+                    <span><span style="font-family: monospace; color: var(--text-muted);">{{ $acc['code'] }}</span> — {{ __($acc['name']) }}</span>
                     <span style="font-family: monospace; font-weight: 600;">{{ number_format($acc['net_amount'], 2) }}</span>
                 </div>
             @empty
@@ -145,7 +154,7 @@
             </div>
 
             <!-- Operating Profit Summary -->
-            <div style="display: flex; justify-content: space-between; padding: 0.75rem 0.5rem; font-weight: 800; font-size: 1.05rem; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; margin-top: 0.5rem;">
+            <div style="display: flex; justify-content: space-between; padding: 0.75rem 0.5rem; font-weight: 800; font-size: 1.05rem; background: var(--bg-card-hover); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 0.5rem;">
                 <span>{{ __('OPERATING PROFIT (EBITDA)') }} <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">({{ __('Margin:') }} {{ $pnl['operating_margin_pct'] }}%)</span></span>
                 <span style="font-family: monospace; color: {{ $pnl['operating_profit'] >= 0 ? '#10b981' : '#ef4444' }};">{{ number_format($pnl['operating_profit'], 2) }} {{ $pnl['currency'] }}</span>
             </div>
@@ -156,7 +165,7 @@
             @if(!empty($pnl['taxes']['accounts']))
                 @foreach($pnl['taxes']['accounts'] as $acc)
                     <div style="display: flex; justify-content: space-between; padding: 0.4rem 0.5rem; font-size: 0.9rem;">
-                        <span>{{ $acc['code'] }} — {{ $acc['name'] }}</span>
+                        <span>{{ $acc['code'] }} — {{ __($acc['name']) }}</span>
                         <span style="font-family: monospace;">-{{ number_format($acc['net_amount'], 2) }}</span>
                     </div>
                 @endforeach

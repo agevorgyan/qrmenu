@@ -24,7 +24,7 @@ The architectural pattern adheres to **Domain-Driven Design (DDD)** within Larav
 ### 2.1 Core Ledger Models
 | Model | Table | Primary Responsibility | Key Foreign Constraints |
 | :--- | :--- | :--- | :--- |
-| `ChartOfAccount` | `chart_of_accounts` | Standardized hierarchical chart of accounts (Assets 1000, Liabilities 2000, Equity 3000, Revenue 4000, Expenses 5000) | `vendor_id` -> `vendors(id)` ON DELETE CASCADE |
+| `ChartOfAccount` | `chart_of_accounts` | Standardized hierarchical chart of accounts (Republic of Armenia standard - Classes 1 to 7) | `vendor_id` -> `vendors(id)` ON DELETE CASCADE |
 | `JournalEntry` | `journal_entries` | Transaction header holding audit metadata, source reference, idempotency keys, and HMAC signatures | `vendor_id`, `location_id`, `accounting_period_id` |
 | `JournalEntryLine` | `journal_entry_lines` | Debit/credit line postings with multi-currency tracking and base-currency normalization | `journal_entry_id` -> `journal_entries(id)` ON DELETE RESTRICT |
 | `AccountingPeriod` | `accounting_periods` | Fiscal period boundaries and hard-close locks | `vendor_id`, `location_id` |

@@ -34,32 +34,32 @@ The system strictly avoids the fatal mistake of summing Orders + Payments + Cash
 [Customer Order Placed & Completed]
         |
         v (Dimension 1: Sales Recognition)
-   Debit Accounts Receivable (1200)
-   Credit Food/Drink Sales Revenue (4010/4020)
-   Credit VAT Payable (2300)
-   Credit Service Charge Revenue (4030)
-   Credit Delivery Fee Revenue (4100)
-   Debit Promotional Discounts Allowed (4910)
+   Debit Accounts Receivable (2211)
+   Credit Food/Drink Sales Revenue (6111/6112)
+   Credit VAT Payable (5243)
+   Credit Service Charge Revenue (6114)
+   Credit Delivery Fee Revenue (6144)
+   Debit Promotional Discounts Allowed (6123)
         |
         v
 [Payment Settlement via POS or Online Gateway]
         |
         v (Dimension 2: Cash / Liquid Settlement)
-   Debit Cash on Hand (1010) OR Bank Clearing (1030)
-   Credit Accounts Receivable (1200)
+   Debit Cash on Hand (2511) OR Bank Clearing (2551)
+   Credit Accounts Receivable (2211)
         |
         v
 [End-of-Day Cash Safe Drop]
         |
         v (Dimension 3: Physical Cash Transfer)
-   Debit Main Vault Cash (1020)
-   Credit Register Cash Drawer (1010)
+   Debit Main Safe / Vault Cash (2512)
+   Credit Register Cash Drawer (2511)
 ```
 
 **Audit Proof**:
 - Orders generate sales revenue, but **never** debit cash.
-- Payments settle receivables (`1200`), but **never** credit revenue.
-- Safe drops transfer cash between sub-accounts (`1010` -> `1020`), with **zero** P&L impact.
+- Payments settle receivables (`2211`), but **never** credit revenue.
+- Safe drops transfer cash between sub-accounts (`2511` -> `2512`), with **zero** P&L impact.
 - Revenue is never double-counted.
 
 ---
@@ -68,53 +68,53 @@ The system strictly avoids the fatal mistake of summing Orders + Payments + Cash
 
 ### 3.1 Order Sales Recognition (`recordOrderSale`)
 When an order is completed, revenue is recognized based on goods and services delivered:
-- **Debit**: `1200 Accounts Receivable` (Total Amount payable by customer)
-- **Debit**: `4910 Promotional Discounts Allowed` (Contra-Revenue, if discount applied)
-- **Credit**: `4010 Food Sales Revenue` (Subtotal gross food)
-- **Credit**: `4020 Beverage Sales Revenue` (Subtotal gross beverage)
-- **Credit**: `4030 Service Charge Revenue` (Service fee percentage)
-- **Credit**: `4100 Delivery Fee Revenue` (Delivery surcharge)
-- **Credit**: `2300 VAT / Sales Tax Payable` (Taxes collected on behalf of government)
-- **Credit**: `2100 Tips / Gratuities Payable` (Tips held in trust for staff)
+- **Debit**: `2211 Accounts Receivable` (Total Amount payable by customer)
+- **Debit**: `6123 Promotional Discounts Allowed` (Contra-Revenue, if discount applied)
+- **Credit**: `6111 Food Sales Revenue` (Subtotal gross food)
+- **Credit**: `6112 Beverage Sales Revenue` (Subtotal gross beverage)
+- **Credit**: `6114 Service Charge Revenue` (Service fee percentage)
+- **Credit**: `6144 Delivery Fee Revenue` (Delivery surcharge)
+- **Credit**: `5243 VAT / Sales Tax Payable` (Taxes collected on behalf of government)
+- **Credit**: `5311 Tips / Gratuities Payable` (Tips held in trust for staff)
 
 *Audit Verification*:
-- VAT is credited directly to a liability account (`2300`), not included in operating revenue.
-- Tips are credited to a liability account (`2100`), not included in restaurant income.
+- VAT is credited directly to a liability account (`5243`), not included in operating revenue.
+- Tips are credited to a liability account (`5311`), not included in restaurant income.
 - Service charges and delivery fees are segmented into their dedicated revenue accounts.
 
 ### 3.2 Payment Settlement (`recordPaymentSettlement`)
 When payment is received (Cash, POS Card Terminal, Stripe, Idram, Telcell):
-- **Debit**: `1010 Cash on Hand` (for Cash) OR `1030 Bank Clearing / Merchant Accounts` (for Card/Online)
-- **Credit**: `1200 Accounts Receivable`
+- **Debit**: `2511 Cash in Till` (for Cash) OR `2551 Card Acquirer Clearing` (for Card/Online)
+- **Credit**: `2211 Accounts Receivable`
 
 If merchant processing fees are deducted at source (e.g. 2.5% card fee):
-- **Debit**: `1030 Bank Clearing` (Net 97.5%)
-- **Debit**: `5410 Bank & Processing Fees Expense` (2.5%)
-- **Credit**: `1200 Accounts Receivable` (Gross 100%)
+- **Debit**: `2551 Card Clearing` (Net 97.5%)
+- **Debit**: `7138 Bank & Acquirer Processing Fees` (2.5%)
+- **Credit**: `2211 Accounts Receivable` (Gross 100%)
 
 ### 3.3 Order Refunds (`recordOrderRefund`)
 When an order is refunded to the customer:
-- **Debit**: `4900 Sales Returns & Allowances` (Contra-Revenue)
-- **Debit**: `2300 VAT / Sales Tax Payable` (Reverses output tax liability)
-- **Credit**: `1010 Cash on Hand` OR `1030 Bank Clearing`
+- **Debit**: `6121 Sales Returns & Allowances` (Contra-Revenue)
+- **Debit**: `5243 VAT / Sales Tax Payable` (Reverses output tax liability)
+- **Credit**: `2511 Cash in Till` OR `2551 Card Clearing`
 
 *Audit Verification*:
-Refunds do not delete the original sale. They post an explicit contra-entry debiting `4900` and `2300`, ensuring the gross audit trail remains intact.
+Refunds do not delete the original sale. They post an explicit contra-entry debiting `6121` and `5243`, ensuring the gross audit trail remains intact.
 
 ### 3.4 Supplier Procurement & Inventory Capitalization (`recordSupplierProcurement`)
 When inventory raw materials or food items are received from a supplier:
-- **Debit**: `1300 Food & Beverage Inventory` (Asset Capitalization)
-- **Debit**: `1310 Packaging & Supplies Inventory` (Asset Capitalization)
-- **Credit**: `2010 Accounts Payable` (Liability to Supplier)
+- **Debit**: `2111 Kitchen Raw Materials & Inventory` (Asset Capitalization)
+- **Debit**: `2114 Packaging & Takeaway Materials` (Asset Capitalization)
+- **Credit**: `5211 Accounts Payable` (Liability to Supplier)
 
 *Audit Verification*:
 Inventory purchases are **not** immediately expensed upon receipt. They are capitalized as Current Assets on the Balance Sheet.
 
 ### 3.5 Inventory Depletion & COGS Recognition (`recordInventoryDepletion`)
 When kitchen production consumes raw ingredients to fulfill dishes:
-- **Debit**: `5010 Cost of Goods Sold — Food` (Expense)
-- **Debit**: `5020 Cost of Goods Sold — Beverage` (Expense)
-- **Credit**: `1300 Food & Beverage Inventory` (Asset Depletion)
+- **Debit**: `7111 Cost of Goods Sold — Food` (Expense)
+- **Debit**: `7112 Cost of Goods Sold — Beverage` (Expense)
+- **Credit**: `2111 Kitchen Raw Materials & Inventory` (Asset Depletion)
 
 *Audit Verification*:
 Matches the matching principle of accrual accounting: COGS is recognized in the exact period when the related food sales occur.

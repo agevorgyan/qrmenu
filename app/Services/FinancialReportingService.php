@@ -88,8 +88,8 @@ class FinancialReportingService
 
         foreach ($accounts as $acc) {
             if ($acc['type'] === 'revenue') {
-                // Contra accounts (Discounts 4910, Returns 4900, or subtype contra_revenue)
-                if (in_array($acc['code'], ['4900', '4910'], true) || $acc['subtype'] === 'contra_revenue') {
+                // Contra accounts (Discounts 6123/4910, Returns 6121/4900, or subtype contra_revenue)
+                if (in_array($acc['code'], ['6121', '6122', '6123', '4900', '4910'], true) || $acc['subtype'] === 'contra_revenue') {
                     $contraRevenueAccounts[] = $acc;
                     $totalContra += abs($acc['debit'] - $acc['credit']);
                 } else {
@@ -101,25 +101,25 @@ class FinancialReportingService
 
         $netRevenue = round($grossRevenue - $totalContra, 2);
 
-        // Categorize Cost of Goods Sold (5010-5090)
+        // Categorize Cost of Goods Sold (RA 711 or legacy 5010-5090)
         $cogsAccounts = [];
         $totalCogs = 0.0;
 
-        // Categorize Operating Expenses (5100-5890)
+        // Categorize Operating Expenses (RA 712, 713, 714 or legacy 5100-5890)
         $opexAccounts = [];
         $totalOpex = 0.0;
 
-        // Categorize Taxes & Non-Operating (5900+)
+        // Categorize Taxes & Non-Operating (RA 751 or legacy 5900+)
         $taxAccounts = [];
         $totalTax = 0.0;
 
         foreach ($accounts as $acc) {
             if ($acc['type'] === 'expense') {
                 $codeNum = (int) $acc['code'];
-                if ($codeNum >= 5000 && $codeNum < 5100) {
+                if (str_starts_with($acc['code'], '711') || ($codeNum >= 5000 && $codeNum < 5100) || $acc['subtype'] === 'cost_of_goods_sold') {
                     $cogsAccounts[] = $acc;
                     $totalCogs += $acc['net_amount'];
-                } elseif ($codeNum >= 5900) {
+                } elseif (str_starts_with($acc['code'], '751') || ($codeNum >= 5900 && $codeNum < 6000) || $acc['subtype'] === 'tax_expense') {
                     $taxAccounts[] = $acc;
                     $totalTax += $acc['net_amount'];
                 } else {
@@ -262,7 +262,12 @@ class FinancialReportingService
         foreach ($accounts as $acc) {
             if ($acc['type'] === 'asset') {
                 $codeNum = (int) $acc['code'];
-                if ($codeNum < 1500) {
+                // RA Class 2 (211-263) or legacy 1000-1499 are Current Assets
+                $isCurrent = str_starts_with($acc['code'], '2')
+                    || ($codeNum >= 1000 && $codeNum < 1500)
+                    || in_array($acc['subtype'], ['cash', 'petty_cash', 'bank', 'clearing', 'accounts_receivable', 'inventory', 'receivables'], true);
+
+                if ($isCurrent) {
                     $currentAssets[] = $acc;
                     $totalCurrentAssets += $acc['balance'];
                 } else {
@@ -283,7 +288,12 @@ class FinancialReportingService
         foreach ($accounts as $acc) {
             if ($acc['type'] === 'liability') {
                 $codeNum = (int) $acc['code'];
-                if ($codeNum < 2500) {
+                // RA Class 5 (511-544) or legacy 2000-2499 are Current Liabilities
+                $isCurrent = str_starts_with($acc['code'], '5')
+                    || ($codeNum >= 2000 && $codeNum < 2500)
+                    || in_array($acc['subtype'], ['accounts_payable', 'tips_payable', 'payroll_payable', 'tax_payable', 'unearned_revenue', 'current_liability'], true);
+
+                if ($isCurrent) {
                     $currentLiabilities[] = $acc;
                     $totalCurrentLiabilities += $acc['balance'];
                 } else {
@@ -347,11 +357,12 @@ class FinancialReportingService
     {
         $baseCurrency = $vendor->currency ?? 'AMD';
 
-        // Get cash and bank account IDs (1010-1050)
+        // Get cash and bank account IDs (RA 2511-2552 or legacy 1010-1050)
         $cashAccountIds = ChartOfAccount::where('vendor_id', $vendor->id)
             ->where(function ($q) {
-                $q->whereBetween('code', ['1010', '1050'])
-                    ->orWhereIn('subtype', ['cash', 'petty_cash', 'bank', 'cash_in_transit']);
+                $q->where('code', 'like', '25%')
+                    ->orWhereBetween('code', ['1010', '1050'])
+                    ->orWhereIn('subtype', ['cash', 'petty_cash', 'bank', 'cash_in_transit', 'clearing']);
             })
             ->pluck('id')
             ->all();

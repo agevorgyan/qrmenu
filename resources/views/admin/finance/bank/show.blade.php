@@ -3,10 +3,10 @@
 @section('title', $bankAccount->bank_name . ' - ' . config('app.name'))
 
 @section('content')
-<div x-data="{ importModalOpen: false, reconcileModalOpen: false }" style="display: flex; flex-direction: column; gap: 1.5rem;">
+<div x-data="{ importModalOpen: false, reconcileModalOpen: false }" style="max-width: 1400px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 1.5rem;">
     <!-- Header -->
     <div class="card" style="padding: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div class="page-header-flex" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
             <div>
                 <a href="{{ route('admin.finance.bank_accounts.index') }}" style="color: var(--text-muted); font-size: 0.85rem; text-decoration: none; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.5rem;">
                     <i class="fa-solid fa-arrow-left"></i> {{ __('Back to Bank Accounts') }}
@@ -21,7 +21,7 @@
                 </p>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div class="page-header-actions" style="display: flex; align-items: center; gap: 0.75rem;">
                 <button type="button" @click="importModalOpen = true" class="btn btn-secondary">
                     <i class="fa-solid fa-file-import"></i> {{ __('Import Statement (CSV)') }}
                 </button>
@@ -52,14 +52,14 @@
     </div>
 
     <!-- Transactions Table -->
-    <div class="card" style="padding: 1.5rem;">
-        <h3 style="margin-top: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main);">
+    <div class="card card-flush" style="padding: 1.5rem;">
+        <h3 style="margin-top: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin-bottom: 1rem;">
             <i class="fa-solid fa-list" style="color: #3b82f6; margin-right: 0.5rem;"></i>
             {{ __('Bank Statement Transactions') }}
         </h3>
 
-        <div class="table-responsive">
-            <table class="table">
+        <div class="table-responsive" style="margin-bottom: 0;">
+            <table class="table" style="min-width: 860px;">
                 <thead>
                     <tr>
                         <th>{{ __('Date') }}</th>

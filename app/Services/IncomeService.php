@@ -103,9 +103,9 @@ class IncomeService
 
             // Resolve receiving asset account
             if ($method === 'cash') {
-                $assetAccount = $this->ledgerService->getAccountByCode($vendor, '1010');
+                $assetAccount = $this->ledgerService->getAccountByCode($vendor, '2511'); // RA 2511 Cash in Till
             } else {
-                $assetAccount = $income->bankAccount?->account ?: $this->ledgerService->getAccountByCode($vendor, '1020');
+                $assetAccount = $income->bankAccount?->account ?: $this->ledgerService->getAccountByCode($vendor, '2521'); // RA 2521 Operating Bank Account
             }
 
             // Post to General Ledger

@@ -247,4 +247,36 @@ class CashRegisterAndShiftManagementTest extends TestCase
         $this->assertArrayHasKey('payment_breakdown', $zReport);
         $this->assertEquals(0.00, $zReport['cash_reconciliation']['discrepancy']);
     }
+
+    public function test_shift_show_view_renders_cleanly_with_breakdown_and_refunds(): void
+    {
+        $this->vendor->update(['subscription_status' => 'active']);
+        $this->manager->update(['email_verified_at' => now()]);
+
+        $register = $this->registerService->createRegister($this->vendor, [
+            'location_id' => $this->location->id,
+            'name' => 'View Test Register',
+            'code' => 'REG-VIEW-01',
+            'opening_float' => 10000.00,
+        ], $this->manager);
+
+        $shift = $this->shiftService->openShift($this->vendor, [
+            'cash_register_id' => $register->id,
+            'opening_float' => 10000.00,
+        ], $this->cashier, $register);
+
+        // Open shift show
+        $response = $this->actingAs($this->manager)->get(route('admin.finance.shifts.show', $shift));
+        $response->assertStatus(200);
+        $response->assertSee('Shift Cash Reconciliation Breakdown');
+        $response->assertSee('(-) Cash Refunds');
+        $response->assertSee('10,000.00');
+
+        // Close shift and check closed shift view with Z-report
+        $this->shiftService->closeShift($shift, 10000.00, $this->cashier);
+
+        $closedResponse = $this->actingAs($this->manager)->get(route('admin.finance.shifts.show', $shift));
+        $closedResponse->assertStatus(200);
+        $closedResponse->assertSee('*** OFFICIAL Z-REPORT ***');
+    }
 }

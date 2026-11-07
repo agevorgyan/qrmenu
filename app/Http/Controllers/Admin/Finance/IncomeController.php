@@ -53,10 +53,11 @@ class IncomeController extends Controller
 
         $categories = FinancialCategory::where('vendor_id', $vendor->id)->where('type', 'income')->get();
         $locations = Location::where('vendor_id', $vendor->id)->get();
-        $registers = CashRegister::where('vendor_id', $vendor->id)->where('status', 'active')->get();
+        $cashRegisters = CashRegister::where('vendor_id', $vendor->id)->where('status', 'active')->get();
+        $registers = $cashRegisters;
         $bankAccounts = BankAccount::where('vendor_id', $vendor->id)->where('is_active', true)->get();
 
-        return view('admin.finance.incomes.index', compact('incomes', 'categories', 'locations', 'registers', 'bankAccounts'));
+        return view('admin.finance.incomes.index', compact('incomes', 'categories', 'locations', 'cashRegisters', 'registers', 'bankAccounts'));
     }
 
     public function store(StoreIncomeRequest $request): RedirectResponse

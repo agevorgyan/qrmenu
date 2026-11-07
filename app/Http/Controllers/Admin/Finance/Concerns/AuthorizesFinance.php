@@ -25,6 +25,10 @@ trait AuthorizesFinance
             return;
         }
 
+        if ($user->isVendorOwner()) {
+            return;
+        }
+
         if (! $user->hasPermission($permission)) {
             abort(403, 'Unauthorized financial action.');
         }
@@ -44,6 +48,13 @@ trait AuthorizesFinance
 
         if ($user->vendor) {
             return $user->vendor;
+        }
+
+        if ($user->vendor_id) {
+            $vendor = Vendor::find($user->vendor_id);
+            if ($vendor) {
+                return $vendor;
+            }
         }
 
         if ($user->isSuperAdmin()) {

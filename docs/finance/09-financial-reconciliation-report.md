@@ -4,8 +4,8 @@
 
 The Cash Management & Financial Operations module integrates an immutable, double-entry general ledger inside the multi-tenant QR Menu SaaS platform. The system operates under a **Single Source of Truth** paradigm, strictly resolving and reconciling four independent financial dimensions:
 
-1. **Sales Recognition (Accrual Dimension)**: Derived exclusively from `Order` sales posted to Revenue accounts (Credit 4010/4020) and Accounts Receivable (Debit 1200).
-2. **Settlement (Liquidity Dimension)**: Derived exclusively from `PosPayment` and online gateway events, settling Accounts Receivable (Credit 1200) into Cash Till (Debit 1010), Card Clearing (Debit 1030), or Online Gateway (Debit 1040).
+1. **Sales Recognition (Accrual Dimension)**: Derived exclusively from `Order` sales posted to Revenue accounts (Credit 6111/6112) and Accounts Receivable (Debit 2211).
+2. **Settlement (Liquidity Dimension)**: Derived exclusively from `PosPayment` and online gateway events, settling Accounts Receivable (Credit 2211) into Cash Till (Debit 2511), Card Clearing (Debit 2551), or Online Gateway (Debit 2552).
 3. **Till Liquidity (Physical Cash Dimension)**: Monitored through `PosCashMovement` and `PosShift` records, tracking drawer cash, float, drops, payouts, and transfers without affecting sales revenue or expense accounts.
 4. **Accounting Impact (General Ledger Dimension)**: Maintained in balanced `JournalEntry` and `JournalEntryLine` tables, ensuring total debits equal total credits for every transaction.
 
@@ -24,28 +24,28 @@ Consider an order of 15,000 AMD split into 10,000 AMD cash and 5,000 AMD card, f
 - If Cash Movements are summed: 8,000 AMD.
 - **Naive sum**: 38,000 AMD (**153% overstated revenue!**)
 
-### The QR Menu SaaS Solution
+### The QR Menu SaaS Solution (RA Standard Chart of Accounts)
 
 In this module:
 - **Order Sales Recognition**:
-  $$\text{Dr } 1200 \text{ (Accounts Receivable)} = 15,000$$
-  $$\text{Cr } 4010 \text{ (Food Sales Revenue)} = 15,000$$
+  $$\text{Dr } 2211 \text{ (Accounts Receivable)} = 15,000$$
+  $$\text{Cr } 6111 \text{ (Food Sales Revenue)} = 15,000$$
 - **Payment Settlement**:
-  $$\text{Dr } 1010 \text{ (Cash in Till)} = 10,000$$
-  $$\text{Dr } 1030 \text{ (Card Clearing)} = 5,000$$
-  $$\text{Cr } 1200 \text{ (Accounts Receivable)} = 15,000$$
+  $$\text{Dr } 2511 \text{ (Cash in Till)} = 10,000$$
+  $$\text{Dr } 2551 \text{ (Card Clearing)} = 5,000$$
+  $$\text{Cr } 2211 \text{ (Accounts Receivable)} = 15,000$$
 - **Internal Till Transfer**:
-  $$\text{Dr } 1015 \text{ (Cash in Safe)} = 8,000$$
-  $$\text{Cr } 1010 \text{ (Cash in Till)} = 8,000$$
+  $$\text{Dr } 2512 \text{ (Cash in Safe)} = 8,000$$
+  $$\text{Cr } 2511 \text{ (Cash in Till)} = 8,000$$
 
 ### Financial Dimension Verification Matrix
 
 | Entity | Primary Table | Debited Account | Credited Account | P&L Impact | Cash Flow Impact |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Order Sale** | `orders` | 1200 (AR) | 4010/4020 (Revenue) | +15,000 | 0.00 |
-| **Cash Settlement** | `pos_payments` | 1010 (Cash Till) | 1200 (AR) | 0.00 | +10,000 |
-| **Card Settlement** | `pos_payments` | 1030 (Card Clearing)| 1200 (AR) | 0.00 | 0.00 (In Transit) |
-| **Safe Transfer** | `financial_transfers` | 1015 (Safe) | 1010 (Cash Till) | 0.00 | 0.00 (Asset Swap) |
+| **Order Sale** | `orders` | 2211 (AR) | 6111/6112 (Revenue) | +15,000 | 0.00 |
+| **Cash Settlement** | `pos_payments` | 2511 (Cash Till) | 2211 (AR) | 0.00 | +10,000 |
+| **Card Settlement** | `pos_payments` | 2551 (Card Clearing)| 2211 (AR) | 0.00 | 0.00 (In Transit) |
+| **Safe Transfer** | `financial_transfers` | 2512 (Safe) | 2511 (Cash Till) | 0.00 | 0.00 (Asset Swap) |
 
 **Result**: Net Revenue reported on P&L is **exactly 15,000.00 AMD**, verified by automated test `FinancialReportingAndReconciliationTest::test_single_source_of_truth_proof_preventing_duplicate_calculations`.
 
@@ -61,29 +61,29 @@ $$\text{Expected Cash} = \text{Opening Float} + \text{Cash Payments} + \text{Cas
 $$\text{Cash Discrepancy} = \text{Counted Cash} - \text{Expected Cash}$$
 
 - If $\text{Counted Cash} < \text{Expected Cash}$, a **Cash Shortage** is posted:
-  $$\text{Dr } 5800 \text{ (Cash Over/Short Expense)}$$
-  $$\text{Cr } 1010 \text{ (Cash in Till)}$$
+  $$\text{Dr } 7145 \text{ (Inventory Spoilage & Till Shortages)}$$
+  $$\text{Cr } 2511 \text{ (Cash in Till)}$$
 - If $\text{Counted Cash} > \text{Expected Cash}$, a **Cash Overage** is posted:
-  $$\text{Dr } 1010 \text{ (Cash in Till)}$$
-  $$\text{Cr } 5800 \text{ (Cash Over/Short Expense)}$$
+  $$\text{Dr } 2511 \text{ (Cash in Till)}$$
+  $$\text{Cr } 6143 \text{ (Inventory & Till Surplus Income)}$$
 
 ### B. Expense Accrual and Settlement Separation
 
 Operating expenses strictly separate the recognition of expense obligations from cash/bank disbursements:
 
 1. **Expense Accrual (Upon Approval)**:
-   $$\text{Dr } 5300 \text{ (Operating Expense)} = X$$
-   $$\text{Cr } 2010 \text{ (Accounts Payable)} = X$$
+   $$\text{Dr } 7134 \text{ (Operating / Utility Expense)} = X$$
+   $$\text{Cr } 5211 \text{ (Accounts Payable)} = X$$
    *(Recognizes expense in period without prematurely deducting cash)*
 2. **Partial Disbursement 1**:
-   $$\text{Dr } 2010 \text{ (Accounts Payable)} = Y_1$$
-   $$\text{Cr } 1020 \text{ (Bank Account)} = Y_1$$
+   $$\text{Dr } 5211 \text{ (Accounts Payable)} = Y_1$$
+   $$\text{Cr } 2521 \text{ (Operating Bank Account)} = Y_1$$
 3. **Final Disbursement 2**:
-   $$\text{Dr } 2010 \text{ (Accounts Payable)} = Y_2$$
-   $$\text{Cr } 1020 \text{ (Bank Account)} = Y_2$$
+   $$\text{Dr } 5211 \text{ (Accounts Payable)} = Y_2$$
+   $$\text{Cr } 2521 \text{ (Operating Bank Account)} = Y_2$$
 
 Where $Y_1 + Y_2 = X$.
-- At final payment, the balance of Account `2010` is **0.00 AMD**.
+- At final payment, the balance of Account `5211` is **0.00 AMD**.
 - The expense recognized in P&L remains **exactly $X$** (never duplicated to $X + Y_1 + Y_2$).
 
 ### C. Fundamental Balance Sheet Equation

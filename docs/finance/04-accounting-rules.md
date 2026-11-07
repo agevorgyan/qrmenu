@@ -1,137 +1,257 @@
-# PHASE 1 — ACCOUNTING RULES & GENERAL LEDGER SPECIFICATION
-## Cash Management & Financial Operations Module
+# ՀԱՇՎԱՊԱՀԱԿԱՆ ՀԱՇՎԱՌՄԱՆ ԿԱՆՈՆՆԵՐ ԵՎ ՀԱՇՎԱՅԻՆ ՊԼԱՆ (COA)
+## ՀՀ Ստանդարտներին (IFRS / ՀԱՍ) Համապատասխանեցված Ռեստորանային Ֆինանսական Մոդուլ
 
 ---
 
-### 1. Fundamental Accounting Equation & Double-Entry Invariant
+### 1. Հաշվապահական Հաշվառման Հիմնարար Հավասարում և Կրկնակի Գրանցման Ինվարիանտ
 
-All financial operations in the QR Menu SaaS platform adhere strictly to standard double-entry bookkeeping:
+QR Menu SaaS հարթակի բոլոր ֆինանսական գործառնությունները խստորեն հիմնված են կրկնակի գրանցման (Double-Entry Bookkeeping) միջազգային և ՀՀ ստանդարտների վրա.
 
-$$\text{Assets} = \text{Liabilities} + \text{Equity} + (\text{Revenue} - \text{Expenses})$$
+$$\text{Ակտիվներ (Assets)} = \text{Պարտավորություններ (Liabilities)} + \text{Սեփական Կապիտալ (Equity)} + (\text{Եկամուտներ (Revenue)} - \text{Ծախսեր (Expenses)})$$
 
-#### The Fundamental Balancing Invariant:
-For every posted journal entry:
-$$\sum \text{Debits} - \sum \text{Credits} = 0.00$$
+#### Հաշվեկշռվածության Հիմնարար Ինվարիանտ.
+Յուրաքանչյուր հաշվապահական ձևակերպման (Journal Entry) համար պարտադիր է.
+$$\sum \text{Դեբետ (Debits)} - \sum \text{Կրեդիտ (Credits)} = 0.00$$
 
-A journal entry will be rejected with an `UnbalancedJournalEntryException` if total debits do not equal total credits down to exact monetary decimal cents/lumas (`0.00`).
+Եթե դեբետային տողերի հանրագումարը չի համընկնում կրեդիտային տողերի հանրագումարի հետ մինչև 0.01 լումա (ցենտ) ճշգրտությամբ, գործարքը մերժվում է համակարգի կողմից `UnbalancedJournalEntryException` բացառությամբ:
 
 ---
 
-## 2. Standard Chart of Accounts (COA)
+## 2. Հաշիվների Պլան (Chart of Accounts - ՀՀ Պաշտոնական Ստանդարտ)
 
-Every tenant is provisioned with a standardized Chart of Accounts upon registration. Tenants may create custom sub-accounts, but system accounts cannot be deleted.
+Համակարգի հաշիվների պլանը ամբողջությամբ համապատասխանեցված է Հայաստանի Հանրապետության ֆինանսների նախարարության կողմից հաստատված Հաշվապահական հաշվառման հաշիվների պլանին (Account.am / ՖՀՄՍ) և ադապտացված է հանրային սննդի (ռեստորաններ, սրճարաններ, առաքման կետեր) ոլորտի առանձնահատկություններին:
 
-| Account Code | Account Name | Type | Normal Balance | Classification | System Locked |
+### ԴԱՍ 1. ՈՉ ԸՆԹԱՑԻԿ ԱԿՏԻՎՆԵՐ (Non-Current Assets)
+
+| Հաշվի Կոդ | Հաշվի Անվանում (ՀՀ Ստանդարտ) | Տիպ (Type) | Նորմալ Մնացորդ | Ենթատեսակ (Subtype) | Համակարգային |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **1010** | Cash in Registers (Petty Cash/Till) | Asset | Debit | Current Asset / Cash | Yes |
-| **1015** | Cash in Safe / Vault | Asset | Debit | Current Asset / Cash | Yes |
-| **1020** | Operating Bank Account | Asset | Debit | Current Asset / Bank | Yes |
-| **1030** | Card Clearing / Undeposited Funds | Asset | Debit | Current Asset / Clearing | Yes |
-| **1040** | Online Payment Gateway Clearing | Asset | Debit | Current Asset / Clearing | Yes |
-| **1200** | Accounts Receivable (Customer Tabs) | Asset | Debit | Current Asset / Receivables | Yes |
-| **1300** | Food & Beverage Inventory | Asset | Debit | Current Asset / Inventory | Yes |
-| **1400** | Employee Advances & Loans | Asset | Debit | Current Asset / Receivables | Yes |
-| **2010** | Accounts Payable (Suppliers) | Liability | Credit | Current Liability / AP | Yes |
-| **2100** | Tips Payable (Employee Pool) | Liability | Credit | Current Liability / Staff | Yes |
-| **2200** | Net Salaries Payable | Liability | Credit | Current Liability / Payroll | Yes |
-| **2300** | Sales Tax / VAT Payable (Armenia SRC)| Liability | Credit | Current Liability / Taxes | Yes |
-| **2350** | Payroll Taxes & Pension Payable | Liability | Credit | Current Liability / Taxes | Yes |
-| **3010** | Owner's Capital & Equity | Equity | Credit | Equity / Capital | Yes |
-| **3020** | Retained Earnings | Equity | Credit | Equity / Retained | Yes |
-| **4010** | Food Sales Revenue | Revenue | Credit | Operating Revenue | Yes |
-| **4020** | Beverage Sales Revenue | Revenue | Credit | Operating Revenue | Yes |
-| **4030** | Service Charge Revenue | Revenue | Credit | Operating Revenue | Yes |
-| **4100** | Other Operational Income | Revenue | Credit | Non-Operating Revenue | Yes |
-| **4900** | Sales Returns & Allowances | Revenue | Debit (Contra) | Contra-Revenue | Yes |
-| **4910** | Promotional Discounts Allowed | Revenue | Debit (Contra) | Contra-Revenue | Yes |
-| **5010** | Cost of Goods Sold (COGS - Food) | Expense | Debit | Direct Cost | Yes |
-| **5020** | Cost of Goods Sold (COGS - Bev) | Expense | Debit | Direct Cost | Yes |
-| **5100** | Wages & Salaries Expense | Expense | Debit | Operating Expense / Labor | Yes |
-| **5150** | Employer Pension & Social Security | Expense | Debit | Operating Expense / Labor | Yes |
-| **5200** | Rent & Facility Expense | Expense | Debit | Operating Expense / Rent | Yes |
-| **5300** | Utilities (Gas, Water, Electricity)| Expense | Debit | Operating Expense / Util | Yes |
-| **5400** | Repairs & Maintenance | Expense | Debit | Operating Expense | Yes |
-| **5500** | General & Admin Expenses | Expense | Debit | Operating Expense / G&A | Yes |
-| **5600** | Marketing & Advertising | Expense | Debit | Operating Expense / Mktg | Yes |
-| **5700** | Bank Fees & Payment Processing | Expense | Debit | Financial Expense | Yes |
-| **5800** | Cash Over / Short (Till Discrepancy)| Expense | Debit / Credit | Other Operating | Yes |
+| **1114** | Խոհանոցային և ռեստորանային սարքավորումներ | Asset | Դեբետ | fixed_asset | Այո |
+| **1116** | Արտադրական և տնտեսական գույք (սեղաններ, աթոռներ, բար) | Asset | Դեբետ | fixed_asset | Այո |
+| **1121** | Հիմնական միջոցների մաշվածություն (հակակշռային հաշիվ) | Asset | Կրեդիտ (Contra) | contra_asset | Այո |
+| **1311** | Ոչ նյութական ակտիվներ / POS համակարգի լիցենզիաներ | Asset | Դեբետ | intangible_asset | Այո |
 
 ---
 
-## 3. Revenue Recognition Principle
+### ԴԱՍ 2. ԸՆԹԱՑԻԿ ԱԿՏԻՎՆԵՐ (Current Assets)
 
-1. **Accrual Basis**: Revenue is recognized at the moment an order is **completed** and delivered to the customer, NOT when payment is received.
-2. **Gross vs Net Revenue**:
-   $$\text{Gross Sales} = \text{Sum of Menu Items at Regular Selling Price}$$
-   $$\text{Net Sales} = \text{Gross Sales} - \text{Discounts Allowed} - \text{Refunds/Returns}$$
-3. **Exclusion of Taxes and Tips**:
-   - VAT / Sales Tax collected from the customer is recorded directly into `2300 - Sales Tax / VAT Payable` (Liability). It is NEVER counted as revenue.
-   - Tips collected for staff are recorded directly into `2100 - Tips Payable` (Liability). Tips NEVER belong to restaurant revenue.
-
----
-
-## 4. Expense Recognition & Separation of Payment
-
-1. **Accrual Expenses (Suppliers & Labor)**:
-   - When a supplier invoice arrives:
-     - Debit: `1300 - Inventory` (or `5010 - COGS`)
-     - Credit: `2010 - Accounts Payable`
-   - When the supplier invoice is paid later:
-     - Debit: `2010 - Accounts Payable`
-     - Credit: `1020 - Bank Account` (or `1010 - Cash in Register`)
-   - **Crucial Rule**: The payment does NOT touch the Expense account! Only the initial invoice touches the expense/asset account.
-
-2. **Direct Operating Expenses (Petty Cash / Register Payouts)**:
-   - When a manager takes cash from the drawer to buy emergency kitchen cleaning supplies:
-     - Debit: `5500 - General Operating Expenses`
-     - Credit: `1010 - Cash in Register`
-     - Cash shift expected cash balance is reduced by the payout amount.
+| Հաշվի Կոդ | Հաշվի Անվանում (ՀՀ Ստանդարտ) | Տիպ (Type) | Նորմալ Մնացորդ | Ենթատեսակ (Subtype) | Համակարգային |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **2111** | Հումք և նյութեր (խոհանոցային սննդամթերք, միս, բանջարեղեն) | Asset | Դեբետ | inventory | Այո |
+| **2114** | Տարա և տարանյութեր (առաքման տուփեր, բաժակներ, փաթեթներ) | Asset | Դեբետ | inventory | Այո |
+| **2152** | Սեփական արտադրության կիսապատրաստուկներ (պատրաստված սոուսներ, կիսաֆաբրիկատներ) | Asset | Դեբետ | inventory | Այո |
+| **2161** | Ապրանքներ պահեստում (բարի ալկոհոլային և ոչ ալկոհոլային խմիչքներ վերավաճառքի) | Asset | Դեբետ | inventory | Այո |
+| **2211** | Դեբիտորական պարտքեր վաճառքների գծով (չվճարված հյուրերի հաշիվներ / կորպորատիվ) | Asset | Դեբետ | accounts_receivable | Այո |
+| **2281** | Դեբիտորական պարտքեր առհաշիվ տրված գումարների գծով (աշխատակիցների կանխավճարներ) | Asset | Դեբետ | receivables | Այո |
+| **2511** | Ազգային արժույթի դրամարկղ (POS դրամարկղային արկղեր / Հերթափոխի կանխիկ) | Asset | Դեբետ | cash | Այո |
+| **2512** | Գլխավոր դրամարկղ / Պահարան (Չհրկիզվող պահարան - Սեյֆ) | Asset | Դեբետ | cash | Այո |
+| **2521** | Հաշվարկային հաշիվ (Բանկային գործառնական հաշիվ ՀՀ դրամով) | Asset | Դեբետ | bank | Այո |
+| **2531** | Արտարժութային հաշիվ (USD, EUR, RUB բանկային հաշիվներ) | Asset | Դեբետ | bank | Այո |
+| **2551** | Դրամական միջոցներ ճանապարհին - Էքվայրինգ (POS քարտային վճարումների հաշվանցում) | Asset | Դեբետ | clearing | Այո |
+| **2552** | Դրամական միջոցներ ճանապարհին - Օնլայն դարպասներ (Իդրամ, Թելսել, Սթրայփ) | Asset | Դեբետ | clearing | Այո |
 
 ---
 
-## 5. Physical Till Discrepancies & Cash Over/Short
+### ԴԱՍ 3. ՍԵՓԱԿԱՆ ԿԱՊԻՏԱԼ (Equity)
 
-When a cash register shift is closed:
-$$\text{Variance} = \text{Counted Cash} - \text{Expected Cash}$$
-
-1. **Cash Shortage** ($\text{Variance} < 0$):
-   - Physical cash is missing.
-   - Debit: `5800 - Cash Over / Short` (Expense)
-   - Credit: `1010 - Cash in Register` (Asset reduction)
-2. **Cash Overage** ($\text{Variance} > 0$):
-   - Physical cash is surplus.
-   - Debit: `1010 - Cash in Register` (Asset increase)
-   - Credit: `5800 - Cash Over / Short` (Negative expense / Other income)
-3. **Balanced** ($\text{Variance} = 0.00$):
-   - No adjustment entry required.
+| Հաշվի Կոդ | Հաշվի Անվանում (ՀՀ Ստանդարտ) | Տիպ (Type) | Նորմալ Մնացորդ | Ենթատեսակ (Subtype) | Համակարգային |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **3111** | Կանոնադրական (բաժնեհավաք) կապիտալ | Equity | Կրեդիտ | equity | Այո |
+| **3411** | Նախորդ տարիների չբաշխված շահույթ (չծածկված վնաս) | Equity | Կրեդիտ | retained_earnings | Այո |
+| **3421** | Հաշվետու տարվա զուտ շահույթ (վնաս) | Equity | Կրեդիտ | retained_earnings | Այո |
 
 ---
 
-## 6. Internal Asset Transfers
+### ԴԱՍ 4. ՈՉ ԸՆԹԱՑԻԿ ՊԱՐՏԱՎՈՐՈՒԹՅՈՒՆՆԵՐ (Non-Current Liabilities)
 
-Internal money movements between drawers, vaults, and bank accounts are **Asset-to-Asset** reclassifications:
-- Safe drop: `DR: 1015 Safe` / `CR: 1010 Register`
-- Bank cash deposit: `DR: 1020 Bank` / `CR: 1010 Register`
-- Branch cash transfer: `DR: 1010 Branch B` / `CR: 1010 Branch A`
-
-**Strict Invariant**: Internal transfers must NEVER touch any account in classes 4000 (Revenue) or 5000 (Expense).
+| Հաշվի Կոդ | Հաշվի Անվանում (ՀՀ Ստանդարտ) | Տիպ (Type) | Նորմալ Մնացորդ | Ենթատեսակ (Subtype) | Համակարգային |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **4111** | Երկարաժամկետ բանկային վարկեր | Liability | Կրեդիտ | long_term_liability | Այո |
+| **4211** | Երկարաժամկետ պարտավորություններ ֆինանսական վարձակալության գծով | Liability | Կրեդիտ | long_term_liability | Այո |
 
 ---
 
-## 7. Reversals & Immutability Rules
+### ԴԱՍ 5. ԸՆԹԱՑԻԿ ՊԱՐՏԱՎՈՐՈՒԹՅՈՒՆՆԵՐ (Current Liabilities)
 
-1. **No Hard Deletes**: The SQL statement `DELETE FROM journal_entries` or `DELETE FROM pos_payments` is strictly forbidden and protected by database triggers / foreign keys.
-2. **Reversals**: To reverse a transaction:
-   - A new journal entry is created with `is_reversal = true` and `reversal_of_entry_id = [original_entry_id]`.
-   - Exact inverse debit and credit lines are posted.
-   - Original entry status changes from `posted` to `reversed`.
+| Հաշվի Կոդ | Հաշվի Անվանում (ՀՀ Ստանդարտ) | Տիպ (Type) | Նորմալ Մնացորդ | Ենթատեսակ (Subtype) | Համակարգային |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **5111** | Կարճաժամկետ բանկային վարկեր և օվերդրաֆտներ | Liability | Կրեդիտ | current_liability | Այո |
+| **5211** | Կրեդիտորական պարտքեր գնումների գծով (Սննդամթերքի և հումքի մատակարարներ) | Liability | Կրեդիտ | accounts_payable | Այո |
+| **5213** | Կրեդիտորական պարտքեր ծառայությունների գծով (Կոմունալ, վարձակալություն, ՏՏ) | Liability | Կրեդիտ | accounts_payable | Այո |
+| **5231** | Ստացված ընթացիկ կանխավճարներ (Բանկետների և ամրագրումների ավանդներ) | Liability | Կրեդիտ | unearned_revenue | Այո |
+| **5241** | Պարտքեր շահութահարկի գծով (ՀՀ ՊԵԿ) | Liability | Կրեդիտ | tax_payable | Այո |
+| **5242** | Պարտքեր եկամտային հարկի գծով (Աշխատավարձից պահված) | Liability | Կրեդիտ | tax_payable | Այո |
+| **5243** | Պարտքեր ավելացված արժեքի հարկի (ԱԱՀ) գծով | Liability | Կրեդիտ | tax_payable | Այո |
+| **5248** | Պարտքեր դրոշմանիշային վճարների գծով (Զինծառայողների ապահովագրության հիմնադրամ) | Liability | Կրեդիտ | tax_payable | Այո |
+| **5249** | Պարտքեր շրջանառության հարկի և այլ պարտադիր վճարների գծով | Liability | Կրեդիտ | tax_payable | Այո |
+| **5251** | Պարտքեր պարտադիր կենսաթոշակային վճարների գծով (Սոցվճար) | Liability | Կրեդիտ | tax_payable | Այո |
+| **5271** | Պարտքեր աշխատավարձի վճարման գծով (Զուտ աշխատավարձ աշխատակիցներին) | Liability | Կրեդիտ | payroll_payable | Այո |
+| **5311** | Թեյավճարների գծով ընթացիկ պարտավորություն (Մատուցողների ֆոնդ) | Liability | Կրեդիտ | tips_payable | Այո |
 
 ---
 
-## 8. Period Closing & Date Locking
+### ԴԱՍ 6. ԵԿԱՄՈՒՏՆԵՐ (Revenue & Income)
 
-1. Tenants define accounting periods (e.g. Monthly).
-2. When a period status is set to `closed`:
-   - No new journal entries or operational transactions can be back-dated into that period.
-   - Any late adjustments must be posted into the currently `open` period with an explanatory memo.
+| Հաշվի Կոդ | Հաշվի Անվանում (ՀՀ Ստանդարտ) | Տիպ (Type) | Նորմալ Մնացորդ | Ենթատեսակ (Subtype) | Համակարգային |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **6111** | Հասույթ արտադրանքի վաճառքից (Խոհանոցում պատրաստված ուտեստներ) | Revenue | Կրեդիտ | sales_food | Այո |
+| **6112** | Հասույթ ապրանքների վաճառքից (Բարի խմիչքներ, վերավաճառքի ապրանքներ) | Revenue | Կրեդիտ | sales_beverage | Այո |
+| **6114** | Հասույթ ծառայությունների մատուցումից (Սպասարկման վճար / Առաքում) | Revenue | Կրեդիտ | sales_service | Այո |
+| **6121** | Հետվերադարձված արտադրանք և ապրանքներ (Կոնտրա-հասույթ) | Revenue | Դեբետ (Contra) | contra_revenue | Այո |
+| **6123** | Տրամադրված առևտրային զեղչեր (Ակցիաներ, լոյալություն - Կոնտրա-հասույթ) | Revenue | Դեբետ (Contra) | contra_revenue | Այո |
+| **6143** | Եկամուտներ գույքագրման ավելցուկներից (Դրամարկղի և պահեստի ավելցուկ) | Revenue | Կրեդիտ | other_income | Այո |
+| **6144** | Եկամուտներ դահլիճի/տարածքի վարձակալությունից (Հանդիսությունների սրահ) | Revenue | Կրեդիտ | other_income | Այո |
+| **6146** | Այլ գործառնական եկամուտներ | Revenue | Կրեդիտ | other_income | Այո |
+| **6211** | Ֆինանսական եկամուտներ բանկային տոկոսներից | Revenue | Կրեդիտ | other_income | Այո |
 
+---
+
+### ԴԱՍ 7. ԾԱԽՍԵՐ (Expenses)
+
+| Հաշվի Կոդ | Հաշվի Անվանում (ՀՀ Ստանդարտ) | Տիպ (Type) | Նորմալ Մնացորդ | Ենթատեսակ (Subtype) | Համակարգային |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **7111** | Իրացված արտադրանքի ինքնարժեք (Խոհանոցի Food Cost - հումքի դուրսգրում) | Expense | Դեբետ | cost_of_goods_sold | Այո |
+| **7112** | Իրացված ապրանքների ինքնարժեք (Բարի Beverage Cost - խմիչքների մեծածախ արժեք) | Expense | Դեբետ | cost_of_goods_sold | Այո |
+| **7114** | Մատուցված ծառայությունների ինքնարժեք | Expense | Դեբետ | cost_of_goods_sold | Այո |
+| **7121** | Իրացման գծով աշխատակիցների աշխատավարձ (Առաքիչների վարձատրություն) | Expense | Դեբետ | operating_expense | Այո |
+| **7124** | Փոխադրման և առաքման ծախսեր (Առաքման տրանսպորտ, վառելիք, տարաներ) | Expense | Դեբետ | operating_expense | Այո |
+| **7125** | Գովազդի և մարքեթինգի ծախսեր (SMM, պոլիգրաֆիա, մենյուների տպագրություն) | Expense | Դեբետ | operating_expense | Այո |
+| **7126** | Առաքման ծառայությունների միջնորդավճարներ (Glovo, Yandex Eats, Menu.am) | Expense | Դեբետ | operating_expense | Այո |
+| **7131** | Վարչական անձնակազմի աշխատանքի վճարման ծախսեր (տնօրեն, հաշվապահ, մենեջերներ, մատուցողներ) | Expense | Դեբետ | operating_expense | Այո |
+| **7132** | Հիմնական միջոցների և ոչ նյութական ակտիվների մաշվածություն | Expense | Դեբետ | operating_expense | Այո |
+| **7133** | Տարածքի և գույքի վարձակալական ծախսեր (Ռեստորանի դահլիճի և խոհանոցի վարձակալություն) | Expense | Դեբետ | operating_expense | Այո |
+| **7134** | Կոմունալ ծախսեր (էլեկտրաէներգիա, բնական գազ, ջուր, աղբահանություն) | Expense | Դեբետ | operating_expense | Այո |
+| **7135** | Նորոգման և տեխնիկական սպասարկման ծախսեր (խոհանոցի սարքավորումներ, սանտեխնիկա) | Expense | Դեբետ | operating_expense | Այո |
+| **7136** | Գրասենյակային, տնտեսական և մաքրության նյութերի ծախսեր | Expense | Դեբետ | operating_expense | Այո |
+| **7137** | Կապի, ինտերնետի և ՏՏ ծախսեր (POS համակարգ, ամպային ծրագրեր) | Expense | Դեբետ | operating_expense | Այո |
+| **7138** | Բանկային ծառայությունների և էքվայրինգի ծախսեր (POS քարտային միջնորդավճարներ) | Expense | Դեբետ | operating_expense | Այո |
+| **7139** | Այլ վարչական ծախսեր (ալկոհոլի/ծխախոտի լիցենզիաներ, պետական տուրքեր) | Expense | Դեբետ | operating_expense | Այո |
+| **7144** | Տույժեր, տուգանքներ և դատական ծախսեր | Expense | Դեբետ | operating_expense | Այո |
+| **7145** | Գույքագրման պակասորդներ, փչացումից կորուստներ (Spoilage & Till Shortages) | Expense | Դեբետ | operating_expense | Այո |
+| **7148** | Այլ գործառնական ծախսեր | Expense | Դեբետ | operating_expense | Այո |
+| **7511** | Շահութահարկի գծով ծախս | Expense | Դեբետ | tax_expense | Այո |
+| **7512** | Շրջանառության հարկի գծով ծախս (Հանրային սննդի շրջհարկ) | Expense | Դեբետ | tax_expense | Այո |
+
+---
+
+## 3. Տիպային Հաշվապահական Թղթակցություններ (Standard Journal Entries)
+
+### 3.1. Ռեստորանային Պատվերի Իրացում և Վճարման Մարում (Guest Check Settlement)
+
+Երբ հյուրը փակում է պատվերը.
+- Ուտեստներ (Խոհանոց). 20,000 դրամ
+- Խմիչքներ (Բար). 4,000 դրամ
+- Սպասարկման վճար (10%). 2,400 դրամ
+- Լոյալության զեղչ. -2,000 դրամ
+- ԱԱՀ (կամ Շրջհարկ). ներառված է կամ հաշվարկված
+- Թեյավճար մատուցողին (քարտով). 1,500 դրամ
+- Վճարում. Կանխիկ 15,900 դրամ + POS Քարտ 10,000 դրամ
+
+#### Հաշվապահական Ձևակերպում.
+| Դեբետ (DR) | Կրեդիտ (CR) | Գումար (AMD) | Գործառնության Նկարագրություն |
+| :--- | :--- | :--- | :--- |
+| **2511** (Դրամարկղ) | | 15,900.00 | Կանխիկ դրամի մուտք դրամարկղային արկղ |
+| **2551** (Դրամական միջոցներ ճանապարհին - Էքվայրինգ) | | 10,000.00 | Քարտային վճարում POS տերմինալով |
+| **6123** (Տրամադրված առևտրային զեղչեր) | | 2,000.00 | Տրամադրված զեղչ (Կոնտրա-հասույթ) |
+| | **6111** (Հասույթ արտադրանքի վաճառքից) | 20,000.00 | Խոհանոցային ուտեստների հասույթ |
+| | **6112** (Հասույթ ապրանքների վաճառքից) | 4,000.00 | Բարի խմիչքների հասույթ |
+| | **6114** (Հասույթ ծառայությունների մատուցումից) | 2,400.00 | Սպասարկման վճարի հասույթ |
+| | **5311** (Թեյավճարների գծով պարտավորություն) | 1,500.00 | Հաճախորդի թեյավճար (անձնակազմի ֆոնդ) |
+
+*Ստուգում. Ընդամենը Դեբետ = 27,900.00 դրամ, Ընդամենը Կրեդիտ = 27,900.00 դրամ: Գործարքը լիարժեք հաշվեկշռված է:*
+
+---
+
+### 3.2. Ինքնարժեքի Դուրսգրում (COGS / Food Cost & Beverage Cost)
+
+Պատվերի իրացման պահին կամ օրվա վերջում համակարգն ավտոմատ դուրս է գրում բաղադրատոմսերով (Recipes) ծախսված հումքը և բարի ապրանքները.
+
+1. **Խոհանոցի ինքնարժեք (Food Cost).**
+   - **Դեբետ 7111** (Իրացված արտադրանքի ինքնարժեք)
+   - **Կրեդիտ 2111** (Հումք և նյութեր - միս, բանջարեղեն, կաթնամթերք)
+   - *(Կամ Կրեդիտ 2152՝ սեփական արտադրության կիսապատրաստուկների դեպքում)*
+
+2. **Բարի ինքնարժեք (Beverage Cost).**
+   - **Դեբետ 7112** (Իրացված ապրանքների ինքնարժեք)
+   - **Կրեդիտ 2161** (Ապրանքներ պահեստում - շշալցված խմիչքներ, ալկոհոլ)
+
+---
+
+### 3.3. Մատակարարներից Գնումներ և Պարտքերի Մարում (Procurement & AP)
+
+1. **Ստացվել է մատակարարի հաշիվ-ապրանքագիր (օր. միս և բանջարեղեն՝ 100,000 դրամ + 20,000 դրամ ԱԱՀ).**
+   - **Դեբետ 2111** (Հումք և նյութեր) — 100,000 դրամ
+   - **Դեբետ 5243** (կամ 2261՝ Հաշվանցման ենթակա ԱԱՀ) — 20,000 դրամ
+   - **Կրեդիտ 5211** (Կրեդիտորական պարտքեր մատակարարներին) — 120,000 դրամ
+
+2. **Մատակարարի պարտքի մարում բանկային հաշվարկային հաշվից.**
+   - **Դեբետ 5211** (Կրեդիտորական պարտքեր մատակարարներին) — 120,000 դրամ
+   - **Կրեդիտ 2521** (Հաշվարկային հաշիվ) — 120,000 դրամ
+   - *Ուշադրություն. Պարտքի մարումը Ծախսի հաշվին (7-րդ դաս) ՉԻ ԴԻՊՉՈՒՄ:*
+
+---
+
+### 3.4. Գործառնական Ուղղակի Ծախսեր Դրամարկղից (Petty Cash Payouts)
+
+Երբ մենեջերը դրամարկղից կանխիկ վճարում է խոհանոցի մաքրող նյութերի կամ շտապ տնտեսական գնումների համար.
+- **Դեբետ 7136** (Գրասենյակային, տնտեսական և մաքրության նյութերի ծախսեր)
+- **Կրեդիտ 2511** (Ազգային արժույթի դրամարկղ)
+- Հերթափոխի կանխիկի ակնկալվող մնացորդը նվազում է համապատասխան գումարով:
+
+---
+
+### 3.5. Աշխատավարձի Հաշվեգրում, Հարկեր և Վճարում (Payroll Cycle)
+
+1. **Աշխատավարձի ամսական հաշվեգրում.**
+   - **Դեբետ 7131** (Վարչական անձնակազմի աշխատանքի վճարման ծախսեր) — Համախառն աշխատավարձ (Gross)
+   - **Կրեդիտ 5271** (Պարտքեր աշխատավարձի վճարման գծով) — Զուտ աշխատավարձ (Net)
+   - **Կրեդիտ 5242** (Պարտքեր եկամտային հարկի գծով) — Եկամտային հարկ (20%)
+   - **Կրեդիտ 5251** (Պարտադիր կենսաթոշակային վճարների գծով) — Սոցվճար (5%)
+   - **Կրեդիտ 5248** (Պարտքեր դրոշմանիշային վճարների գծով) — Դրոշմանիշային վճար
+   - **Կրեդիտ 2281** (Առհաշիվ տրված գումարներ) — Աշխատակցի ստացած կանխավճարի մարում (եթե եղել է)
+
+2. **Աշխատավարձի փոխանցում աշխատակցի քարտին.**
+   - **Դեբետ 5271** (Պարտքեր աշխատավարձի վճարման գծով)
+   - **Կրեդիտ 2521** (Հաշվարկային հաշիվ)
+
+---
+
+### 3.6. Դրամարկղի Փակման Շեղումներ (Till Cash Over / Short)
+
+Հերթափոխի փակման ժամանակ ֆիզիկական կանխիկի հաշվարկից հետո.
+$$\Delta = \text{Փաստացի Կանխիկ} - \text{Համակարգային Սպասվող Կանխիկ}$$
+
+1. **Պակասորդ ($\Delta < 0$).**
+   - **Դեբետ 7145** (Գույքագրման պակասորդներ և փչացումից կորուստներ)
+   - **Կրեդիտ 2511** (Ազգային արժույթի դրամարկղ)
+2. **Ավելցուկ ($\Delta > 0$).**
+   - **Դեբետ 2511** (Ազգային արժույթի դրամարկղ)
+   - **Կրեդիտ 6143** (Եկամուտներ գույքագրման ժամանակ հայտնաբերված ավելցուկներից)
+
+---
+
+### 3.7. Ներքին Դրամական Փոխանցումներ (Asset-to-Asset Reclassification)
+
+Ռեստորանի ներսում կանխիկի տեղաշարժերը բացառապես ակտիվից ակտիվ վերադասակարգումներ են և **երբեք չեն ազդում** 6-րդ (Եկամուտ) կամ 7-րդ (Ծախս) դասերի վրա.
+- **Ինկասացիա / Սեյֆի մուտքագրում (Safe Drop).**
+  - `Դեբետ 2512` (Գլխավոր դրամարկղ / Պահարան)
+  - `Կրեդիտ 2511` (Ազգային արժույթի դրամարկղ)
+- **Կանխիկի մուտքագրում բանկային հաշվին (Bank Deposit).**
+  - `Դեբետ 2521` (Հաշվարկային հաշիվ)
+  - `Կրեդիտ 2511` (Ազգային արժույթի դրամարկղ)
+- **Էքվայրինգի քարտային փաթեթի նստեցում բանկում (POS Batch Settlement).**
+  - `Դեբետ 2521` (Հաշվարկային հաշիվ) — Զուտ ստացված գումար
+  - `Դեբետ 7138` (Բանկային ծառայությունների և էքվայրինգի ծախսեր) — Բանկի միջնորդավճար (1.5% - 2.5%)
+  - `Կրեդիտ 2551` (Դրամական միջոցներ ճանապարհին - Էքվայրինգ) — Լրիվ գումար
+
+---
+
+## 4. Անփոփոխելիություն (Immutability), Սխալների Ուղղում և Ժամանակաշրջանի Փակում
+
+1. **Ֆիզիկական Ջնջման Բացառում.** `DELETE FROM journal_entries` կամ `DELETE FROM pos_payments` գործողությունները խստորեն արգելված են բազայի մակարդակով (FK Restrict և Cryptographic Hash Chain):
+2. **Ստորնո / Հակադարձ Գրանցումներ (Reversals).**
+   - Սխալ ձևակերպումը չեղարկելու համար ստեղծվում է հակադարձ գրանցում (`is_reversal = true`, `reversal_of_entry_id = [original_id]`):
+   - Դեբետային և կրեդիտային տողերը տեղերով փոխվում են:
+   - Սկզբնական գրառման կարգավիճակը փոխվում է `reversed`:
+3. **Հաշվետու Ժամանակաշրջանի Կողպում (Period Closing).**
+   - Հաշվետու ամիսը կամ տարին `closed` կարգավիճակ ստանալուց հետո այդ ժամանակահատվածի ամսաթվով որևէ նոր գործարք չի կարող գրանցվել կամ խմբագրվել:
+   - Ուշացած ճշգրտումները ձևակերպվում են ընթացիկ բաց ժամանակաշրջանում:

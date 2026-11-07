@@ -56,7 +56,7 @@ class BankReconciliationService
         $openingBalance = round((float) ($data['opening_balance'] ?? 0.00), 2);
         $glAccount = isset($data['account_id'])
             ? ChartOfAccount::where('vendor_id', $vendor->id)->findOrFail($data['account_id'])
-            : $this->ledgerService->getAccountByCode($vendor, '1020'); // Operating Bank Account
+            : $this->ledgerService->getAccountByCode($vendor, '2521'); // Operating Bank Account (RA 2521 / legacy 1020)
 
         $bankAccount = BankAccount::create([
             'uuid' => (string) Str::uuid(),

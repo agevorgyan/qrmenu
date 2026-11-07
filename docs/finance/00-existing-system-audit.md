@@ -122,12 +122,14 @@ This audit establishes the definitive baseline of the existing **QR Menu SaaS** 
 
 To guarantee financial integrity across all modules:
 
-1. **Standard Chart of Accounts (COA)**:
-   - **Assets (1000-1999)**: Cash in Registers (1010), Bank Accounts (1020), Accounts Receivable (1200), Inventory (1300), Employee Advances (1400).
-   - **Liabilities (2000-2999)**: Accounts Payable (2010), Tips Payable (2100), Salaries Payable (2200), Taxes Payable (VAT/SRC) (2300).
-   - **Equity (3000-3999)**: Owner Equity (3010), Retained Earnings (3020).
-   - **Revenue (4000-4999)**: Food Sales (4010), Beverage Sales (4020), Service Charges (4030), Other Operational Income (4100), Contra-Revenue: Sales Returns/Discounts (4900).
-   - **Expenses (5000-5999)**: Cost of Goods Sold / Food Cost (5010), Salaries & Wages (5100), Rent Expense (5200), Utilities (5300), Repairs & Maintenance (5400), General Operating Expenses (5500).
+1. **Republic of Armenia Standard Chart of Accounts (COA - ՀՀ Հաշվային Պլան)**:
+   - **Դաս 1. Ոչ ընթացիկ ակտիվներ (111-131)**: Խոհանոցային սարքավորումներ (1114), Գույք/Կահույք (1116), Մաշվածություն (1121), Ծրագրային ապահովում (1311):
+   - **Դաս 2. Ընթացիկ ակտիվներ (211-255)**: Դրամարկղ (2511), Պահարան/Սեյֆ (2512), Բանկային հաշիվ (2521), Էքվայրինգ / Միջոցներ ճանապարհին (2551), Դեբիտորական պարտքեր (2211), Հումք և նյութեր (2111), Ապրանքներ (2161), Առհաշիվ գումարներ (2281):
+   - **Դաս 3. Սեփական կապիտալ (311-342)**: Կանոնադրական կապիտալ (3111), Չբաշխված շահույթ (3411, 3421):
+   - **Դաս 4. Ոչ ընթացիկ պարտավորություններ (411-421)**: Երկարաժամկետ վարկեր (4111), Լիզինգային պարտավորություններ (4211):
+   - **Դաս 5. Ընթացիկ պարտավորություններ (511-531)**: Կրեդիտորական պարտքեր մատակարարներին (5211), Կանխավճարներ (5231), Հարկային պարտավորություններ (ԱԱՀ 5243, Եկամտային 5242, Շրջհարկ 5249), Աշխատավարձի պարտքեր (5271), Թեյավճարներ (5311):
+   - **Դաս 6. Եկամուտներ (611-621)**: Հասույթ արտադրանքից / Food (6111), Հասույթ ապրանքներից / Bar (6112), Ծառայությունների հասույթ (6114), Կոնտրա-հասույթ / Զեղչեր (6123), Հետվերադարձ (6121), Այլ գործառնական եկամուտ (6144):
+   - **Դաս 7. Ծախսեր (711-751)**: Իրացված արտադրանքի ինքնարժեք / Food Cost (7111), Բարի ինքնարժեք / Bar Cost (7112), Վարչական աշխատավարձ (7131), Իրացման/առաքման աշխատավարձ (7121), Վարձակալություն (7133), Կոմունալ (7134), Նորոգում (7135), Տնտեսական նյութեր (7136), Բանկային/էքվայրինգի միջնորդավճարներ (7138), Փչացում և պակասորդներ (7145), Շրջհարկի/շահութահարկի ծախս (7512/7511):
 
 2. **Immutable Journal Entries & Balancing Invariant**:
    - Every posted journal entry must satisfy: `SUM(debits) - SUM(credits) == 0`.
@@ -147,18 +149,18 @@ To guarantee financial integrity across all modules:
 
 | Event / Source | Financial Dimension | GL Debit Account | GL Credit Account | Duplicate Prevention Mechanism |
 | :--- | :--- | :--- | :--- | :--- |
-| **Order Completed (Cash)** | Sales + Settlement | Cash in Register (1010) | Food/Bev Revenue (4010) + Tax (2300) | Atomic transaction; single journal entry; `order_id` source reference |
-| **Order Completed (Card)** | Sales + Settlement | Card Clearing (1030) | Food/Bev Revenue (4010) + Tax (2300) | Atomic transaction; single journal entry; `order_id` source reference |
-| **Customer Tip Added** | Non-Revenue Settlement | Cash / Card Clearing (1010/1030) | Tips Payable (2100 - Liability) | Separate tip line; credited to liability, excluded from revenue |
-| **Order Refunded** | Sales Reversal | Sales Returns (4900) + Tax (2300) | Cash (1010) / Card Clearing (1030) | Reversal entry linked to original `order_id`; cannot exceed order total |
-| **Cash Drop to Safe** | Asset Transfer | Safe / Vault Asset (1015) | Cash in Register (1010) | Asset-to-asset transfer; neither revenue nor expense account touched |
-| **Cash Transfer between Branches** | Inter-branch Transfer | Target Branch Cash (1010-B) | Source Branch Cash (1010-A) | Dual-legged transfer record with `transfer_id` idempotency key |
-| **Supplier Invoice Received** | Expense Recognition (Accrual) | Inventory / Purchases (1300/5010)| Accounts Payable (2010 - Liability) | Idempotent on `(vendor_id, supplier_id, invoice_number)` |
-| **Supplier Invoice Paid** | Liability Settlement | Accounts Payable (2010) | Bank Account (1020) / Cash (1010) | Debits AP liability; zero impact on P&L expenses |
-| **Payroll Period Approved** | Labor Accrual | Salaries Expense (5100) | Salaries Payable (2200) + Tax (2300) | Single entry per payroll period run; locked against recalculation |
-| **Salary Paid to Worker** | Liability Settlement | Salaries Payable (2200) | Bank Account (1020) / Cash (1010) | Debits liability; zero impact on P&L expenses |
-| **Employee Advance Given** | Asset Loan | Employee Advances (1400) | Cash in Register (1010) / Bank (1020) | Recorded as asset receivable, not an expense |
-| **Direct Operating Expense** | Cash Expense | Operating Expense (5500) | Cash in Register (1010) / Bank (1020) | Expense entry created with approval workflow |
+| **Order Completed (Cash)** | Sales + Settlement | Cash in Till (2511) | Food/Bev Revenue (6111/6112) + Tax (5243) | Atomic transaction; single journal entry; `order_id` source reference |
+| **Order Completed (Card)** | Sales + Settlement | Card Clearing (2551) | Food/Bev Revenue (6111/6112) + Tax (5243) | Atomic transaction; single journal entry; `order_id` source reference |
+| **Customer Tip Added** | Non-Revenue Settlement | Cash / Card Clearing (2511/2551) | Tips Payable (5311 - Liability) | Separate tip line; credited to liability, excluded from revenue |
+| **Order Refunded** | Sales Reversal | Sales Returns (6121) + Tax (5243) | Cash (2511) / Card Clearing (2551) | Reversal entry linked to original `order_id`; cannot exceed order total |
+| **Cash Drop to Safe** | Asset Transfer | Safe / Vault Asset (2512) | Cash in Till (2511) | Asset-to-asset transfer; neither revenue nor expense account touched |
+| **Cash Transfer between Branches** | Inter-branch Transfer | Target Branch Cash (2511-B) | Source Branch Cash (2511-A) | Dual-legged transfer record with `transfer_id` idempotency key |
+| **Supplier Invoice Received** | Expense Recognition (Accrual) | Kitchen Inventory / Stock (2111) | Accounts Payable (5211 - Liability) | Idempotent on `(vendor_id, supplier_id, invoice_number)` |
+| **Supplier Invoice Paid** | Liability Settlement | Accounts Payable (5211) | Bank Account (2521) / Cash (2511) | Debits AP liability; zero impact on P&L expenses |
+| **Payroll Period Approved** | Labor Accrual | Gross Wages Expense (7131) | Salaries Payable (5271) + Tax (5242) | Single entry per payroll period run; locked against recalculation |
+| **Salary Paid to Worker** | Liability Settlement | Salaries Payable (5271) | Bank Account (2521) / Cash (2511) | Debits liability; zero impact on P&L expenses |
+| **Employee Advance Given** | Asset Loan | Employee Advances (2281) | Cash in Till (2511) / Bank (2521) | Recorded as asset receivable, not an expense |
+| **Direct Operating Expense** | Cash Expense | Operating Expense (7134/7136) | Cash in Till (2511) / Bank (2521) | Expense entry created with approval workflow |
 
 ---
 

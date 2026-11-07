@@ -50,7 +50,7 @@ erDiagram
 Defines the configurable Chart of Accounts for each vendor.
 - `id` (bigserial, PK)
 - `vendor_id` (bigint, FK -> `vendors.id`, cascade)
-- `code` (varchar 30, NOT NULL) — e.g. "1010", "1020", "2010", "4010"
+- `code` (varchar 30, NOT NULL) — e.g. "2511", "2521", "5211", "6111", "7111" (Republic of Armenia Chart of Accounts standard)
 - `name` (varchar 200, NOT NULL)
 - `type` (varchar 30, NOT NULL) — `asset`, `liability`, `equity`, `revenue`, `expense`
 - `subtype` (varchar 50, NOT NULL) — `cash`, `bank`, `accounts_receivable`, `inventory`, `accounts_payable`, `tax_payable`, `payroll_payable`, `tips_payable`, `retained_earnings`, `sales_food`, `sales_beverage`, `cost_of_goods_sold`, `operating_expense`

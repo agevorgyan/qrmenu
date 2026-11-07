@@ -2,10 +2,29 @@
 
 @section('title', __('Journal Entry ') . $entry->entry_number . ' - ' . config('app.name'))
 
+@section('styles')
+<style>
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        .printable-statement {
+            border: 1px solid #000000 !important;
+            box-shadow: none !important;
+            padding: 20px !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+    }
+</style>
+@endsection
+
 @section('content')
 <div x-data="{ reverseModalOpen: false }" style="display: flex; flex-direction: column; gap: 1.5rem;">
     <!-- Header -->
-    <div class="card" style="padding: 1.5rem;">
+    <div class="card no-print" style="padding: 1.5rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
             <div>
                 <a href="{{ route('admin.finance.ledger.entries') }}" style="color: var(--text-muted); font-size: 0.85rem; text-decoration: none; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.5rem;">
@@ -30,6 +49,9 @@
             </div>
 
             <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <button type="button" onclick="window.print()" class="btn btn-secondary">
+                    <i class="fa-solid fa-print"></i> {{ __('Print Voucher') }}
+                </button>
                 @if($entry->status === 'posted' && !$entry->is_reversal)
                     @can('finance.ledger.manage')
                         <button type="button" @click="reverseModalOpen = true" class="btn btn-rose">
@@ -62,8 +84,22 @@
     </div>
 
     <!-- Balanced Double-Entry Lines Table -->
-    <div class="card" style="padding: 1.5rem;">
-        <h3 style="margin-top: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main);">
+    <div class="card printable-statement" style="padding: 1.5rem;">
+        <!-- Formal Print Document Header -->
+        <div class="print-only statement-header" style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 20px;">
+            <h2 style="font-size: 16pt; font-weight: 800; margin: 0 0 4px 0;">{{ auth()->user()?->vendor?->name }}</h2>
+            <div class="statement-title" style="font-size: 13pt; font-weight: 700; text-transform: uppercase;">{{ __('JOURNAL VOUCHER / MEMORIAL ORDER') }}</div>
+            <div style="font-size: 9.5pt; margin-top: 4px;">
+                <strong>{{ __('Voucher #:') }}</strong> {{ $entry->entry_number }} | 
+                <strong>{{ __('Date:') }}</strong> {{ $entry->entry_date->format('Y-m-d') }} |
+                <strong>{{ __('Status:') }}</strong> {{ ucfirst($entry->status) }}
+            </div>
+            <div style="font-size: 9pt; color: #444; margin-top: 4px;">
+                <strong>{{ __('Description:') }}</strong> {{ $entry->description }}
+            </div>
+        </div>
+
+        <h3 class="no-print" style="margin-top: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main);">
             <i class="fa-solid fa-table-list" style="color: #8b5cf6; margin-right: 0.5rem;"></i>
             {{ __('Double-Entry Journal Lines') }}
         </h3>
@@ -110,6 +146,18 @@
             <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #10b981; font-weight: 700;">
                 <i class="fa-solid fa-circle-check"></i>
                 {{ __('Double-entry invariant satisfied: Total Debit strictly equals Total Credit.') }}
+            </div>
+        </div>
+
+        <!-- Signatures Block for Print -->
+        <div class="print-signatures statement-signatures">
+            <div class="sig-col">
+                <div class="sig-line"></div>
+                <div class="sig-label">{{ __('Prepared by (Accountant):') }} {{ auth()->user()?->name }}</div>
+            </div>
+            <div class="sig-col">
+                <div class="sig-line"></div>
+                <div class="sig-label">{{ __('Approved by (Chief Accountant / Director)') }}</div>
             </div>
         </div>
     </div>

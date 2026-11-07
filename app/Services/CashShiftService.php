@@ -212,6 +212,7 @@ class CashShiftService
             'total_sales' => round($cashPayments + $cardPayments + $otherPayments, 2),
             'tips' => $totalTips,
             'refunds' => $cashRefunds,
+            'cash_refunds' => $cashRefunds,
             'cash_in' => $cashIn,
             'cash_out' => $cashOut,
             'safe_drops' => $safeDrops,
@@ -411,6 +412,55 @@ class CashShiftService
                 'expected_cash' => (float) $shift->expected_cash,
                 'actual_cash' => (float) ($shift->counted_cash ?? 0.00),
                 'discrepancy' => (float) $shift->discrepancy,
+            ],
+            'payment_breakdown' => [
+                'cash_payments' => $breakdown['cash_sales'],
+                'card_payments' => $breakdown['card_sales'],
+                'online_payments' => $breakdown['other_sales'],
+                'total_revenue_settled' => $breakdown['total_sales'],
+            ],
+        ];
+    }
+
+    /**
+     * Generate interim X-Report for an active/open shift audit.
+     */
+    public function generateXReport(PosShift $shift): array
+    {
+        $breakdown = $this->getShiftBreakdown($shift);
+        $reportNumber = 'X-'.date('Ymd')."-{$shift->id}";
+
+        return [
+            'report_number' => $reportNumber,
+            'x_report_number' => $reportNumber,
+            'vendor_name' => $shift->vendor->name,
+            'location_name' => $shift->location?->name,
+            'register_code' => $shift->cashRegister?->code ?? 'DEFAULT',
+            'cashier_name' => $shift->user->name,
+            'opened_at' => $shift->opened_at->toIso8601String(),
+            'current_time' => Carbon::now()->toIso8601String(),
+            'currency' => $shift->vendor->currency ?? 'AMD',
+            'opening_float' => (float) $shift->opening_float,
+            'cash_sales' => $breakdown['cash_sales'],
+            'card_sales' => $breakdown['card_sales'],
+            'other_sales' => $breakdown['other_sales'],
+            'total_sales' => $breakdown['total_sales'],
+            'tips' => $breakdown['tips'],
+            'refunds' => $breakdown['refunds'],
+            'cash_in' => $breakdown['cash_in'],
+            'cash_out' => $breakdown['cash_out'],
+            'safe_drops' => $breakdown['safe_drops'],
+            'expenses' => $breakdown['expenses'],
+            'expected_cash' => (float) $breakdown['expected_cash'],
+            'orders_count' => $breakdown['orders_count'],
+            'cash_reconciliation' => [
+                'opening_float' => (float) $shift->opening_float,
+                'cash_payments' => $breakdown['cash_sales'],
+                'cash_in' => $breakdown['cash_in'],
+                'refunds' => $breakdown['refunds'],
+                'cash_out' => $breakdown['cash_out'],
+                'safe_drops' => $breakdown['safe_drops'],
+                'expected_cash' => (float) $breakdown['expected_cash'],
             ],
             'payment_breakdown' => [
                 'cash_payments' => $breakdown['cash_sales'],

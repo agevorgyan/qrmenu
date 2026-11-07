@@ -49,10 +49,10 @@ class CashRegisterService
             ]);
         }
 
-        // Resolve GL Cash Account (default 1010)
+        // Resolve GL Cash Account (default RA 2511 / legacy 1010)
         $account = isset($data['account_id'])
             ? ChartOfAccount::where('vendor_id', $vendor->id)->findOrFail($data['account_id'])
-            : $this->ledgerService->getAccountByCode($vendor, '1010');
+            : $this->ledgerService->getAccountByCode($vendor, '2511');
 
         $register = CashRegister::create([
             'uuid' => (string) Str::uuid(),

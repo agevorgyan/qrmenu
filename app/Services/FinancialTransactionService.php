@@ -50,13 +50,13 @@ class FinancialTransactionService
             return $existing;
         }
 
-        $arAccount = $this->ledgerService->getAccountByCode($vendor, '1200'); // Accounts Receivable / Clearing
-        $foodRev = $this->ledgerService->getAccountByCode($vendor, '4010');   // Food Sales Revenue
-        $serviceAccount = $this->ledgerService->getAccountByCode($vendor, '4030'); // Service Charge Revenue
-        $otherIncomeAccount = $this->ledgerService->getAccountByCode($vendor, '4100'); // Delivery / Ancillary
-        $tipsAccount = $this->ledgerService->getAccountByCode($vendor, '2100'); // Tips Payable
-        $taxAccount = $this->ledgerService->getAccountByCode($vendor, '2300'); // Sales Tax / VAT
-        $discountAccount = $this->ledgerService->getAccountByCode($vendor, '4910'); // Promo Discounts
+        $arAccount = $this->ledgerService->getAccountByCode($vendor, '2211'); // RA 2211: Accounts Receivable
+        $foodRev = $this->ledgerService->getAccountByCode($vendor, '6111');   // RA 6111: Food Sales Revenue
+        $serviceAccount = $this->ledgerService->getAccountByCode($vendor, '6114'); // RA 6114: Service Charge Revenue
+        $otherIncomeAccount = $this->ledgerService->getAccountByCode($vendor, '6144'); // RA 6144: Delivery / Ancillary
+        $tipsAccount = $this->ledgerService->getAccountByCode($vendor, '5311'); // RA 5311: Tips Payable
+        $taxAccount = $this->ledgerService->getAccountByCode($vendor, '5243'); // RA 5243: Sales Tax / VAT
+        $discountAccount = $this->ledgerService->getAccountByCode($vendor, '6123'); // RA 6123: Promo Discounts
 
         $subtotal = round((float) $order->subtotal, 2);
         $serviceFee = round((float) ($order->service_fee ?? 0), 2);
@@ -203,15 +203,15 @@ class FinancialTransactionService
 
         // Resolve asset account based on payment method
         if ($method === 'cash') {
-            $assetAccount = $this->ledgerService->getAccountByCode($vendor, '1010'); // Cash in Registers
+            $assetAccount = $this->ledgerService->getAccountByCode($vendor, '2511'); // RA 2511: Cash in Registers
         } elseif (in_array($method, ['card', 'pos_terminal'], true)) {
-            $assetAccount = $this->ledgerService->getAccountByCode($vendor, '1030'); // Card Clearing
+            $assetAccount = $this->ledgerService->getAccountByCode($vendor, '2551'); // RA 2551: Card Clearing
         } else {
-            $assetAccount = $this->ledgerService->getAccountByCode($vendor, '1040'); // Online Gateway Clearing
+            $assetAccount = $this->ledgerService->getAccountByCode($vendor, '2552'); // RA 2552: Online Gateway Clearing
         }
 
-        $arAccount = $this->ledgerService->getAccountByCode($vendor, '1200'); // Accounts Receivable
-        $tipsAccount = $this->ledgerService->getAccountByCode($vendor, '2100'); // Tips Payable (Liability)
+        $arAccount = $this->ledgerService->getAccountByCode($vendor, '2211'); // RA 2211: Accounts Receivable
+        $tipsAccount = $this->ledgerService->getAccountByCode($vendor, '5311'); // RA 5311: Tips Payable (Liability)
 
         $lines = [];
 
@@ -283,12 +283,12 @@ class FinancialTransactionService
             return $existing;
         }
 
-        $returnsAccount = $this->ledgerService->getAccountByCode($vendor, '4900'); // Sales Returns & Allowances (Contra-Rev)
+        $returnsAccount = $this->ledgerService->getAccountByCode($vendor, '6121'); // RA 6121: Sales Returns & Allowances (Contra-Rev)
 
         if (strtolower($paymentMethod) === 'cash') {
-            $disbAccount = $this->ledgerService->getAccountByCode($vendor, '1010'); // Cash in Registers
+            $disbAccount = $this->ledgerService->getAccountByCode($vendor, '2511'); // RA 2511: Cash in Registers
         } else {
-            $disbAccount = $this->ledgerService->getAccountByCode($vendor, '1030'); // Card Clearing
+            $disbAccount = $this->ledgerService->getAccountByCode($vendor, '2551'); // RA 2551: Card Clearing
         }
 
         $lines = [
@@ -341,8 +341,8 @@ class FinancialTransactionService
             return $existing;
         }
 
-        $expenseAccount = $expense->account ?: $expense->category?->account ?: $this->ledgerService->getAccountByCode($vendor, '5300');
-        $apAccount = $this->ledgerService->getAccountByCode($vendor, '2010'); // Accounts Payable
+        $expenseAccount = $expense->account ?: $expense->category?->account ?: $this->ledgerService->getAccountByCode($vendor, '7134'); // RA 7134: Utilities
+        $apAccount = $this->ledgerService->getAccountByCode($vendor, '5211'); // RA 5211: Accounts Payable
         $amount = round((float) $expense->amount, 2);
 
         $lines = [
@@ -394,20 +394,20 @@ class FinancialTransactionService
             return $existing;
         }
 
-        // If expense was accrued to Accounts Payable, debit Accounts Payable (2010)
+        // If expense was accrued to Accounts Payable, debit Accounts Payable (5211)
         // Otherwise, debit the expense account directly
         if ($expense->journal_entry_id) {
-            $debitAccount = $this->ledgerService->getAccountByCode($vendor, '2010');
+            $debitAccount = $this->ledgerService->getAccountByCode($vendor, '5211'); // RA 5211: Accounts Payable
         } else {
-            $debitAccount = $expense->account ?: $expense->category?->account ?: $this->ledgerService->getAccountByCode($vendor, '5300');
+            $debitAccount = $expense->account ?: $expense->category?->account ?: $this->ledgerService->getAccountByCode($vendor, '7134');
         }
 
         $method = strtolower($payment->payment_method);
 
         if ($method === 'cash') {
-            $disbAccount = $this->ledgerService->getAccountByCode($vendor, '1010'); // Cash in Registers
+            $disbAccount = $this->ledgerService->getAccountByCode($vendor, '2511'); // RA 2511: Cash in Registers
         } else {
-            $disbAccount = $payment->bankAccount?->account ?: $this->ledgerService->getAccountByCode($vendor, '1020'); // Bank Account
+            $disbAccount = $payment->bankAccount?->account ?: $this->ledgerService->getAccountByCode($vendor, '2521'); // RA 2521: Bank Account
         }
 
         $amount = round((float) $payment->amount, 2);
@@ -462,9 +462,9 @@ class FinancialTransactionService
             return $existing;
         }
 
-        $inventoryAccount = $this->ledgerService->getAccountByCode($vendor, '1300'); // Inventory Asset (or 5010 COGS)
-        $apAccount = $this->ledgerService->getAccountByCode($vendor, '2010');        // Accounts Payable
-        $taxAccount = $this->ledgerService->getAccountByCode($vendor, '2300');       // Tax
+        $inventoryAccount = $this->ledgerService->getAccountByCode($vendor, '2111'); // RA 2111: Kitchen Raw Materials & Inventory
+        $apAccount = $this->ledgerService->getAccountByCode($vendor, '5211');        // RA 5211: Accounts Payable
+        $taxAccount = $this->ledgerService->getAccountByCode($vendor, '5243');       // RA 5243: Tax Payable
 
         $subtotal = round((float) $invoice->subtotal, 2);
         $tax = round((float) $invoice->tax_amount, 2);
@@ -526,13 +526,13 @@ class FinancialTransactionService
             return $existing;
         }
 
-        $apAccount = $this->ledgerService->getAccountByCode($vendor, '2010'); // Accounts Payable
+        $apAccount = $this->ledgerService->getAccountByCode($vendor, '5211'); // RA 5211: Accounts Payable
         $method = strtolower($payment->payment_method);
 
         if ($method === 'cash') {
-            $disbAccount = $this->ledgerService->getAccountByCode($vendor, '1010');
+            $disbAccount = $this->ledgerService->getAccountByCode($vendor, '2511'); // RA 2511: Cash in Till
         } else {
-            $disbAccount = $this->ledgerService->getAccountByCode($vendor, '1020'); // Bank Account
+            $disbAccount = $this->ledgerService->getAccountByCode($vendor, '2521'); // RA 2521: Bank Account
         }
 
         $amount = round((float) $payment->amount, 2);
@@ -580,10 +580,10 @@ class FinancialTransactionService
             return $existing;
         }
 
-        $wageExpense = $this->ledgerService->getAccountByCode($vendor, '5100'); // Wages & Salaries Expense
-        $salariesPayable = $this->ledgerService->getAccountByCode($vendor, '2200'); // Net Salaries Payable (Liability)
-        $taxPayable = $this->ledgerService->getAccountByCode($vendor, '2350'); // Payroll Taxes Payable
-        $advancesAccount = $this->ledgerService->getAccountByCode($vendor, '1400'); // Employee Advances
+        $wageExpense = $this->ledgerService->getAccountByCode($vendor, '7131'); // RA 7131: Wages & Salaries Expense
+        $salariesPayable = $this->ledgerService->getAccountByCode($vendor, '5271'); // RA 5271: Net Salaries Payable (Liability)
+        $taxPayable = $this->ledgerService->getAccountByCode($vendor, '5242'); // RA 5242: Payroll Taxes Payable
+        $advancesAccount = $this->ledgerService->getAccountByCode($vendor, '2281'); // RA 2281: Employee Advances
 
         $gross = round((float) $period->total_gross, 2);
         $net = round((float) $period->total_net, 2);
@@ -660,13 +660,13 @@ class FinancialTransactionService
             return $existing;
         }
 
-        $salariesPayable = $this->ledgerService->getAccountByCode($vendor, '2200'); // Net Salaries Payable
+        $salariesPayable = $this->ledgerService->getAccountByCode($vendor, '5271'); // RA 5271: Net Salaries Payable
         $method = strtolower($payment->payment_method);
 
         if ($method === 'cash') {
-            $disbAccount = $this->ledgerService->getAccountByCode($vendor, '1010'); // Cash in Registers
+            $disbAccount = $this->ledgerService->getAccountByCode($vendor, '2511'); // RA 2511: Cash in Registers
         } else {
-            $disbAccount = $this->ledgerService->getAccountByCode($vendor, '1020'); // Bank Account
+            $disbAccount = $this->ledgerService->getAccountByCode($vendor, '2521'); // RA 2521: Bank Account
         }
 
         $amount = round((float) $payment->amount, 2);
@@ -714,13 +714,13 @@ class FinancialTransactionService
             return $existing;
         }
 
-        $advancesAccount = $this->ledgerService->getAccountByCode($vendor, '1400'); // Employee Advances Asset
+        $advancesAccount = $this->ledgerService->getAccountByCode($vendor, '2281'); // RA 2281: Employee Advances Asset
         $method = strtolower($advance->payment_method);
 
         if ($method === 'cash') {
-            $disbAccount = $this->ledgerService->getAccountByCode($vendor, '1010');
+            $disbAccount = $this->ledgerService->getAccountByCode($vendor, '2511'); // RA 2511: Cash in Till
         } else {
-            $disbAccount = $this->ledgerService->getAccountByCode($vendor, '1020');
+            $disbAccount = $this->ledgerService->getAccountByCode($vendor, '2521'); // RA 2521: Bank Account
         }
 
         $amount = round((float) $advance->amount, 2);
@@ -826,8 +826,9 @@ class FinancialTransactionService
             return $existing;
         }
 
-        $cashAccount = $this->ledgerService->getAccountByCode($vendor, '1010'); // Cash in Registers
-        $varianceAccount = $this->ledgerService->getAccountByCode($vendor, '5800'); // Cash Over / Short
+        $cashAccount = $this->ledgerService->getAccountByCode($vendor, '2511'); // RA 2511: Cash in Registers
+        $shortageAccount = $this->ledgerService->getAccountByCode($vendor, '7145'); // RA 7145: Spoilage & Shortages (Expense)
+        $overageAccount = $this->ledgerService->getAccountByCode($vendor, '6143');  // RA 6143: Surplus Income (Revenue)
 
         $absVariance = round(abs($variance), 2);
         $lines = [];
@@ -835,7 +836,7 @@ class FinancialTransactionService
         if ($variance < 0) {
             // Shortage: Debit expense (loss), Credit cash asset
             $lines[] = [
-                'account_id' => $varianceAccount->id,
+                'account_id' => $shortageAccount->id,
                 'location_id' => $shift->location_id,
                 'type' => 'debit',
                 'amount' => $absVariance,
@@ -851,7 +852,7 @@ class FinancialTransactionService
                 'memo' => "Till balance reduction for Shift #{$shift->id} shortage",
             ];
         } else {
-            // Overage / Surplus: Debit cash asset, Credit expense (contra-expense / other income)
+            // Overage / Surplus: Debit cash asset, Credit other operating income
             $lines[] = [
                 'account_id' => $cashAccount->id,
                 'location_id' => $shift->location_id,
@@ -861,7 +862,7 @@ class FinancialTransactionService
                 'memo' => "Cash Surplus on Shift #{$shift->id}",
             ];
             $lines[] = [
-                'account_id' => $varianceAccount->id,
+                'account_id' => $overageAccount->id,
                 'location_id' => $shift->location_id,
                 'type' => 'credit',
                 'amount' => $absVariance,
@@ -887,9 +888,9 @@ class FinancialTransactionService
     protected function resolveTransferAccount(Vendor $vendor, string $type, int $id): ChartOfAccount
     {
         return match ($type) {
-            'safe' => $this->ledgerService->getAccountByCode($vendor, '1015'),
-            'bank_account' => BankAccount::find($id)?->account ?: $this->ledgerService->getAccountByCode($vendor, '1020'),
-            default => $this->ledgerService->getAccountByCode($vendor, '1010'), // cash_register
+            'safe' => $this->ledgerService->getAccountByCode($vendor, '2512'), // RA 2512: Safe / Vault
+            'bank_account' => BankAccount::find($id)?->account ?: $this->ledgerService->getAccountByCode($vendor, '2521'), // RA 2521: Operating Bank Account
+            default => $this->ledgerService->getAccountByCode($vendor, '2511'), // RA 2511: Cash in Till (cash_register)
         };
     }
 }

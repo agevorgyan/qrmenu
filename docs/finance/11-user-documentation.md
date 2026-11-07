@@ -40,20 +40,20 @@ This manual provides standard operating procedures for **Cashiers**, **Store/Bra
    - Cash Refunds Deducted
    - Payouts & Drops
    - Counted Cash vs Expected Cash
-4. Click **Approve Shift**. The variance is automatically posted to the general ledger under account `5800 (Cash Over/Short)`.
+4. Click **Approve Shift**. The variance is automatically posted to the general ledger under account `7145 (Inventory Spoilage & Till Shortages)` or `6143 (Inventory & Till Overages)`.
 
 ### 2.2 Approving Operating Expenses
 1. Navigate to **Finance & Cash** > **Expenses**.
 2. Filter by **Pending Approval**.
 3. Inspect the expense title, supplier, category, attached invoice/receipt image, and amount.
 4. Click **Approve**. Once approved:
-   - The liability is recognized in the general ledger (Credit Accounts Payable 2010).
+   - The liability is recognized in the general ledger (Credit Accounts Payable 5211 - Կրեդիտորական պարտքեր).
    - The expense is queued for disbursement.
 
 ### 2.3 Safe-to-Bank and Till-to-Safe Transfers
 1. Navigate to **Finance & Cash** > **Cash Transfers**.
 2. Click **New Transfer**.
-3. Choose the source (e.g., *Main Cash Safe*) and destination (e.g., *Ameriabank Operating Account* or *Armenian Post Transit*).
+3. Choose the source (e.g., *Main Cash Safe - 2512*) and destination (e.g., *Ameriabank Operating Account - 2521* or *Armenian Post Transit - 2551*).
 4. Enter the amount and courier / transit reference.
 5. Click **Execute Transfer**. The system executes an asset-to-asset journal entry with zero revenue/expense impact.
 
@@ -64,7 +64,7 @@ This manual provides standard operating procedures for **Cashiers**, **Store/Bra
 ### 3.1 Managing Corporate Bank Accounts
 1. Navigate to **Finance & Cash** > **Bank Accounts**.
 2. View real-time bank ledger balances versus last reconciled statement balances.
-3. To add a new account, click **Add Bank Account**, enter bank name, account number, IBAN, SWIFT, and select the linked Chart of Accounts code (default `1020`).
+3. To add a new account, click **Add Bank Account**, enter bank name, account number, IBAN, SWIFT, and select the linked Chart of Accounts code (default `2521 - Հաշվարկային հաշիվ`).
 
 ### 3.2 Importing Statements & Bank Reconciliation
 1. Open the target Bank Account and click **Import Statement**.

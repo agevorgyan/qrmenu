@@ -21,21 +21,21 @@ In this application, **all financial reports are generated exclusively from the 
 The P&L is structured according to IFRS Multi-Step Income Statement format:
 
 $$\begin{aligned}
-\text{Gross Revenue} &= \sum \text{Credits}(4010, 4020, 4030, 4100, \dots) \\
-\text{Less: Sales Returns \& Discounts} &= \sum \text{Debits}(4900, 4910) \\
+\text{Gross Revenue} &= \sum \text{Credits}(6111, 6112, 6114, 6144, \dots) \\
+\text{Less: Sales Returns \& Discounts} &= \sum \text{Debits}(6121, 6123) \\
 \mathbf{\text{Net Revenue}} &= \mathbf{\text{Gross Revenue} - \text{Contra Revenue}} \\
-\text{Less: Cost of Goods Sold (COGS)} &= \sum \text{Debits}(5010 \dots 5090) \\
+\text{Less: Cost of Goods Sold (COGS)} &= \sum \text{Debits}(7111, 7112, 7114) \\
 \mathbf{\text{Gross Profit}} &= \mathbf{\text{Net Revenue} - \text{COGS}} \\
-\text{Less: Operating Expenses (OPEX)} &= \sum \text{Debits}(5100 \dots 5890) \\
+\text{Less: Operating Expenses (OPEX)} &= \sum \text{Debits}(7121 \dots 7148) \\
 \mathbf{\text{Operating Profit (EBIT)}} &= \mathbf{\text{Gross Profit} - \text{OPEX}} \\
-\text{Less: Corporate Taxes} &= \sum \text{Debits}(5900 \dots 5990) \\
+\text{Less: Corporate Taxes} &= \sum \text{Debits}(7511, 7512) \\
 \mathbf{\text{Net Profit}} &= \mathbf{\text{Operating Profit} - \text{Taxes}}
 \end{aligned}$$
 
 ### Contra-Revenue Handling:
-- Code `4900` (Sales Returns & Allowances) and `4910` (Promotional Discounts Allowed) carry normal debit balances.
+- Code `6121` (Sales Returns & Allowances) and `6123` (Promotional Discounts Allowed) carry normal debit balances.
 - In `FinancialReportingService::getProfitAndLoss()`, these accounts are separated into `$contraRevenueAccounts` and subtracted from `$grossRevenue` to arrive at `$netRevenue`.
-- Remediated bug: Service Charge Revenue (`4030`) was removed from contra-revenue and recognized as gross operating revenue.
+- Service Charge Revenue (`6114`) is recognized as gross operating revenue.
 
 ---
 
@@ -45,21 +45,22 @@ The Balance Sheet equation must hold at any given calendar date:
 
 $$\text{Total Assets} \equiv \text{Total Liabilities} + \text{Total Equity} + \text{Current Period Earnings}$$
 
-### Account Groupings:
-1. **Assets (1000–1999)**:
-   - Cash and Cash Equivalents (`1010`, `1020`, `1030`)
-   - Accounts Receivable (`1200`)
-   - Inventories (`1300`, `1310`)
-   - Property, Plant & Equipment (`1500`, less accumulated depreciation `1510`)
-2. **Liabilities (2000–2999)**:
-   - Accounts Payable (`2010`)
-   - Tips Payable (`2100`)
-   - Accrued Payroll & Salaries Payable (`2210`)
-   - VAT & Tax Liabilities (`2300`)
-3. **Equity (3000–3999)**:
-   - Share Capital (`3010`)
-   - Retained Earnings (`3100`)
-   - Current Period Net Income (Dynamically calculated as $\text{Total Revenue} - \text{Total Expenses}$)
+### Account Groupings (RA Standard):
+1. **Assets (Դաս 1-2)**:
+   - Cash and Cash Equivalents (`2511`, `2512`, `2521`, `2551`, `2552`)
+   - Accounts Receivable (`2211`, `2281`)
+   - Inventories (`2111`, `2114`, `2152`, `2161`)
+   - Property, Plant & Equipment (`1114`, `1116`, less accumulated depreciation `1121`)
+2. **Liabilities (Դաս 4-5)**:
+   - Accounts Payable (`5211`, `5213`)
+   - Tips Payable (`5311`)
+   - Accrued Payroll & Salaries Payable (`5271`)
+   - VAT & Tax Liabilities (`5241`, `5242`, `5243`, `5248`, `5249`, `5251`)
+   - Long-Term Debt & Leases (`4111`, `4211`)
+3. **Equity (Դաս 3)**:
+   - Share Capital (`3111`)
+   - Retained Earnings (`3411`)
+   - Current Period Net Income (`3421` / Dynamically calculated as $\text{Total Revenue} - \text{Total Expenses}$)
 
 ### Cross-Statement Reconciliation:
 - In `FinancialReportingService::getBalanceSheet()`:

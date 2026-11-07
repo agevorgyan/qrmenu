@@ -2,11 +2,30 @@
 
 @section('title', __('Trial Balance') . ' - ' . config('app.name'))
 
+@section('styles')
+<style>
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        .printable-statement {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+    }
+</style>
+@endsection
+
 @section('content')
 <div style="max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem;">
     <!-- Header -->
-    <div class="card" style="padding: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div class="card no-print" style="padding: 1.5rem;">
+        <div class="page-header-flex" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
             <div>
                 <a href="{{ route('admin.finance.reports.index') }}" style="color: var(--text-muted); font-size: 0.85rem; text-decoration: none; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.5rem;">
                     <i class="fa-solid fa-arrow-left"></i> {{ __('Back to Reports') }}
@@ -20,7 +39,7 @@
                 </p>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div class="page-header-actions" style="display: flex; align-items: center; gap: 0.75rem;">
                 <a href="{{ route('admin.finance.reports.export', ['type' => 'trial-balance', 'start_date' => $asOfDate->toDateString(), 'end_date' => $asOfDate->toDateString(), 'location_id' => $locationId]) }}" class="btn btn-secondary">
                     <i class="fa-solid fa-download"></i> {{ __('Export CSV') }}
                 </a>
@@ -31,7 +50,7 @@
         </div>
 
         <!-- Filter Form -->
-        <form method="GET" action="{{ route('admin.finance.reports.trial_balance') }}" style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+        <form method="GET" action="{{ route('admin.finance.reports.trial_balance') }}" class="filter-bar-flex" style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
             <select name="location_id" class="form-control" style="width: auto;">
                 <option value="">{{ __('All Branches / Consolidated') }}</option>
                 @foreach($locations as $loc)
@@ -45,32 +64,35 @@
     </div>
 
     <!-- Trial Balance Paper Card -->
-    <div class="card" style="padding: 2.5rem; background: var(--card-bg);">
-        <div style="text-align: center; border-bottom: 2px solid var(--border-color); padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
-            <h2 style="font-size: 1.4rem; font-weight: 800; margin: 0; color: var(--text-main);">{{ auth()->user()?->vendor?->name }}</h2>
-            <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-muted); margin-top: 0.25rem;">{{ __('TRIAL BALANCE') }}</div>
-            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
-                {{ __('As of') }} {{ $asOfDate->format('F d, Y') }}
+    <div class="card printable-statement" style="padding: 2.5rem; background: var(--card-bg);">
+        <div class="statement-header" style="text-align: center; border-bottom: 2px solid var(--border-color); padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.5rem; font-weight: 800; margin: 0; color: var(--text-main);">{{ auth()->user()?->vendor?->name }}</h2>
+            <div class="statement-title" style="font-size: 1.15rem; font-weight: 700; color: var(--text-muted); margin-top: 0.25rem;">{{ __('TRIAL BALANCE') }}</div>
+            <div class="statement-subtitle" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+                {{ __('As of') }} {{ $asOfDate->format('F d, Y') }} | {{ __('Currency:') }} {{ $trialBalance['currency'] }}
+            </div>
+            <div class="print-only" style="font-size: 0.75rem; color: #666; margin-top: 0.35rem;">
+                {{ __('Generated on:') }} {{ now()->format('Y-m-d H:i') }} | {{ __('Accountant:') }} {{ auth()->user()?->name }}
             </div>
         </div>
 
         <div class="table-responsive">
-            <table class="table">
+            <table class="table" style="min-width: 800px;">
                 <thead>
                     <tr>
-                        <th>{{ __('Account Code') }}</th>
-                        <th>{{ __('Account Title') }}</th>
-                        <th>{{ __('Account Classification') }}</th>
-                        <th style="text-align: right;">{{ __('Debit Balance (Dr)') }}</th>
-                        <th style="text-align: right;">{{ __('Credit Balance (Cr)') }}</th>
+                        <th style="width: 120px;">{{ __('Account Code') }}</th>
+                        <th style="min-width: 250px;">{{ __('Account Title') }}</th>
+                        <th style="width: 140px;">{{ __('Account Classification') }}</th>
+                        <th style="min-width: 140px; text-align: right;">{{ __('Debit Balance (Dr)') }}</th>
+                        <th style="min-width: 140px; text-align: right;">{{ __('Credit Balance (Cr)') }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($trialBalance['rows'] as $row)
                         <tr>
                             <td style="font-family: monospace; font-weight: 800;">{{ $row['code'] }}</td>
-                            <td style="font-weight: 600;">{{ $row['name'] }}</td>
-                            <td><span class="badge badge-secondary">{{ ucfirst($row['type']) }}</span></td>
+                            <td style="font-weight: 600;">{{ __($row['name']) }}</td>
+                            <td><span class="badge badge-secondary">{{ __(ucfirst($row['type'])) }}</span></td>
                             <td style="text-align: right; font-family: monospace; font-weight: 700; color: #10b981;">
                                 {{ $row['net_debit'] > 0 ? number_format($row['net_debit'], 2) : '—' }}
                             </td>
@@ -107,6 +129,18 @@
             </div>
             <div style="font-size: 0.85rem; color: var(--text-muted);">
                 {{ __('Difference:') }} {{ number_format($trialBalance['difference'], 2) }} {{ $trialBalance['currency'] }}
+            </div>
+        </div>
+
+        <!-- Signatures Block for Print -->
+        <div class="print-signatures statement-signatures">
+            <div class="sig-col">
+                <div class="sig-line"></div>
+                <div class="sig-label">{{ __('Prepared by (Accountant):') }} {{ auth()->user()?->name }}</div>
+            </div>
+            <div class="sig-col">
+                <div class="sig-line"></div>
+                <div class="sig-label">{{ __('Approved by (Director / General Manager)') }}</div>
             </div>
         </div>
     </div>

@@ -233,4 +233,75 @@ class FinancialLedgerAndDoubleEntryTest extends TestCase
             ],
         ], $this->user);
     }
+
+    public function test_initializes_and_posts_with_republic_of_armenia_standard_chart_of_accounts(): void
+    {
+        $this->ledgerService->initializeDefaultAccounts($this->vendor);
+
+        // Verify key Armenian Chart of Accounts classes
+        $acc2511 = $this->ledgerService->getAccountByCode($this->vendor, '2511'); // Cash Till
+        $this->assertEquals('asset', $acc2511->type);
+        $this->assertTrue($acc2511->isDebitNormal());
+        $this->assertStringContainsString('Ազգային արժույթի դրամարկղ', $acc2511->name);
+
+        $acc2521 = $this->ledgerService->getAccountByCode($this->vendor, '2521'); // Bank Account
+        $this->assertEquals('asset', $acc2521->type);
+        $this->assertTrue($acc2521->isDebitNormal());
+
+        $acc2111 = $this->ledgerService->getAccountByCode($this->vendor, '2111'); // Raw materials
+        $this->assertEquals('asset', $acc2111->type);
+
+        $acc5211 = $this->ledgerService->getAccountByCode($this->vendor, '5211'); // AP Suppliers
+        $this->assertEquals('liability', $acc5211->type);
+        $this->assertTrue($acc5211->isCreditNormal());
+
+        $acc6111 = $this->ledgerService->getAccountByCode($this->vendor, '6111'); // Food Revenue
+        $this->assertEquals('revenue', $acc6111->type);
+        $this->assertTrue($acc6111->isCreditNormal());
+
+        $acc7111 = $this->ledgerService->getAccountByCode($this->vendor, '7111'); // Food COGS
+        $this->assertEquals('expense', $acc7111->type);
+        $this->assertTrue($acc7111->isDebitNormal());
+
+        $acc6123 = $this->ledgerService->getAccountByCode($this->vendor, '6123'); // Promo Discount (Contra-revenue)
+        $this->assertEquals('revenue', $acc6123->type);
+        $this->assertTrue($acc6123->isDebitNormal());
+
+        $acc5311 = $this->ledgerService->getAccountByCode($this->vendor, '5311'); // Tips Payable
+        $this->assertEquals('liability', $acc5311->type);
+
+        $acc5243 = $this->ledgerService->getAccountByCode($this->vendor, '5243'); // VAT
+        $this->assertEquals('liability', $acc5243->type);
+
+        $acc2551 = $this->ledgerService->getAccountByCode($this->vendor, '2551'); // Card Clearing
+        $acc6112 = $this->ledgerService->getAccountByCode($this->vendor, '6112'); // Beverage Revenue
+
+        // Post a full multi-line restaurant guest check settlement adhering to RA Chart of Accounts
+        // Total Debit: 15,000 (Cash 2511) + 10,000 (Card 2551) + 2,000 (Discount 6123) = 27,000 AMD
+        // Total Credit: 20,000 (Food 6111) + 4,000 (Bev 6112) + 1,500 (Tips 5311) + 1,500 (VAT 5243) = 27,000 AMD
+        $entry = $this->ledgerService->postJournalEntry($this->vendor, [
+            'entry_date' => Carbon::today()->toDateString(),
+            'source_type' => 'PosOrder',
+            'source_id' => 888,
+            'idempotency_key' => 'ra-standard-sale-entry-1',
+            'description' => 'Հյուրերի հաշվի փակում (Դրամարկղ, Էքվայրինգ, Զեղչ, Հասույթ, Թեյավճար, ԱԱՀ)',
+            'lines' => [
+                ['account_id' => $acc2511->id, 'type' => 'debit', 'amount' => 15000.00, 'memo' => 'Կանխիկ մուտք դրամարկղ'],
+                ['account_id' => $acc2551->id, 'type' => 'debit', 'amount' => 10000.00, 'memo' => 'Անկանխիկ POS քարտային վճարում'],
+                ['account_id' => $acc6123->id, 'type' => 'debit', 'amount' => 2000.00, 'memo' => 'Լոյալության զեղչ'],
+                ['account_id' => $acc6111->id, 'type' => 'credit', 'amount' => 20000.00, 'memo' => 'Խոհանոցային արտադրանքի հասույթ'],
+                ['account_id' => $acc6112->id, 'type' => 'credit', 'amount' => 4000.00, 'memo' => 'Բարի ապրանքների հասույթ'],
+                ['account_id' => $acc5311->id, 'type' => 'credit', 'amount' => 1500.00, 'memo' => 'Մատուցողների թեյավճար'],
+                ['account_id' => $acc5243->id, 'type' => 'credit', 'amount' => 1500.00, 'memo' => 'Հաշվարկված ԱԱՀ'],
+            ],
+        ], $this->user);
+
+        $this->assertEquals('posted', $entry->status);
+        $this->assertEquals(27000.00, $entry->total_debit);
+        $this->assertEquals(27000.00, $entry->total_credit);
+        $this->assertEquals(15000.00, $acc2511->fresh()->current_balance);
+        $this->assertEquals(10000.00, $acc2551->fresh()->current_balance);
+        $this->assertEquals(20000.00, $acc6111->fresh()->current_balance);
+        $this->assertEquals(1500.00, $acc5311->fresh()->current_balance);
+    }
 }
