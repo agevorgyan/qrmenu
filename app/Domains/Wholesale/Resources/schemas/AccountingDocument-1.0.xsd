@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://www.taxservice.am/tp3/invoice/definitions"
+           xmlns="http://www.taxservice.am/tp3/invoice/definitions"
+           elementFormDefault="qualified">
+
+  <xs:complexType name="SignableDataType" abstract="true">
+    <xs:attribute name="Version" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="AccountingDocument">
+    <xs:complexContent>
+      <xs:extension base="SignableDataType">
+        <xs:sequence>
+          <xs:element name="User" type="xs:string" minOccurs="0"/>
+          <xs:element name="Type" type="xs:integer" minOccurs="0"/>
+          <xs:element name="Traceable" type="xs:boolean" minOccurs="0"/>
+          <xs:element name="GeneralInfo">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="ParentInvoiceNumber" type="xs:string" minOccurs="0"/>
+                <xs:element name="ParentInvoiceSubmitDate" type="xs:string" minOccurs="0"/>
+                <xs:element name="InvoiceNumber">
+                  <xs:complexType>
+                    <xs:sequence>
+                      <xs:element name="Number" type="xs:string"/>
+                      <xs:element name="Series" type="xs:string"/>
+                    </xs:sequence>
+                  </xs:complexType>
+                </xs:element>
+                <xs:element name="DeliveryDate" type="xs:string" minOccurs="0"/>
+                <xs:element name="Procedure" type="xs:integer" minOccurs="0"/>
+                <xs:element name="AdjustmentAccount" type="xs:boolean" minOccurs="0"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="SupplierInfo">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="VATNumber" type="xs:string" minOccurs="0"/>
+                <xs:element name="Taxpayer">
+                  <xs:complexType>
+                    <xs:sequence>
+                      <xs:element name="TIN" type="xs:string"/>
+                      <xs:element name="Name" type="xs:string"/>
+                      <xs:element name="Address" type="xs:string"/>
+                      <xs:element name="BankAccount" minOccurs="0">
+                        <xs:complexType>
+                          <xs:sequence>
+                            <xs:element name="BankName" type="xs:string"/>
+                            <xs:element name="BankAccountNumber" type="xs:string"/>
+                          </xs:sequence>
+                        </xs:complexType>
+                      </xs:element>
+                    </xs:sequence>
+                  </xs:complexType>
+                </xs:element>
+                <xs:element name="SupplyLocation" type="xs:string" minOccurs="0"/>
+                <xs:element name="SourceIsCar" type="xs:boolean" minOccurs="0"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="BuyerInfo">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="VATNumber" type="xs:string" minOccurs="0"/>
+                <xs:element name="Taxpayer">
+                  <xs:complexType>
+                    <xs:sequence>
+                      <xs:element name="TIN" type="xs:string" minOccurs="0"/>
+                      <xs:element name="Name" type="xs:string"/>
+                      <xs:element name="Address" type="xs:string"/>
+                      <xs:element name="TinNotRequired" type="xs:boolean" minOccurs="0"/>
+                      <xs:element name="IsNatural" type="xs:boolean" minOccurs="0"/>
+                    </xs:sequence>
+                  </xs:complexType>
+                </xs:element>
+                <xs:element name="DeliveryLocation" type="xs:string" minOccurs="0"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="GoodsInfo">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="Good" maxOccurs="unbounded">
+                  <xs:complexType>
+                    <xs:sequence>
+                      <xs:element name="GoodParentId" type="xs:string" minOccurs="0"/>
+                      <xs:element name="Description" type="xs:string"/>
+                      <xs:element name="ClassifierCode" type="xs:string"/>
+                      <xs:element name="Unit" type="xs:string"/>
+                      <xs:element name="Amount" type="xs:decimal"/>
+                      <xs:element name="PricePerUnit" type="xs:decimal"/>
+                      <xs:element name="Price" type="xs:decimal"/>
+                      <xs:element name="Discount" type="xs:decimal" minOccurs="0"/>
+                      <xs:element name="DealType" type="xs:string"/>
+                      <xs:element name="TotalPrice" type="xs:decimal"/>
+                    </xs:sequence>
+                  </xs:complexType>
+                </xs:element>
+                <xs:element name="Total">
+                  <xs:complexType>
+                    <xs:sequence>
+                      <xs:element name="TotalPrice" type="xs:decimal"/>
+                    </xs:sequence>
+                  </xs:complexType>
+                </xs:element>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:element name="ExportedAccDocData">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="SignedAccDocData">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Data">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="SignableData" type="SignableDataType"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="Signature">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="SignatureType" type="xs:string"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="AccDocMetadata">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="SubmissionDate" type="xs:string"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

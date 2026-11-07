@@ -9,6 +9,7 @@
            tablesOpen: {{ (request()->routeIs('admin.floor_plan.*') || request()->routeIs('admin.tables.*') || request()->routeIs('admin.qr.*')) ? 'true' : 'false' }},
            aiOpen: {{ (request()->routeIs('admin.ai.*') || request()->routeIs('admin.settings.ai*')) ? 'true' : 'false' }},
            inventoryOpen: {{ request()->routeIs('admin.inventory.*') ? 'true' : 'false' }},
+           wholesaleOpen: {{ request()->routeIs('admin.wholesale.*') ? 'true' : 'false' }},
            financeOpen: {{ request()->routeIs('admin.finance.*') ? 'true' : 'false' }},
            loyaltyOpen: {{ request()->routeIs('admin.loyalty.*') ? 'true' : 'false' }},
            teamOpen: {{ (request()->routeIs('admin.team.*') || request()->routeIs('admin.access_control.*') || request()->routeIs('admin.hr.*')) ? 'true' : 'false' }},
@@ -137,6 +138,9 @@
             </a>
             <a href="{{ route('superadmin.subscriptions.index') }}" class="nav-item {{ request()->routeIs('superadmin.subscriptions.*') ? 'active' : '' }}">
                 <i class="fa-solid fa-credit-card" style="color: #ec4899;"></i> <span>{{ __('Vendor Subscriptions') }}</span>
+            </a>
+            <a href="{{ route('superadmin.wholesale.tenants.index') }}" class="nav-item {{ request()->routeIs('superadmin.wholesale.*') ? 'active' : '' }}">
+                <i class="fa-solid fa-boxes-packing" style="color: #6366f1;"></i> <span>{{ __('Wholesale Access') }}</span>
             </a>
             <a href="{{ route('superadmin.settings.index') }}" class="nav-item {{ request()->routeIs('superadmin.settings.*') ? 'active' : '' }}">
                 <i class="fa-solid fa-sliders" style="color: #06b6d4;"></i> <span>{{ __('Settings & Landing') }}</span>
@@ -469,6 +473,130 @@
                     @endcan
                 </div>
             </div>
+
+            <!-- ========================================== -->
+            <!-- B2B WHOLESALE & DISTRIBUTION (Super Admin-Gated) -->
+            <!-- ========================================== -->
+            @if($v && \App\Domains\Wholesale\Services\WholesaleAccessService::isEntitled($v))
+                <div class="menu-category">{{ __('B2B Wholesale & Distribution') }}</div>
+
+                <div class="nav-group">
+                    <button type="button" 
+                            class="nav-group-header {{ request()->routeIs('admin.wholesale.*') ? 'active' : '' }}"
+                            @click="wholesaleOpen = !wholesaleOpen"
+                            aria-expanded="wholesaleOpen"
+                            title="{{ __('B2B Wholesale') }}">
+                        <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                            <i class="fa-solid fa-boxes-packing" style="color: #6366f1;"></i>
+                            <span>{{ __('B2B Wholesale') }}</span>
+                        </span>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-size: 0.65rem; padding: 2px 6px; border-radius: 9999px; background: rgba(99, 102, 241, 0.15); color: #818cf8; font-weight: 700; border: 1px solid rgba(99, 102, 241, 0.3);">B2B</span>
+                            <i class="fa-solid fa-chevron-down nav-chevron" :class="wholesaleOpen ? 'rotate-180' : ''"></i>
+                        </div>
+                    </button>
+
+                    <div class="nav-group-children" x-show="wholesaleOpen" x-transition.opacity.duration.200ms style="display: {{ request()->routeIs('admin.wholesale.*') ? 'flex' : 'none' }};">
+                        <a href="{{ route('admin.wholesale.dashboard') }}" class="nav-sub-item {{ request()->routeIs('admin.wholesale.dashboard') ? 'active' : '' }}" title="{{ __('Dashboard') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-chart-pie" style="font-size: 0.85rem; color: #6366f1;"></i>
+                                <span>{{ __('Dashboard') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.wholesale.pos.index') }}" class="nav-sub-item {{ request()->routeIs('admin.wholesale.pos.*') ? 'active' : '' }}" title="{{ __('Wholesale POS') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-cash-register" style="font-size: 0.85rem; color: #f59e0b;"></i>
+                                <span>{{ __('Wholesale POS') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.wholesale.orders.index') }}" class="nav-sub-item {{ request()->routeIs('admin.wholesale.orders.*') ? 'active' : '' }}" title="{{ __('Orders & Pre-orders') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-file-invoice" style="font-size: 0.85rem; color: #3b82f6;"></i>
+                                <span>{{ __('Orders & Pre-orders') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.wholesale.sales.index') }}" class="nav-sub-item {{ request()->routeIs('admin.wholesale.sales.*') ? 'active' : '' }}" title="{{ __('Sales & Invoices') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-receipt" style="font-size: 0.85rem; color: #10b981;"></i>
+                                <span>{{ __('Sales & Invoices') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.wholesale.customers.index') }}" class="nav-sub-item {{ request()->routeIs('admin.wholesale.customers.*') ? 'active' : '' }}" title="{{ __('B2B Customers') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-users" style="font-size: 0.85rem; color: #06b6d4;"></i>
+                                <span>{{ __('B2B Customers') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.wholesale.sellers.index') }}" class="nav-sub-item {{ request()->routeIs('admin.wholesale.sellers.*') ? 'active' : '' }}" title="{{ __('Seller Companies') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-building-columns" style="font-size: 0.85rem; color: #ec4899;"></i>
+                                <span>{{ __('Seller Companies') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.wholesale.products.index') }}" class="nav-sub-item {{ request()->routeIs('admin.wholesale.products.*') ? 'active' : '' }}" title="{{ __('Wholesale Catalog') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-boxes-stacked" style="font-size: 0.85rem; color: #f59e0b;"></i>
+                                <span>{{ __('Wholesale Catalog') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.wholesale.pricelists.index') }}" class="nav-sub-item {{ request()->routeIs('admin.wholesale.pricelists.*') ? 'active' : '' }}" title="{{ __('Price Lists') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-tags" style="font-size: 0.85rem; color: #8b5cf6;"></i>
+                                <span>{{ __('Price Lists') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.wholesale.deliveries.index') }}" class="nav-sub-item {{ request()->routeIs('admin.wholesale.deliveries.*') ? 'active' : '' }}" title="{{ __('Deliveries') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-truck" style="font-size: 0.85rem; color: #3b82f6;"></i>
+                                <span>{{ __('Deliveries') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.wholesale.payments.index') }}" class="nav-sub-item {{ request()->routeIs('admin.wholesale.payments.*') ? 'active' : '' }}" title="{{ __('Payments & A/R') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-money-bill-wave" style="font-size: 0.85rem; color: #10b981;"></i>
+                                <span>{{ __('Payments & A/R') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.wholesale.tax_documents.index') }}" class="nav-sub-item {{ request()->routeIs('admin.wholesale.tax_documents.*') ? 'active' : '' }}" title="{{ __('Tax Documents') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-stamp" style="font-size: 0.85rem; color: #ec4899;"></i>
+                                <span>{{ __('Tax Documents') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.wholesale.pek.index') }}" class="nav-sub-item {{ request()->routeIs('admin.wholesale.pek.*') ? 'active' : '' }}" title="{{ __('PEK XML Export') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-file-code" style="font-size: 0.85rem; color: #6366f1;"></i>
+                                <span>{{ __('PEK XML Export') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.wholesale.returns.index') }}" class="nav-sub-item {{ request()->routeIs('admin.wholesale.returns.*') ? 'active' : '' }}" title="{{ __('Returns') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-rotate-left" style="font-size: 0.85rem; color: #ef4444;"></i>
+                                <span>{{ __('Returns') }}</span>
+                            </span>
+                        </a>
+
+                        <a href="{{ route('admin.wholesale.reports.index') }}" class="nav-sub-item {{ request()->routeIs('admin.wholesale.reports.*') ? 'active' : '' }}" title="{{ __('Reports') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-chart-column" style="font-size: 0.85rem; color: #06b6d4;"></i>
+                                <span>{{ __('Reports') }}</span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            @endif
 
             <!-- ========================================== -->
             <!-- C. CUSTOMER EXPERIENCE & GROWTH            -->

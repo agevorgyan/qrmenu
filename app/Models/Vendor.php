@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Domains\Loyalty\Models\LoyaltyProgram;
 use App\Domains\Loyalty\Models\WalletIssuer;
 use App\Domains\Loyalty\Models\WalletPassDesign;
+use App\Domains\Wholesale\Models\WholesaleSeller;
 use App\DTOs\QuotaStatus;
 use App\Security\FeatureCatalog;
 use App\Services\CredentialService;
@@ -1773,6 +1774,16 @@ class Vendor extends Model
     public function analyticsLogs()
     {
         return $this->hasMany(AnalyticsLog::class);
+    }
+
+    public function moduleAccess(): HasMany
+    {
+        return $this->hasMany(TenantModuleAccess::class, 'vendor_id');
+    }
+
+    public function wholesaleSellers(): HasMany
+    {
+        return $this->hasMany(WholesaleSeller::class, 'vendor_id');
     }
 
     public function customers()

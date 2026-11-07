@@ -15,6 +15,21 @@ use App\Domains\Loyalty\Http\Controllers\Customer\CustomerLoyaltyPortalControlle
 use App\Domains\Loyalty\Http\Controllers\Customer\CustomerWalletController;
 use App\Domains\Loyalty\Http\Controllers\Staff\StaffLoyaltyOperationsController;
 use App\Domains\Loyalty\Http\Controllers\Webhooks\ApplePassKitWebserviceController;
+use App\Domains\Wholesale\Http\Controllers\WholesaleCustomerController;
+use App\Domains\Wholesale\Http\Controllers\WholesaleDashboardController;
+use App\Domains\Wholesale\Http\Controllers\WholesaleDeliveryController;
+use App\Domains\Wholesale\Http\Controllers\WholesaleOrderController;
+use App\Domains\Wholesale\Http\Controllers\WholesalePaymentController;
+use App\Domains\Wholesale\Http\Controllers\WholesalePekExportController;
+use App\Domains\Wholesale\Http\Controllers\WholesalePosController;
+use App\Domains\Wholesale\Http\Controllers\WholesalePriceListController;
+use App\Domains\Wholesale\Http\Controllers\WholesaleProductController;
+use App\Domains\Wholesale\Http\Controllers\WholesaleReceivablesController;
+use App\Domains\Wholesale\Http\Controllers\WholesaleReportController;
+use App\Domains\Wholesale\Http\Controllers\WholesaleReturnController;
+use App\Domains\Wholesale\Http\Controllers\WholesaleSaleController;
+use App\Domains\Wholesale\Http\Controllers\WholesaleSellerController;
+use App\Domains\Wholesale\Http\Controllers\WholesaleTaxDocumentController;
 use App\Http\Controllers\Admin\AccessControlController;
 use App\Http\Controllers\Admin\Finance\BankAccountController;
 use App\Http\Controllers\Admin\Finance\CashRegisterController;
@@ -89,6 +104,7 @@ use App\Http\Controllers\ReservationNotificationController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\StorefrontEventInquiryController;
 use App\Http\Controllers\StorefrontReservationController;
+use App\Http\Controllers\SuperAdmin\WholesaleAccessController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\SuperAdminEmailController;
 use App\Http\Controllers\TranslationController;
@@ -417,6 +433,15 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::delete('/subscriptions/{vendor}/addons/{vendorAddon}', [SuperAdminController::class, 'cancelVendorAddon'])->name('subscriptions.addons.cancel');
     Route::post('/subscriptions/{vendor}/usage-meters/{quotaKey}/reset', [SuperAdminController::class, 'resetUsageMeter'])->name('subscriptions.usage_meters.reset');
 
+    // B2B Wholesale POS Access Management
+    Route::prefix('wholesale')->name('wholesale.')->group(function () {
+        Route::get('/tenants', [WholesaleAccessController::class, 'index'])->name('tenants.index');
+        Route::post('/tenants/{vendor}/grant', [WholesaleAccessController::class, 'grant'])->name('tenants.grant');
+        Route::post('/tenants/{vendor}/suspend', [WholesaleAccessController::class, 'suspend'])->name('tenants.suspend');
+        Route::post('/tenants/{vendor}/revoke', [WholesaleAccessController::class, 'revoke'])->name('tenants.revoke');
+        Route::get('/tenants/{vendor}/logs', [WholesaleAccessController::class, 'logs'])->name('tenants.logs');
+    });
+
     // Landing, System & Security Settings Management
     Route::get('/settings', [SuperAdminController::class, 'settingsIndex'])->name('settings.index');
     Route::post('/settings', [SuperAdminController::class, 'updateSettings'])->name('settings.update');
@@ -727,6 +752,101 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', E
         Route::get('/reports/inventory/abc-analysis', [InventoryReportController::class, 'abcAnalysis'])->name('reports.inventory.abc-analysis');
         Route::get('/reports/inventory/turnover', [InventoryReportController::class, 'turnover'])->name('reports.inventory.turnover');
         Route::get('/reports/inventory/waste', [InventoryReportController::class, 'wasteAnalysis'])->name('reports.inventory.waste');
+    });
+
+    // B2B Wholesale POS & Distribution Subsystem (Super Admin-Gated)
+    Route::middleware(['wholesale.access'])->prefix('wholesale')->name('wholesale.')->group(function () {
+        Route::get('/dashboard', [WholesaleDashboardController::class, 'index'])->name('dashboard');
+
+        // Seller Companies Management
+        Route::get('/sellers', [WholesaleSellerController::class, 'index'])->name('sellers.index');
+        Route::get('/sellers/create', [WholesaleSellerController::class, 'create'])->name('sellers.create');
+        Route::post('/sellers', [WholesaleSellerController::class, 'store'])->name('sellers.store');
+        Route::get('/sellers/{seller}', [WholesaleSellerController::class, 'show'])->name('sellers.show');
+        Route::get('/sellers/{seller}/edit', [WholesaleSellerController::class, 'edit'])->name('sellers.edit');
+        Route::put('/sellers/{seller}', [WholesaleSellerController::class, 'update'])->name('sellers.update');
+        Route::post('/sellers/{seller}/bank-accounts', [WholesaleSellerController::class, 'storeBankAccount'])->name('sellers.bank_accounts.store');
+        Route::post('/sellers/{seller}/locations', [WholesaleSellerController::class, 'storeLocation'])->name('sellers.locations.store');
+
+        // Wholesale POS Terminal
+        Route::get('/pos', [WholesalePosController::class, 'index'])->name('pos.index');
+        Route::post('/pos/calculate-line', [WholesalePosController::class, 'calculateLine'])->name('pos.calculate_line');
+        Route::post('/pos/checkout', [WholesalePosController::class, 'checkout'])->name('pos.checkout');
+
+        // Wholesale Orders & Pre-orders
+        Route::get('/orders', [WholesaleOrderController::class, 'index'])->name('orders.index');
+        Route::get('/orders/{order}', [WholesaleOrderController::class, 'show'])->name('orders.show');
+        Route::post('/orders/{order}/confirm', [WholesaleOrderController::class, 'confirm'])->name('orders.confirm');
+        Route::post('/orders/{order}/sale', [WholesaleOrderController::class, 'generateSale'])->name('orders.sale');
+
+        // Wholesale Sales Invoices
+        Route::get('/sales', [WholesaleSaleController::class, 'index'])->name('sales.index');
+        Route::get('/sales/{sale}', [WholesaleSaleController::class, 'show'])->name('sales.show');
+        Route::get('/sales/{sale}/print', [WholesaleSaleController::class, 'print'])->name('sales.print');
+        // B2B Customers Management
+        Route::get('/customers', [WholesaleCustomerController::class, 'index'])->name('customers.index');
+        Route::get('/customers/create', [WholesaleCustomerController::class, 'create'])->name('customers.create');
+        Route::post('/customers', [WholesaleCustomerController::class, 'store'])->name('customers.store');
+        Route::get('/customers/{customer}', [WholesaleCustomerController::class, 'show'])->name('customers.show');
+        Route::get('/customers/{customer}/edit', [WholesaleCustomerController::class, 'edit'])->name('customers.edit');
+        Route::put('/customers/{customer}', [WholesaleCustomerController::class, 'update'])->name('customers.update');
+        Route::post('/customers/{customer}/addresses', [WholesaleCustomerController::class, 'storeAddress'])->name('customers.addresses.store');
+        Route::post('/customers/{customer}/pricing', [WholesaleCustomerController::class, 'storePricing'])->name('customers.pricing.store');
+
+        // Wholesale Product Catalog & ATGAA Classification
+        Route::get('/products', [WholesaleProductController::class, 'index'])->name('products.index');
+        Route::get('/products/create', [WholesaleProductController::class, 'create'])->name('products.create');
+        Route::post('/products', [WholesaleProductController::class, 'store'])->name('products.store');
+        Route::get('/products/{product}', [WholesaleProductController::class, 'show'])->name('products.show');
+        Route::get('/products/{product}/edit', [WholesaleProductController::class, 'edit'])->name('products.edit');
+        Route::put('/products/{product}', [WholesaleProductController::class, 'update'])->name('products.update');
+        Route::post('/products/{product}/packagings', [WholesaleProductController::class, 'storePackaging'])->name('products.packaging.store');
+
+        // Price Lists & Contracts
+        Route::get('/price-lists', [WholesalePriceListController::class, 'index'])->name('pricelists.index');
+        Route::get('/price-lists/create', [WholesalePriceListController::class, 'create'])->name('pricelists.create');
+        Route::post('/price-lists', [WholesalePriceListController::class, 'store'])->name('pricelists.store');
+        Route::get('/price-lists/{priceList}', [WholesalePriceListController::class, 'show'])->name('pricelists.show');
+        Route::post('/price-lists/{priceList}/items', [WholesalePriceListController::class, 'storeItem'])->name('pricelists.items.store');
+        // Wholesale Deliveries & Logistics
+        Route::get('/deliveries', [WholesaleDeliveryController::class, 'index'])->name('deliveries.index');
+        Route::get('/deliveries/create', [WholesaleDeliveryController::class, 'create'])->name('deliveries.create');
+        Route::post('/deliveries', [WholesaleDeliveryController::class, 'store'])->name('deliveries.store');
+        Route::get('/deliveries/{delivery}', [WholesaleDeliveryController::class, 'show'])->name('deliveries.show');
+        Route::post('/deliveries/{delivery}/dispatch', [WholesaleDeliveryController::class, 'dispatch'])->name('deliveries.dispatch');
+        Route::post('/deliveries/{delivery}/confirm', [WholesaleDeliveryController::class, 'confirm'])->name('deliveries.confirm');
+
+        // Wholesale Customer Returns & Restocking
+        Route::get('/returns', [WholesaleReturnController::class, 'index'])->name('returns.index');
+        Route::get('/returns/create', [WholesaleReturnController::class, 'create'])->name('returns.create');
+        Route::post('/returns', [WholesaleReturnController::class, 'store'])->name('returns.store');
+        Route::get('/returns/{return}', [WholesaleReturnController::class, 'show'])->name('returns.show');
+
+        // Subsystem routes (stubbed until Phase 6 and 7)
+        // Wholesale Payments & Collections
+        Route::get('/payments', [WholesalePaymentController::class, 'index'])->name('payments.index');
+        Route::get('/payments/create', [WholesalePaymentController::class, 'create'])->name('payments.create');
+        Route::post('/payments', [WholesalePaymentController::class, 'store'])->name('payments.store');
+        Route::get('/payments/{payment}', [WholesalePaymentController::class, 'show'])->name('payments.show');
+
+        // Accounts Receivable & Aging
+        Route::get('/receivables', [WholesaleReceivablesController::class, 'index'])->name('receivables.index');
+
+        // Wholesale Tax Documents & PEK XML
+        Route::get('/tax-documents', [WholesaleTaxDocumentController::class, 'index'])->name('tax_documents.index');
+        Route::get('/tax-documents/{taxDocument}', [WholesaleTaxDocumentController::class, 'show'])->name('tax_documents.show');
+        Route::post('/tax-documents/from-sale/{sale}', [WholesaleTaxDocumentController::class, 'generateFromSale'])->name('tax_documents.generate_from_sale');
+        Route::post('/tax-documents/{taxDocument}/revalidate', [WholesaleTaxDocumentController::class, 'revalidate'])->name('tax_documents.revalidate');
+        Route::get('/tax-documents/{taxDocument}/download-xml', [WholesaleTaxDocumentController::class, 'downloadXml'])->name('tax_documents.download_xml');
+
+        // Batch PEK XML Exports
+        Route::get('/pek-export', [WholesalePekExportController::class, 'index'])->name('pek.index');
+        Route::post('/pek-export/batch', [WholesalePekExportController::class, 'exportBatch'])->name('pek.export_batch');
+        Route::get('/pek-export/{export}/download-zip', [WholesalePekExportController::class, 'downloadZip'])->name('pek.download_zip');
+
+        // Wholesale Analytics & Reports
+        Route::get('/reports', [WholesaleReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/export/{type}', [WholesaleReportController::class, 'exportCsv'])->name('reports.export');
     });
 
     // Cash Management & Financial Operations

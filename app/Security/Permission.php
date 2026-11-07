@@ -415,6 +415,45 @@ class Permission
 
     public const FINANCE_PERIOD_CLOSE = 'finance.period.close';
 
+    // B2B Wholesale Permissions
+    public const WHOLESALE_MODULE_MANAGE = 'wholesale.module.manage';
+
+    public const WHOLESALE_POS_ACCESS = 'wholesale.pos.access';
+
+    public const WHOLESALE_PRICE_OVERRIDE = 'wholesale.price.override';
+
+    public const WHOLESALE_ORDERS_VIEW = 'wholesale.orders.view';
+
+    public const WHOLESALE_ORDERS_CREATE = 'wholesale.orders.create';
+
+    public const WHOLESALE_ORDERS_CONFIRM = 'wholesale.orders.confirm';
+
+    public const WHOLESALE_ORDERS_CANCEL = 'wholesale.orders.cancel';
+
+    public const WHOLESALE_CATALOG_VIEW = 'wholesale.catalog.view';
+
+    public const WHOLESALE_CATALOG_MANAGE = 'wholesale.catalog.manage';
+
+    public const WHOLESALE_PRICING_MANAGE = 'wholesale.pricing.manage';
+
+    public const WHOLESALE_CUSTOMERS_MANAGE = 'wholesale.customers.manage';
+
+    public const WHOLESALE_SELLERS_MANAGE = 'wholesale.sellers.manage';
+
+    public const WHOLESALE_DELIVERIES_VIEW = 'wholesale.deliveries.view';
+
+    public const WHOLESALE_DELIVERIES_MANAGE = 'wholesale.deliveries.manage';
+
+    public const WHOLESALE_PAYMENTS_RECORD = 'wholesale.payments.record';
+
+    public const WHOLESALE_RECEIVABLES_VIEW = 'wholesale.receivables.view';
+
+    public const WHOLESALE_TAX_DOCUMENTS_MANAGE = 'wholesale.tax.manage';
+
+    public const WHOLESALE_PEK_EXPORT = 'wholesale.pek.export';
+
+    public const WHOLESALE_REPORTS_VIEW = 'wholesale.reports.view';
+
     /**
      * Get all defined permissions in the system.
      */
@@ -613,6 +652,25 @@ class Permission
             self::FINANCE_REPORTS_VIEW,
             self::FINANCE_REPORTS_EXPORT,
             self::FINANCE_PERIOD_CLOSE,
+            self::WHOLESALE_MODULE_MANAGE,
+            self::WHOLESALE_POS_ACCESS,
+            self::WHOLESALE_PRICE_OVERRIDE,
+            self::WHOLESALE_ORDERS_VIEW,
+            self::WHOLESALE_ORDERS_CREATE,
+            self::WHOLESALE_ORDERS_CONFIRM,
+            self::WHOLESALE_ORDERS_CANCEL,
+            self::WHOLESALE_CATALOG_VIEW,
+            self::WHOLESALE_CATALOG_MANAGE,
+            self::WHOLESALE_PRICING_MANAGE,
+            self::WHOLESALE_CUSTOMERS_MANAGE,
+            self::WHOLESALE_SELLERS_MANAGE,
+            self::WHOLESALE_DELIVERIES_VIEW,
+            self::WHOLESALE_DELIVERIES_MANAGE,
+            self::WHOLESALE_PAYMENTS_RECORD,
+            self::WHOLESALE_RECEIVABLES_VIEW,
+            self::WHOLESALE_TAX_DOCUMENTS_MANAGE,
+            self::WHOLESALE_PEK_EXPORT,
+            self::WHOLESALE_REPORTS_VIEW,
         ];
     }
 
@@ -693,6 +751,25 @@ class Permission
                 self::HR_ATTENDANCE_CLOCK,
                 self::HR_LEAVE_REQUEST,
                 self::HR_ADVANCES_REQUEST,
+                self::WHOLESALE_MODULE_MANAGE,
+                self::WHOLESALE_POS_ACCESS,
+                self::WHOLESALE_PRICE_OVERRIDE,
+                self::WHOLESALE_ORDERS_VIEW,
+                self::WHOLESALE_ORDERS_CREATE,
+                self::WHOLESALE_ORDERS_CONFIRM,
+                self::WHOLESALE_ORDERS_CANCEL,
+                self::WHOLESALE_CATALOG_VIEW,
+                self::WHOLESALE_CATALOG_MANAGE,
+                self::WHOLESALE_PRICING_MANAGE,
+                self::WHOLESALE_CUSTOMERS_MANAGE,
+                self::WHOLESALE_SELLERS_MANAGE,
+                self::WHOLESALE_DELIVERIES_VIEW,
+                self::WHOLESALE_DELIVERIES_MANAGE,
+                self::WHOLESALE_PAYMENTS_RECORD,
+                self::WHOLESALE_RECEIVABLES_VIEW,
+                self::WHOLESALE_TAX_DOCUMENTS_MANAGE,
+                self::WHOLESALE_PEK_EXPORT,
+                self::WHOLESALE_REPORTS_VIEW,
             ],
             'vendor_owner' => [
                 self::MENU_VIEW,
@@ -872,6 +949,24 @@ class Permission
                 self::HR_ATTENDANCE_CLOCK,
                 self::HR_LEAVE_REQUEST,
                 self::HR_ADVANCES_REQUEST,
+                self::WHOLESALE_POS_ACCESS,
+                self::WHOLESALE_PRICE_OVERRIDE,
+                self::WHOLESALE_ORDERS_VIEW,
+                self::WHOLESALE_ORDERS_CREATE,
+                self::WHOLESALE_ORDERS_CONFIRM,
+                self::WHOLESALE_ORDERS_CANCEL,
+                self::WHOLESALE_CATALOG_VIEW,
+                self::WHOLESALE_CATALOG_MANAGE,
+                self::WHOLESALE_PRICING_MANAGE,
+                self::WHOLESALE_CUSTOMERS_MANAGE,
+                self::WHOLESALE_SELLERS_MANAGE,
+                self::WHOLESALE_DELIVERIES_VIEW,
+                self::WHOLESALE_DELIVERIES_MANAGE,
+                self::WHOLESALE_PAYMENTS_RECORD,
+                self::WHOLESALE_RECEIVABLES_VIEW,
+                self::WHOLESALE_TAX_DOCUMENTS_MANAGE,
+                self::WHOLESALE_PEK_EXPORT,
+                self::WHOLESALE_REPORTS_VIEW,
             ],
             'manager' => [
                 self::MENU_VIEW,

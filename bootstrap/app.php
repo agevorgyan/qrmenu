@@ -1,5 +1,6 @@
 <?php
 
+use App\Domains\Wholesale\Http\Middleware\EnsureWholesaleAccess;
 use App\Http\Middleware\EnsurePlanHasFeature;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\IdentifyTenant;
@@ -51,7 +52,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => EnsureRole::class,
             'feature' => EnsurePlanHasFeature::class,
-            'feature' => EnsurePlanHasFeature::class,
+            'wholesale.access' => EnsureWholesaleAccess::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             'api/webhooks/*',
