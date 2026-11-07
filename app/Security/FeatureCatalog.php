@@ -79,6 +79,19 @@ class FeatureCatalog
 
     public const HR_REPORTS_ADVANCED = 'hr.reports_advanced';
 
+    // Cash Management & Financial Operations
+    public const FINANCE_BASE = 'finance.base';
+
+    public const FINANCE_CASH_REGISTERS = 'finance.cash_registers';
+
+    public const FINANCE_EXPENSES = 'finance.expenses';
+
+    public const FINANCE_BANK_RECONCILIATION = 'finance.bank_reconciliation';
+
+    public const FINANCE_LEDGER = 'finance.ledger';
+
+    public const FINANCE_REPORTS_ADVANCED = 'finance.reports_advanced';
+
     // Dynamic Feature Catalog canonical codes (Sections 3 & 4)
     public const MENU_QR = 'menu.qr';
 

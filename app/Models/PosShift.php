@@ -40,6 +40,11 @@ class PosShift extends Model
         'orders_count',
         'opening_notes',
         'closing_notes',
+        'cash_register_id',
+        'manager_approved_by',
+        'manager_approved_at',
+        'approval_notes',
+        'variance_status',
     ];
 
     protected function casts(): array
@@ -47,6 +52,7 @@ class PosShift extends Model
         return [
             'opened_at' => 'datetime',
             'closed_at' => 'datetime',
+            'manager_approved_at' => 'datetime',
             'opening_float' => 'decimal:2',
             'expected_cash' => 'decimal:2',
             'counted_cash' => 'decimal:2',
@@ -108,6 +114,46 @@ class PosShift extends Model
     public function closedByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'closed_by_user_id');
+    }
+
+    public function managerApprovedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'manager_approved_by');
+    }
+
+    public function getOpeningCashAttribute(): ?float
+    {
+        return $this->opening_float !== null ? (float) $this->opening_float : null;
+    }
+
+    public function setOpeningCashAttribute(mixed $value): void
+    {
+        $this->attributes['opening_float'] = $value;
+    }
+
+    public function getActualCashAttribute(): ?float
+    {
+        return $this->counted_cash !== null ? (float) $this->counted_cash : null;
+    }
+
+    public function setActualCashAttribute(mixed $value): void
+    {
+        $this->attributes['counted_cash'] = $value;
+    }
+
+    public function getCashDiscrepancyAttribute(): ?float
+    {
+        return $this->discrepancy !== null ? (float) $this->discrepancy : null;
+    }
+
+    public function setCashDiscrepancyAttribute(mixed $value): void
+    {
+        $this->attributes['discrepancy'] = $value;
+    }
+
+    public function cashRegister(): BelongsTo
+    {
+        return $this->belongsTo(CashRegister::class, 'cash_register_id');
     }
 
     public function cashMovements(): HasMany

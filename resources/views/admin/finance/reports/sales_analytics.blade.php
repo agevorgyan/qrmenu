@@ -1,0 +1,153 @@
+@extends('layouts.app')
+
+@section('title', __('Sales Analytics') . ' - ' . config('app.name'))
+
+@section('content')
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    <!-- Header -->
+    <div class="card" style="padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <a href="{{ route('admin.finance.reports.index') }}" style="color: var(--text-muted); font-size: 0.85rem; text-decoration: none; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.5rem;">
+                    <i class="fa-solid fa-arrow-left"></i> {{ __('Back to Reports') }}
+                </a>
+                <h1 style="font-size: 1.5rem; font-weight: 800; margin: 0; color: var(--text-main); display: flex; align-items: center; gap: 0.6rem;">
+                    <i class="fa-solid fa-chart-pie" style="color: #f59e0b;"></i>
+                    {{ __('Multi-Dimensional Sales Analytics') }}
+                </h1>
+                <p style="margin: 0.25rem 0 0; color: var(--text-muted); font-size: 0.85rem;">
+                    {{ __('Period:') }} {{ $analytics['start_date'] }} {{ __('to') }} {{ $analytics['end_date'] }} | {{ __('Currency:') }} {{ $analytics['currency'] }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Filter Form -->
+        <form method="GET" action="{{ route('admin.finance.reports.sales_analytics') }}" style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+            <select name="location_id" class="form-control" style="width: auto;">
+                <option value="">{{ __('All Branches / Consolidated') }}</option>
+                @foreach($locations as $loc)
+                    <option value="{{ $loc->id }}" {{ $locationId == $loc->id ? 'selected' : '' }}>{{ $loc->name }}</option>
+                @endforeach
+            </select>
+
+            <input type="date" name="start_date" class="form-control" style="width: auto;" value="{{ $startDate->toDateString() }}">
+            <input type="date" name="end_date" class="form-control" style="width: auto;" value="{{ $endDate->toDateString() }}">
+            <button type="submit" class="btn btn-secondary">{{ __('Update Range') }}</button>
+        </form>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem;">
+        <div class="card" style="padding: 1.25rem;">
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">{{ __('Total Orders') }}</div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-top: 0.25rem;">
+                {{ number_format($analytics['summary']['total_orders']) }}
+            </div>
+        </div>
+
+        <div class="card" style="padding: 1.25rem;">
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">{{ __('Gross Sales') }}</div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-top: 0.25rem;">
+                {{ number_format($analytics['summary']['gross_sales'], 2) }}
+            </div>
+        </div>
+
+        <div class="card" style="padding: 1.25rem;">
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">{{ __('Discounts Allowed') }}</div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: #ef4444; margin-top: 0.25rem;">
+                -{{ number_format($analytics['summary']['discounts'], 2) }}
+            </div>
+        </div>
+
+        <div class="card" style="padding: 1.25rem;">
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">{{ __('Net Sales') }}</div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: #10b981; margin-top: 0.25rem;">
+                {{ number_format($analytics['summary']['net_sales'], 2) }} {{ $analytics['currency'] }}
+            </div>
+        </div>
+
+        <div class="card" style="padding: 1.25rem;">
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">{{ __('Average Ticket / AOV') }}</div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: #3b82f6; margin-top: 0.25rem;">
+                {{ number_format($analytics['summary']['average_order_value'], 2) }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Breakdown Tables: Order Type & Payment Method -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <!-- By Order Type -->
+        <div class="card" style="padding: 1.5rem;">
+            <h3 style="margin-top: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main);">
+                <i class="fa-solid fa-utensils" style="color: #f59e0b; margin-right: 0.5rem;"></i>
+                {{ __('Sales by Service Type') }}
+            </h3>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>{{ __('Service Type') }}</th>
+                            <th style="text-align: right;">{{ __('Order Count') }}</th>
+                            <th style="text-align: right;">{{ __('Net Revenue') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($analytics['by_order_type'] as $ot)
+                            <tr>
+                                <td style="font-weight: 700;">{{ ucfirst(str_replace('_', ' ', $ot['order_type'])) }}</td>
+                                <td style="text-align: right; font-weight: 600;">{{ number_format($ot['order_count']) }}</td>
+                                <td style="text-align: right; font-weight: 800; color: #10b981;">
+                                    {{ number_format($ot['total_revenue'], 2) }} {{ $analytics['currency'] }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                                    {{ __('No sales orders in period.') }}
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- By Payment Method -->
+        <div class="card" style="padding: 1.5rem;">
+            <h3 style="margin-top: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main);">
+                <i class="fa-solid fa-credit-card" style="color: #3b82f6; margin-right: 0.5rem;"></i>
+                {{ __('Settlement by Payment Method') }}
+            </h3>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>{{ __('Payment Channel') }}</th>
+                            <th style="text-align: right;">{{ __('Tx Count') }}</th>
+                            <th style="text-align: right;">{{ __('Settled Amount') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($analytics['by_payment_method'] as $pm)
+                            <tr>
+                                <td style="font-weight: 700;">{{ ucfirst($pm['payment_method']) }}</td>
+                                <td style="text-align: right; font-weight: 600;">{{ number_format($pm['payment_count']) }}</td>
+                                <td style="text-align: right; font-weight: 800; color: #3b82f6;">
+                                    {{ number_format($pm['total_amount'], 2) }} {{ $analytics['currency'] }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                                    {{ __('No payments collected in period.') }}
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+

@@ -9,6 +9,7 @@
            tablesOpen: {{ (request()->routeIs('admin.floor_plan.*') || request()->routeIs('admin.tables.*') || request()->routeIs('admin.qr.*')) ? 'true' : 'false' }},
            aiOpen: {{ (request()->routeIs('admin.ai.*') || request()->routeIs('admin.settings.ai*')) ? 'true' : 'false' }},
            inventoryOpen: {{ request()->routeIs('admin.inventory.*') ? 'true' : 'false' }},
+           financeOpen: {{ request()->routeIs('admin.finance.*') ? 'true' : 'false' }},
            loyaltyOpen: {{ request()->routeIs('admin.loyalty.*') ? 'true' : 'false' }},
            teamOpen: {{ (request()->routeIs('admin.team.*') || request()->routeIs('admin.access_control.*') || request()->routeIs('admin.hr.*')) ? 'true' : 'false' }},
            settingsOpen: {{ (request()->routeIs('admin.settings.*') || request()->routeIs('admin.profile')) ? 'true' : 'false' }},
@@ -696,6 +697,124 @@
                     @endif
                 </a>
             @endcan
+
+            @if(auth()->user()?->can('finance.view') || auth()->user()?->role === 'vendor_owner' || auth()->user()?->role === 'manager')
+                <!-- Finance & Cash Operations (Collapsible Group) -->
+                <div class="nav-group">
+                    <button type="button" 
+                            class="nav-group-header {{ request()->routeIs('admin.finance.*') ? 'active' : '' }}"
+                            @click="financeOpen = !financeOpen"
+                            aria-expanded="financeOpen"
+                            title="{{ __('Finance & Cash') }}">
+                        <span style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                            <i class="fa-solid fa-coins" style="color: #10b981;"></i>
+                            <span>{{ __('Finance & Cash') }}</span>
+                        </span>
+                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-chevron-down nav-chevron" :class="financeOpen ? 'rotate-180' : ''"></i>
+                        </div>
+                    </button>
+
+                    <div class="nav-group-children" x-show="financeOpen" x-transition.opacity.duration.200ms style="display: {{ request()->routeIs('admin.finance.*') ? 'flex' : 'none' }};">
+                        <a href="{{ route('admin.finance.dashboard') }}" class="nav-sub-item {{ request()->routeIs('admin.finance.dashboard') ? 'active' : '' }}" title="{{ __('Financial Dashboard') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-chart-line" style="font-size: 0.85rem; color: #10b981;"></i>
+                                <span>{{ __('Overview & KPIs') }}</span>
+                            </span>
+                        </a>
+
+                        @can('finance.registers.manage')
+                            <a href="{{ route('admin.finance.registers.index') }}" class="nav-sub-item {{ request()->routeIs('admin.finance.registers.*') ? 'active' : '' }}" title="{{ __('Cash Registers') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-cash-register" style="font-size: 0.85rem; color: #f59e0b;"></i>
+                                    <span>{{ __('Cash Registers') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+
+                        @can('finance.shifts.view')
+                            <a href="{{ route('admin.finance.shifts.index') }}" class="nav-sub-item {{ request()->routeIs('admin.finance.shifts.*') ? 'active' : '' }}" title="{{ __('Cash Shifts') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-business-time" style="font-size: 0.85rem; color: #6366f1;"></i>
+                                    <span>{{ __('Cash Shifts') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+
+                        @can('finance.expenses.view')
+                            <a href="{{ route('admin.finance.expenses.index') }}" class="nav-sub-item {{ request()->routeIs('admin.finance.expenses.*') ? 'active' : '' }}" title="{{ __('Expenses & AP') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-receipt" style="font-size: 0.85rem; color: #ef4444;"></i>
+                                    <span>{{ __('Expenses & AP') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+
+                        @can('finance.income.manage')
+                            <a href="{{ route('admin.finance.incomes.index') }}" class="nav-sub-item {{ request()->routeIs('admin.finance.incomes.*') ? 'active' : '' }}" title="{{ __('Other Incomes') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-hand-holding-dollar" style="font-size: 0.85rem; color: #10b981;"></i>
+                                    <span>{{ __('Other Incomes') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+
+                        @can('finance.transfers.manage')
+                            <a href="{{ route('admin.finance.transfers.index') }}" class="nav-sub-item {{ request()->routeIs('admin.finance.transfers.*') ? 'active' : '' }}" title="{{ __('Cash Transfers') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-money-bill-transfer" style="font-size: 0.85rem; color: #06b6d4;"></i>
+                                    <span>{{ __('Cash Transfers') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+
+                        @can('finance.bank.manage')
+                            <a href="{{ route('admin.finance.bank_accounts.index') }}" class="nav-sub-item {{ request()->routeIs('admin.finance.bank_accounts.*') ? 'active' : '' }}" title="{{ __('Bank Accounts') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-building-columns" style="font-size: 0.85rem; color: #3b82f6;"></i>
+                                    <span>{{ __('Bank Accounts') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+
+                        @can('finance.ledger.view')
+                            <a href="{{ route('admin.finance.ledger.index') }}" class="nav-sub-item {{ request()->routeIs('admin.finance.ledger.*') ? 'active' : '' }}" title="{{ __('Chart of Accounts') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-book-journal-whills" style="font-size: 0.85rem; color: #8b5cf6;"></i>
+                                    <span>{{ __('General Ledger') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+
+                        @can('finance.reports.view')
+                            <a href="{{ route('admin.finance.reports.index') }}" class="nav-sub-item {{ request()->routeIs('admin.finance.reports.*') ? 'active' : '' }}" title="{{ __('Financial Reports') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-file-invoice-dollar" style="font-size: 0.85rem; color: #ec4899;"></i>
+                                    <span>{{ __('Financial Reports') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+
+                        @can('finance.expenses.approve')
+                            <a href="{{ route('admin.finance.approvals.index') }}" class="nav-sub-item {{ request()->routeIs('admin.finance.approvals.*') ? 'active' : '' }}" title="{{ __('Approvals Queue') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-clipboard-check" style="font-size: 0.85rem; color: #f97316;"></i>
+                                    <span>{{ __('Approvals Queue') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+
+                        @can('finance.ledger.view')
+                            <a href="{{ route('admin.finance.audit.index') }}" class="nav-sub-item {{ request()->routeIs('admin.finance.audit.*') ? 'active' : '' }}" title="{{ __('Audit Trail') }}">
+                                <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <i class="fa-solid fa-shield-halved" style="font-size: 0.85rem; color: #64748b;"></i>
+                                    <span>{{ __('Audit Trail') }}</span>
+                                </span>
+                            </a>
+                        @endcan
+                    </div>
+                </div>
+            @endif
 
             @if(auth()->user()?->can('team.view') || auth()->user()?->can('hr.employees.view') || auth()->user()?->can('hr.self_service.view'))
                 <!-- Team & Workforce Management (Collapsible Group) -->

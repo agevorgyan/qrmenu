@@ -376,6 +376,45 @@ class Permission
 
     public const HR_REPORTS_EXPORT = 'hr.reports.export';
 
+    // Cash Management & Financial Operations permissions
+    public const FINANCE_VIEW = 'finance.view';
+
+    public const FINANCE_DASHBOARD = 'finance.dashboard';
+
+    public const FINANCE_REGISTERS_MANAGE = 'finance.registers.manage';
+
+    public const FINANCE_SHIFTS_VIEW = 'finance.shifts.view';
+
+    public const FINANCE_SHIFTS_MANAGE = 'finance.shifts.manage';
+
+    public const FINANCE_SHIFTS_APPROVE = 'finance.shifts.approve';
+
+    public const FINANCE_EXPENSES_VIEW = 'finance.expenses.view';
+
+    public const FINANCE_EXPENSES_CREATE = 'finance.expenses.create';
+
+    public const FINANCE_EXPENSES_APPROVE = 'finance.expenses.approve';
+
+    public const FINANCE_EXPENSES_PAY = 'finance.expenses.pay';
+
+    public const FINANCE_INCOME_MANAGE = 'finance.income.manage';
+
+    public const FINANCE_TRANSFERS_MANAGE = 'finance.transfers.manage';
+
+    public const FINANCE_BANK_MANAGE = 'finance.bank.manage';
+
+    public const FINANCE_BANK_RECONCILE = 'finance.bank.reconcile';
+
+    public const FINANCE_LEDGER_VIEW = 'finance.ledger.view';
+
+    public const FINANCE_LEDGER_MANAGE = 'finance.ledger.manage';
+
+    public const FINANCE_REPORTS_VIEW = 'finance.reports.view';
+
+    public const FINANCE_REPORTS_EXPORT = 'finance.reports.export';
+
+    public const FINANCE_PERIOD_CLOSE = 'finance.period.close';
+
     /**
      * Get all defined permissions in the system.
      */
@@ -555,6 +594,25 @@ class Permission
             self::HR_DOCUMENTS_MANAGE,
             self::HR_REPORTS_VIEW,
             self::HR_REPORTS_EXPORT,
+            self::FINANCE_VIEW,
+            self::FINANCE_DASHBOARD,
+            self::FINANCE_REGISTERS_MANAGE,
+            self::FINANCE_SHIFTS_VIEW,
+            self::FINANCE_SHIFTS_MANAGE,
+            self::FINANCE_SHIFTS_APPROVE,
+            self::FINANCE_EXPENSES_VIEW,
+            self::FINANCE_EXPENSES_CREATE,
+            self::FINANCE_EXPENSES_APPROVE,
+            self::FINANCE_EXPENSES_PAY,
+            self::FINANCE_INCOME_MANAGE,
+            self::FINANCE_TRANSFERS_MANAGE,
+            self::FINANCE_BANK_MANAGE,
+            self::FINANCE_BANK_RECONCILE,
+            self::FINANCE_LEDGER_VIEW,
+            self::FINANCE_LEDGER_MANAGE,
+            self::FINANCE_REPORTS_VIEW,
+            self::FINANCE_REPORTS_EXPORT,
+            self::FINANCE_PERIOD_CLOSE,
         ];
     }
 
@@ -617,6 +675,9 @@ class Permission
                 self::SHIFTS_OPEN,
                 self::SHIFTS_CLOSE,
                 self::SHIFTS_VIEW_OWN,
+                self::FINANCE_VIEW,
+                self::FINANCE_SHIFTS_VIEW,
+                self::FINANCE_SHIFTS_MANAGE,
                 self::REFUNDS_REQUEST,
                 self::ORDERS_VIEW_OWN,
                 self::ORDERS_CREATE,
@@ -700,6 +761,9 @@ class Permission
                 self::SHIFTS_OPEN,
                 self::SHIFTS_CLOSE,
                 self::SHIFTS_VIEW_OWN,
+                self::FINANCE_VIEW,
+                self::FINANCE_SHIFTS_VIEW,
+                self::FINANCE_SHIFTS_MANAGE,
                 self::REFUNDS_REQUEST,
                 self::ORDERS_VIEW_OWN,
                 self::ORDERS_CREATE,
@@ -782,6 +846,25 @@ class Permission
                 self::HR_DOCUMENTS_MANAGE,
                 self::HR_REPORTS_VIEW,
                 self::HR_REPORTS_EXPORT,
+                self::FINANCE_VIEW,
+                self::FINANCE_DASHBOARD,
+                self::FINANCE_REGISTERS_MANAGE,
+                self::FINANCE_SHIFTS_VIEW,
+                self::FINANCE_SHIFTS_MANAGE,
+                self::FINANCE_SHIFTS_APPROVE,
+                self::FINANCE_EXPENSES_VIEW,
+                self::FINANCE_EXPENSES_CREATE,
+                self::FINANCE_EXPENSES_APPROVE,
+                self::FINANCE_EXPENSES_PAY,
+                self::FINANCE_INCOME_MANAGE,
+                self::FINANCE_TRANSFERS_MANAGE,
+                self::FINANCE_BANK_MANAGE,
+                self::FINANCE_BANK_RECONCILE,
+                self::FINANCE_LEDGER_VIEW,
+                self::FINANCE_LEDGER_MANAGE,
+                self::FINANCE_REPORTS_VIEW,
+                self::FINANCE_REPORTS_EXPORT,
+                self::FINANCE_PERIOD_CLOSE,
                 self::PROFILE_VIEW_OWN,
                 self::PROFILE_UPDATE_OWN,
                 self::PASSWORD_CHANGE_OWN,
@@ -893,6 +976,25 @@ class Permission
                 self::HR_DOCUMENTS_MANAGE,
                 self::HR_REPORTS_VIEW,
                 self::HR_REPORTS_EXPORT,
+                self::FINANCE_VIEW,
+                self::FINANCE_DASHBOARD,
+                self::FINANCE_REGISTERS_MANAGE,
+                self::FINANCE_SHIFTS_VIEW,
+                self::FINANCE_SHIFTS_MANAGE,
+                self::FINANCE_SHIFTS_APPROVE,
+                self::FINANCE_EXPENSES_VIEW,
+                self::FINANCE_EXPENSES_CREATE,
+                self::FINANCE_EXPENSES_APPROVE,
+                self::FINANCE_EXPENSES_PAY,
+                self::FINANCE_INCOME_MANAGE,
+                self::FINANCE_TRANSFERS_MANAGE,
+                self::FINANCE_BANK_MANAGE,
+                self::FINANCE_BANK_RECONCILE,
+                self::FINANCE_LEDGER_VIEW,
+                self::FINANCE_LEDGER_MANAGE,
+                self::FINANCE_REPORTS_VIEW,
+                self::FINANCE_REPORTS_EXPORT,
+                self::FINANCE_PERIOD_CLOSE,
                 self::PROFILE_VIEW_OWN,
                 self::PROFILE_UPDATE_OWN,
                 self::PASSWORD_CHANGE_OWN,
@@ -987,6 +1089,9 @@ class Permission
                 self::SHIFTS_OPEN,
                 self::SHIFTS_CLOSE,
                 self::SHIFTS_VIEW_OWN,
+                self::FINANCE_VIEW,
+                self::FINANCE_SHIFTS_VIEW,
+                self::FINANCE_SHIFTS_MANAGE,
                 self::REFUNDS_REQUEST,
                 self::PROFILE_VIEW_OWN,
                 self::PROFILE_UPDATE_OWN,

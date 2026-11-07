@@ -365,6 +365,17 @@ class PosPaymentShiftService
                         $fiscalService->fiscalizePayment($order, $p);
                     }
                 }
+
+                // 5. Post General Ledger double-entry transactions
+                try {
+                    $financialTxService = app(FinancialTransactionService::class);
+                    $financialTxService->recordOrderSale($order, $cashier);
+                    foreach ($createdPayments as $p) {
+                        $financialTxService->recordPaymentSettlement($p, $cashier);
+                    }
+                } catch (\Throwable $fe) {
+                    Log::warning('Financial ledger posting notice: '.$fe->getMessage());
+                }
             } catch (\Throwable $e) {
                 Log::warning('POS payment post-processing warning: '.$e->getMessage());
             }

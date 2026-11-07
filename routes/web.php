@@ -16,6 +16,17 @@ use App\Domains\Loyalty\Http\Controllers\Customer\CustomerWalletController;
 use App\Domains\Loyalty\Http\Controllers\Staff\StaffLoyaltyOperationsController;
 use App\Domains\Loyalty\Http\Controllers\Webhooks\ApplePassKitWebserviceController;
 use App\Http\Controllers\Admin\AccessControlController;
+use App\Http\Controllers\Admin\Finance\BankAccountController;
+use App\Http\Controllers\Admin\Finance\CashRegisterController;
+use App\Http\Controllers\Admin\Finance\CashShiftController;
+use App\Http\Controllers\Admin\Finance\ExpenseController;
+use App\Http\Controllers\Admin\Finance\FinancialApprovalController;
+use App\Http\Controllers\Admin\Finance\FinancialAuditController;
+use App\Http\Controllers\Admin\Finance\FinancialDashboardController;
+use App\Http\Controllers\Admin\Finance\FinancialReportController;
+use App\Http\Controllers\Admin\Finance\FinancialTransferController;
+use App\Http\Controllers\Admin\Finance\GeneralLedgerController;
+use App\Http\Controllers\Admin\Finance\IncomeController;
 use App\Http\Controllers\Admin\HaccpController;
 use App\Http\Controllers\Admin\Hr\HrAttendanceController;
 use App\Http\Controllers\Admin\Hr\HrDepartmentPositionController;
@@ -716,6 +727,75 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', E
         Route::get('/reports/inventory/abc-analysis', [InventoryReportController::class, 'abcAnalysis'])->name('reports.inventory.abc-analysis');
         Route::get('/reports/inventory/turnover', [InventoryReportController::class, 'turnover'])->name('reports.inventory.turnover');
         Route::get('/reports/inventory/waste', [InventoryReportController::class, 'wasteAnalysis'])->name('reports.inventory.waste');
+    });
+
+    // Cash Management & Financial Operations
+    Route::prefix('finance')->name('finance.')->group(function () {
+        // Executive Financial Dashboard
+        Route::get('/', [FinancialDashboardController::class, 'index'])->name('dashboard');
+
+        // Cash Registers & Hardware Drawers
+        Route::get('/registers', [CashRegisterController::class, 'index'])->name('registers.index');
+        Route::post('/registers', [CashRegisterController::class, 'store'])->name('registers.store');
+        Route::put('/registers/{register}', [CashRegisterController::class, 'update'])->name('registers.update');
+        Route::post('/registers/{register}/toggle', [CashRegisterController::class, 'toggle'])->name('registers.toggle');
+        Route::post('/registers/{register}/kick-drawer', [CashRegisterController::class, 'kickDrawer'])->name('registers.kick-drawer');
+
+        // Cash Shifts & Blind Counting
+        Route::get('/shifts', [CashShiftController::class, 'index'])->name('shifts.index');
+        Route::post('/shifts/open', [CashShiftController::class, 'open'])->name('shifts.open');
+        Route::get('/shifts/{shift}', [CashShiftController::class, 'show'])->name('shifts.show');
+        Route::post('/shifts/{shift}/close', [CashShiftController::class, 'close'])->name('shifts.close');
+        Route::post('/shifts/{shift}/movement', [CashShiftController::class, 'movement'])->name('shifts.movement');
+        Route::post('/shifts/{shift}/approve', [CashShiftController::class, 'approve'])->name('shifts.approve');
+
+        // Expenses & Accounts Payable
+        Route::get('/expenses', [ExpenseController::class, 'index'])->name('expenses.index');
+        Route::get('/expenses/create', [ExpenseController::class, 'create'])->name('expenses.create');
+        Route::post('/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
+        Route::get('/expenses/{expense}', [ExpenseController::class, 'show'])->name('expenses.show');
+        Route::post('/expenses/{expense}/pay', [ExpenseController::class, 'pay'])->name('expenses.pay');
+        Route::post('/expenses/{expense}/approve', [ExpenseController::class, 'approve'])->name('expenses.approve');
+        Route::post('/expenses/{expense}/reject', [ExpenseController::class, 'reject'])->name('expenses.reject');
+
+        // Other Operating Income
+        Route::get('/incomes', [IncomeController::class, 'index'])->name('incomes.index');
+        Route::post('/incomes', [IncomeController::class, 'store'])->name('incomes.store');
+
+        // Financial Asset Transfers
+        Route::get('/transfers', [FinancialTransferController::class, 'index'])->name('transfers.index');
+        Route::post('/transfers', [FinancialTransferController::class, 'store'])->name('transfers.store');
+
+        // Bank Accounts & Reconciliations
+        Route::get('/bank-accounts', [BankAccountController::class, 'index'])->name('bank_accounts.index');
+        Route::post('/bank-accounts', [BankAccountController::class, 'store'])->name('bank_accounts.store');
+        Route::get('/bank-accounts/{bankAccount}', [BankAccountController::class, 'show'])->name('bank_accounts.show');
+        Route::post('/bank-accounts/{bankAccount}/import', [BankAccountController::class, 'import'])->name('bank_accounts.import');
+        Route::post('/bank-accounts/{bankAccount}/reconcile', [BankAccountController::class, 'reconcile'])->name('bank_accounts.reconcile');
+
+        // Chart of Accounts & General Ledger
+        Route::get('/ledger/accounts', [GeneralLedgerController::class, 'index'])->name('ledger.index');
+        Route::post('/ledger/accounts/seed', [GeneralLedgerController::class, 'seedCoa'])->name('ledger.seed');
+        Route::get('/ledger/entries', [GeneralLedgerController::class, 'entries'])->name('ledger.entries');
+        Route::get('/ledger/entries/{entry}', [GeneralLedgerController::class, 'showEntry'])->name('ledger.entries.show');
+        Route::post('/ledger/entries/{entry}/reverse', [GeneralLedgerController::class, 'reverse'])->name('ledger.entries.reverse');
+
+        // Financial Reports
+        Route::get('/reports', [FinancialReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/profit-loss', [FinancialReportController::class, 'profitAndLoss'])->name('reports.profit_loss');
+        Route::get('/reports/balance-sheet', [FinancialReportController::class, 'balanceSheet'])->name('reports.balance_sheet');
+        Route::get('/reports/cash-flow', [FinancialReportController::class, 'cashFlow'])->name('reports.cash_flow');
+        Route::get('/reports/trial-balance', [FinancialReportController::class, 'trialBalance'])->name('reports.trial_balance');
+        Route::get('/reports/sales-analytics', [FinancialReportController::class, 'salesAnalytics'])->name('reports.sales_analytics');
+        Route::get('/reports/export/{type}', [FinancialReportController::class, 'export'])->name('reports.export');
+
+        // Approvals Queue
+        Route::get('/approvals', [FinancialApprovalController::class, 'index'])->name('approvals.index');
+        Route::post('/approvals/{approvalRequest}/decide', [FinancialApprovalController::class, 'decide'])->name('approvals.decide');
+
+        // Immutable Audit Trail & Integrity Check
+        Route::get('/audit', [FinancialAuditController::class, 'index'])->name('audit.index');
+        Route::get('/audit/verify', [FinancialAuditController::class, 'verify'])->name('audit.verify');
     });
 
     // AI Tools (Business Plan Feature)

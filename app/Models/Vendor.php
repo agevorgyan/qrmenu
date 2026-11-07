@@ -2999,4 +2999,54 @@ class Vendor extends Model
     {
         return $this->hasOne(WalletPassDesign::class);
     }
+
+    public function chartOfAccounts(): HasMany
+    {
+        return $this->hasMany(ChartOfAccount::class);
+    }
+
+    public function accountingPeriods(): HasMany
+    {
+        return $this->hasMany(AccountingPeriod::class);
+    }
+
+    public function journalEntries(): HasMany
+    {
+        return $this->hasMany(JournalEntry::class);
+    }
+
+    public function cashRegisters(): HasMany
+    {
+        return $this->hasMany(CashRegister::class);
+    }
+
+    public function bankAccounts(): HasMany
+    {
+        return $this->hasMany(BankAccount::class);
+    }
+
+    public function financialCategories(): HasMany
+    {
+        return $this->hasMany(FinancialCategory::class);
+    }
+
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class);
+    }
+
+    public function incomes(): HasMany
+    {
+        return $this->hasMany(Income::class);
+    }
+
+    public function financialTransfers(): HasMany
+    {
+        return $this->hasMany(FinancialTransfer::class);
+    }
+
+    public function financialAuditLogs(): HasMany
+    {
+        return $this->hasMany(FinancialAuditLog::class);
+    }
 }

@@ -24,6 +24,11 @@ class PosCashMovement extends Model
         'amount',
         'reason',
         'notes',
+        'cash_register_id',
+        'destination_type',
+        'destination_id',
+        'transfer_id',
+        'journal_entry_id',
     ];
 
     protected function casts(): array
@@ -64,5 +69,15 @@ class PosCashMovement extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function cashRegister(): BelongsTo
+    {
+        return $this->belongsTo(CashRegister::class, 'cash_register_id');
+    }
+
+    public function journalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class, 'journal_entry_id');
     }
 }
