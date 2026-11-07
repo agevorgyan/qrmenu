@@ -276,11 +276,19 @@ class MenuBuilderController extends Controller
         return back()->with('success', __('Location product settings updated!'));
     }
 
-    public function destroyProduct(Product $product)
+    public function destroyProduct(Request $request, Product $product)
     {
         $this->authorize('delete', $product);
 
         $this->menuService->deleteProduct($product);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('Product deleted successfully.'),
+                'product_id' => $product->id,
+            ]);
+        }
 
         return back()->with('success', __('Product deleted successfully.'));
     }

@@ -4,11 +4,231 @@
 
 @section('styles')
 <style>
+    /* ================================================================
+       Menu Builder - Modern High-End UI Styles
+       ================================================================ */
+    
+    /* Top KPI Stats Strip */
+    .menu-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .menu-kpi-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.15rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    .menu-kpi-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(245, 158, 11, 0.35);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+    .menu-kpi-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+    .menu-kpi-val {
+        font-size: 1.5rem;
+        font-weight: 800;
+        font-family: 'Outfit', sans-serif;
+        color: var(--text-main);
+        line-height: 1.1;
+    }
+    .menu-kpi-lbl {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        margin-top: 0.2rem;
+    }
+
+    /* Branch Menu Scope Bar */
+    .branch-scope-card {
+        background: var(--bg-card);
+        border: 1.5px solid var(--border-color);
+        border-radius: 16px;
+        padding: 0.85rem 1.25rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+    }
+
+    /* Modern Toolbar */
+    .menu-toolbar-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 18px;
+        padding: 1.15rem 1.35rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow-card);
+    }
+
+    /* Segmented Navigation Controls */
+    .segmented-control {
+        display: inline-flex;
+        background: var(--input-bg);
+        padding: 0.25rem;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        gap: 0.25rem;
+    }
+    .segmented-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.45rem 0.95rem;
+        border-radius: 9px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+        background: transparent;
+        color: var(--text-muted);
+        border: none;
+        transition: all 0.18s ease;
+        white-space: nowrap;
+    }
+    .segmented-btn:hover {
+        color: var(--text-main);
+    }
+    .segmented-btn.active {
+        background: var(--bg-card);
+        color: var(--text-main);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    html[data-theme="dark"] .segmented-btn.active {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+    }
+    .segmented-badge {
+        font-size: 0.68rem;
+        font-weight: 800;
+        padding: 0.1rem 0.4rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Category Chips Ribbon */
+    .category-ribbon {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        overflow-x: auto;
+        padding-bottom: 0.45rem;
+        margin: 0.85rem 0;
+        scrollbar-width: thin;
+    }
+    .category-ribbon::-webkit-scrollbar {
+        height: 4px;
+    }
+    .cat-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.45rem 0.85rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        background: var(--input-bg);
+        color: var(--text-muted);
+        border: 1px solid var(--border-color);
+        white-space: nowrap;
+        transition: all 0.15s ease;
+        flex-shrink: 0;
+    }
+    .cat-chip:hover {
+        color: var(--text-main);
+        border-color: rgba(245, 158, 11, 0.4);
+        background: var(--bg-card-hover);
+    }
+    .cat-chip.active {
+        background: var(--primary);
+        color: #0b0f19;
+        border-color: var(--primary);
+        box-shadow: 0 2px 10px var(--primary-glow);
+    }
+    .cat-chip-count {
+        font-size: 0.7rem;
+        font-weight: 800;
+        padding: 0.1rem 0.45rem;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.12);
+    }
+    html[data-theme="dark"] .cat-chip.active .cat-chip-count {
+        background: rgba(0, 0, 0, 0.25);
+        color: #000;
+    }
+
+    /* Category Cards & Accordion */
+    .category-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 18px;
+        margin-bottom: 1.75rem;
+        overflow: hidden;
+        box-shadow: var(--shadow-card);
+        transition: all 0.2s ease;
+    }
+    .category-header {
+        padding: 1.15rem 1.45rem;
+        background: var(--bg-card);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        user-select: none;
+    }
+    .category-collapse-btn {
+        background: var(--input-bg);
+        border: 1px solid var(--border-color);
+        color: var(--text-muted);
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .category-collapse-btn:hover {
+        color: var(--text-main);
+        border-color: var(--primary);
+    }
+    .category-dishes-body {
+        padding: 1.15rem 1.45rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+
+    /* Dish Row Styling */
     .menu-dish-row {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 1.15rem 1.25rem;
+        padding: 1.15rem 1.35rem;
         background: var(--input-bg);
         border: 1px solid var(--border-color);
         border-radius: 16px;
@@ -18,18 +238,33 @@
         box-sizing: border-box;
     }
     .menu-dish-row:hover {
-        border-color: rgba(245, 158, 11, 0.35);
+        border-color: rgba(245, 158, 11, 0.4);
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
         transform: translateY(-1px);
+        background: var(--bg-card);
     }
-    .dish-thumb {
+    .menu-dish-row.selected-row {
+        border-color: var(--primary) !important;
+        background: rgba(245, 158, 11, 0.06) !important;
+    }
+    .dish-thumb-box {
+        position: relative;
         width: 76px;
         height: 76px;
-        object-fit: cover;
-        border-radius: 14px;
         flex-shrink: 0;
+        border-radius: 14px;
+        overflow: hidden;
         border: 1px solid var(--border-color);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        background: rgba(0, 0, 0, 0.05);
+    }
+    .dish-thumb {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.25s ease;
+    }
+    .menu-dish-row:hover .dish-thumb {
+        transform: scale(1.05);
     }
     .dish-content {
         flex: 1;
@@ -40,23 +275,370 @@
         display: flex;
         flex-direction: column;
         align-items: flex-end;
-        gap: 0.45rem;
+        gap: 0.55rem;
         flex-shrink: 0;
     }
+
+    /* Modern Stock Switch Toggle */
+    .modern-stock-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.32rem 0.75rem 0.32rem 0.4rem;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 700;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        user-select: none;
+    }
+    .modern-stock-switch.in-stock {
+        background: rgba(16, 185, 129, 0.12);
+        border-color: rgba(16, 185, 129, 0.35);
+        color: #10b981;
+    }
+    .modern-stock-switch.in-stock:hover {
+        background: rgba(16, 185, 129, 0.2);
+        border-color: #10b981;
+    }
+    .modern-stock-switch.out-of-stock {
+        background: rgba(239, 68, 68, 0.12);
+        border-color: rgba(239, 68, 68, 0.35);
+        color: #ef4444;
+    }
+    .modern-stock-switch.out-of-stock:hover {
+        background: rgba(239, 68, 68, 0.2);
+        border-color: #ef4444;
+    }
+    .stock-switch-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.65rem;
+        transition: all 0.2s ease;
+    }
+    .modern-stock-switch.in-stock .stock-switch-thumb {
+        background: #10b981;
+        color: #fff;
+        box-shadow: 0 0 8px rgba(16, 185, 129, 0.45);
+    }
+    .modern-stock-switch.out-of-stock .stock-switch-thumb {
+        background: #ef4444;
+        color: #fff;
+        box-shadow: 0 0 8px rgba(239, 68, 68, 0.45);
+    }
+
+    /* Daily Offer Button */
+    .daily-offer-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0.7rem;
+        border-radius: 10px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        border: 1px solid var(--border-color);
+        background: var(--input-bg);
+        color: var(--text-muted);
+        transition: all 0.2s ease;
+    }
+    .daily-offer-btn:hover {
+        border-color: rgba(239, 68, 68, 0.4);
+        color: #ef4444;
+    }
+    .daily-offer-btn.active {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: rgba(239, 68, 68, 0.5);
+        color: #ef4444;
+        box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+    }
+
+    /* Portions & Variations Pills */
+    .portion-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        padding: 0.25rem 0.65rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        transition: all 0.15s ease;
+    }
+    .portion-pill.default-portion {
+        border-color: rgba(245, 158, 11, 0.4);
+        background: rgba(245, 158, 11, 0.08);
+    }
+
+    /* Density Switcher Classes */
+    .density-compact .menu-dish-row {
+        padding: 0.6rem 0.95rem;
+        gap: 0.85rem;
+        border-radius: 12px;
+    }
+    .density-compact .dish-thumb-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+    }
+    .density-compact .table-row-item td {
+        padding: 0.4rem 0.65rem !important;
+        font-size: 0.8rem !important;
+    }
+    .density-compact .table-dish-thumb {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+    }
+
+    .density-comfortable .menu-dish-row {
+        padding: 1.05rem 1.25rem;
+        gap: 1.15rem;
+        border-radius: 16px;
+    }
+    .density-comfortable .dish-thumb-box {
+        width: 72px;
+        height: 72px;
+        border-radius: 14px;
+    }
+    .density-comfortable .table-row-item td {
+        padding: 0.65rem 0.85rem !important;
+        font-size: 0.86rem !important;
+    }
+    .density-comfortable .table-dish-thumb {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+    }
+
+    .density-expanded .menu-dish-row {
+        padding: 1.35rem 1.55rem;
+        gap: 1.45rem;
+        border-radius: 18px;
+    }
+    .density-expanded .dish-thumb-box {
+        width: 86px;
+        height: 86px;
+        border-radius: 16px;
+    }
+    .density-expanded .table-row-item td {
+        padding: 0.95rem 1.15rem !important;
+        font-size: 0.92rem !important;
+    }
+    .density-expanded .table-dish-thumb {
+        width: 54px;
+        height: 54px;
+        border-radius: 12px;
+    }
+
+    /* Floating Bulk Action Bar */
+    .floating-bulk-bar {
+        position: fixed;
+        bottom: 1.75rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        background: var(--bg-card);
+        border: 2px solid var(--primary);
+        box-shadow: 0 16px 45px rgba(0, 0, 0, 0.45), 0 0 30px var(--primary-glow);
+        border-radius: 20px;
+        padding: 0.75rem 1.35rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        max-width: min(880px, 94vw);
+        flex-wrap: wrap;
+        backdrop-filter: blur(16px);
+        animation: floatUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes floatUp {
+        from { opacity: 0; transform: translate(-50%, 25px); }
+        to { opacity: 1; transform: translate(-50%, 0); }
+    }
+
+    /* High Density Table */
+    .modern-menu-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        background: var(--bg-card);
+    }
+    .modern-menu-table th {
+        background: var(--bg-card);
+        color: var(--text-muted);
+        font-size: 0.76rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0.85rem 0.95rem;
+        border-bottom: 1px solid var(--border-color);
+        text-align: left;
+        white-space: nowrap;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: blur(8px);
+    }
+    .modern-menu-table td {
+        border-bottom: 1px solid var(--table-row-border);
+        color: var(--text-main);
+        vertical-align: middle;
+        transition: background 0.15s ease;
+    }
+    .modern-menu-table tr:hover td {
+        background: rgba(245, 158, 11, 0.04);
+    }
+    .modern-menu-table tr.selected-row td {
+        background: rgba(245, 158, 11, 0.09) !important;
+    }
+
+    /* Inline editable click targets */
+    .inline-editable-cell {
+        cursor: pointer;
+        padding: 0.2rem 0.45rem;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        transition: all 0.15s ease;
+    }
+    .inline-editable-cell:hover {
+        background: rgba(255, 255, 255, 0.08);
+        outline: 1px dashed rgba(245, 158, 11, 0.45);
+    }
+    .inline-edit-input {
+        background: var(--input-bg);
+        border: 1.5px solid var(--primary);
+        color: var(--text-main);
+        border-radius: 8px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.84rem;
+        font-weight: 700;
+        outline: none;
+        box-shadow: 0 0 10px var(--primary-glow);
+    }
+
+    /* Category organizer cards */
+    .category-drag-card {
+        background: var(--bg-card);
+        border: 1.5px solid var(--border-color);
+        border-radius: 14px;
+        padding: 1rem 1.35rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        transition: all 0.2s ease;
+        margin-bottom: 0.75rem;
+    }
+    .category-drag-card:hover {
+        border-color: rgba(245, 158, 11, 0.4);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+
+    /* Toast Notification */
+    .menu-toast {
+        position: fixed;
+        top: 1.5rem;
+        right: 1.5rem;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.95rem 1.45rem;
+        border-radius: 14px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        box-shadow: 0 12px 35px rgba(0,0,0,0.45);
+        animation: toastSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes toastSlideIn {
+        from { opacity: 0; transform: translateX(30px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Modern Tabbed Modal System */
     .modal-box-responsive {
         background: var(--bg-card);
         border: 1px solid var(--border-color);
-        border-radius: 20px;
+        border-radius: 22px;
         width: 100%;
-        max-width: min(660px, 95vw);
-        max-height: 90vh;
+        max-width: min(720px, 95vw);
+        max-height: 92vh;
         overflow-y: auto;
         padding: 1.75rem 2rem;
         margin: auto;
         box-sizing: border-box;
-        box-shadow: 0 25px 60px rgba(0,0,0,0.45);
+        box-shadow: 0 25px 65px rgba(0,0,0,0.5);
+    }
+    .modal-tab-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: var(--input-bg);
+        padding: 0.3rem;
+        border-radius: 14px;
+        border: 1px solid var(--border-color);
+        margin-bottom: 1.35rem;
+        overflow-x: auto;
+    }
+    .modal-tab-btn {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        transition: all 0.15s ease;
+        white-space: nowrap;
+    }
+    .modal-tab-btn:hover {
+        color: var(--text-main);
+    }
+    .modal-tab-btn.active {
+        background: var(--bg-card);
+        color: var(--text-main);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    html[data-theme="dark"] .modal-tab-btn.active {
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+    }
+
+    /* Mobile Responsive Optimizations */
+    @media (max-width: 900px) {
+        .menu-kpi-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
     @media (max-width: 768px) {
+        .menu-kpi-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 0.65rem;
+        }
+        .menu-kpi-card {
+            padding: 0.85rem;
+            gap: 0.65rem;
+        }
+        .menu-kpi-val {
+            font-size: 1.25rem;
+        }
         .menu-dish-row {
             flex-direction: column;
             align-items: stretch;
@@ -96,235 +678,6 @@
         .modal-box-responsive {
             padding: 1.25rem;
         }
-    }
-
-    /* Density Switcher Classes */
-    .density-compact .menu-dish-row {
-        padding: 0.55rem 0.85rem;
-        gap: 0.75rem;
-        border-radius: 10px;
-    }
-    .density-compact .dish-thumb {
-        width: 44px;
-        height: 44px;
-        border-radius: 8px;
-    }
-    .density-compact .table-row-item td {
-        padding: 0.35rem 0.6rem !important;
-        font-size: 0.8rem !important;
-    }
-    .density-compact .table-dish-thumb {
-        width: 32px;
-        height: 32px;
-        border-radius: 6px;
-    }
-
-    .density-comfortable .menu-dish-row {
-        padding: 0.95rem 1.15rem;
-        gap: 1rem;
-        border-radius: 14px;
-    }
-    .density-comfortable .dish-thumb {
-        width: 64px;
-        height: 64px;
-        border-radius: 12px;
-    }
-    .density-comfortable .table-row-item td {
-        padding: 0.65rem 0.85rem !important;
-        font-size: 0.86rem !important;
-    }
-    .density-comfortable .table-dish-thumb {
-        width: 42px;
-        height: 42px;
-        border-radius: 8px;
-    }
-
-    .density-expanded .menu-dish-row {
-        padding: 1.25rem 1.45rem;
-        gap: 1.25rem;
-        border-radius: 16px;
-    }
-    .density-expanded .dish-thumb {
-        width: 78px;
-        height: 78px;
-        border-radius: 14px;
-    }
-    .density-expanded .table-row-item td {
-        padding: 0.95rem 1.15rem !important;
-        font-size: 0.92rem !important;
-    }
-    .density-expanded .table-dish-thumb {
-        width: 52px;
-        height: 52px;
-        border-radius: 10px;
-    }
-
-    /* Floating Bulk Action Bar */
-    .floating-bulk-bar {
-        position: fixed;
-        bottom: 1.75rem;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 1000;
-        background: var(--bg-card);
-        border: 2px solid var(--primary);
-        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), 0 0 25px var(--primary-glow);
-        border-radius: 18px;
-        padding: 0.75rem 1.25rem;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        max-width: min(850px, 94vw);
-        flex-wrap: wrap;
-        animation: floatUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    @keyframes floatUp {
-        from { opacity: 0; transform: translate(-50%, 20px); }
-        to { opacity: 1; transform: translate(-50%, 0); }
-    }
-
-    /* High Density Table */
-    .modern-menu-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        border-radius: 16px;
-        overflow: hidden;
-        border: 1px solid var(--border-color);
-        background: var(--bg-card);
-    }
-    .modern-menu-table th {
-        background: rgba(14, 20, 36, 0.9);
-        color: var(--text-muted);
-        font-size: 0.76rem;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        padding: 0.75rem 0.85rem;
-        border-bottom: 1px solid var(--border-color);
-        text-align: left;
-        white-space: nowrap;
-    }
-    .modern-menu-table td {
-        border-bottom: 1px solid var(--table-row-border);
-        color: var(--text-main);
-        vertical-align: middle;
-        transition: background 0.15s ease;
-    }
-    .modern-menu-table tr:hover td {
-        background: rgba(245, 158, 11, 0.04);
-    }
-    .modern-menu-table tr.selected-row td {
-        background: rgba(245, 158, 11, 0.09) !important;
-    }
-
-    /* Inline editable click targets */
-    .inline-editable-cell {
-        cursor: pointer;
-        padding: 0.2rem 0.4rem;
-        border-radius: 6px;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        transition: all 0.15s ease;
-    }
-    .inline-editable-cell:hover {
-        background: rgba(255, 255, 255, 0.08);
-        outline: 1px dashed rgba(245, 158, 11, 0.4);
-    }
-
-    /* Category organizer cards */
-    .category-drag-card {
-        background: var(--bg-card);
-        border: 1.5px solid var(--border-color);
-        border-radius: 14px;
-        padding: 0.95rem 1.25rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        transition: all 0.2s ease;
-        margin-bottom: 0.65rem;
-    }
-    .category-drag-card:hover {
-        border-color: rgba(245, 158, 11, 0.4);
-        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-    }
-    .view-mode-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.45rem;
-        padding: 0.45rem 0.85rem;
-        border-radius: 10px;
-        font-size: 0.84rem;
-        font-weight: 700;
-        cursor: pointer;
-        background: var(--input-bg);
-        color: var(--text-muted);
-        border: 1px solid var(--border-color);
-        transition: all 0.15s ease;
-    }
-    .view-mode-pill:hover {
-        color: var(--text-main);
-        border-color: rgba(245, 158, 11, 0.35);
-    }
-    .view-mode-pill.active {
-        background: var(--primary);
-        color: #000;
-        border-color: var(--primary);
-        box-shadow: 0 2px 8px var(--primary-glow);
-    }
-    .density-pill {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0.4rem 0.65rem;
-        border-radius: 8px;
-        font-size: 0.78rem;
-        font-weight: 700;
-        cursor: pointer;
-        background: var(--input-bg);
-        color: var(--text-muted);
-        border: 1px solid var(--border-color);
-        transition: all 0.15s ease;
-    }
-    .density-pill:hover {
-        color: var(--text-main);
-    }
-    .density-pill.active {
-        background: rgba(245, 158, 11, 0.18);
-        color: var(--primary);
-        border-color: rgba(245, 158, 11, 0.5);
-    }
-    .inline-edit-input {
-        background: var(--input-bg);
-        border: 1.5px solid var(--primary);
-        color: var(--text-main);
-        border-radius: 6px;
-        padding: 0.2rem 0.45rem;
-        font-size: 0.82rem;
-        font-weight: 700;
-        outline: none;
-        box-shadow: 0 0 8px var(--primary-glow);
-    }
-    .menu-toast {
-        position: fixed;
-        top: 1.5rem;
-        right: 1.5rem;
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.85rem 1.25rem;
-        border-radius: 12px;
-        font-size: 0.88rem;
-        font-weight: 700;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-        animation: toastSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    @keyframes toastSlideIn {
-        from { opacity: 0; transform: translateX(30px); }
-        to { opacity: 1; transform: translateX(0); }
     }
 </style>
 @endsection
@@ -375,6 +728,12 @@
             'raw_json' => $c,
         ];
     })->values();
+
+    $totalDishesCount = $allDishes->count();
+    $totalCategoriesCount = $categories->count();
+    $inStockCount = $allDishes->filter(fn($p) => $p->isAvailableAtLocation($activeLocationId))->count();
+    $inStockPct = $totalDishesCount > 0 ? round(($inStockCount / $totalDishesCount) * 100) : 100;
+    $dailyOffersCount = $vendor->dailyOffers ? $vendor->dailyOffers->where('is_active', true)->count() : 0;
 @endphp
 
 <div x-data="menuManagerApp()" :class="'density-' + density" id="menuManagerRoot">
@@ -384,64 +743,128 @@
         <span x-text="toast.message"></span>
     </div>
 
-    <!-- Page Header -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <!-- Page Header & Main CTAs -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1.25rem;">
         <div>
-            <div style="display: flex; align-items: center; gap: 0.65rem;">
-                <span style="width: 40px; height: 40px; border-radius: 12px; background: rgba(16, 185, 129, 0.15); color: #10b981; display: inline-flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                <span style="width: 44px; height: 44px; border-radius: 14px; background: rgba(245, 158, 11, 0.15); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.35rem; box-shadow: 0 4px 14px var(--primary-glow);">
                     <i class="fa-solid fa-utensils"></i>
                 </span>
-                <h1 style="font-size: 1.75rem; font-weight: 800; margin: 0; color: var(--text-main);">
-                    {{ __('Menu Builder') }}
-                </h1>
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                        <h1 style="font-size: 1.85rem; font-weight: 800; margin: 0; color: var(--text-main); font-family: 'Outfit';">
+                            {{ __('Menu Builder') }}
+                        </h1>
+                        <span class="badge badge-amber" style="font-size: 0.72rem; font-weight: 700;">
+                            {{ $vendor->currency }}
+                        </span>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.25rem; margin-bottom: 0;">
+                        {{ __('Manage categories, dish offerings, pricing portions, allergens, and happy hour discount schedules.') }}
+                    </p>
+                </div>
             </div>
-            <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.35rem;">
-                {{ __('Manage categories, dish offerings, pricing portions, allergens, and happy hour discount schedules.') }}
-            </p>
         </div>
-        <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
+
+        <div style="display: flex; gap: 0.65rem; flex-wrap: wrap; align-items: center;">
+            <a href="{{ route('admin.ai.import') }}"
+               class="btn btn-secondary"
+               style="font-size: 0.85rem; font-weight: 700; border-color: rgba(139, 92, 246, 0.4); background: rgba(139, 92, 246, 0.08); color: #8b5cf6;"
+               title="{{ __('Digitize paper or PDF menu with AI') }}">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span>{{ __('AI Menu Import') }}</span>
+            </a>
+
             <a href="{{ route('admin.settings.index', ['tab' => 'daily_offers']) }}"
                class="btn btn-secondary"
-               style="display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.86rem; border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.08); color: #ef4444; text-decoration: none;"
+               style="display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.85rem; border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.08); color: #ef4444; text-decoration: none;"
                title="{{ __('Manage daily offers carousel and special dish settings') }}">
                 <i class="fa-solid fa-fire-flame-curved"></i>
-                <span>{{ __('Daily Offers & Carousel') }}</span>
+                <span>{{ __('Daily Offers') }}</span>
                 <span class="badge" style="background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 999px;">
-                    {{ $vendor->dailyOffers ? $vendor->dailyOffers->where('is_active', true)->count() : 0 }}
+                    {{ $dailyOffersCount }}
                 </span>
             </a>
-            <button class="btn btn-secondary" onclick="document.getElementById('newCategoryModal').style.display='flex'">
+
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('newCategoryModal').style.display='flex'">
                 <i class="fa-solid fa-folder-plus" style="color: var(--primary);"></i> {{ __('New Category') }}
             </button>
-            <button class="btn btn-primary" onclick="openNewProductModal()">
+
+            <button type="button" class="btn btn-primary" onclick="openNewProductModal()">
                 <i class="fa-solid fa-plus"></i> {{ __('Add New Dish') }}
             </button>
         </div>
     </div>
 
+    <!-- Top KPI Stats Strip (Clickable Quick Filters) -->
+    <div class="menu-kpi-grid">
+        <div class="menu-kpi-card" @click="resetFilters()" title="{{ __('Click to show all dishes') }}">
+            <div class="menu-kpi-icon" style="background: rgba(245, 158, 11, 0.12); color: var(--primary);">
+                <i class="fa-solid fa-bowl-food"></i>
+            </div>
+            <div>
+                <div class="menu-kpi-val">{{ $totalDishesCount }}</div>
+                <div class="menu-kpi-lbl">{{ __('Total Menu Items') }}</div>
+            </div>
+        </div>
+
+        <div class="menu-kpi-card" @click="viewMode = 'categories'" title="{{ __('Manage categories display order') }}">
+            <div class="menu-kpi-icon" style="background: rgba(99, 102, 241, 0.12); color: #6366f1;">
+                <i class="fa-solid fa-folder-tree"></i>
+            </div>
+            <div>
+                <div class="menu-kpi-val">{{ $totalCategoriesCount }}</div>
+                <div class="menu-kpi-lbl">{{ __('Categories') }}</div>
+            </div>
+        </div>
+
+        <div class="menu-kpi-card" @click="stockFilter = (stockFilter === 'in_stock' ? 'all' : 'in_stock')" title="{{ __('Filter by stock status') }}">
+            <div class="menu-kpi-icon" style="background: rgba(16, 185, 129, 0.12); color: #10b981;">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div>
+                <div style="display: flex; align-items: baseline; gap: 0.4rem;">
+                    <span class="menu-kpi-val">{{ $inStockCount }}</span>
+                    <span style="font-size: 0.76rem; font-weight: 800; color: #10b981;">({{ $inStockPct }}%)</span>
+                </div>
+                <div class="menu-kpi-lbl">{{ __('In Stock Now') }}</div>
+            </div>
+        </div>
+
+        <div class="menu-kpi-card" @click="window.location.href='{{ route('admin.settings.index', ['tab' => 'daily_offers']) }}'" title="{{ __('View active daily offers') }}">
+            <div class="menu-kpi-icon" style="background: rgba(239, 68, 68, 0.12); color: #ef4444;">
+                <i class="fa-solid fa-fire-flame-curved"></i>
+            </div>
+            <div>
+                <div class="menu-kpi-val">{{ $dailyOffersCount }}</div>
+                <div class="menu-kpi-lbl">{{ __('Special Offers') }}</div>
+            </div>
+        </div>
+    </div>
+
     @if($locations->count() > 0)
         <!-- Branch Menu Scope Bar -->
-        <div style="background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 16px; padding: 0.95rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; box-shadow: 0 4px 16px rgba(0,0,0,0.06);">
+        <div class="branch-scope-card">
             <div style="display: flex; align-items: center; gap: 0.85rem;">
-                <span style="width: 38px; height: 38px; border-radius: 10px; background: rgba(99, 102, 241, 0.15); color: #6366f1; display: inline-flex; align-items: center; justify-content: center; font-size: 1.15rem;">
+                <span style="width: 40px; height: 40px; border-radius: 12px; background: rgba(99, 102, 241, 0.15); color: #6366f1; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem;">
                     <i class="fa-solid fa-store"></i>
                 </span>
                 <div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <strong style="font-size: 0.95rem; color: var(--text-main);">{{ __('Branch Menu Availability') }}</strong>
-                        <span class="badge badge-indigo" style="font-size: 0.72rem;">{{ $activeLocation?->name ?? __('Default Branch') }}</span>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                        <strong style="font-size: 0.95rem; color: var(--text-main);">{{ __('Branch Stock Context') }}</strong>
+                        <span class="badge badge-indigo" style="font-size: 0.72rem; padding: 0.15rem 0.55rem;">
+                            📍 {{ $activeLocation?->name ?? __('Default Branch') }}
+                        </span>
                     </div>
                     <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.15rem;">
-                        {{ __('The «In Stock / Out of Stock» toggles apply to the selected branch:') }}
+                        {{ __('The stock switches and branch overrides apply to the selected location:') }}
                     </div>
                 </div>
             </div>
+
             <div style="display: flex; align-items: center; gap: 0.65rem;">
-                <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); white-space: nowrap;">
-                    <i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> {{ __('Branch:') }}
-                </label>
                 <form method="GET" action="{{ route('admin.menu.index') }}" id="branchScopeFilterForm" style="display: flex; align-items: center; margin: 0;">
-                    <select name="location_id" onchange="document.getElementById('branchScopeFilterForm').submit()" class="form-select" style="min-width: 200px; font-weight: 700; padding: 0.45rem 0.75rem; border-radius: 10px; border-color: rgba(99, 102, 241, 0.4); font-size: 0.84rem;">
+                    <select name="location_id" onchange="document.getElementById('branchScopeFilterForm').submit()" class="form-select" style="min-width: 220px; font-weight: 700; padding: 0.5rem 0.85rem; border-radius: 12px; border-color: rgba(99, 102, 241, 0.4); font-size: 0.86rem;">
                         @foreach($locations as $loc)
                             <option value="{{ $loc->id }}" {{ (int)$activeLocationId === (int)$loc->id ? 'selected' : '' }}>
                                 📍 {{ $loc->name }}
@@ -453,66 +876,95 @@
         </div>
     @endif
 
-    <!-- Advanced Menu Management Toolbar Card -->
-    <div class="card" style="margin-bottom: 1.5rem; padding: 1.15rem 1.35rem;">
+    <!-- Menu Control Center (Toolbar Card) -->
+    <div class="menu-toolbar-card">
         <!-- Top row: View Switcher and Density Toggles -->
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem; margin-bottom: 0.85rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem;">
             <!-- View Mode Switcher -->
-            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                <span style="font-size: 0.8rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">
-                    <i class="fa-solid fa-layer-group" style="color: var(--primary);"></i> {{ __('View:') }}
-                </span>
-                <button type="button" class="view-mode-pill" :class="{ 'active': viewMode === 'grouped' }" @click="viewMode = 'grouped'">
-                    <i class="fa-solid fa-folder-tree"></i> {{ __('Categorized') }}
-                </button>
-                <button type="button" class="view-mode-pill" :class="{ 'active': viewMode === 'table' }" @click="viewMode = 'table'">
-                    <i class="fa-solid fa-table-list"></i> {{ __('Compact Table') }}
-                    <span class="badge" style="font-size: 0.68rem; padding: 0.1rem 0.4rem; background: rgba(255,255,255,0.2);" x-text="filteredDishes().length"></span>
-                </button>
-                <button type="button" class="view-mode-pill" :class="{ 'active': viewMode === 'categories' }" @click="viewMode = 'categories'">
-                    <i class="fa-solid fa-folder-open"></i> {{ __('Category Organizer') }}
-                    <span class="badge" style="font-size: 0.68rem; padding: 0.1rem 0.4rem; background: rgba(255,255,255,0.2);" x-text="categories.length"></span>
-                </button>
+            <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+                <div class="segmented-control">
+                    <button type="button" class="segmented-btn" :class="{ 'active': viewMode === 'grouped' }" @click="viewMode = 'grouped'">
+                        <i class="fa-solid fa-layer-group"></i> {{ __('Categorized') }}
+                    </button>
+                    <button type="button" class="segmented-btn" :class="{ 'active': viewMode === 'table' }" @click="viewMode = 'table'">
+                        <i class="fa-solid fa-table-list"></i> {{ __('Compact Table') }}
+                        <span class="segmented-badge" x-text="filteredDishes().length"></span>
+                    </button>
+                    <button type="button" class="segmented-btn" :class="{ 'active': viewMode === 'categories' }" @click="viewMode = 'categories'">
+                        <i class="fa-solid fa-folder-open"></i> {{ __('Category Organizer') }}
+                        <span class="segmented-badge" x-text="categories.length"></span>
+                    </button>
+                </div>
             </div>
 
-            <!-- Density Switcher -->
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="font-size: 0.8rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">
-                    <i class="fa-solid fa-bars-staggered"></i> {{ __('Density:') }}
-                </span>
-                <div style="display: flex; gap: 0.25rem; background: var(--input-bg); padding: 0.2rem; border-radius: 10px; border: 1px solid var(--border-color);">
-                    <button type="button" class="density-pill" :class="{ 'active': density === 'compact' }" @click="density = 'compact'" title="{{ __('High Density (Compact)') }}">
-                        <i class="fa-solid fa-compress"></i> {{ __('Compact') }}
+            <!-- Right Controls: Density Switcher & Expand/Collapse All (for Grouped view) -->
+            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                <div x-show="viewMode === 'grouped'" style="display: flex; align-items: center; gap: 0.35rem;">
+                    <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem;" @click="allCategoriesCollapsed() ? expandAllCategories() : collapseAllCategories()">
+                        <i class="fa-solid" :class="allCategoriesCollapsed() ? 'fa-angles-down' : 'fa-angles-up'"></i>
+                        <span x-text="allCategoriesCollapsed() ? '{{ __('Expand All') }}' : '{{ __('Collapse All') }}'"></span>
                     </button>
-                    <button type="button" class="density-pill" :class="{ 'active': density === 'comfortable' }" @click="density = 'comfortable'" title="{{ __('Standard Density (Comfortable)') }}">
-                        <i class="fa-solid fa-table-cells-large"></i> {{ __('Comfortable') }}
-                    </button>
-                    <button type="button" class="density-pill" :class="{ 'active': density === 'expanded' }" @click="density = 'expanded'" title="{{ __('Spacious Density (Expanded)') }}">
-                        <i class="fa-solid fa-expand"></i> {{ __('Expanded') }}
-                    </button>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 0.45rem;">
+                    <span style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">
+                        <i class="fa-solid fa-bars-staggered"></i> {{ __('Density:') }}
+                    </span>
+                    <div class="segmented-control" title="{{ __('Display Density') }}">
+                        <button type="button" class="segmented-btn" :class="{ 'active': density === 'compact' }" @click="density = 'compact'" title="{{ __('Compact Density') }}">
+                            <i class="fa-solid fa-compress"></i> {{ __('Compact') }}
+                        </button>
+                        <button type="button" class="segmented-btn" :class="{ 'active': density === 'comfortable' }" @click="density = 'comfortable'" title="{{ __('Standard Density') }}">
+                            <i class="fa-solid fa-table-cells-large"></i> {{ __('Comfortable') }}
+                        </button>
+                        <button type="button" class="segmented-btn" :class="{ 'active': density === 'expanded' }" @click="density = 'expanded'" title="{{ __('Spacious Density') }}">
+                            <i class="fa-solid fa-expand"></i> {{ __('Expanded') }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
+        <!-- Middle row: Quick Category Filter Chips Ribbon -->
+        <div class="category-ribbon" x-show="viewMode !== 'categories'">
+            <button type="button"
+                    class="cat-chip"
+                    :class="{ 'active': !filterCategoryId }"
+                    @click="filterCategoryId = ''">
+                <i class="fa-solid fa-border-all"></i>
+                <span>{{ __('All Dishes') }}</span>
+                <span class="cat-chip-count" x-text="allDishes.length"></span>
+            </button>
+            <template x-for="c in categories" :key="c.id">
+                <button type="button"
+                        class="cat-chip"
+                        :class="{ 'active': filterCategoryId == c.id }"
+                        @click="filterCategoryId = (filterCategoryId == c.id ? '' : c.id)">
+                    <span x-text="c.name"></span>
+                    <span class="cat-chip-count" x-text="c.products_count"></span>
+                </button>
+            </template>
+        </div>
+
         <!-- Bottom row: Live Filters & Search Bar (Visible in Grouped & Table views) -->
-        <div x-show="viewMode !== 'categories'" style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.65rem;">
+        <div x-show="viewMode !== 'categories'" style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.65rem; margin-top: 0.5rem;">
             <!-- Search Input -->
             <div style="flex: 2; min-width: 220px; position: relative;">
-                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem;"></i>
+                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.95rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem;"></i>
                 <input type="text"
                        x-model.debounce.200ms="searchQuery"
-                       placeholder="{{ __('Search dishes by name, description, tags...') }}"
+                       placeholder="{{ __('Search dishes by name, ingredients, tags...') }}"
                        class="form-input"
-                       style="padding-left: 2.25rem; padding-right: 2rem; font-size: 0.85rem;">
+                       style="padding-left: 2.35rem; padding-right: 2rem; font-size: 0.85rem; border-radius: 12px;">
                 <button type="button" x-show="searchQuery" @click="searchQuery = ''" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0;">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
-            <!-- Category Selector Filter -->
-            <div style="flex: 1; min-width: 160px;">
-                <select x-model="filterCategoryId" class="form-select" style="font-size: 0.85rem;">
-                    <option value="">{{ __('All Categories') }}</option>
+            <!-- Category Selector Dropdown -->
+            <div style="min-width: 160px;">
+                <select x-model="filterCategoryId" class="form-select" style="font-size: 0.84rem; border-radius: 12px;">
+                    <option value="">📁 {{ __('All Categories') }}</option>
                     <template x-for="c in categories" :key="c.id">
                         <option :value="c.id" x-text="c.name + ' (' + c.products_count + ')'"></option>
                     </template>
@@ -521,17 +973,17 @@
 
             <!-- Stock Status Filter -->
             <div style="min-width: 140px;">
-                <select x-model="stockFilter" class="form-select" style="font-size: 0.85rem;">
-                    <option value="all">{{ __('All Stock') }}</option>
-                    <option value="in_stock">{{ __('In Stock Only') }}</option>
-                    <option value="out_of_stock">{{ __('Out of Stock Only') }}</option>
+                <select x-model="stockFilter" class="form-select" style="font-size: 0.84rem; border-radius: 12px;">
+                    <option value="all">⚡ {{ __('All Stock') }}</option>
+                    <option value="in_stock">🟢 {{ __('In Stock Only') }}</option>
+                    <option value="out_of_stock">🔴 {{ __('Out of Stock Only') }}</option>
                 </select>
             </div>
 
             <!-- Channel Filter -->
             <div style="min-width: 135px;">
-                <select x-model="channelFilter" class="form-select" style="font-size: 0.85rem;">
-                    <option value="all">{{ __('All Channels') }}</option>
+                <select x-model="channelFilter" class="form-select" style="font-size: 0.84rem; border-radius: 12px;">
+                    <option value="all">🛵 {{ __('All Channels') }}</option>
                     <option value="dine_in">🍽️ {{ __('Dine-in') }}</option>
                     <option value="takeaway">🥡 {{ __('Takeaway') }}</option>
                     <option value="delivery">🛵 {{ __('Delivery') }}</option>
@@ -540,9 +992,9 @@
 
             <!-- Price Range Min / Max -->
             <div style="display: flex; align-items: center; gap: 0.35rem; min-width: 170px;">
-                <input type="number" x-model.debounce.300ms="minPrice" placeholder="{{ __('Min Price') }}" class="form-input" style="padding: 0.45rem 0.55rem; font-size: 0.82rem; width: 85px;">
+                <input type="number" x-model.debounce.300ms="minPrice" placeholder="{{ __('Min Price') }}" class="form-input" style="padding: 0.45rem 0.6rem; font-size: 0.82rem; width: 85px; border-radius: 10px;">
                 <span style="color: var(--text-muted);">-</span>
-                <input type="number" x-model.debounce.300ms="maxPrice" placeholder="{{ __('Max Price') }}" class="form-input" style="padding: 0.45rem 0.55rem; font-size: 0.82rem; width: 85px;">
+                <input type="number" x-model.debounce.300ms="maxPrice" placeholder="{{ __('Max Price') }}" class="form-input" style="padding: 0.45rem 0.6rem; font-size: 0.82rem; width: 85px; border-radius: 10px;">
             </div>
 
             <!-- Reset Button -->
@@ -550,7 +1002,7 @@
                     x-show="searchQuery || filterCategoryId || stockFilter !== 'all' || channelFilter !== 'all' || minPrice || maxPrice"
                     @click="resetFilters()"
                     class="btn btn-secondary"
-                    style="padding: 0.45rem 0.75rem; font-size: 0.82rem;"
+                    style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 10px;"
                     title="{{ __('Reset all filters') }}">
                 <i class="fa-solid fa-rotate-left"></i> {{ __('Reset') }}
             </button>
@@ -558,7 +1010,7 @@
             <!-- Showing Counter -->
             <div style="margin-left: auto; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); white-space: nowrap;">
                 <span>{{ __('Showing') }}:</span>
-                <span style="color: var(--primary);" x-text="filteredDishes().length"></span>
+                <span style="color: var(--primary); font-size: 0.92rem;" x-text="filteredDishes().length"></span>
                 <span>/</span>
                 <span x-text="allDishes.length"></span>
             </div>
@@ -566,357 +1018,384 @@
     </div>
 
     @if($categories->count() == 0)
+        <!-- Empty Menu State -->
         <div class="card" style="text-align: center; padding: 4rem 2rem;">
-            <div style="width: 64px; height: 64px; border-radius: 20px; background: rgba(245, 158, 11, 0.15); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 1.25rem;">
+            <div style="width: 72px; height: 72px; border-radius: 22px; background: rgba(245, 158, 11, 0.15); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 2.25rem; margin: 0 auto 1.35rem; box-shadow: 0 4px 20px var(--primary-glow);">
                 <i class="fa-solid fa-utensils"></i>
             </div>
-            <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-main);">{{ __('Your menu is empty') }}</h2>
-            <p style="color: var(--text-muted); margin-bottom: 1.75rem; max-width: 440px; margin-left: auto; margin-right: auto; line-height: 1.5;">
+            <h2 style="font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-main); font-family: 'Outfit';">{{ __('Your menu is empty') }}</h2>
+            <p style="color: var(--text-muted); margin-bottom: 1.75rem; max-width: 460px; margin-left: auto; margin-right: auto; line-height: 1.5; font-size: 0.92rem;">
                 {{ __('Start creating categories and dishes, or use our AI Menu Import tool to digitize existing paper/PDF menus in seconds.') }}
             </p>
             <div style="display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap;">
-                <a href="{{ route('admin.ai.import') }}" class="btn btn-primary">
+                <a href="{{ route('admin.ai.import') }}" class="btn btn-primary" style="padding: 0.7rem 1.4rem;">
                     <i class="fa-solid fa-wand-magic-sparkles"></i> {{ __('AI Menu Import') }}
                 </a>
-                <button class="btn btn-secondary" onclick="document.getElementById('newCategoryModal').style.display='flex'">
+                <button type="button" class="btn btn-secondary" style="padding: 0.7rem 1.4rem;" onclick="document.getElementById('newCategoryModal').style.display='flex'">
                     <i class="fa-solid fa-plus"></i> {{ __('Create Category') }}
                 </button>
             </div>
         </div>
     @else
-        <!-- View 1: Categorized View -->
+        <!-- View 1: Categorized View (Grouped Accordions) -->
         <div x-show="viewMode === 'grouped'">
-    @foreach($categories as $category)
-        <div class="card" style="margin-bottom: 2rem;" x-show="!filterCategoryId || filterCategoryId == {{ $category->id }}">
-            <!-- Category Header -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem; flex-wrap: wrap; gap: 0.75rem;">
-                <div style="min-width: 0; flex: 1; display: flex; align-items: center; gap: 0.75rem;">
-                    <!-- Category Select All Checkbox -->
-                    <div style="display: flex; align-items: center;" title="{{ __('Select all dishes in this category') }}">
-                        <input type="checkbox"
-                               :checked="isCategorySelected({{ $category->id }})"
-                               @change="toggleSelectCategory({{ $category->id }})"
-                               style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
-                    </div>
-                    <div style="min-width: 0; flex: 1;">
-                        <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
-                            <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0;">
-                                {{ $category->name }}
-                            </h2>
-                            @if($category->getTranslatedName('hy') || $category->getTranslatedName('ru'))
-                                <span style="font-size: 0.78rem; font-weight: 500; color: var(--text-muted); background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.15rem 0.5rem; border-radius: 6px;">
-                                    @if($category->getTranslatedName('hy')) HY: {{ $category->getTranslatedName('hy') }} @endif
-                                    @if($category->getTranslatedName('hy') && $category->getTranslatedName('ru')) | @endif
-                                    @if($category->getTranslatedName('ru')) RU: {{ $category->getTranslatedName('ru') }} @endif
-                                </span>
-                            @endif
-                            <span class="badge badge-indigo" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;">
-                                {{ $category->products->count() }} {{ __('dishes') }}
-                            </span>
-                        </div>
-                        @if($category->description)
-                            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.35rem;" class="break-word">{{ $category->description }}</p>
-                        @endif
-                    </div>
-                </div>
+            @foreach($categories as $category)
+                <div class="category-card" x-show="!filterCategoryId || filterCategoryId == {{ $category->id }}">
+                    <!-- Category Header -->
+                    <div class="category-header">
+                        <div style="min-width: 0; flex: 1; display: flex; align-items: center; gap: 0.85rem;">
+                            <!-- Category Select All Checkbox -->
+                            <div style="display: flex; align-items: center;" title="{{ __('Select all dishes in this category') }}">
+                                <input type="checkbox"
+                                       :checked="isCategorySelected({{ $category->id }})"
+                                       @change="toggleSelectCategory({{ $category->id }})"
+                                       style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+                            </div>
 
-                <div style="display: flex; gap: 0.45rem; align-items: center; flex-shrink: 0;">
-                    <!-- Duplicate Category -->
-                    <button type="button"
-                            class="btn btn-secondary"
-                            style="padding: 0.35rem 0.65rem; font-size: 0.78rem; color: #6366f1; border-color: rgba(99, 102, 241, 0.4);"
-                            @click="duplicateCategory({ id: {{ $category->id }}, name: '{{ addslashes($category->name) }}' })"
-                            title="{{ __('Duplicate category and all dishes') }}">
-                        <i class="fa-solid fa-copy"></i> {{ __('Duplicate') }}
-                    </button>
-                    <!-- Edit Category -->
-                    <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem;" onclick="editCategory({{ json_encode($category) }})">
-                        <i class="fa-solid fa-pen"></i> {{ __('Edit') }}
-                    </button>
-                    <!-- Safe Delete Category -->
-                    <button type="button"
-                            class="btn btn-danger"
-                            style="padding: 0.35rem 0.65rem; font-size: 0.78rem;"
-                            @click="openSafeDeleteCategory({ id: {{ $category->id }}, name: '{{ addslashes($category->name) }}', products_count: {{ $category->products->count() }} })"
-                            title="{{ __('Delete Category Safely') }}">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                </div>
-            </div>
+                            <!-- Collapse/Expand Toggle Button -->
+                            <button type="button"
+                                    class="category-collapse-btn"
+                                    @click="toggleCategoryCollapse({{ $category->id }})"
+                                    title="{{ __('Collapse / Expand Category') }}">
+                                <i class="fa-solid" :class="isCategoryCollapsed({{ $category->id }}) ? 'fa-chevron-right' : 'fa-chevron-down'"></i>
+                            </button>
 
-            <!-- Dishes List -->
-            <div style="display: flex; flex-direction: column; gap: 0.85rem;">
-                @forelse($category->products as $product)
-                    <div class="menu-dish-row"
-                         x-show="matchesFilter({{ $product->id }})"
-                         :class="{ 'selected-row': selectedDishIds.includes({{ $product->id }}) }">
-                        <!-- Product Selection Checkbox -->
-                        <div style="display: flex; align-items: center; padding-right: 0.25rem;">
-                            <input type="checkbox"
-                                   :value="{{ $product->id }}"
-                                   x-model="selectedDishIds"
-                                   style="width: 17px; height: 17px; accent-color: var(--primary); cursor: pointer;">
-                        </div>
-
-                        <!-- Left/Desktop Content: Thumbnail + Info -->
-                        <div class="dish-main-mobile" style="flex: 1; min-width: 0; display: flex; align-items: flex-start; gap: 1rem;">
-                            <img src="{{ $product->image }}" onerror="this.onerror=null;this.src='{{ asset('images/default-dish.png') }}';" class="dish-thumb" alt="{{ $product->name }}">
-                            
-                            <div class="dish-content">
-                                <div style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
-                                    <!-- Inline Editable Name -->
-                                    <div class="inline-editable-cell"
-                                         @click="startInlineEdit({{ $product->id }}, 'name', '{{ addslashes($product->name) }}')"
-                                         title="{{ __('Click to edit dish name') }}">
-                                        <template x-if="editingDishId === {{ $product->id }} && editingField === 'name'">
-                                            <div style="display: inline-flex; align-items: center; gap: 0.25rem;" @click.stop>
-                                                <input type="text"
-                                                       x-model="editingValue"
-                                                       class="inline-edit-input"
-                                                       style="width: 180px;"
-                                                       @keydown.enter="saveInlineEdit({{ $product->id }})"
-                                                       @keydown.escape="cancelInlineEdit()">
-                                                <button type="button" class="btn btn-primary" style="padding: 0.15rem 0.35rem; font-size: 0.72rem;" @click="saveInlineEdit({{ $product->id }})"><i class="fa-solid fa-check"></i></button>
-                                                <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.35rem; font-size: 0.72rem;" @click="cancelInlineEdit()"><i class="fa-solid fa-xmark"></i></button>
-                                            </div>
-                                        </template>
-                                        <template x-if="!(editingDishId === {{ $product->id }} && editingField === 'name')">
-                                            <span style="display: inline-flex; align-items: center; gap: 0.35rem;">
-                                                <strong style="font-size: 1.05rem; color: var(--text-main); font-family: 'Outfit'; word-break: break-word;"
-                                                        x-text="getDishName({{ $product->id }}, '{{ addslashes($product->name) }}')">
-                                                    {{ $product->name }}
-                                                </strong>
-                                                <i class="fa-solid fa-pen" style="font-size: 0.65rem; color: var(--text-muted); opacity: 0.4;"></i>
-                                            </span>
-                                        </template>
-                                    </div>
-                                    
-                                    @php
-                                        $prodDailyOffer = $product->dailyOffers ? $product->dailyOffers->where('is_active', true)->first() : null;
-                                        $isProductDailyOffer = (bool) $prodDailyOffer || ($vendor->featured_dish_enabled && $vendor->featured_product_id == $product->id);
-                                    @endphp
-                                    @if($vendor->featured_dish_enabled && $isProductDailyOffer)
-                                        <span class="badge" style="background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; font-size: 0.7rem; font-weight: 800; display: inline-flex; align-items: center; gap: 0.35rem;">
-                                            <i class="fa-solid fa-fire-flame-curved"></i> {{ ($prodDailyOffer?->badge) ?: ($vendor->featured_dish_badge ?: __('SPECIAL OF THE DAY')) }}
+                            <div style="min-width: 0; flex: 1; cursor: pointer;" @click="toggleCategoryCollapse({{ $category->id }})">
+                                <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+                                    <h2 style="font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin: 0; font-family: 'Outfit';">
+                                        {{ $category->name }}
+                                    </h2>
+                                    @if($category->getTranslatedName('hy') || $category->getTranslatedName('ru'))
+                                        <span style="font-size: 0.78rem; font-weight: 500; color: var(--text-muted); background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.15rem 0.55rem; border-radius: 6px;">
+                                            @if($category->getTranslatedName('hy')) HY: {{ $category->getTranslatedName('hy') }} @endif
+                                            @if($category->getTranslatedName('hy') && $category->getTranslatedName('ru')) | @endif
+                                            @if($category->getTranslatedName('ru')) RU: {{ $category->getTranslatedName('ru') }} @endif
                                         </span>
                                     @endif
-                                    
-                                    @if($product->is_featured)
-                                        <span class="badge badge-amber" style="font-size: 0.7rem; font-weight: 700;">★ {{ __('FEATURED') }}</span>
-                                    @endif
-
-                                    @if(!empty($product->dietary_tags))
-                                        @foreach($product->dietary_tags as $tag)
-                                            <span class="badge badge-emerald" style="font-size: 0.68rem; text-transform: uppercase;">{{ str_replace('_', ' ', $tag) }}</span>
-                                        @endforeach
-                                    @endif
-
-                                    @if($product->available_start_time || $product->available_end_time || !empty($product->available_days))
-                                        <span class="badge badge-amber" style="font-size: 0.68rem;">
-                                            <i class="fa-regular fa-clock"></i> {{ $product->getAvailabilityScheduleSummary(app()->getLocale()) }}
-                                        </span>
-                                    @endif
-
-                                    @if(!$product->available_for_dine_in || !$product->available_for_takeaway || !$product->available_for_delivery)
-                                        <span class="badge badge-indigo" style="font-size: 0.68rem;">
-                                            @if($product->available_for_dine_in) 🍽️ {{ __('Dine-in') }} @endif
-                                            @if($product->available_for_takeaway) 🥡 {{ __('Takeaway') }} @endif
-                                            @if($product->available_for_delivery) 🛵 {{ __('Delivery') }} @endif
-                                        </span>
-                                    @endif
-
-                                    @php
-                                        $locUnavailableCount = 0;
-                                        foreach($locations as $loc) {
-                                            if (!$product->isAvailableAtLocation($loc->id)) {
-                                                $locUnavailableCount++;
-                                            }
-                                        }
-                                    @endphp
-                                    @if($locUnavailableCount > 0 && $locUnavailableCount < $locations->count())
-                                        <span class="badge badge-rose" style="font-size: 0.68rem;">
-                                            <i class="fa-solid fa-store-slash"></i> {{ __('Disabled in :count branches', ['count' => $locUnavailableCount]) }}
-                                        </span>
-                                    @endif
+                                    <span class="badge badge-indigo" style="font-size: 0.72rem; padding: 0.2rem 0.6rem; border-radius: 999px;">
+                                        {{ $category->products->count() }} {{ __('dishes') }}
+                                    </span>
                                 </div>
-
-                                @if($product->description)
-                                    <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.35rem; line-height: 1.4; word-break: break-word;">{{ $product->description }}</p>
+                                @if($category->description)
+                                    <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem; margin-bottom: 0;" class="break-word">{{ $category->description }}</p>
                                 @endif
-
-                                <!-- Variations & Portions Chips -->
-                                @if($product->variations && $product->variations->count() > 0)
-                                    @php
-                                        $hasCustomVariations = $product->variations->count() > 1 || 
-                                            ($product->variations->count() === 1 && !in_array($product->variations->first()->name, ['Standard', 'Standard Portion']));
-                                    @endphp
-                                    @if($hasCustomVariations)
-                                        <div style="margin-top: 0.65rem; padding: 0.5rem 0.75rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; width: 100%; box-sizing: border-box;">
-                                            <div style="font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.35rem;">
-                                                <i class="fa-solid fa-sliders" style="color: var(--primary);"></i> {{ __('Portions & Variations') }} ({{ $product->variations->count() }}):
-                                            </div>
-                                            <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
-                                                @foreach($product->variations as $var)
-                                                    <div style="display: inline-flex; align-items: center; gap: 0.35rem; background: var(--input-bg); border: 1px solid {{ $var->is_default ? 'var(--primary)' : 'var(--border-color)' }}; padding: 0.2rem 0.55rem; border-radius: 8px; font-size: 0.75rem; white-space: nowrap;">
-                                                        @if($var->is_default)
-                                                            <i class="fa-solid fa-circle-check" style="color: var(--primary); font-size: 0.75rem;" title="{{ __('Default Portion') }}"></i>
-                                                        @else
-                                                            <i class="fa-regular fa-circle" style="color: var(--text-muted); font-size: 0.7rem;"></i>
-                                                        @endif
-                                                        <span style="font-weight: 700; color: var(--text-main);">{{ $var->name }}</span>
-                                                        @php
-                                                            $extraTrans = array_filter([
-                                                                $var->name_translations['hy'] ?? null,
-                                                                $var->name_translations['ru'] ?? null
-                                                            ], fn($t) => !empty($t) && $t !== $var->name);
-                                                        @endphp
-                                                        @if(!empty($extraTrans))
-                                                            <span style="color: var(--text-muted); font-size: 0.7rem;">({{ implode(' • ', $extraTrans) }})</span>
-                                                        @endif
-                                                        <span style="font-family: 'Outfit'; font-weight: 800; color: var(--primary);">
-                                                            {{ number_format($var->price) }} {{ $vendor->currency }}
-                                                        </span>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                    @endif
-                                @endif
-
-                                <div style="display: flex; gap: 0.85rem; align-items: center; margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap;">
-                                    @if($product->calories)
-                                        <span><i class="fa-solid fa-fire" style="color: var(--primary);"></i> {{ $product->calories }} {{ __('kcal') }}</span>
-                                    @endif
-                                    @if($product->preparation_time_min)
-                                        <span><i class="fa-solid fa-clock"></i> {{ $product->preparation_time_min }} {{ __('mins') }}</span>
-                                    @endif
-                                    @if($product->allergens->count() > 0)
-                                        <span><i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i> {{ __('Allergens:') }} {{ $product->allergens->pluck('icon')->join(' ') }}</span>
-                                    @endif
-                                </div>
                             </div>
                         </div>
 
-                        <!-- Right / Bottom Pricing & Actions -->
-                        <div class="dish-pricing-col">
-                            <div class="dish-pricing-row-mobile">
-                                <!-- Inline Editable Price -->
-                                <div class="inline-editable-cell"
-                                     @click="startInlineEdit({{ $product->id }}, 'price', {{ (float)$product->price }})"
-                                     title="{{ __('Click to edit price') }}">
-                                    <template x-if="editingDishId === {{ $product->id }} && editingField === 'price'">
-                                        <div style="display: inline-flex; align-items: center; gap: 0.25rem;" @click.stop>
-                                            <input type="number"
-                                                   x-model="editingValue"
-                                                   class="inline-edit-input"
-                                                   style="width: 90px;"
-                                                   @keydown.enter="saveInlineEdit({{ $product->id }})"
-                                                   @keydown.escape="cancelInlineEdit()">
-                                            <button type="button" class="btn btn-primary" style="padding: 0.15rem 0.35rem; font-size: 0.72rem;" @click="saveInlineEdit({{ $product->id }})"><i class="fa-solid fa-check"></i></button>
-                                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.35rem; font-size: 0.72rem;" @click="cancelInlineEdit()"><i class="fa-solid fa-xmark"></i></button>
-                                        </div>
-                                    </template>
-                                    <template x-if="!(editingDishId === {{ $product->id }} && editingField === 'price')">
-                                        <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary); font-family: 'Outfit'; line-height: 1.2; display: flex; align-items: baseline; gap: 0.35rem;">
-                                            @if($product->isDiscountActive())
-                                                <div style="display: flex; align-items: baseline; gap: 0.45rem;">
-                                                    <span style="color: #ef4444;" x-text="getDishPrice({{ $product->id }}, '{{ number_format($product->discount_price) }} {{ $vendor->currency }}')">
-                                                        {{ number_format($product->discount_price) }} {{ $vendor->currency }}
-                                                    </span>
-                                                    <del style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">{{ number_format($product->price) }}</del>
-                                                </div>
-                                            @elseif($product->discount_price)
-                                                <div>
-                                                    <span x-text="getDishPrice({{ $product->id }}, '{{ number_format($product->price) }} {{ $vendor->currency }}')">
-                                                        {{ number_format($product->price) }} {{ $vendor->currency }}
-                                                    </span>
-                                                    <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">
-                                                        ({{ __('Discount:') }} {{ number_format($product->discount_price) }} {{ $vendor->currency }})
+                        <!-- Category Action Buttons -->
+                        <div style="display: flex; gap: 0.45rem; align-items: center; flex-shrink: 0; flex-wrap: wrap;">
+                            <!-- Direct Add Dish To This Category -->
+                            <button type="button"
+                                    class="btn btn-primary"
+                                    style="padding: 0.4rem 0.8rem; font-size: 0.78rem;"
+                                    onclick="openNewProductModal({{ $category->id }})"
+                                    title="{{ __('Add dish directly to this category') }}">
+                                <i class="fa-solid fa-plus"></i> {{ __('Add Dish') }}
+                            </button>
+
+                            <!-- Duplicate Category -->
+                            <button type="button"
+                                    class="btn btn-secondary"
+                                    style="padding: 0.4rem 0.75rem; font-size: 0.78rem; color: #6366f1; border-color: rgba(99, 102, 241, 0.4);"
+                                    @click="duplicateCategory({ id: {{ $category->id }}, name: '{{ addslashes($category->name) }}' })"
+                                    title="{{ __('Duplicate category and all dishes') }}">
+                                <i class="fa-solid fa-copy"></i> {{ __('Duplicate') }}
+                            </button>
+
+                            <!-- Edit Category -->
+                            <button type="button" class="btn btn-secondary" style="padding: 0.4rem 0.75rem; font-size: 0.78rem;" onclick="editCategory({{ json_encode($category) }})">
+                                <i class="fa-solid fa-pen"></i> {{ __('Edit') }}
+                            </button>
+
+                            <!-- Safe Delete Category -->
+                            <button type="button"
+                                    class="btn btn-danger"
+                                    style="padding: 0.4rem 0.75rem; font-size: 0.78rem;"
+                                    @click="openSafeDeleteCategory({ id: {{ $category->id }}, name: '{{ addslashes($category->name) }}', products_count: {{ $category->products->count() }} })"
+                                    title="{{ __('Delete Category Safely') }}">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Category Dishes Body (Collapsible) -->
+                    <div class="category-dishes-body" x-show="!isCategoryCollapsed({{ $category->id }})" x-collapse>
+                        @forelse($category->products as $product)
+                            <div class="menu-dish-row"
+                                 x-show="matchesFilter({{ $product->id }})"
+                                 :class="{ 'selected-row': selectedDishIds.includes({{ $product->id }}) }">
+                                
+                                <!-- Selection Checkbox -->
+                                <div style="display: flex; align-items: center; padding-right: 0.25rem;">
+                                    <input type="checkbox"
+                                           :value="{{ $product->id }}"
+                                           x-model="selectedDishIds"
+                                           style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+                                </div>
+
+                                <!-- Left/Desktop: Thumbnail + Details -->
+                                <div class="dish-main-mobile" style="flex: 1; min-width: 0; display: flex; align-items: flex-start; gap: 1rem;">
+                                    <!-- Dish Thumbnail with Zoom & Fallback -->
+                                    <div class="dish-thumb-box">
+                                        <img src="{{ $product->image }}"
+                                             onerror="this.onerror=null;this.src='{{ asset('images/default-dish.png') }}';"
+                                             class="dish-thumb"
+                                             alt="{{ $product->name }}">
+                                    </div>
+                                    
+                                    <div class="dish-content">
+                                        <!-- Title & Badges Row -->
+                                        <div style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
+                                            <!-- Inline Editable Name -->
+                                            <div class="inline-editable-cell"
+                                                 @click="startInlineEdit({{ $product->id }}, 'name', '{{ addslashes($product->name) }}')"
+                                                 title="{{ __('Click to edit dish name') }}">
+                                                <template x-if="editingDishId === {{ $product->id }} && editingField === 'name'">
+                                                    <div style="display: inline-flex; align-items: center; gap: 0.25rem;" @click.stop>
+                                                        <input type="text"
+                                                               x-model="editingValue"
+                                                               class="inline-edit-input"
+                                                               style="width: 190px;"
+                                                               @keydown.enter="saveInlineEdit({{ $product->id }})"
+                                                               @keydown.escape="cancelInlineEdit()">
+                                                        <button type="button" class="btn btn-primary" style="padding: 0.2rem 0.45rem; font-size: 0.72rem;" @click="saveInlineEdit({{ $product->id }})"><i class="fa-solid fa-check"></i></button>
+                                                        <button type="button" class="btn btn-secondary" style="padding: 0.2rem 0.45rem; font-size: 0.72rem;" @click="cancelInlineEdit()"><i class="fa-solid fa-xmark"></i></button>
                                                     </div>
-                                                </div>
-                                            @elseif($product->variations->count() > 1)
-                                                <span x-text="getDishPrice({{ $product->id }}, '{{ number_format($product->variations->min('price')) }} - {{ number_format($product->variations->max('price')) }} {{ $vendor->currency }}')">
-                                                    {{ number_format($product->variations->min('price')) }} - {{ number_format($product->variations->max('price')) }} {{ $vendor->currency }}
+                                                </template>
+                                                <template x-if="!(editingDishId === {{ $product->id }} && editingField === 'name')">
+                                                    <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                                                        <strong style="font-size: 1.05rem; color: var(--text-main); font-family: 'Outfit'; word-break: break-word;"
+                                                                x-text="getDishName({{ $product->id }}, '{{ addslashes($product->name) }}')">
+                                                            {{ $product->name }}
+                                                        </strong>
+                                                        <i class="fa-solid fa-pen" style="font-size: 0.65rem; color: var(--text-muted); opacity: 0.4;"></i>
+                                                    </span>
+                                                </template>
+                                            </div>
+                                            
+                                            @php
+                                                $prodDailyOffer = $product->dailyOffers ? $product->dailyOffers->where('is_active', true)->first() : null;
+                                                $isProductDailyOffer = (bool) $prodDailyOffer || ($vendor->featured_dish_enabled && (int)$vendor->featured_product_id === (int)$product->id);
+                                            @endphp
+                                            
+                                            <!-- Daily Offer Badge (Reactive with Alpine) -->
+                                            <template x-if="allDishes.find(d => d.id === {{ $product->id }})?.is_daily_offer">
+                                                <span class="badge" style="background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; font-size: 0.68rem; font-weight: 800; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.15rem 0.5rem; border-radius: 999px;">
+                                                    <i class="fa-solid fa-fire-flame-curved"></i> {{ ($prodDailyOffer?->badge) ?: ($vendor->featured_dish_badge ?: __('SPECIAL OF THE DAY')) }}
                                                 </span>
-                                            @else
-                                                <span x-text="getDishPrice({{ $product->id }}, '{{ number_format($product->price) }} {{ $vendor->currency }}')">
-                                                    {{ number_format($product->price) }} {{ $vendor->currency }}
+                                            </template>
+                                            
+                                            @if($product->is_featured)
+                                                <span class="badge badge-amber" style="font-size: 0.68rem; font-weight: 700;">★ {{ __('FEATURED') }}</span>
+                                            @endif
+
+                                            @if(!empty($product->dietary_tags))
+                                                @foreach($product->dietary_tags as $tag)
+                                                    <span class="badge badge-emerald" style="font-size: 0.66rem; text-transform: uppercase;">{{ str_replace('_', ' ', $tag) }}</span>
+                                                @endforeach
+                                            @endif
+
+                                            @if($product->available_start_time || $product->available_end_time || !empty($product->available_days))
+                                                <span class="badge badge-amber" style="font-size: 0.66rem;">
+                                                    <i class="fa-regular fa-clock"></i> {{ $product->getAvailabilityScheduleSummary(app()->getLocale()) }}
                                                 </span>
                                             @endif
-                                            <i class="fa-solid fa-pen" style="font-size: 0.65rem; color: var(--text-muted); opacity: 0.4;"></i>
+
+                                            @if(!$product->available_for_dine_in || !$product->available_for_takeaway || !$product->available_for_delivery)
+                                                <span class="badge badge-indigo" style="font-size: 0.66rem;">
+                                                    @if($product->available_for_dine_in) 🍽️ {{ __('Dine-in') }} @endif
+                                                    @if($product->available_for_takeaway) 🥡 {{ __('Takeaway') }} @endif
+                                                    @if($product->available_for_delivery) 🛵 {{ __('Delivery') }} @endif
+                                                </span>
+                                            @endif
+
+                                            @php
+                                                $locUnavailableCount = 0;
+                                                foreach($locations as $loc) {
+                                                    if (!$product->isAvailableAtLocation($loc->id)) {
+                                                        $locUnavailableCount++;
+                                                    }
+                                                }
+                                            @endphp
+                                            @if($locUnavailableCount > 0 && $locUnavailableCount < $locations->count())
+                                                <span class="badge badge-rose" style="font-size: 0.66rem;">
+                                                    <i class="fa-solid fa-store-slash"></i> {{ __('Disabled in :count branches', ['count' => $locUnavailableCount]) }}
+                                                </span>
+                                            @endif
                                         </div>
-                                    </template>
+
+                                        @if($product->description)
+                                            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.35rem; margin-bottom: 0; line-height: 1.4; word-break: break-word;">{{ $product->description }}</p>
+                                        @endif
+
+                                        <!-- Portions & Variations Chips -->
+                                        @if($product->variations && $product->variations->count() > 0)
+                                            @php
+                                                $hasCustomVariations = $product->variations->count() > 1 || 
+                                                    ($product->variations->count() === 1 && !in_array($product->variations->first()->name, ['Standard', 'Standard Portion']));
+                                            @endphp
+                                            @if($hasCustomVariations)
+                                                <div style="margin-top: 0.65rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center;">
+                                                    <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-right: 0.25rem;">
+                                                        <i class="fa-solid fa-sliders" style="color: var(--primary);"></i> {{ __('Portions') }}:
+                                                    </span>
+                                                    @foreach($product->variations as $var)
+                                                        <div class="portion-pill {{ $var->is_default ? 'default-portion' : '' }}">
+                                                            @if($var->is_default)
+                                                                <i class="fa-solid fa-circle-check" style="color: var(--primary); font-size: 0.72rem;" title="{{ __('Default Portion') }}"></i>
+                                                            @endif
+                                                            <span style="font-weight: 700; color: var(--text-main);">{{ $var->name }}</span>
+                                                            @php
+                                                                $extraTrans = array_filter([
+                                                                    $var->name_translations['hy'] ?? null,
+                                                                    $var->name_translations['ru'] ?? null
+                                                                ], fn($t) => !empty($t) && $t !== $var->name);
+                                                            @endphp
+                                                            @if(!empty($extraTrans))
+                                                                <span style="color: var(--text-muted); font-size: 0.68rem;">({{ implode(' • ', $extraTrans) }})</span>
+                                                            @endif
+                                                            <strong style="font-family: 'Outfit'; font-weight: 800; color: var(--primary);">
+                                                                {{ number_format($var->price) }} {{ $vendor->currency }}
+                                                            </strong>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        @endif
+
+                                        <!-- Nutrition, Prep Time & Allergens Footer -->
+                                        <div style="display: flex; gap: 0.85rem; align-items: center; margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap;">
+                                            @if($product->calories)
+                                                <span><i class="fa-solid fa-fire" style="color: var(--primary);"></i> {{ $product->calories }} {{ __('kcal') }}</span>
+                                            @endif
+                                            @if($product->preparation_time_min)
+                                                <span><i class="fa-solid fa-clock"></i> {{ $product->preparation_time_min }} {{ __('mins') }}</span>
+                                            @endif
+                                            @if($product->allergens->count() > 0)
+                                                <span><i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i> {{ __('Allergens:') }} {{ $product->allergens->pluck('icon')->join(' ') }}</span>
+                                            @endif
+                                        </div>
+                                    </div>
                                 </div>
 
-                                @if($product->isDiscountActive())
-                                    <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; justify-content: flex-end;">
-                                        <span class="badge badge-rose" style="font-size: 0.7rem;">
-                                            <i class="fa-solid fa-tag"></i> -{{ $product->getDiscountPercentage() }}% {{ __('Off') }}
-                                        </span>
-                                        <span class="badge badge-emerald" style="font-size: 0.7rem;">
-                                            <i class="fa-regular fa-clock"></i> {{ $product->getDiscountScheduleSummary(app()->getLocale()) }}
-                                        </span>
-                                    </div>
-                                @elseif($product->discount_price)
-                                    <div style="font-size: 0.7rem; color: var(--text-muted);">
-                                        <i class="fa-regular fa-clock"></i> {{ $product->getDiscountScheduleSummary(app()->getLocale()) }} <span style="opacity: 0.7;">({{ __('off hours') }})</span>
-                                    </div>
-                                @endif
-                            </div>
+                                <!-- Right Side: Pricing & Direct Actions -->
+                                <div class="dish-pricing-col">
+                                    <div class="dish-pricing-row-mobile">
+                                        <!-- Inline Editable Price -->
+                                        <div class="inline-editable-cell"
+                                             @click="startInlineEdit({{ $product->id }}, 'price', {{ (float)$product->price }})"
+                                             title="{{ __('Click to edit price') }}">
+                                            <template x-if="editingDishId === {{ $product->id }} && editingField === 'price'">
+                                                <div style="display: inline-flex; align-items: center; gap: 0.25rem;" @click.stop>
+                                                    <input type="number"
+                                                           x-model="editingValue"
+                                                           class="inline-edit-input"
+                                                           style="width: 95px;"
+                                                           @keydown.enter="saveInlineEdit({{ $product->id }})"
+                                                           @keydown.escape="cancelInlineEdit()">
+                                                    <button type="button" class="btn btn-primary" style="padding: 0.2rem 0.45rem; font-size: 0.72rem;" @click="saveInlineEdit({{ $product->id }})"><i class="fa-solid fa-check"></i></button>
+                                                    <button type="button" class="btn btn-secondary" style="padding: 0.2rem 0.45rem; font-size: 0.72rem;" @click="cancelInlineEdit()"><i class="fa-solid fa-xmark"></i></button>
+                                                </div>
+                                            </template>
+                                            <template x-if="!(editingDishId === {{ $product->id }} && editingField === 'price')">
+                                                <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary); font-family: 'Outfit'; line-height: 1.2; display: flex; align-items: baseline; gap: 0.35rem;">
+                                                    @if($product->isDiscountActive())
+                                                        <div style="display: flex; align-items: baseline; gap: 0.45rem;">
+                                                            <span style="color: #ef4444;" x-text="getDishPrice({{ $product->id }}, '{{ number_format($product->discount_price) }} {{ $vendor->currency }}')">
+                                                                {{ number_format($product->discount_price) }} {{ $vendor->currency }}
+                                                            </span>
+                                                            <del style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">{{ number_format($product->price) }}</del>
+                                                        </div>
+                                                    @elseif($product->discount_price)
+                                                        <div>
+                                                            <span x-text="getDishPrice({{ $product->id }}, '{{ number_format($product->price) }} {{ $vendor->currency }}')">
+                                                                {{ number_format($product->price) }} {{ $vendor->currency }}
+                                                            </span>
+                                                            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">
+                                                                ({{ __('Discount:') }} {{ number_format($product->discount_price) }} {{ $vendor->currency }})
+                                                            </div>
+                                                        </div>
+                                                    @elseif($product->variations->count() > 1)
+                                                        <span x-text="getDishPrice({{ $product->id }}, '{{ number_format($product->variations->min('price')) }} - {{ number_format($product->variations->max('price')) }} {{ $vendor->currency }}')">
+                                                            {{ number_format($product->variations->min('price')) }} - {{ number_format($product->variations->max('price')) }} {{ $vendor->currency }}
+                                                        </span>
+                                                    @else
+                                                        <span x-text="getDishPrice({{ $product->id }}, '{{ number_format($product->price) }} {{ $vendor->currency }}')">
+                                                            {{ number_format($product->price) }} {{ $vendor->currency }}
+                                                        </span>
+                                                    @endif
+                                                    <i class="fa-solid fa-pen" style="font-size: 0.65rem; color: var(--text-muted); opacity: 0.4;"></i>
+                                                </div>
+                                            </template>
+                                        </div>
 
-                            <div class="dish-actions-mobile">
-                                <form action="{{ route('admin.menu.products.daily_offer.toggle', $product->id) }}" method="POST" style="margin: 0;">
-                                    @csrf
-                                    <button type="submit"
-                                            class="btn btn-secondary"
-                                            style="padding: 0.35rem 0.65rem; font-size: 0.78rem; {{ $isProductDailyOffer ? 'border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.08); color: #ef4444; font-weight: 700;' : 'color: var(--text-muted);' }}"
-                                            title="{{ $isProductDailyOffer ? __('Remove from Daily Offers') : __('Add to Daily Offers') }}">
-                                        <i class="fa-solid fa-fire-flame-curved" style="{{ $isProductDailyOffer ? 'color: #ef4444;' : 'opacity: 0.4;' }}"></i>
-                                        <span>{{ $isProductDailyOffer ? __('Daily Offer') : __('+ Daily Offer') }}</span>
-                                    </button>
-                                </form>
-
-                                <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.7rem; font-size: 0.78rem;" onclick="editProduct({{ json_encode($product->load(['allergens', 'variations', 'overrides', 'dailyOffers'])) }})">
-                                    <i class="fa-solid fa-pen"></i> {{ __('Edit') }}
-                                </button>
-
-                                @php
-                                    $isInStockCurrentBranch = $product->isAvailableAtLocation($activeLocationId);
-                                @endphp
-                                <form action="{{ route('admin.menu.products.toggle', $product->id) }}" method="POST" style="margin: 0;">
-                                    @csrf
-                                    <input type="hidden" name="location_id" value="{{ $activeLocationId }}">
-                                    <button type="submit" class="btn btn-secondary" style="padding: 0.35rem 0.7rem; font-size: 0.78rem;" title="{{ __('Toggle stock status for :name', ['name' => $activeLocation?->name]) }}">
-                                        @if($isInStockCurrentBranch)
-                                            <span style="color: #10b981;"><i class="fa-solid fa-toggle-on"></i> {{ __('In Stock') }}</span>
-                                        @else
-                                            <span style="color: #ef4444;"><i class="fa-solid fa-toggle-off"></i> {{ __('Out of Stock') }}</span>
+                                        @if($product->isDiscountActive())
+                                            <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; justify-content: flex-end;">
+                                                <span class="badge badge-rose" style="font-size: 0.7rem;">
+                                                    <i class="fa-solid fa-tag"></i> -{{ $product->getDiscountPercentage() }}% {{ __('Off') }}
+                                                </span>
+                                            </div>
                                         @endif
-                                        <small style="opacity: 0.7; font-size: 0.7rem; display: block;">({{ Str::limit($activeLocation?->name ?? __('Branch'), 12) }})</small>
-                                    </button>
-                                </form>
+                                    </div>
 
-                                <form action="{{ route('admin.menu.products.destroy', $product->id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('{{ __('Delete dish') }} {{ $product->name }}?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-danger" style="padding: 0.35rem 0.65rem; font-size: 0.78rem;" title="{{ __('Delete dish') }}">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </form>
+                                    <!-- Quick Interactive Controls (Instant AJAX) -->
+                                    <div class="dish-actions-mobile">
+                                        <!-- Modern Stock Switch Toggle -->
+                                        <template x-if="allDishes.find(d => d.id === {{ $product->id }})">
+                                            <div class="modern-stock-switch"
+                                                 :class="{ 'in-stock': allDishes.find(d => d.id === {{ $product->id }})?.is_available, 'out-of-stock': !allDishes.find(d => d.id === {{ $product->id }})?.is_available }"
+                                                 @click="toggleDishStock(allDishes.find(d => d.id === {{ $product->id }}))"
+                                                 title="{{ __('Toggle stock availability for :name', ['name' => $activeLocation?->name ?? __('Branch')]) }}">
+                                                <span class="stock-switch-thumb">
+                                                    <i class="fa-solid" :class="allDishes.find(d => d.id === {{ $product->id }})?.is_available ? 'fa-check' : 'fa-xmark'"></i>
+                                                </span>
+                                                <span x-text="allDishes.find(d => d.id === {{ $product->id }})?.is_available ? '{{ __('In Stock') }}' : '{{ __('Out of Stock') }}'"></span>
+                                            </div>
+                                        </template>
+
+                                        <!-- Daily Offer Toggle Button (Instant AJAX) -->
+                                        <template x-if="allDishes.find(d => d.id === {{ $product->id }})">
+                                            <button type="button"
+                                                    class="daily-offer-btn"
+                                                    :class="{ 'active': allDishes.find(d => d.id === {{ $product->id }})?.is_daily_offer }"
+                                                    @click="toggleDailyOffer(allDishes.find(d => d.id === {{ $product->id }}))"
+                                                    title="{{ __('Toggle daily special offer status') }}">
+                                                <i class="fa-solid fa-fire-flame-curved"></i>
+                                                <span x-text="allDishes.find(d => d.id === {{ $product->id }})?.is_daily_offer ? '{{ __('Daily Offer') }}' : '{{ __('+ Offer') }}'"></span>
+                                            </button>
+                                        </template>
+
+                                        <!-- Edit Dish Modal Button -->
+                                        <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem;" onclick="editProduct({{ json_encode($product->load(['allergens', 'variations', 'overrides', 'dailyOffers'])) }})">
+                                            <i class="fa-solid fa-pen"></i> {{ __('Edit') }}
+                                        </button>
+
+                                        <!-- Delete Dish Button -->
+                                        <template x-if="allDishes.find(d => d.id === {{ $product->id }})">
+                                            <button type="button" class="btn btn-danger" style="padding: 0.35rem 0.65rem; font-size: 0.78rem;" @click="deleteSingleProduct(allDishes.find(d => d.id === {{ $product->id }}))" title="{{ __('Delete dish') }}">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        @empty
+                            <div style="text-align: center; padding: 2.5rem; color: var(--text-muted); font-size: 0.9rem;">
+                                <i class="fa-solid fa-bowl-food" style="font-size: 1.75rem; opacity: 0.4; margin-bottom: 0.5rem; display: block;"></i>
+                                {{ __('No dishes added to this category yet.') }}
+                                <div style="margin-top: 0.75rem;">
+                                    <button type="button" class="btn btn-primary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem;" onclick="openNewProductModal({{ $category->id }})">
+                                        <i class="fa-solid fa-plus"></i> {{ __('Add First Dish') }}
+                                    </button>
+                                </div>
+                            </div>
+                        @endforelse
                     </div>
-                @empty
-                    <div style="text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.9rem;">
-                        {{ __('No dishes added to this category yet.') }}
-                    </div>
-                @endforelse
-            </div>
-        </div>
-    @endforeach
+                </div>
+            @endforeach
         </div>
         <!-- End View 1: Categorized View -->
-@endif
+    @endif
 
     <!-- View 2: High-Density Compact Table View -->
     <div x-show="viewMode === 'table'" x-cloak class="card" style="padding: 0; overflow: hidden; margin-bottom: 2rem;">
@@ -969,8 +1448,8 @@
                                     <template x-if="editingDishId === dish.id && editingField === 'name'">
                                         <div style="display: inline-flex; align-items: center; gap: 0.25rem;" @click.stop>
                                             <input type="text" x-model="editingValue" class="inline-edit-input" style="width: 180px;" @keydown.enter="saveInlineEdit(dish.id)" @keydown.escape="cancelInlineEdit()">
-                                            <button type="button" class="btn btn-primary" style="padding: 0.15rem 0.35rem; font-size: 0.72rem;" @click="saveInlineEdit(dish.id)"><i class="fa-solid fa-check"></i></button>
-                                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.35rem; font-size: 0.72rem;" @click="cancelInlineEdit()"><i class="fa-solid fa-xmark"></i></button>
+                                            <button type="button" class="btn btn-primary" style="padding: 0.2rem 0.4rem; font-size: 0.72rem;" @click="saveInlineEdit(dish.id)"><i class="fa-solid fa-check"></i></button>
+                                            <button type="button" class="btn btn-secondary" style="padding: 0.2rem 0.4rem; font-size: 0.72rem;" @click="cancelInlineEdit()"><i class="fa-solid fa-xmark"></i></button>
                                         </div>
                                     </template>
                                     <template x-if="!(editingDishId === dish.id && editingField === 'name')">
@@ -993,8 +1472,8 @@
                                     <template x-if="editingDishId === dish.id && editingField === 'price'">
                                         <div style="display: inline-flex; align-items: center; gap: 0.25rem;" @click.stop>
                                             <input type="number" x-model="editingValue" class="inline-edit-input" style="width: 85px;" @keydown.enter="saveInlineEdit(dish.id)" @keydown.escape="cancelInlineEdit()">
-                                            <button type="button" class="btn btn-primary" style="padding: 0.15rem 0.35rem; font-size: 0.72rem;" @click="saveInlineEdit(dish.id)"><i class="fa-solid fa-check"></i></button>
-                                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.35rem; font-size: 0.72rem;" @click="cancelInlineEdit()"><i class="fa-solid fa-xmark"></i></button>
+                                            <button type="button" class="btn btn-primary" style="padding: 0.2rem 0.4rem; font-size: 0.72rem;" @click="saveInlineEdit(dish.id)"><i class="fa-solid fa-check"></i></button>
+                                            <button type="button" class="btn btn-secondary" style="padding: 0.2rem 0.4rem; font-size: 0.72rem;" @click="cancelInlineEdit()"><i class="fa-solid fa-xmark"></i></button>
                                         </div>
                                     </template>
                                     <template x-if="!(editingDishId === dish.id && editingField === 'price')">
@@ -1009,11 +1488,13 @@
                             <td style="text-align: center;">
                                 <button type="button"
                                         @click="toggleDishStock(dish)"
-                                        class="btn btn-secondary"
-                                        style="padding: 0.25rem 0.6rem; font-size: 0.74rem; border-radius: 8px;"
-                                        :style="dish.is_available ? 'color: #10b981; border-color: rgba(16, 185, 129, 0.4);' : 'color: #ef4444; border-color: rgba(239, 68, 68, 0.4);'">
-                                    <i class="fa-solid" :class="dish.is_available ? 'fa-toggle-on' : 'fa-toggle-off'"></i>
-                                    <span x-text="dish.is_available ? '{{ __('In Stock') }}' : '{{ __('Out of Stock') }}'"></span>
+                                        class="modern-stock-switch"
+                                        :class="{ 'in-stock': dish.is_available, 'out-of-stock': !dish.is_available }"
+                                        style="font-size: 0.72rem; padding: 0.25rem 0.6rem;">
+                                    <span class="stock-switch-thumb" style="width: 17px; height: 17px; font-size: 0.6rem;">
+                                        <i class="fa-solid" :class="dish.is_available ? 'fa-check' : 'fa-xmark'"></i>
+                                    </span>
+                                    <span x-text="dish.is_available ? '{{ __('In Stock') }}' : '{{ __('Out') }}'"></span>
                                 </button>
                             </td>
 
@@ -1028,10 +1509,13 @@
 
                             <!-- Daily Offer -->
                             <td style="text-align: center;">
-                                <span x-show="dish.is_daily_offer" class="badge" style="background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; font-size: 0.68rem; padding: 0.15rem 0.45rem;">
+                                <button type="button"
+                                        class="daily-offer-btn"
+                                        :class="{ 'active': dish.is_daily_offer }"
+                                        @click="toggleDailyOffer(dish)"
+                                        style="padding: 0.25rem 0.55rem; font-size: 0.72rem;">
                                     <i class="fa-solid fa-fire"></i>
-                                </span>
-                                <span x-show="!dish.is_daily_offer" style="color: var(--text-muted); opacity: 0.3;">—</span>
+                                </button>
                             </td>
 
                             <!-- Sort Order (Inline Editable) -->
@@ -1076,7 +1560,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1.25rem; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 0.75rem; background: var(--bg-card);">
             <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: var(--text-muted);">
                 <span>{{ __('Rows per page:') }}</span>
-                <select x-model.number="perPage" class="form-select" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; width: auto;">
+                <select x-model.number="perPage" class="form-select" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; width: auto; border-radius: 8px;">
                     <option value="15">15</option>
                     <option value="25">25</option>
                     <option value="50">50</option>
@@ -1085,13 +1569,13 @@
             </div>
 
             <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.65rem; font-size: 0.78rem;" :disabled="currentPage <= 1" @click="currentPage--">
+                <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem;" :disabled="currentPage <= 1" @click="currentPage--">
                     <i class="fa-solid fa-chevron-left"></i> {{ __('Previous') }}
                 </button>
                 <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700;">
                     <span x-text="currentPage"></span> / <span x-text="totalPages()"></span>
                 </span>
-                <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.65rem; font-size: 0.78rem;" :disabled="currentPage >= totalPages()" @click="currentPage++">
+                <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem;" :disabled="currentPage >= totalPages()" @click="currentPage++">
                     {{ __('Next') }} <i class="fa-solid fa-chevron-right"></i>
                 </button>
             </div>
@@ -1103,10 +1587,10 @@
     <div x-show="viewMode === 'categories'" x-cloak class="card" style="padding: 1.5rem; margin-bottom: 2rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
             <div>
-                <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0;">
+                <h2 style="font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin: 0; font-family: 'Outfit';">
                     <i class="fa-solid fa-folder-tree" style="color: var(--primary);"></i> {{ __('Category Display Order & Safeguards') }}
                 </h2>
-                <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem;">
+                <p style="font-size: 0.84rem; color: var(--text-muted); margin-top: 0.25rem; margin-bottom: 0;">
                     {{ __('Drag & drop or use arrow buttons to reorder categories. Duplication clones category dishes and portions.') }}
                 </p>
             </div>
@@ -1127,11 +1611,11 @@
                         <span class="drag-handle" style="cursor: grab; color: var(--text-muted); padding: 0.25rem;" title="{{ __('Drag to reorder') }}">
                             <i class="fa-solid fa-grip-vertical"></i>
                         </span>
-                        <span class="badge" style="background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.75rem; font-weight: 800; padding: 0.2rem 0.5rem;">
+                        <span class="badge" style="background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.75rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 8px;">
                             #<span x-text="index + 1"></span>
                         </span>
                         <div style="min-width: 0;">
-                            <strong style="font-size: 1.05rem; color: var(--text-main); font-weight: 800; display: block;" x-text="cat.name"></strong>
+                            <strong style="font-size: 1.05rem; color: var(--text-main); font-weight: 800; display: block; font-family: 'Outfit';" x-text="cat.name"></strong>
                             <div x-show="cat.name_translations && (cat.name_translations.hy || cat.name_translations.ru)" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem;">
                                 <span x-show="cat.name_translations?.hy" x-text="'HY: ' + cat.name_translations?.hy"></span>
                                 <span x-show="cat.name_translations?.hy && cat.name_translations?.ru"> | </span>
@@ -1142,32 +1626,31 @@
 
                     <!-- Right: Count badge + Move Up/Down + Duplicate + Edit + Safe Delete -->
                     <div style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; flex-wrap: wrap;">
-                        <span class="badge badge-indigo" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">
+                        <span class="badge badge-indigo" style="font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 999px;">
                             <span x-text="cat.products_count"></span> {{ __('dishes') }}
                         </span>
 
                         <!-- Move Up -->
-                        <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;" :disabled="index === 0" @click="moveCategory(index, -1)" title="{{ __('Move category up') }}">
+                        <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.75rem;" :disabled="index === 0" @click="moveCategory(index, -1)" title="{{ __('Move category up') }}">
                             <i class="fa-solid fa-arrow-up"></i>
                         </button>
-
                         <!-- Move Down -->
-                        <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;" :disabled="index === categories.length - 1" @click="moveCategory(index, 1)" title="{{ __('Move category down') }}">
+                        <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.75rem;" :disabled="index === categories.length - 1" @click="moveCategory(index, 1)" title="{{ __('Move category down') }}">
                             <i class="fa-solid fa-arrow-down"></i>
                         </button>
 
                         <!-- Duplicate -->
-                        <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.75rem; color: #6366f1; border-color: rgba(99, 102, 241, 0.4);" @click="duplicateCategory(cat)" title="{{ __('Duplicate category and all dishes') }}">
+                        <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; color: #6366f1; border-color: rgba(99, 102, 241, 0.4);" @click="duplicateCategory(cat)" title="{{ __('Duplicate category and all dishes') }}">
                             <i class="fa-solid fa-copy"></i> {{ __('Duplicate') }}
                         </button>
 
                         <!-- Edit -->
-                        <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.75rem;" @click="editCategory(cat.raw_json)">
-                            <i class="fa-solid fa-pen"></i>
+                        <button type="button" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem;" @click="editCategory(cat.raw_json || cat)">
+                            <i class="fa-solid fa-pen"></i> {{ __('Edit') }}
                         </button>
 
                         <!-- Safe Delete -->
-                        <button type="button" class="btn btn-danger" style="padding: 0.35rem 0.65rem; font-size: 0.75rem;" @click="openSafeDeleteCategory(cat)" title="{{ __('Delete Category Safely') }}">
+                        <button type="button" class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.78rem;" @click="openSafeDeleteCategory(cat)">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
@@ -1177,38 +1660,38 @@
     </div>
     <!-- End View 3: Category Organizer View -->
 
-    <!-- Floating Bulk Action Bar -->
+    <!-- Floating Bulk Action Dock -->
     <div class="floating-bulk-bar" x-show="selectedDishIds.length > 0" x-cloak>
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span class="badge" style="background: var(--primary); color: #000; font-weight: 800; font-size: 0.85rem; padding: 0.35rem 0.75rem; border-radius: 999px;">
+        <div style="display: flex; align-items: center; gap: 0.65rem;">
+            <span class="badge" style="background: var(--primary); color: #000; font-weight: 800; font-size: 0.85rem; padding: 0.35rem 0.8rem; border-radius: 999px;">
                 <i class="fa-solid fa-check"></i> <span x-text="selectedDishIds.length"></span>
             </span>
-            <strong style="color: var(--text-main); font-size: 0.9rem;">{{ __('dishes selected') }}</strong>
+            <strong style="color: var(--text-main); font-size: 0.92rem;">{{ __('dishes selected') }}</strong>
         </div>
 
         <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
             <!-- Bulk Edit Modal Trigger -->
-            <button type="button" class="btn btn-primary" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; font-weight: 700;" @click="openBulkEditModal()">
+            <button type="button" class="btn btn-primary" style="padding: 0.45rem 0.95rem; font-size: 0.84rem; font-weight: 700;" @click="openBulkEditModal()">
                 <i class="fa-solid fa-pen-to-square"></i> {{ __('Bulk Edit') }}
             </button>
 
             <!-- Quick In Stock -->
-            <button type="button" class="btn btn-secondary" style="padding: 0.45rem 0.75rem; font-size: 0.82rem; color: #10b981; border-color: rgba(16, 185, 129, 0.4);" @click="quickBulkStock(true)">
+            <button type="button" class="btn btn-secondary" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; color: #10b981; border-color: rgba(16, 185, 129, 0.4);" @click="quickBulkStock(true)">
                 <i class="fa-solid fa-circle-check"></i> {{ __('In Stock') }}
             </button>
 
             <!-- Quick Out of Stock -->
-            <button type="button" class="btn btn-secondary" style="padding: 0.45rem 0.75rem; font-size: 0.82rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.4);" @click="quickBulkStock(false)">
+            <button type="button" class="btn btn-secondary" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.4);" @click="quickBulkStock(false)">
                 <i class="fa-solid fa-circle-xmark"></i> {{ __('Out of Stock') }}
             </button>
 
             <!-- Bulk Delete Trigger -->
-            <button type="button" class="btn btn-danger" style="padding: 0.45rem 0.75rem; font-size: 0.82rem;" @click="showBulkDeleteModal = true">
+            <button type="button" class="btn btn-danger" style="padding: 0.45rem 0.85rem; font-size: 0.82rem;" @click="showBulkDeleteModal = true">
                 <i class="fa-solid fa-trash"></i> {{ __('Delete') }}
             </button>
 
             <!-- Clear Selection -->
-            <button type="button" class="btn btn-secondary" style="padding: 0.45rem 0.65rem; font-size: 0.82rem;" @click="selectedDishIds = []" title="{{ __('Clear Selection') }}">
+            <button type="button" class="btn btn-secondary" style="padding: 0.45rem 0.75rem; font-size: 0.82rem;" @click="selectedDishIds = []" title="{{ __('Clear Selection') }}">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -1216,13 +1699,13 @@
 
     <!-- Modal: Bulk Edit Dishes -->
     <div class="modern-modal-overlay" x-show="showBulkEditModal" x-cloak style="display: flex;">
-        <div class="modal-box-responsive" style="max-width: 620px;" @click.away="showBulkEditModal = false">
+        <div class="modal-box-responsive" style="max-width: 640px;" @click.away="showBulkEditModal = false">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
                 <div>
-                    <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0;">
+                    <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin: 0; font-family: 'Outfit';">
                         <i class="fa-solid fa-pen-to-square" style="color: var(--primary);"></i> {{ __('Bulk Edit Dishes') }}
                     </h3>
-                    <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem;">
+                    <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem; margin-bottom: 0;">
                         {{ __('Applying changes to') }} <strong style="color: var(--primary);" x-text="selectedDishIds.length"></strong> {{ __('selected dishes') }}
                     </p>
                 </div>
@@ -1360,7 +1843,7 @@
                     <i class="fa-solid fa-triangle-exclamation"></i>
                 </div>
                 <div>
-                    <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0;">{{ __('Confirm Bulk Deletion') }}</h3>
+                    <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0; font-family: 'Outfit';">{{ __('Confirm Bulk Deletion') }}</h3>
                     <span style="font-size: 0.8rem; color: #ef4444; font-weight: 600;">{{ __('Irreversible Action') }}</span>
                 </div>
             </div>
@@ -1394,7 +1877,7 @@
                     <i class="fa-solid fa-folder-minus"></i>
                 </div>
                 <div>
-                    <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0;">{{ __('Delete Category') }}</h3>
+                    <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0; font-family: 'Outfit';">{{ __('Delete Category') }}</h3>
                     <span style="font-size: 0.82rem; color: var(--text-muted);" x-text="deletingCategory?.name"></span>
                 </div>
             </div>
@@ -1458,9 +1941,14 @@
 
 <!-- Modal Add Category -->
 <div id="newCategoryModal" class="modern-modal-overlay" style="display: none;">
-    <div class="modal-box-responsive" style="max-width: 500px;">
+    <div class="modal-box-responsive" style="max-width: 520px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0;">{{ __('Create New Category') }}</h3>
+            <div style="display: flex; align-items: center; gap: 0.65rem;">
+                <span style="width: 36px; height: 36px; border-radius: 10px; background: rgba(245, 158, 11, 0.15); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                    <i class="fa-solid fa-folder-plus"></i>
+                </span>
+                <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin: 0; font-family: 'Outfit';">{{ __('Create New Category') }}</h3>
+            </div>
             <button onclick="document.getElementById('newCategoryModal').style.display='none'" style="background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
@@ -1468,7 +1956,7 @@
             @csrf
             <div style="margin-bottom: 1rem;">
                 <label class="form-label">{{ __('Category Name') }} ({{ $primaryLang['name'] }} {{ $primaryLang['flag'] }}) *</label>
-                <input type="text" name="name" required placeholder="{{ __('e.g. Signature Cocktails') }}" class="form-input">
+                <input type="text" name="name" required placeholder="{{ __('e.g. Signature Burgers') }}" class="form-input">
             </div>
 
             @if(count($secondaryLangs) > 0)
@@ -1499,9 +1987,14 @@
 
 <!-- Modal Edit Category -->
 <div id="editCategoryModal" class="modern-modal-overlay" style="display: none;">
-    <div class="modal-box-responsive" style="max-width: 500px;">
+    <div class="modal-box-responsive" style="max-width: 520px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0;">{{ __('Edit Category') }}</h3>
+            <div style="display: flex; align-items: center; gap: 0.65rem;">
+                <span style="width: 36px; height: 36px; border-radius: 10px; background: rgba(99, 102, 241, 0.15); color: #6366f1; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                    <i class="fa-solid fa-pen"></i>
+                </span>
+                <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin: 0; font-family: 'Outfit';">{{ __('Edit Category') }}</h3>
+            </div>
             <button onclick="document.getElementById('editCategoryModal').style.display='none'" style="background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
@@ -1538,349 +2031,389 @@
     </div>
 </div>
 
-<!-- Modal Add Product -->
+<!-- Modal Add Product (Modern Tabbed Layout) -->
 <div id="newProductModal" class="modern-modal-overlay" style="display: none;">
     <div class="modal-box-responsive">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0;">{{ __('Add New Menu Dish') }}</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <div style="display: flex; align-items: center; gap: 0.65rem;">
+                <span style="width: 38px; height: 38px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.15rem;">
+                    <i class="fa-solid fa-plus"></i>
+                </span>
+                <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin: 0; font-family: 'Outfit';">{{ __('Add New Menu Dish') }}</h3>
+            </div>
             <button onclick="document.getElementById('newProductModal').style.display='none'" style="background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- Tabbed Navigation Bar -->
+        <div class="modal-tab-bar">
+            <button type="button" class="modal-tab-btn new-modal-tab-btn active" data-tab="general" onclick="switchProductModalTab('new', 'general')">
+                <i class="fa-solid fa-tag"></i> {{ __('General & Price') }}
+            </button>
+            <button type="button" class="modal-tab-btn new-modal-tab-btn" data-tab="portions" onclick="switchProductModalTab('new', 'portions')">
+                <i class="fa-solid fa-sliders"></i> {{ __('Portions & Dietary') }}
+            </button>
+            <button type="button" class="modal-tab-btn new-modal-tab-btn" data-tab="availability" onclick="switchProductModalTab('new', 'availability')">
+                <i class="fa-solid fa-clock"></i> {{ __('Availability & Branches') }}
+            </button>
+            <button type="button" class="modal-tab-btn new-modal-tab-btn" data-tab="ai" onclick="switchProductModalTab('new', 'ai')">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> {{ __('AI & Specials') }}
+            </button>
         </div>
 
         <form action="{{ route('admin.menu.products.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
-            <div style="margin-bottom: 1rem;">
-                <label class="form-label">{{ __('Category') }} *</label>
-                <select name="category_id" required class="form-select">
-                    @foreach($categories as $cat)
-                        <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                    @endforeach
-                </select>
-            </div>
 
-            <div class="grid-3" style="margin-bottom: 1rem;">
-                <div style="grid-column: span 1;">
-                    <label class="form-label">{{ __('Dish Name') }} ({{ $primaryLang['name'] }} {{ $primaryLang['flag'] }}) *</label>
-                    <input type="text" name="name" required class="form-input">
+            <!-- TAB 1: General & Price -->
+            <div class="new-modal-tab-pane" data-tab="general" style="display: block;">
+                <div style="margin-bottom: 1rem;">
+                    <label class="form-label">{{ __('Category') }} *</label>
+                    <select name="category_id" required class="form-select">
+                        @foreach($categories as $cat)
+                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
-                <div>
-                    <label class="form-label">{{ __('Price') }} ({{ $vendor->currency }}) *</label>
-                    <input type="number" name="price" step="100" required class="form-input">
+
+                <div class="grid-3" style="margin-bottom: 1rem;">
+                    <div style="grid-column: span 1;">
+                        <label class="form-label">{{ __('Dish Name') }} ({{ $primaryLang['name'] }} {{ $primaryLang['flag'] }}) *</label>
+                        <input type="text" name="name" required placeholder="{{ __('e.g. Truffle Cheeseburger') }}" class="form-input">
+                    </div>
+                    <div>
+                        <label class="form-label">{{ __('Price') }} ({{ $vendor->currency }}) *</label>
+                        <input type="number" name="price" step="100" required placeholder="3500" class="form-input">
+                    </div>
+                    <div>
+                        <label class="form-label" style="color: #ef4444;">
+                            <i class="fa-solid fa-tag"></i> {{ __('Discounted Price') }}
+                        </label>
+                        <input type="number" name="discount_price" step="100" placeholder="{{ __('e.g. 2900') }}" class="form-input" style="border-color: rgba(239, 68, 68, 0.4);">
+                    </div>
                 </div>
-                <div>
-                    <label class="form-label" style="color: #ef4444;">
-                        <i class="fa-solid fa-tag"></i> {{ __('Discounted Price') }}
+
+                @if(count($secondaryLangs) > 0)
+                    <div style="margin-bottom: 1rem; padding: 0.85rem; background: var(--bg-body); border: 1px dashed var(--border-color); border-radius: 12px;">
+                        <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.65rem;">
+                            <i class="fa-solid fa-language"></i> {{ __('Dish Name Translations') }}
+                        </div>
+                        <div class="grid-2" style="gap: 0.65rem;">
+                            @foreach($secondaryLangs as $secLang)
+                                <div>
+                                    <label class="form-label" style="font-size: 0.78rem;">{{ $secLang['name'] }} {{ $secLang['flag'] }}</label>
+                                    <input type="text" name="name_translations[{{ $secLang['code'] }}]" placeholder="{{ __('Translation in') }} {{ $secLang['name'] }}" class="form-input" style="font-size: 0.85rem;">
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Dish Image (Upload or URL) -->
+                <div style="margin-bottom: 1rem;">
+                    <label class="form-label">
+                        <i class="fa-solid fa-image" style="color: var(--primary);"></i> {{ __('Dish Image (Upload File or Enter URL)') }}
                     </label>
-                    <input type="number" name="discount_price" step="100" placeholder="{{ __('e.g. 2500') }}" class="form-input" style="border-color: rgba(239, 68, 68, 0.4);">
-                </div>
-            </div>
-
-            <!-- Happy Hour & Discount Schedule Section -->
-            <div style="margin-bottom: 1.25rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(239, 68, 68, 0.15); color: #ef4444; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">
-                            <i class="fa-solid fa-clock"></i>
-                        </span>
+                    <div class="grid-2" style="align-items: center;">
                         <div>
-                            <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Discount Schedule (Happy Hour)') }}</strong>
-                            <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('Set active days and hours for the discount') }}</small>
+                            <input type="file" name="image_file" accept="image/*" class="form-input" style="padding: 0.45rem;">
+                            <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">📁 {{ __('Upload file from device') }}</small>
+                        </div>
+                        <div>
+                            <input type="text" name="image" placeholder="/storage/... or https://..." class="form-input">
+                            <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">🔗 {{ __('Or image link / path') }}</small>
                         </div>
                     </div>
-                    <label style="font-size: 0.78rem; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; color: var(--text-main); font-weight: 600;">
-                        <input type="checkbox" name="is_discount_active" value="1" checked> {{ __('Enable Discount') }}
-                    </label>
                 </div>
 
-                <!-- Day Selector Chips -->
-                <div style="margin-bottom: 0.75rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.35rem;">
-                        <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">{{ __('Days of the Week') }}</label>
-                        <div style="display: flex; gap: 0.35rem;">
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('new', 'all')">{{ __('All') }}</button>
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('new', 'weekdays')">{{ __('Mon-Fri') }}</button>
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('new', 'weekends')">{{ __('Weekends') }}</button>
+                <div style="margin-bottom: 1rem;">
+                    <label class="form-label">{{ __('Description') }} ({{ $primaryLang['name'] }} {{ $primaryLang['flag'] }})</label>
+                    <textarea name="description" rows="2" class="form-textarea" placeholder="{{ __('Brief dish ingredients or description...') }}"></textarea>
+                </div>
+
+                @if(count($secondaryLangs) > 0)
+                    <div style="margin-bottom: 1rem; padding: 0.85rem; background: var(--bg-body); border: 1px dashed var(--border-color); border-radius: 12px;">
+                        <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.65rem;">
+                            <i class="fa-solid fa-language"></i> {{ __('Description Translations') }}
+                        </div>
+                        <div class="grid-2" style="gap: 0.65rem;">
+                            @foreach($secondaryLangs as $secLang)
+                                <div>
+                                    <label class="form-label" style="font-size: 0.78rem;">{{ $secLang['name'] }} {{ $secLang['flag'] }}</label>
+                                    <textarea name="description_translations[{{ $secLang['code'] }}]" rows="2" class="form-textarea" style="font-size: 0.85rem;" placeholder="{{ __('Description in') }} {{ $secLang['name'] }}"></textarea>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
+                @endif
+
+                <!-- Happy Hour & Discount Schedule -->
+                <div style="margin-bottom: 1rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(239, 68, 68, 0.15); color: #ef4444; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">
+                                <i class="fa-solid fa-clock"></i>
+                            </span>
+                            <div>
+                                <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Discount Schedule (Happy Hour)') }}</strong>
+                                <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('Set active days and hours for the discount') }}</small>
+                            </div>
+                        </div>
+                        <label style="font-size: 0.78rem; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; color: var(--text-main); font-weight: 600;">
+                            <input type="checkbox" name="is_discount_active" value="1" checked> {{ __('Enable Discount') }}
+                        </label>
+                    </div>
+
+                    <!-- Day Selector Chips -->
+                    <div style="margin-bottom: 0.75rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.35rem;">
+                            <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">{{ __('Days of the Week') }}</label>
+                            <div style="display: flex; gap: 0.35rem;">
+                                <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('new', 'all')">{{ __('All') }}</button>
+                                <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('new', 'weekdays')">{{ __('Mon-Fri') }}</button>
+                                <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('new', 'weekends')">{{ __('Weekends') }}</button>
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                            @php
+                                $weekDays = [
+                                    'mon' => __('Mon'),
+                                    'tue' => __('Tue'),
+                                    'wed' => __('Wed'),
+                                    'thu' => __('Thu'),
+                                    'fri' => __('Fri'),
+                                    'sat' => __('Sat'),
+                                    'sun' => __('Sun')
+                                ];
+                            @endphp
+                            @foreach($weekDays as $key => $lbl)
+                                <label style="display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.25rem 0.55rem; border-radius: 8px; cursor: pointer; color: var(--text-main);">
+                                    <input type="checkbox" class="new-discount-day-checkbox" name="discount_days[]" value="{{ $key }}" checked> {{ $lbl }}
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Time Window -->
+                    <div class="grid-2" style="margin-bottom: 0.35rem;">
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">{{ __('Start Time') }}</label>
+                            <input type="time" name="discount_start_time" class="form-input" style="padding: 0.45rem 0.75rem;">
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">{{ __('End Time') }}</label>
+                            <input type="time" name="discount_end_time" class="form-input" style="padding: 0.45rem 0.75rem;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: Portions & Dietary -->
+            <div class="new-modal-tab-pane" data-tab="portions" style="display: none;">
+                <!-- Portions & Variations Section -->
+                <div style="margin-bottom: 1.25rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-main);">
+                                <i class="fa-solid fa-sliders" style="color: var(--primary);"></i> {{ __('Portions & Variations (Optional)') }}
+                            </label>
+                            <small style="color: var(--text-muted); font-size: 0.72rem;">{{ __('Add portion sizes (e.g. 200g, 400g, Small, Large)') }}</small>
+                        </div>
+                        <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.65rem; font-size: 0.75rem;" onclick="addVariationRow('new')">
+                            <i class="fa-solid fa-plus"></i> {{ __('Add Portion') }}
+                        </button>
+                    </div>
+                    <div id="new_variations_container" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
+                </div>
+
+                <!-- Dietary Tags -->
+                <div style="margin-bottom: 1rem;">
+                    <label class="form-label">{{ __('Dietary Tags') }}</label>
                     <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
-                        @php
-                            $weekDays = [
-                                'mon' => __('Mon'),
-                                'tue' => __('Tue'),
-                                'wed' => __('Wed'),
-                                'thu' => __('Thu'),
-                                'fri' => __('Fri'),
-                                'sat' => __('Sat'),
-                                'sun' => __('Sun')
-                            ];
-                        @endphp
-                        @foreach($weekDays as $key => $lbl)
-                            <label style="display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.25rem 0.55rem; border-radius: 8px; cursor: pointer; color: var(--text-main);">
-                                <input type="checkbox" class="new-discount-day-checkbox" name="discount_days[]" value="{{ $key }}" checked> {{ $lbl }}
+                        @foreach(['vegan', 'vegetarian', 'gluten_free', 'halal', 'chef_special', 'spicy'] as $dtag)
+                            <label style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.25rem 0.55rem; border-radius: 8px; cursor: pointer; color: var(--text-main);">
+                                <input type="checkbox" name="dietary_tags[]" value="{{ $dtag }}"> {{ str_replace('_', ' ', strtoupper($dtag)) }}
                             </label>
                         @endforeach
                     </div>
                 </div>
 
-                <!-- Time Window -->
-                <div class="grid-2" style="margin-bottom: 0.35rem;">
-                    <div>
-                        <label class="form-label" style="font-size: 0.75rem;">{{ __('Start Time') }}</label>
-                        <input type="time" name="discount_start_time" class="form-input" style="padding: 0.45rem 0.75rem;">
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-size: 0.75rem;">{{ __('End Time') }}</label>
-                        <input type="time" name="discount_end_time" class="form-input" style="padding: 0.45rem 0.75rem;">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Branch Availability (New) -->
-            <div style="margin-bottom: 1.25rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(99, 102, 241, 0.15); color: #6366f1; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">
-                            <i class="fa-solid fa-code-branch"></i>
-                        </span>
-                        <div>
-                            <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Branch Availability') }}</strong>
-                            <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('Select which branches offer this dish') }}</small>
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 0.35rem;">
-                        <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setLocationsPreset('new', true)">{{ __('Select All') }}</button>
-                        <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setLocationsPreset('new', false)">{{ __('Clear') }}</button>
-                    </div>
-                </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                    @foreach($locations as $loc)
-                        <label style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.35rem 0.65rem; border-radius: 8px; cursor: pointer; color: var(--text-main); font-weight: 600;">
-                            <input type="checkbox" class="new-location-checkbox" name="locations[]" value="{{ $loc->id }}" checked> 📍 {{ $loc->name }}
-                        </label>
-                    @endforeach
-                </div>
-            </div>
-
-            <!-- Schedule & Time Availability (Lunch Menu) (New) -->
-            <div style="margin-bottom: 1.25rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
-                    <span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">
-                        <i class="fa-regular fa-clock"></i>
-                    </span>
-                    <div>
-                        <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Operating Hours (Lunch / Hours)') }}</strong>
-                        <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('e.g., lunch available only 12:00 - 15:00 (leave empty for all day)') }}</small>
-                    </div>
-                </div>
-                <div class="grid-2" style="margin-bottom: 0.75rem;">
-                    <div>
-                        <label class="form-label" style="font-size: 0.75rem;">{{ __('Available from (Start Time)') }}</label>
-                        <input type="time" name="available_start_time" class="form-input" style="padding: 0.45rem 0.75rem;">
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-size: 0.75rem;">{{ __('Until (End Time)') }}</label>
-                        <input type="time" name="available_end_time" class="form-input" style="padding: 0.45rem 0.75rem;">
-                    </div>
-                </div>
-                <div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: gap: 0.35rem;">
-                        <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">{{ __('Available Days') }}</label>
-                        <div style="display: flex; gap: 0.35rem;">
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('new', 'all')">{{ __('All') }}</button>
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('new', 'weekdays')">{{ __('Mon-Fri') }}</button>
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('new', 'weekends')">{{ __('Weekends') }}</button>
-                        </div>
-                    </div>
+                <!-- EU Allergens Tagging -->
+                <div style="margin-bottom: 1rem;">
+                    <label class="form-label">{{ __('EU Allergens Tagging') }}</label>
                     <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
-                        @foreach($weekDays as $key => $lbl)
-                            <label style="display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.25rem 0.55rem; border-radius: 8px; cursor: pointer; color: var(--text-main);">
-                                <input type="checkbox" class="new-available-day-checkbox" name="available_days[]" value="{{ $key }}" checked> {{ $lbl }}
+                        @foreach($allergens as $allg)
+                            <label style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.25rem 0.55rem; border-radius: 8px; cursor: pointer; color: var(--text-main);">
+                                <input type="checkbox" name="allergens[]" value="{{ $allg->id }}"> {{ $allg->icon }} {{ $allg->name }}
                             </label>
                         @endforeach
                     </div>
                 </div>
-            </div>
 
-            <!-- Order Channels / Type Availability (New) -->
-            <div style="margin-bottom: 1.25rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
-                    <span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(16, 185, 129, 0.15); color: #10b981; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">
-                        <i class="fa-solid fa-truck-ramp-box"></i>
-                    </span>
+                <!-- Calories & Prep Time -->
+                <div class="grid-2" style="margin-bottom: 1rem;">
                     <div>
-                        <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Order Channels Availability') }}</strong>
-                        <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('Select allowed order channels for this dish') }}</small>
+                        <label class="form-label" style="font-size: 0.75rem;">{{ __('Calories (kcal)') }}</label>
+                        <input type="number" name="calories" placeholder="450" class="form-input">
                     </div>
-                </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.65rem;">
-                    <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.45rem 0.8rem; border-radius: 10px; cursor: pointer; color: var(--text-main); font-weight: 600;">
-                        <input type="hidden" name="available_for_dine_in" value="0">
-                        <input type="checkbox" name="available_for_dine_in" value="1" checked> 🍽️ {{ __('Dine-in') }}
-                    </label>
-                    <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.45rem 0.8rem; border-radius: 10px; cursor: pointer; color: var(--text-main); font-weight: 600;">
-                        <input type="hidden" name="available_for_takeaway" value="0">
-                        <input type="checkbox" name="available_for_takeaway" value="1" checked> 🥡 {{ __('Takeaway') }}
-                    </label>
-                    <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.45rem 0.8rem; border-radius: 10px; cursor: pointer; color: var(--text-main); font-weight: 600;">
-                        <input type="hidden" name="available_for_delivery" value="0">
-                        <input type="checkbox" name="available_for_delivery" value="1" checked> 🛵 {{ __('Delivery') }}
-                    </label>
+                    <div>
+                        <label class="form-label" style="font-size: 0.75rem;">{{ __('Prep Time (Minutes)') }}</label>
+                        <input type="number" name="preparation_time_min" placeholder="15" class="form-input">
+                    </div>
                 </div>
             </div>
 
-            @if(count($secondaryLangs) > 0)
-                <div style="margin-bottom: 1rem; padding: 0.85rem; background: var(--bg-body); border: 1px dashed var(--border-color); border-radius: 12px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.65rem;">
-                        <i class="fa-solid fa-language"></i> {{ __('Dish Name Translations for active languages') }}
-                    </div>
-                    <div class="grid-2" style="gap: 0.65rem;">
-                        @foreach($secondaryLangs as $secLang)
+            <!-- TAB 3: Availability & Branches -->
+            <div class="new-modal-tab-pane" data-tab="availability" style="display: none;">
+                <!-- Branch Availability -->
+                <div style="margin-bottom: 1.25rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(99, 102, 241, 0.15); color: #6366f1; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">
+                                <i class="fa-solid fa-code-branch"></i>
+                            </span>
                             <div>
-                                <label class="form-label" style="font-size: 0.78rem;">{{ $secLang['name'] }} {{ $secLang['flag'] }}</label>
-                                <input type="text" name="name_translations[{{ $secLang['code'] }}]" placeholder="{{ __('Translation in') }} {{ $secLang['name'] }}" class="form-input" style="font-size: 0.85rem;">
+                                <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Branch Availability') }}</strong>
+                                <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('Select which branches offer this dish') }}</small>
                             </div>
+                        </div>
+                        <div style="display: flex; gap: 0.35rem;">
+                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setLocationsPreset('new', true)">{{ __('Select All') }}</button>
+                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setLocationsPreset('new', false)">{{ __('Clear') }}</button>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        @foreach($locations as $loc)
+                            <label style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.35rem 0.65rem; border-radius: 8px; cursor: pointer; color: var(--text-main); font-weight: 600;">
+                                <input type="checkbox" class="new-location-checkbox" name="locations[]" value="{{ $loc->id }}" checked> 📍 {{ $loc->name }}
+                            </label>
                         @endforeach
                     </div>
                 </div>
-            @endif
 
-            <div style="margin-bottom: 1rem;">
-                <label class="form-label">
-                    <i class="fa-solid fa-image" style="color: var(--primary);"></i> {{ __('Dish Image (Upload File or Enter URL)') }}
-                </label>
-                <div class="grid-2" style="align-items: center;">
-                    <div>
-                        <input type="file" name="image_file" accept="image/*" class="form-input" style="padding: 0.45rem;">
-                        <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">📁 {{ __('Upload file from device') }}</small>
+                <!-- Schedule & Time Availability (Lunch Menu) -->
+                <div style="margin-bottom: 1.25rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">
+                            <i class="fa-regular fa-clock"></i>
+                        </span>
+                        <div>
+                            <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Operating Hours (Lunch / Hours)') }}</strong>
+                            <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('e.g., lunch available only 12:00 - 15:00 (leave empty for all day)') }}</small>
+                        </div>
+                    </div>
+                    <div class="grid-2" style="margin-bottom: 0.75rem;">
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">{{ __('Available from (Start Time)') }}</label>
+                            <input type="time" name="available_start_time" class="form-input" style="padding: 0.45rem 0.75rem;">
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">{{ __('Until (End Time)') }}</label>
+                            <input type="time" name="available_end_time" class="form-input" style="padding: 0.45rem 0.75rem;">
+                        </div>
                     </div>
                     <div>
-                        <input type="text" name="image" placeholder="/storage/... or https://..." class="form-input">
-                        <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">🔗 {{ __('Or image link / path') }}</small>
-                    </div>
-                </div>
-            </div>
-
-            <div style="margin-bottom: 1rem;">
-                <label class="form-label">{{ __('Description') }} ({{ $primaryLang['name'] }} {{ $primaryLang['flag'] }})</label>
-                <textarea name="description" rows="2" class="form-textarea" placeholder="{{ __('Brief dish ingredients or description...') }}"></textarea>
-            </div>
-
-            @if(count($secondaryLangs) > 0)
-                <div style="margin-bottom: 1rem; padding: 0.85rem; background: var(--bg-body); border: 1px dashed var(--border-color); border-radius: 12px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.65rem;">
-                        <i class="fa-solid fa-language"></i> {{ __('Description Translations for active languages') }}
-                    </div>
-                    <div class="grid-2" style="gap: 0.65rem;">
-                        @foreach($secondaryLangs as $secLang)
-                            <div>
-                                <label class="form-label" style="font-size: 0.78rem;">{{ $secLang['name'] }} {{ $secLang['flag'] }}</label>
-                                <textarea name="description_translations[{{ $secLang['code'] }}]" rows="2" class="form-textarea" style="font-size: 0.85rem;" placeholder="{{ __('Description in') }} {{ $secLang['name'] }}"></textarea>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.35rem;">
+                            <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">{{ __('Available Days') }}</label>
+                            <div style="display: flex; gap: 0.35rem;">
+                                <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('new', 'all')">{{ __('All') }}</button>
+                                <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('new', 'weekdays')">{{ __('Mon-Fri') }}</button>
+                                <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('new', 'weekends')">{{ __('Weekends') }}</button>
                             </div>
-                        @endforeach
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                            @foreach($weekDays as $key => $lbl)
+                                <label style="display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.25rem 0.55rem; border-radius: 8px; cursor: pointer; color: var(--text-main);">
+                                    <input type="checkbox" class="new-available-day-checkbox" name="available_days[]" value="{{ $key }}" checked> {{ $lbl }}
+                                </label>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
-            @endif
 
-            <!-- Portions & Variations Section -->
-            <div style="margin-bottom: 1.25rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
-                    <div>
-                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-main);">
-                            <i class="fa-solid fa-sliders" style="color: var(--primary);"></i> {{ __('Portions & Variations (Optional)') }}
-                        </label>
-                        <small style="color: var(--text-muted); font-size: 0.72rem;">{{ __('Add sizes or portion options') }}</small>
+                <!-- Order Channels Availability -->
+                <div style="margin-bottom: 1.25rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(16, 185, 129, 0.15); color: #10b981; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">
+                            <i class="fa-solid fa-truck-ramp-box"></i>
+                        </span>
+                        <div>
+                            <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Order Channels Availability') }}</strong>
+                            <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('Select allowed order channels for this dish') }}</small>
+                        </div>
                     </div>
-                    <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.65rem; font-size: 0.75rem;" onclick="addVariationRow('new')">
-                        <i class="fa-solid fa-plus"></i> {{ __('Add Portion') }}
-                    </button>
-                </div>
-                <div id="new_variations_container" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
-            </div>
-
-            <!-- Dietary & Allergens -->
-            <div style="margin-bottom: 1rem;">
-                <label class="form-label">{{ __('Dietary Tags') }}</label>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
-                    @foreach(['vegan', 'vegetarian', 'gluten_free', 'halal', 'chef_special', 'spicy'] as $dtag)
-                        <label style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.25rem 0.55rem; border-radius: 8px; cursor: pointer; color: var(--text-main);">
-                            <input type="checkbox" name="dietary_tags[]" value="{{ $dtag }}"> {{ str_replace('_', ' ', strtoupper($dtag)) }}
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.65rem;">
+                        <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.45rem 0.8rem; border-radius: 10px; cursor: pointer; color: var(--text-main); font-weight: 600;">
+                            <input type="hidden" name="available_for_dine_in" value="0">
+                            <input type="checkbox" name="available_for_dine_in" value="1" checked> 🍽️ {{ __('Dine-in') }}
                         </label>
-                    @endforeach
-                </div>
-            </div>
-
-            <div style="margin-bottom: 1rem;">
-                <label class="form-label">{{ __('EU Allergens Tagging') }}</label>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
-                    @foreach($allergens as $allg)
-                        <label style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.25rem 0.55rem; border-radius: 8px; cursor: pointer; color: var(--text-main);">
-                            <input type="checkbox" name="allergens[]" value="{{ $allg->id }}"> {{ $allg->icon }} {{ $allg->name }}
+                        <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.45rem 0.8rem; border-radius: 10px; cursor: pointer; color: var(--text-main); font-weight: 600;">
+                            <input type="hidden" name="available_for_takeaway" value="0">
+                            <input type="checkbox" name="available_for_takeaway" value="1" checked> 🥡 {{ __('Takeaway') }}
                         </label>
-                    @endforeach
+                        <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.45rem 0.8rem; border-radius: 10px; cursor: pointer; color: var(--text-main); font-weight: 600;">
+                            <input type="hidden" name="available_for_delivery" value="0">
+                            <input type="checkbox" name="available_for_delivery" value="1" checked> 🛵 {{ __('Delivery') }}
+                        </label>
+                    </div>
                 </div>
             </div>
 
-            <div class="grid-3" style="margin-bottom: 1.5rem;">
-                <div>
-                    <label class="form-label" style="font-size: 0.75rem;">{{ __('Calories (kcal)') }}</label>
-                    <input type="number" name="calories" placeholder="450" class="form-input">
-                </div>
-                <div>
-                    <label class="form-label" style="font-size: 0.75rem;">{{ __('Prep Mins') }}</label>
-                    <input type="number" name="preparation_time_min" placeholder="15" class="form-input">
-                </div>
-                <div style="display: flex; align-items: flex-end; padding-bottom: 0.35rem; gap: 1rem; flex-wrap: wrap;">
-                    <label style="font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
+            <!-- TAB 4: AI & Specials -->
+            <div class="new-modal-tab-pane" data-tab="ai" style="display: none;">
+                <!-- Featured & Daily Offer Toggles -->
+                <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem; margin-bottom: 1.25rem; display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                    <label style="font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
                         <input type="checkbox" name="is_featured" value="1"> ★ {{ __('Featured Dish') }}
                     </label>
-                    <label style="font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; gap: 0.45rem; cursor: pointer; color: var(--text-main);">
+                    <label style="font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.45rem; cursor: pointer; color: var(--text-main);">
                         <input type="checkbox" name="is_daily_offer" value="1">
                         <span style="color: #ef4444;"><i class="fa-solid fa-fire-flame-curved"></i></span> {{ __('Daily Offer / Special of the Day') }}
                     </label>
                 </div>
+
+                <!-- AI Waiter Metadata & Priority Settings -->
+                <div style="background: rgba(139, 92, 246, 0.05); border: 1.5px dashed rgba(139, 92, 246, 0.3); border-radius: 14px; padding: 1.1rem; margin-bottom: 1rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
+                        <div style="font-weight: 700; font-size: 0.88rem; color: #8b5cf6; display: flex; align-items: center; gap: 0.45rem;">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> {{ __('AI Waiter Recommendation Settings') }}
+                        </div>
+                        <label style="font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; color: var(--text-main);">
+                            <input type="checkbox" name="ai_priority" value="1"> ★ {{ __('AI Promoted') }}
+                        </label>
+                    </div>
+                    <div class="grid-3" style="margin-bottom: 0.75rem;">
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">{{ __('AI Priority (1-100)') }}</label>
+                            <input type="number" name="ai_priority_level" min="1" max="100" value="50" class="form-input" placeholder="50">
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">{{ __('AI Group') }}</label>
+                            <select name="ai_group" class="form-select">
+                                <option value="">{{ __('None (Standard)') }}</option>
+                                <option value="bestseller">{{ __('AI Bestseller') }}</option>
+                                <option value="chef_choice">{{ __('Chef Recommendation') }}</option>
+                                <option value="high_margin">{{ __('High Margin') }}</option>
+                                <option value="new_arrival">{{ __('New Product') }}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">{{ __('Spiciness Level') }}</label>
+                            <select name="ai_spicy_level" class="form-select">
+                                <option value="0">{{ __('0 - Not Spicy') }}</option>
+                                <option value="1">{{ __('1 - Mild / Light') }}</option>
+                                <option value="2">{{ __('2 - Medium Spicy') }}</option>
+                                <option value="3">{{ __('3 - Hot / Very Spicy') }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-size: 0.75rem;">{{ __('AI Keywords / Flavor Tags (comma separated)') }}</label>
+                        <input type="text" name="ai_tags" placeholder="{{ __('e.g. meat, savory, juicy, dinner, signature') }}" class="form-input">
+                    </div>
+                </div>
             </div>
 
-            <!-- AI Waiter Metadata & Priority Settings -->
-            <div style="background: rgba(139, 92, 246, 0.05); border: 1.5px dashed rgba(139, 92, 246, 0.3); border-radius: 14px; padding: 1.1rem; margin-bottom: 1.5rem;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
-                    <div style="font-weight: 700; font-size: 0.88rem; color: #8b5cf6; display: flex; align-items: center; gap: 0.45rem;">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> {{ __('AI Waiter Recommendation Settings') }}
-                    </div>
-                    <label style="font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; color: var(--text-main);">
-                        <input type="checkbox" name="ai_priority" value="1"> ★ {{ __('AI Promoted') }}
-                    </label>
-                </div>
-                <div class="grid-3" style="margin-bottom: 0.75rem;">
-                    <div>
-                        <label class="form-label" style="font-size: 0.75rem;">{{ __('AI Priority (1-100)') }}</label>
-                        <input type="number" name="ai_priority_level" min="1" max="100" value="50" class="form-input" placeholder="50">
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-size: 0.75rem;">{{ __('AI Group') }}</label>
-                        <select name="ai_group" class="form-select">
-                            <option value="">{{ __('None (Standard)') }}</option>
-                            <option value="bestseller">{{ __('AI Bestseller') }}</option>
-                            <option value="chef_choice">{{ __('Chef Recommendation') }}</option>
-                            <option value="high_margin">{{ __('High Margin') }}</option>
-                            <option value="new_arrival">{{ __('New Product') }}</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-size: 0.75rem;">{{ __('Spiciness Level') }}</label>
-                        <select name="ai_spicy_level" class="form-select">
-                            <option value="0">{{ __('0 - Not Spicy') }}</option>
-                            <option value="1">{{ __('1 - Mild / Light') }}</option>
-                            <option value="2">{{ __('2 - Medium Spicy') }}</option>
-                            <option value="3">{{ __('3 - Hot / Very Spicy') }}</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="form-label" style="font-size: 0.75rem;">{{ __('AI Keywords / Flavor Tags (comma separated)') }}</label>
-                    <input type="text" name="ai_tags" placeholder="{{ __('e.g. meat, savory, juicy, dinner, signature') }}" class="form-input">
-                </div>
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+            <!-- Modal Persistent Action Footer -->
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
                 <button type="button" class="btn btn-secondary" onclick="document.getElementById('newProductModal').style.display='none'">{{ __('Cancel') }}</button>
                 <button type="submit" class="btn btn-primary">{{ __('Create Dish') }}</button>
             </div>
@@ -1888,338 +2421,377 @@
     </div>
 </div>
 
-<!-- Modal Edit Product -->
+<!-- Modal Edit Product (Modern Tabbed Layout) -->
 <div id="editProductModal" class="modern-modal-overlay" style="display: none;">
     <div class="modal-box-responsive">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0;">{{ __('Edit Dish') }}</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <div style="display: flex; align-items: center; gap: 0.65rem;">
+                <span style="width: 38px; height: 38px; border-radius: 12px; background: rgba(99, 102, 241, 0.15); color: #6366f1; display: inline-flex; align-items: center; justify-content: center; font-size: 1.15rem;">
+                    <i class="fa-solid fa-pen"></i>
+                </span>
+                <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin: 0; font-family: 'Outfit';">{{ __('Edit Dish') }}</h3>
+            </div>
             <button onclick="document.getElementById('editProductModal').style.display='none'" style="background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- Tabbed Navigation Bar -->
+        <div class="modal-tab-bar">
+            <button type="button" class="modal-tab-btn edit-modal-tab-btn active" data-tab="general" onclick="switchProductModalTab('edit', 'general')">
+                <i class="fa-solid fa-tag"></i> {{ __('General & Price') }}
+            </button>
+            <button type="button" class="modal-tab-btn edit-modal-tab-btn" data-tab="portions" onclick="switchProductModalTab('edit', 'portions')">
+                <i class="fa-solid fa-sliders"></i> {{ __('Portions & Dietary') }}
+            </button>
+            <button type="button" class="modal-tab-btn edit-modal-tab-btn" data-tab="availability" onclick="switchProductModalTab('edit', 'availability')">
+                <i class="fa-solid fa-clock"></i> {{ __('Availability & Branches') }}
+            </button>
+            <button type="button" class="modal-tab-btn edit-modal-tab-btn" data-tab="ai" onclick="switchProductModalTab('edit', 'ai')">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> {{ __('AI & Specials') }}
+            </button>
         </div>
 
         <form id="editProductForm" method="POST" enctype="multipart/form-data">
             @csrf
-            <div style="margin-bottom: 1rem;">
-                <label class="form-label">{{ __('Category') }} *</label>
-                <select id="edit_prod_category_id" name="category_id" required class="form-select">
-                    @foreach($categories as $cat)
-                        <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                    @endforeach
-                </select>
-            </div>
 
-            <div class="grid-3" style="margin-bottom: 1rem;">
-                <div>
-                    <label class="form-label">{{ __('Dish Name') }} ({{ $primaryLang['name'] }} {{ $primaryLang['flag'] }}) *</label>
-                    <input type="text" id="edit_prod_name" name="name" required class="form-input">
+            <!-- TAB 1: General & Price -->
+            <div class="edit-modal-tab-pane" data-tab="general" style="display: block;">
+                <div style="margin-bottom: 1rem;">
+                    <label class="form-label">{{ __('Category') }} *</label>
+                    <select id="edit_prod_category_id" name="category_id" required class="form-select">
+                        @foreach($categories as $cat)
+                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
-                <div>
-                    <label class="form-label">{{ __('Price') }} ({{ $vendor->currency }}) *</label>
-                    <input type="number" id="edit_prod_price" name="price" step="100" required class="form-input">
+
+                <div class="grid-3" style="margin-bottom: 1rem;">
+                    <div>
+                        <label class="form-label">{{ __('Dish Name') }} ({{ $primaryLang['name'] }} {{ $primaryLang['flag'] }}) *</label>
+                        <input type="text" id="edit_prod_name" name="name" required class="form-input">
+                    </div>
+                    <div>
+                        <label class="form-label">{{ __('Price') }} ({{ $vendor->currency }}) *</label>
+                        <input type="number" id="edit_prod_price" name="price" step="100" required class="form-input">
+                    </div>
+                    <div>
+                        <label class="form-label" style="color: #ef4444;">
+                            <i class="fa-solid fa-tag"></i> {{ __('Discount Price') }}
+                        </label>
+                        <input type="number" id="edit_prod_discount_price" name="discount_price" step="100" placeholder="{{ __('e.g. 2500') }}" class="form-input" style="border-color: rgba(239, 68, 68, 0.4);">
+                    </div>
                 </div>
-                <div>
-                    <label class="form-label" style="color: #ef4444;">
-                        <i class="fa-solid fa-tag"></i> {{ __('Discount Price') }}
+
+                @if(count($secondaryLangs) > 0)
+                    <div style="margin-bottom: 1rem; padding: 0.85rem; background: var(--bg-body); border: 1px dashed var(--border-color); border-radius: 12px;">
+                        <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.65rem;">
+                            <i class="fa-solid fa-language"></i> {{ __('Dish Name Translations') }}
+                        </div>
+                        <div class="grid-2" style="gap: 0.65rem;">
+                            @foreach($secondaryLangs as $secLang)
+                                <div>
+                                    <label class="form-label" style="font-size: 0.78rem;">{{ $secLang['name'] }} {{ $secLang['flag'] }}</label>
+                                    <input type="text" id="edit_prod_trans_{{ $secLang['code'] }}" name="name_translations[{{ $secLang['code'] }}]" placeholder="{{ __('Translation in') }} {{ $secLang['name'] }}" class="form-input" style="font-size: 0.85rem;">
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                <div style="margin-bottom: 1rem;">
+                    <label class="form-label">
+                        <i class="fa-solid fa-image" style="color: var(--primary);"></i> {{ __('Dish Image (Upload New File or Change URL)') }}
                     </label>
-                    <input type="number" id="edit_prod_discount_price" name="discount_price" step="100" placeholder="{{ __('e.g. 2500') }}" class="form-input" style="border-color: rgba(239, 68, 68, 0.4);">
-                </div>
-            </div>
-
-            <!-- Happy Hour & Discount Schedule Section (Edit) -->
-            <div style="margin-bottom: 1.25rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(239, 68, 68, 0.15); color: #ef4444; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">
-                            <i class="fa-solid fa-clock"></i>
-                        </span>
+                    <div class="grid-2" style="align-items: center;">
                         <div>
-                            <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Discount Schedule (Happy Hour)') }}</strong>
-                            <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('Set the days and hours when the discount applies') }}</small>
+                            <input type="file" name="image_file" accept="image/*" class="form-input" style="padding: 0.45rem;">
+                            <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">📁 {{ __('Upload new image file') }}</small>
+                        </div>
+                        <div>
+                            <input type="text" id="edit_prod_image" name="image" placeholder="{{ __('/storage/... or https://...') }}" class="form-input">
+                            <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">🔗 {{ __('Or edit image link / path') }}</small>
                         </div>
                     </div>
-                    <label style="font-size: 0.78rem; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; color: var(--text-main); font-weight: 600;">
-                        <input type="checkbox" id="edit_prod_is_discount_active" name="is_discount_active" value="1"> {{ __('Enable discount') }}
-                    </label>
                 </div>
 
-                <!-- Day Selector Chips -->
-                <div style="margin-bottom: 0.75rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.35rem;">
-                        <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">{{ __('Days of Week') }}</label>
-                        <div style="display: flex; gap: 0.35rem;">
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('edit', 'all')">{{ __('All') }}</button>
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('edit', 'weekdays')">{{ __('Mon-Fri') }}</button>
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('edit', 'weekends')">{{ __('Weekends') }}</button>
+                <div style="margin-bottom: 1rem;">
+                    <label class="form-label">{{ __('Description') }} ({{ $primaryLang['name'] }} {{ $primaryLang['flag'] }})</label>
+                    <textarea id="edit_prod_description" name="description" rows="2" class="form-textarea" placeholder="{{ __('Brief dish ingredients or description...') }}"></textarea>
+                </div>
+
+                @if(count($secondaryLangs) > 0)
+                    <div style="margin-bottom: 1rem; padding: 0.85rem; background: var(--bg-body); border: 1px dashed var(--border-color); border-radius: 12px;">
+                        <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.65rem;">
+                            <i class="fa-solid fa-language"></i> {{ __('Description Translations') }}
+                        </div>
+                        <div class="grid-2" style="gap: 0.65rem;">
+                            @foreach($secondaryLangs as $secLang)
+                                <div>
+                                    <label class="form-label" style="font-size: 0.78rem;">{{ $secLang['name'] }} {{ $secLang['flag'] }}</label>
+                                    <textarea id="edit_prod_desc_trans_{{ $secLang['code'] }}" name="description_translations[{{ $secLang['code'] }}]" rows="2" class="form-textarea" style="font-size: 0.85rem;" placeholder="{{ __('Description in') }} {{ $secLang['name'] }}"></textarea>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
+                @endif
+
+                <!-- Happy Hour & Discount Schedule -->
+                <div style="margin-bottom: 1rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(239, 68, 68, 0.15); color: #ef4444; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">
+                                <i class="fa-solid fa-clock"></i>
+                            </span>
+                            <div>
+                                <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Discount Schedule (Happy Hour)') }}</strong>
+                                <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('Set the days and hours when the discount applies') }}</small>
+                            </div>
+                        </div>
+                        <label style="font-size: 0.78rem; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; color: var(--text-main); font-weight: 600;">
+                            <input type="checkbox" id="edit_prod_is_discount_active" name="is_discount_active" value="1"> {{ __('Enable discount') }}
+                        </label>
+                    </div>
+
+                    <!-- Day Selector Chips -->
+                    <div style="margin-bottom: 0.75rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.35rem;">
+                            <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">{{ __('Days of Week') }}</label>
+                            <div style="display: flex; gap: 0.35rem;">
+                                <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('edit', 'all')">{{ __('All') }}</button>
+                                <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('edit', 'weekdays')">{{ __('Mon-Fri') }}</button>
+                                <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setDiscountDaysPreset('edit', 'weekends')">{{ __('Weekends') }}</button>
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                            @foreach($weekDays as $key => $lbl)
+                                <label style="display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.25rem 0.55rem; border-radius: 8px; cursor: pointer; color: var(--text-main);">
+                                    <input type="checkbox" class="edit-discount-day-checkbox" name="discount_days[]" value="{{ $key }}"> {{ $lbl }}
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Time Window -->
+                    <div class="grid-2" style="margin-bottom: 0.35rem;">
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">{{ __('Start Time') }}</label>
+                            <input type="time" id="edit_prod_discount_start_time" name="discount_start_time" class="form-input" style="padding: 0.45rem 0.75rem;">
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">{{ __('End Time') }}</label>
+                            <input type="time" id="edit_prod_discount_end_time" name="discount_end_time" class="form-input" style="padding: 0.45rem 0.75rem;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: Portions & Dietary -->
+            <div class="edit-modal-tab-pane" data-tab="portions" style="display: none;">
+                <!-- Portions & Variations Section -->
+                <div style="margin-bottom: 1.25rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-main);">
+                                <i class="fa-solid fa-sliders" style="color: var(--primary);"></i> {{ __('Portions & Variations (Optional)') }}
+                            </label>
+                            <small style="color: var(--text-muted); font-size: 0.72rem;">{{ __('Add or edit portions and options') }}</small>
+                        </div>
+                        <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.65rem; font-size: 0.75rem;" onclick="addVariationRow('edit')">
+                            <i class="fa-solid fa-plus"></i> {{ __('Add Portion') }}
+                        </button>
+                    </div>
+                    <div id="edit_variations_container" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
+                </div>
+
+                <!-- Dietary Tags -->
+                <div style="margin-bottom: 1rem;">
+                    <label class="form-label">{{ __('Dietary Tags') }}</label>
                     <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
-                        @foreach($weekDays as $key => $lbl)
-                            <label style="display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.25rem 0.55rem; border-radius: 8px; cursor: pointer; color: var(--text-main);">
-                                <input type="checkbox" class="edit-discount-day-checkbox" name="discount_days[]" value="{{ $key }}"> {{ $lbl }}
+                        @foreach(['vegan', 'vegetarian', 'gluten_free', 'halal', 'chef_special', 'spicy'] as $dtag)
+                            <label style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.25rem 0.55rem; border-radius: 8px; cursor: pointer; color: var(--text-main);">
+                                <input type="checkbox" class="edit-dietary-checkbox" name="dietary_tags[]" value="{{ $dtag }}"> {{ str_replace('_', ' ', strtoupper($dtag)) }}
                             </label>
                         @endforeach
                     </div>
                 </div>
 
-                <!-- Time Window -->
-                <div class="grid-2" style="margin-bottom: 0.35rem;">
-                    <div>
-                        <label class="form-label" style="font-size: 0.75rem;">{{ __('Start Time') }}</label>
-                        <input type="time" id="edit_prod_discount_start_time" name="discount_start_time" class="form-input" style="padding: 0.45rem 0.75rem;">
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-size: 0.75rem;">{{ __('End Time') }}</label>
-                        <input type="time" id="edit_prod_discount_end_time" name="discount_end_time" class="form-input" style="padding: 0.45rem 0.75rem;">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Branch Availability (Edit) -->
-            <div style="margin-bottom: 1.25rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(99, 102, 241, 0.15); color: #6366f1; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">
-                            <i class="fa-solid fa-code-branch"></i>
-                        </span>
-                        <div>
-                            <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Branch Availability') }}</strong>
-                            <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('Select which branches this dish is available at') }}</small>
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 0.35rem;">
-                        <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setLocationsPreset('edit', true)">{{ __('All') }}</button>
-                        <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setLocationsPreset('edit', false)">{{ __('Clear') }}</button>
-                    </div>
-                </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                    @foreach($locations as $loc)
-                        <label style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.35rem 0.65rem; border-radius: 8px; cursor: pointer; color: var(--text-main); font-weight: 600;">
-                            <input type="checkbox" class="edit-location-checkbox" name="locations[]" value="{{ $loc->id }}"> 📍 {{ $loc->name }}
-                        </label>
-                    @endforeach
-                </div>
-            </div>
-
-            <!-- Schedule & Time Availability (Lunch Menu) (Edit) -->
-            <div style="margin-bottom: 1.25rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
-                    <span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">
-                        <i class="fa-regular fa-clock"></i>
-                    </span>
-                    <div>
-                        <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Hours & Daily Availability (Lunch / Hours)') }}</strong>
-                        <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('e.g. lunch available only 12:00 - 15:00 (leave empty for all day)') }}</small>
-                    </div>
-                </div>
-                <div class="grid-2" style="margin-bottom: 0.75rem;">
-                    <div>
-                        <label class="form-label" style="font-size: 0.75rem;">{{ __('Start Time') }}</label>
-                        <input type="time" id="edit_prod_available_start_time" name="available_start_time" class="form-input" style="padding: 0.45rem 0.75rem;">
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-size: 0.75rem;">{{ __('End Time') }}</label>
-                        <input type="time" id="edit_prod_available_end_time" name="available_end_time" class="form-input" style="padding: 0.45rem 0.75rem;">
-                    </div>
-                </div>
-                <div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.35rem;">
-                        <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">{{ __('Available Days') }}</label>
-                        <div style="display: flex; gap: 0.35rem;">
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('edit', 'all')">{{ __('All') }}</button>
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('edit', 'weekdays')">{{ __('Mon-Fri') }}</button>
-                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('edit', 'weekends')">{{ __('Weekends') }}</button>
-                        </div>
-                    </div>
+                <!-- EU Allergens Tagging -->
+                <div style="margin-bottom: 1rem;">
+                    <label class="form-label">{{ __('EU Allergens Tagging') }}</label>
                     <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
-                        @foreach($weekDays as $key => $lbl)
-                            <label style="display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.25rem 0.55rem; border-radius: 8px; cursor: pointer; color: var(--text-main);">
-                                <input type="checkbox" class="edit-available-day-checkbox" name="available_days[]" value="{{ $key }}"> {{ $lbl }}
+                        @foreach($allergens as $allg)
+                            <label style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.25rem 0.55rem; border-radius: 8px; cursor: pointer; color: var(--text-main);">
+                                <input type="checkbox" class="edit-allergen-checkbox" name="allergens[]" value="{{ $allg->id }}"> {{ $allg->icon }} {{ $allg->name }}
                             </label>
                         @endforeach
                     </div>
                 </div>
-            </div>
 
-            <!-- Order Channels / Type Availability (Edit) -->
-            <div style="margin-bottom: 1.25rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
-                    <span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(16, 185, 129, 0.15); color: #10b981; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">
-                        <i class="fa-solid fa-truck-ramp-box"></i>
-                    </span>
+                <!-- Calories & Prep Time -->
+                <div class="grid-2" style="margin-bottom: 1rem;">
                     <div>
-                        <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Order Channels Availability') }}</strong>
-                        <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('Select order channels where this dish is available') }}</small>
+                        <label class="form-label" style="font-size: 0.75rem;">{{ __('Calories (kcal)') }}</label>
+                        <input type="number" id="edit_prod_calories" name="calories" placeholder="450" class="form-input">
                     </div>
-                </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.65rem;">
-                    <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.45rem 0.8rem; border-radius: 10px; cursor: pointer; color: var(--text-main); font-weight: 600;">
-                        <input type="hidden" name="available_for_dine_in" value="0">
-                        <input type="checkbox" id="edit_prod_available_for_dine_in" name="available_for_dine_in" value="1"> 🍽️ {{ __('Dine-in') }}
-                    </label>
-                    <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.45rem 0.8rem; border-radius: 10px; cursor: pointer; color: var(--text-main); font-weight: 600;">
-                        <input type="hidden" name="available_for_takeaway" value="0">
-                        <input type="checkbox" id="edit_prod_available_for_takeaway" name="available_for_takeaway" value="1"> 🥡 {{ __('Takeaway') }}
-                    </label>
-                    <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.45rem 0.8rem; border-radius: 10px; cursor: pointer; color: var(--text-main); font-weight: 600;">
-                        <input type="hidden" name="available_for_delivery" value="0">
-                        <input type="checkbox" id="edit_prod_available_for_delivery" name="available_for_delivery" value="1"> 🛵 {{ __('Delivery') }}
-                    </label>
+                    <div>
+                        <label class="form-label" style="font-size: 0.75rem;">{{ __('Prep Mins') }}</label>
+                        <input type="number" id="edit_prod_preparation_time_min" name="preparation_time_min" placeholder="15" class="form-input">
+                    </div>
                 </div>
             </div>
 
-            @if(count($secondaryLangs) > 0)
-                <div style="margin-bottom: 1rem; padding: 0.85rem; background: var(--bg-body); border: 1px dashed var(--border-color); border-radius: 12px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.65rem;">
-                        <i class="fa-solid fa-language"></i> {{ __('Dish Name Translations for active languages') }}
-                    </div>
-                    <div class="grid-2" style="gap: 0.65rem;">
-                        @foreach($secondaryLangs as $secLang)
+            <!-- TAB 3: Availability & Branches -->
+            <div class="edit-modal-tab-pane" data-tab="availability" style="display: none;">
+                <!-- Branch Availability -->
+                <div style="margin-bottom: 1.25rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(99, 102, 241, 0.15); color: #6366f1; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">
+                                <i class="fa-solid fa-code-branch"></i>
+                            </span>
                             <div>
-                                <label class="form-label" style="font-size: 0.78rem;">{{ $secLang['name'] }} {{ $secLang['flag'] }}</label>
-                                <input type="text" id="edit_prod_trans_{{ $secLang['code'] }}" name="name_translations[{{ $secLang['code'] }}]" placeholder="{{ __('Translation in') }} {{ $secLang['name'] }}" class="form-input" style="font-size: 0.85rem;">
+                                <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Branch Availability') }}</strong>
+                                <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('Select which branches this dish is available at') }}</small>
                             </div>
+                        </div>
+                        <div style="display: flex; gap: 0.35rem;">
+                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setLocationsPreset('edit', true)">{{ __('All') }}</button>
+                            <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setLocationsPreset('edit', false)">{{ __('Clear') }}</button>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        @foreach($locations as $loc)
+                            <label style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.35rem 0.65rem; border-radius: 8px; cursor: pointer; color: var(--text-main); font-weight: 600;">
+                                <input type="checkbox" class="edit-location-checkbox" name="locations[]" value="{{ $loc->id }}"> 📍 {{ $loc->name }}
+                            </label>
                         @endforeach
                     </div>
                 </div>
-            @endif
 
-            <div style="margin-bottom: 1rem;">
-                <label class="form-label">
-                    <i class="fa-solid fa-image" style="color: var(--primary);"></i> {{ __('Dish Image (Upload New File or Change URL)') }}
-                </label>
-                <div class="grid-2" style="align-items: center;">
-                    <div>
-                        <input type="file" name="image_file" accept="image/*" class="form-input" style="padding: 0.45rem;">
-                        <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">📁 {{ __('Upload new image file') }}</small>
+                <!-- Hours & Daily Availability (Lunch / Hours) -->
+                <div style="margin-bottom: 1.25rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">
+                            <i class="fa-regular fa-clock"></i>
+                        </span>
+                        <div>
+                            <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Hours & Daily Availability (Lunch / Hours)') }}</strong>
+                            <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('e.g. lunch available only 12:00 - 15:00 (leave empty for all day)') }}</small>
+                        </div>
+                    </div>
+                    <div class="grid-2" style="margin-bottom: 0.75rem;">
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">{{ __('Start Time') }}</label>
+                            <input type="time" id="edit_prod_available_start_time" name="available_start_time" class="form-input" style="padding: 0.45rem 0.75rem;">
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">{{ __('End Time') }}</label>
+                            <input type="time" id="edit_prod_available_end_time" name="available_end_time" class="form-input" style="padding: 0.45rem 0.75rem;">
+                        </div>
                     </div>
                     <div>
-                        <input type="text" id="edit_prod_image" name="image" placeholder="{{ __('/storage/... or https://...') }}" class="form-input">
-                        <small style="color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 0.25rem;">🔗 {{ __('Or edit image link / path') }}</small>
-                    </div>
-                </div>
-            </div>
-
-            <div style="margin-bottom: 1rem;">
-                <label class="form-label">{{ __('Description') }} ({{ $primaryLang['name'] }} {{ $primaryLang['flag'] }})</label>
-                <textarea id="edit_prod_description" name="description" rows="2" class="form-textarea" placeholder="{{ __('Brief dish ingredients or description...') }}"></textarea>
-            </div>
-
-            @if(count($secondaryLangs) > 0)
-                <div style="margin-bottom: 1rem; padding: 0.85rem; background: var(--bg-body); border: 1px dashed var(--border-color); border-radius: 12px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.65rem;">
-                        <i class="fa-solid fa-language"></i> {{ __('Description Translations for active languages') }}
-                    </div>
-                    <div class="grid-2" style="gap: 0.65rem;">
-                        @foreach($secondaryLangs as $secLang)
-                            <div>
-                                <label class="form-label" style="font-size: 0.78rem;">{{ $secLang['name'] }} {{ $secLang['flag'] }}</label>
-                                <textarea id="edit_prod_desc_trans_{{ $secLang['code'] }}" name="description_translations[{{ $secLang['code'] }}]" rows="2" class="form-textarea" style="font-size: 0.85rem;" placeholder="{{ __('Description in') }} {{ $secLang['name'] }}"></textarea>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.35rem;">
+                            <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">{{ __('Available Days') }}</label>
+                            <div style="display: flex; gap: 0.35rem;">
+                                <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('edit', 'all')">{{ __('All') }}</button>
+                                <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('edit', 'weekdays')">{{ __('Mon-Fri') }}</button>
+                                <button type="button" class="btn btn-secondary" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;" onclick="setAvailableDaysPreset('edit', 'weekends')">{{ __('Weekends') }}</button>
                             </div>
-                        @endforeach
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                            @foreach($weekDays as $key => $lbl)
+                                <label style="display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.25rem 0.55rem; border-radius: 8px; cursor: pointer; color: var(--text-main);">
+                                    <input type="checkbox" class="edit-available-day-checkbox" name="available_days[]" value="{{ $key }}"> {{ $lbl }}
+                                </label>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
-            @endif
 
-            <!-- Portions & Variations Section -->
-            <div style="margin-bottom: 1.25rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
-                    <div>
-                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-main);">
-                            <i class="fa-solid fa-sliders" style="color: var(--primary);"></i> {{ __('Portions & Variations (Optional)') }}
-                        </label>
-                        <small style="color: var(--text-muted); font-size: 0.72rem;">{{ __('Add or edit portions and options') }}</small>
+                <!-- Order Channels Availability -->
+                <div style="margin-bottom: 1.25rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(16, 185, 129, 0.15); color: #10b981; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">
+                            <i class="fa-solid fa-truck-ramp-box"></i>
+                        </span>
+                        <div>
+                            <strong style="font-size: 0.85rem; color: var(--text-main);">{{ __('Order Channels Availability') }}</strong>
+                            <small style="display: block; color: var(--text-muted); font-size: 0.72rem;">{{ __('Select order channels where this dish is available') }}</small>
+                        </div>
                     </div>
-                    <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.65rem; font-size: 0.75rem;" onclick="addVariationRow('edit')">
-                        <i class="fa-solid fa-plus"></i> {{ __('Add Portion') }}
-                    </button>
-                </div>
-                <div id="edit_variations_container" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
-            </div>
-
-            <!-- Dietary & Allergens -->
-            <div style="margin-bottom: 1rem;">
-                <label class="form-label">{{ __('Dietary Tags') }}</label>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
-                    @foreach(['vegan', 'vegetarian', 'gluten_free', 'halal', 'chef_special', 'spicy'] as $dtag)
-                        <label style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.25rem 0.55rem; border-radius: 8px; cursor: pointer; color: var(--text-main);">
-                            <input type="checkbox" class="edit-dietary-checkbox" name="dietary_tags[]" value="{{ $dtag }}"> {{ str_replace('_', ' ', strtoupper($dtag)) }}
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.65rem;">
+                        <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.45rem 0.8rem; border-radius: 10px; cursor: pointer; color: var(--text-main); font-weight: 600;">
+                            <input type="hidden" name="available_for_dine_in" value="0">
+                            <input type="checkbox" id="edit_prod_available_for_dine_in" name="available_for_dine_in" value="1"> 🍽️ {{ __('Dine-in') }}
                         </label>
-                    @endforeach
-                </div>
-            </div>
-
-            <div style="margin-bottom: 1rem;">
-                <label class="form-label">{{ __('EU Allergens Tagging') }}</label>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
-                    @foreach($allergens as $allg)
-                        <label style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.25rem 0.55rem; border-radius: 8px; cursor: pointer; color: var(--text-main);">
-                            <input type="checkbox" class="edit-allergen-checkbox" name="allergens[]" value="{{ $allg->id }}"> {{ $allg->icon }} {{ $allg->name }}
+                        <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.45rem 0.8rem; border-radius: 10px; cursor: pointer; color: var(--text-main); font-weight: 600;">
+                            <input type="hidden" name="available_for_takeaway" value="0">
+                            <input type="checkbox" id="edit_prod_available_for_takeaway" name="available_for_takeaway" value="1"> 🥡 {{ __('Takeaway') }}
                         </label>
-                    @endforeach
+                        <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; background: var(--input-bg); border: 1px solid var(--border-color); padding: 0.45rem 0.8rem; border-radius: 10px; cursor: pointer; color: var(--text-main); font-weight: 600;">
+                            <input type="hidden" name="available_for_delivery" value="0">
+                            <input type="checkbox" id="edit_prod_available_for_delivery" name="available_for_delivery" value="1"> 🛵 {{ __('Delivery') }}
+                        </label>
+                    </div>
                 </div>
             </div>
 
-            <div class="grid-3" style="margin-bottom: 1.5rem;">
-                <div>
-                    <label class="form-label" style="font-size: 0.75rem;">{{ __('Calories (kcal)') }}</label>
-                    <input type="number" id="edit_prod_calories" name="calories" placeholder="450" class="form-input">
-                </div>
-                <div>
-                    <label class="form-label" style="font-size: 0.75rem;">{{ __('Prep Mins') }}</label>
-                    <input type="number" id="edit_prod_preparation_time_min" name="preparation_time_min" placeholder="15" class="form-input">
-                </div>
-                <div style="display: flex; align-items: flex-end; padding-bottom: 0.35rem; gap: 1rem; flex-wrap: wrap;">
-                    <label style="font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
+            <!-- TAB 4: AI & Specials -->
+            <div class="edit-modal-tab-pane" data-tab="ai" style="display: none;">
+                <!-- Featured & Daily Offer Toggles -->
+                <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem; margin-bottom: 1.25rem; display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                    <label style="font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
                         <input type="checkbox" id="edit_prod_is_featured" name="is_featured" value="1"> ★ {{ __('Featured Dish') }}
                     </label>
-                    <label style="font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; gap: 0.45rem; cursor: pointer; color: var(--text-main);">
+                    <label style="font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.45rem; cursor: pointer; color: var(--text-main);">
                         <input type="checkbox" id="edit_prod_is_daily_offer" name="is_daily_offer" value="1">
                         <span style="color: #ef4444;"><i class="fa-solid fa-fire-flame-curved"></i></span> {{ __('Daily Offer / Special of the Day') }}
                     </label>
                 </div>
+
+                <!-- AI Waiter Metadata & Priority Settings -->
+                <div style="background: rgba(139, 92, 246, 0.05); border: 1.5px dashed rgba(139, 92, 246, 0.3); border-radius: 14px; padding: 1.1rem; margin-bottom: 1rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
+                        <div style="font-weight: 700; font-size: 0.88rem; color: #8b5cf6; display: flex; align-items: center; gap: 0.45rem;">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> {{ __('AI Waiter Recommendation Settings') }}
+                        </div>
+                        <label style="font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; color: var(--text-main);">
+                            <input type="checkbox" id="edit_prod_ai_priority" name="ai_priority" value="1"> ★ {{ __('AI Promoted') }}
+                        </label>
+                    </div>
+                    <div class="grid-3" style="margin-bottom: 0.75rem;">
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">{{ __('AI Priority (1-100)') }}</label>
+                            <input type="number" id="edit_prod_ai_priority_level" name="ai_priority_level" min="1" max="100" class="form-input" placeholder="50">
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">{{ __('AI Group') }}</label>
+                            <select id="edit_prod_ai_group" name="ai_group" class="form-select">
+                                <option value="">{{ __('None (Standard)') }}</option>
+                                <option value="bestseller">{{ __('AI Bestseller') }}</option>
+                                <option value="chef_choice">{{ __('Chef Recommendation') }}</option>
+                                <option value="high_margin">{{ __('High Margin') }}</option>
+                                <option value="new_arrival">{{ __('New Product') }}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem;">{{ __('Spiciness Level') }}</label>
+                            <select id="edit_prod_ai_spicy_level" name="ai_spicy_level" class="form-select">
+                                <option value="0">{{ __('0 - Not Spicy') }}</option>
+                                <option value="1">{{ __('1 - Mild / Light') }}</option>
+                                <option value="2">{{ __('2 - Medium Spicy') }}</option>
+                                <option value="3">{{ __('3 - Hot / Very Spicy') }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-size: 0.75rem;">{{ __('AI Keywords / Flavor Tags (comma separated)') }}</label>
+                        <input type="text" id="edit_prod_ai_tags" name="ai_tags" placeholder="{{ __('e.g. meat, savory, juicy, dinner, signature') }}" class="form-input">
+                    </div>
+                </div>
             </div>
 
-            <!-- AI Waiter Metadata & Priority Settings -->
-            <div style="background: rgba(139, 92, 246, 0.05); border: 1.5px dashed rgba(139, 92, 246, 0.3); border-radius: 14px; padding: 1.1rem; margin-bottom: 1.5rem;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
-                    <div style="font-weight: 700; font-size: 0.88rem; color: #8b5cf6; display: flex; align-items: center; gap: 0.45rem;">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> {{ __('AI Waiter Recommendation Settings') }}
-                    </div>
-                    <label style="font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; color: var(--text-main);">
-                        <input type="checkbox" id="edit_prod_ai_priority" name="ai_priority" value="1"> ★ {{ __('AI Promoted') }}
-                    </label>
-                </div>
-                <div class="grid-3" style="margin-bottom: 0.75rem;">
-                    <div>
-                        <label class="form-label" style="font-size: 0.75rem;">{{ __('AI Priority (1-100)') }}</label>
-                        <input type="number" id="edit_prod_ai_priority_level" name="ai_priority_level" min="1" max="100" class="form-input" placeholder="50">
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-size: 0.75rem;">{{ __('AI Group') }}</label>
-                        <select id="edit_prod_ai_group" name="ai_group" class="form-select">
-                            <option value="">{{ __('None (Standard)') }}</option>
-                            <option value="bestseller">{{ __('AI Bestseller') }}</option>
-                            <option value="chef_choice">{{ __('Chef Recommendation') }}</option>
-                            <option value="high_margin">{{ __('High Margin') }}</option>
-                            <option value="new_arrival">{{ __('New Product') }}</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-size: 0.75rem;">{{ __('Spiciness Level') }}</label>
-                        <select id="edit_prod_ai_spicy_level" name="ai_spicy_level" class="form-select">
-                            <option value="0">{{ __('0 - Not Spicy') }}</option>
-                            <option value="1">{{ __('1 - Mild / Light') }}</option>
-                            <option value="2">{{ __('2 - Medium Spicy') }}</option>
-                            <option value="3">{{ __('3 - Hot / Very Spicy') }}</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="form-label" style="font-size: 0.75rem;">{{ __('AI Keywords / Flavor Tags (comma separated)') }}</label>
-                    <input type="text" id="edit_prod_ai_tags" name="ai_tags" placeholder="{{ __('e.g. meat, savory, juicy, dinner, signature') }}" class="form-input">
-                </div>
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+            <!-- Modal Persistent Action Footer -->
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
                 <button type="button" class="btn btn-secondary" onclick="document.getElementById('editProductModal').style.display='none'">{{ __('Cancel') }}</button>
                 <button type="submit" class="btn btn-primary">{{ __('Update Dish') }}</button>
             </div>
@@ -2228,6 +2800,16 @@
 </div>
 
 <script>
+    function switchProductModalTab(prefix, tabName) {
+        document.querySelectorAll('.' + prefix + '-modal-tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tabName);
+        });
+        document.querySelectorAll('.' + prefix + '-modal-tab-pane').forEach(pane => {
+            pane.style.display = pane.dataset.tab === tabName ? 'block' : 'none';
+        });
+    }
+    window.switchProductModalTab = switchProductModalTab;
+
     function setDiscountDaysPreset(prefix, type) {
         const checkboxes = document.querySelectorAll(`.${prefix}-discount-day-checkbox`);
         checkboxes.forEach(cb => {
@@ -2375,6 +2957,9 @@
             }
         }
 
+        // Reset to first tab
+        switchProductModalTab('edit', 'general');
+
         document.getElementById('editProductModal').style.display = 'flex';
     }
 
@@ -2449,9 +3034,14 @@
         });
     }
 
-    function openNewProductModal() {
+    function openNewProductModal(categoryId = null) {
         const container = document.getElementById('new_variations_container');
         if (container) container.innerHTML = '';
+        if (categoryId) {
+            const catSelect = document.querySelector('#newProductModal select[name="category_id"]');
+            if (catSelect) catSelect.value = categoryId;
+        }
+        switchProductModalTab('new', 'general');
         document.getElementById('newProductModal').style.display = 'flex';
     }
 
@@ -2461,10 +3051,14 @@
             density: localStorage.getItem('qrmenu_menu_density') || 'comfortable',
             currency: '{{ $vendor->currency }}',
             csrfToken: document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            activeLocationId: {{ (int) $activeLocationId }},
 
             // Local datasets
             allDishes: @json($dishesJson),
             categories: @json($categoriesJson),
+
+            // Category Collapsing state
+            collapsedCategories: JSON.parse(localStorage.getItem('qrmenu_collapsed_cats') || '[]'),
 
             // Filters
             searchQuery: '',
@@ -2541,6 +3135,34 @@
                 this.toast.type = type;
                 this.toast.show = true;
                 setTimeout(() => { this.toast.show = false; }, 3500);
+            },
+
+            // Category Accordion methods
+            toggleCategoryCollapse(catId) {
+                if (this.collapsedCategories.includes(catId)) {
+                    this.collapsedCategories = this.collapsedCategories.filter(id => id !== catId);
+                } else {
+                    this.collapsedCategories.push(catId);
+                }
+                localStorage.setItem('qrmenu_collapsed_cats', JSON.stringify(this.collapsedCategories));
+            },
+
+            isCategoryCollapsed(catId) {
+                return this.collapsedCategories.includes(catId);
+            },
+
+            collapseAllCategories() {
+                this.collapsedCategories = this.categories.map(c => c.id);
+                localStorage.setItem('qrmenu_collapsed_cats', JSON.stringify(this.collapsedCategories));
+            },
+
+            expandAllCategories() {
+                this.collapsedCategories = [];
+                localStorage.setItem('qrmenu_collapsed_cats', JSON.stringify(this.collapsedCategories));
+            },
+
+            allCategoriesCollapsed() {
+                return this.categories.length > 0 && this.categories.every(c => this.collapsedCategories.includes(c.id));
             },
 
             resetFilters() {
@@ -2726,12 +3348,13 @@
                 }
             },
 
+            // Instant Stock Toggle via AJAX
             async toggleDishStock(dish) {
                 const original = dish.is_available;
                 dish.is_available = !dish.is_available; // Optimistic
 
                 try {
-                    const res = await fetch(`/admin/menu/products/${dish.id}/inline-update`, {
+                    const res = await fetch(`/admin/menu/products/${dish.id}/toggle`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -2739,8 +3362,7 @@
                             'Accept': 'application/json',
                         },
                         body: JSON.stringify({
-                            field: 'is_available',
-                            value: dish.is_available ? 1 : 0,
+                            location_id: this.activeLocationId,
                         }),
                     });
 
@@ -2748,10 +3370,38 @@
                     if (!res.ok || !data.success) {
                         throw new Error(data.message || 'Error toggling stock');
                     }
+                    dish.is_available = data.is_available;
                     this.showNotification(dish.is_available ? '{{ __('Marked as In Stock') }}' : '{{ __('Marked as Out of Stock') }}');
                 } catch (e) {
                     dish.is_available = original; // Rollback
                     this.showNotification(e.message || '{{ __('Failed to update stock status') }}', 'error');
+                }
+            },
+
+            // Instant Daily Offer Toggle via AJAX
+            async toggleDailyOffer(dish) {
+                const original = dish.is_daily_offer;
+                dish.is_daily_offer = !dish.is_daily_offer; // Optimistic
+
+                try {
+                    const res = await fetch(`/admin/menu/products/${dish.id}/daily-offer-toggle`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.csrfToken,
+                            'Accept': 'application/json',
+                        },
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok || !data.success) {
+                        throw new Error(data.message || 'Error toggling daily offer');
+                    }
+                    dish.is_daily_offer = data.is_daily_offer;
+                    this.showNotification(dish.is_daily_offer ? '{{ __('Added to Daily Offers!') }}' : '{{ __('Removed from Daily Offers!') }}');
+                } catch (e) {
+                    dish.is_daily_offer = original; // Rollback
+                    this.showNotification(e.message || '{{ __('Failed to update daily offer') }}', 'error');
                 }
             },
 
