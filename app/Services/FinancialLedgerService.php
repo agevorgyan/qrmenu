@@ -268,6 +268,20 @@ class FinancialLedgerService
                 ->where('end_date', '>=', $entryDate->toDateString())
                 ->first();
 
+            // Compute cryptographic HMAC-SHA256 hash chain
+            $lastEntry = JournalEntry::where('vendor_id', $vendor->id)
+                ->where('status', 'posted')
+                ->whereNotNull('entry_hash')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            $previousHash = $lastEntry?->entry_hash ?? hash('sha256', "GENESIS-{$vendor->id}");
+            $appSecret = config('app.key') ?: 'qrmenu-finance-secret';
+            $debitStr = number_format($totalDebit, 2, '.', '');
+            $creditStr = number_format($totalCredit, 2, '.', '');
+            $dataToSign = "{$vendor->id}|{$entryNumber}|{$entryDate->toDateString()}|{$debitStr}|{$creditStr}|{$previousHash}";
+            $entryHash = hash_hmac('sha256', $dataToSign, $appSecret);
+
             $entry = JournalEntry::create([
                 'vendor_id' => $vendor->id,
                 'location_id' => $data['location_id'] ?? null,
@@ -282,6 +296,8 @@ class FinancialLedgerService
                 'description' => $data['description'],
                 'total_debit' => $totalDebit,
                 'total_credit' => $totalCredit,
+                'previous_hash' => $previousHash,
+                'entry_hash' => $entryHash,
                 'created_by' => $user?->id ?? auth()->id(),
                 'posted_at' => Carbon::now(),
             ]);

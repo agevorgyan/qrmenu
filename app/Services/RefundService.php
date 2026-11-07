@@ -88,7 +88,7 @@ class RefundService
             }
         }
 
-        return DB::transaction(function () use ($order, $refundAmount, $method, $reason, $cashRegisterId, $orderPaid, $orderRefunded, $user) {
+        return DB::transaction(function () use ($order, $refundAmount, $method, $reason, $cashRegisterId, $orderPaid, $orderRefunded, $user, $data) {
             $newRefundedTotal = round($orderRefunded + $refundAmount, 2);
             $newStatus = $newRefundedTotal >= $orderPaid ? 'refunded' : 'partially_refunded';
 
@@ -108,13 +108,16 @@ class RefundService
                 ]);
             }
 
+            $refundIdempotencyKey = $data['idempotency_key'] ?? "refund-order-{$order->id}-{$refundAmount}-{$newRefundedTotal}";
+
             // Post to General Ledger
             $journalEntry = $this->transactionService->recordOrderRefund(
                 $order,
                 $refundAmount,
                 $method,
                 $reason,
-                $user
+                $user,
+                $refundIdempotencyKey
             );
 
             // Deduct from register if cash

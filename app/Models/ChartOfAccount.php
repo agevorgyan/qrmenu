@@ -63,19 +63,19 @@ class ChartOfAccount extends Model
     }
 
     /**
-     * Account is normal debit balance (Asset or Expense).
+     * Account is normal debit balance (Asset, Expense, or Contra-Revenue).
      */
     public function isDebitNormal(): bool
     {
-        return in_array($this->type, ['asset', 'expense'], true);
+        return in_array($this->type, ['asset', 'expense'], true) || $this->subtype === 'contra_revenue';
     }
 
     /**
-     * Account is normal credit balance (Liability, Equity, Revenue).
+     * Account is normal credit balance (Liability, Equity, standard Revenue).
      */
     public function isCreditNormal(): bool
     {
-        return in_array($this->type, ['liability', 'equity', 'revenue'], true);
+        return in_array($this->type, ['liability', 'equity', 'revenue'], true) && $this->subtype !== 'contra_revenue';
     }
 
     /**
@@ -83,8 +83,17 @@ class ChartOfAccount extends Model
      */
     public function recalculateBalance(): float
     {
-        $debits = (float) $this->journalLines()->where('type', 'debit')->sum('amount_base_currency');
-        $credits = (float) $this->journalLines()->where('type', 'credit')->sum('amount_base_currency');
+        $debits = (float) $this->journalLines()
+            ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
+            ->whereIn('journal_entries.status', ['posted', 'reversed'])
+            ->where('journal_entry_lines.type', 'debit')
+            ->sum('journal_entry_lines.amount_base_currency');
+
+        $credits = (float) $this->journalLines()
+            ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
+            ->whereIn('journal_entries.status', ['posted', 'reversed'])
+            ->where('journal_entry_lines.type', 'credit')
+            ->sum('journal_entry_lines.amount_base_currency');
 
         $balance = $this->isDebitNormal() ? ($debits - $credits) : ($credits - $debits);
         $this->update(['current_balance' => round($balance, 2)]);

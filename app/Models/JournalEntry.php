@@ -33,6 +33,8 @@ class JournalEntry extends Model
         'total_credit',
         'created_by',
         'posted_at',
+        'previous_hash',
+        'entry_hash',
     ];
 
     protected function casts(): array
@@ -51,6 +53,12 @@ class JournalEntry extends Model
         static::creating(function (self $model) {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
+            }
+        });
+
+        static::deleting(function (self $model) {
+            if (in_array($model->status, ['posted', 'reversed'], true)) {
+                throw new \LogicException("Journal entry {$model->entry_number} is immutable ({$model->status}) and cannot be deleted.");
             }
         });
     }

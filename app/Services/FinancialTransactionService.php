@@ -19,6 +19,7 @@ use App\Models\SupplierPayment;
 use App\Models\User;
 use App\Models\Vendor;
 use Carbon\Carbon;
+use Illuminate\Validation\ValidationException;
 
 class FinancialTransactionService
 {
@@ -31,6 +32,12 @@ class FinancialTransactionService
      */
     public function recordOrderSale(Order $order, ?User $user = null): JournalEntry
     {
+        if ($order->status === 'cancelled' || ($order->cancellation_status && $order->cancellation_status === 'approved')) {
+            throw ValidationException::withMessages([
+                'order' => "Cannot post sales revenue for cancelled order #{$order->order_number}.",
+            ]);
+        }
+
         $vendor = $order->vendor;
         $idempotencyKey = "order-sale-{$order->id}";
 
@@ -45,18 +52,23 @@ class FinancialTransactionService
 
         $arAccount = $this->ledgerService->getAccountByCode($vendor, '1200'); // Accounts Receivable / Clearing
         $foodRev = $this->ledgerService->getAccountByCode($vendor, '4010');   // Food Sales Revenue
-        $bevRev = $this->ledgerService->getAccountByCode($vendor, '4020');    // Beverage Sales Revenue
+        $serviceAccount = $this->ledgerService->getAccountByCode($vendor, '4030'); // Service Charge Revenue
+        $otherIncomeAccount = $this->ledgerService->getAccountByCode($vendor, '4100'); // Delivery / Ancillary
+        $tipsAccount = $this->ledgerService->getAccountByCode($vendor, '2100'); // Tips Payable
         $taxAccount = $this->ledgerService->getAccountByCode($vendor, '2300'); // Sales Tax / VAT
         $discountAccount = $this->ledgerService->getAccountByCode($vendor, '4910'); // Promo Discounts
 
         $subtotal = round((float) $order->subtotal, 2);
+        $serviceFee = round((float) ($order->service_fee ?? 0), 2);
+        $deliveryFee = round((float) ($order->delivery_fee ?? 0), 2);
+        $tipAmount = round((float) ($order->tip_amount ?? 0), 2);
         $tax = round((float) ($order->tax_amount ?? 0), 2);
-        $discount = round((float) ($order->discount_amount ?? 0), 2);
+        $discount = round((float) ($order->discount_amount ?? 0) + (float) ($order->birthday_discount_amount ?? 0), 2);
         $total = round((float) $order->total_amount, 2);
 
         $lines = [];
 
-        // Debit: Accounts Receivable (or Customer Clearing) for net total
+        // Debit: Accounts Receivable for net total
         $lines[] = [
             'account_id' => $arAccount->id,
             'location_id' => $order->location_id,
@@ -66,7 +78,7 @@ class FinancialTransactionService
             'memo' => "Order #{$order->order_number} Receivable",
         ];
 
-        // If a discount was given, record Debit to Contra-Revenue (Discounts Allowed)
+        // Debit: Discounts allowed
         if ($discount > 0) {
             $lines[] = [
                 'account_id' => $discountAccount->id,
@@ -78,18 +90,41 @@ class FinancialTransactionService
             ];
         }
 
-        // Credit: Sales Revenue (Food & Bev)
-        // Note: subtotal represents gross sales before discount
-        $grossSales = $subtotal > 0 ? $subtotal : round($total + $discount - $tax, 2);
+        // Credit: Service Charge Revenue
+        if ($serviceFee > 0) {
+            $lines[] = [
+                'account_id' => $serviceAccount->id,
+                'location_id' => $order->location_id,
+                'type' => 'credit',
+                'amount' => $serviceFee,
+                'currency' => $order->currency ?: 'AMD',
+                'memo' => "Service charge on Order #{$order->order_number}",
+            ];
+        }
 
-        $lines[] = [
-            'account_id' => $foodRev->id,
-            'location_id' => $order->location_id,
-            'type' => 'credit',
-            'amount' => $grossSales,
-            'currency' => $order->currency ?: 'AMD',
-            'memo' => "Order #{$order->order_number} Food Sales Revenue",
-        ];
+        // Credit: Delivery / Ancillary Fee Revenue
+        if ($deliveryFee > 0) {
+            $lines[] = [
+                'account_id' => $otherIncomeAccount->id,
+                'location_id' => $order->location_id,
+                'type' => 'credit',
+                'amount' => $deliveryFee,
+                'currency' => $order->currency ?: 'AMD',
+                'memo' => "Delivery fee on Order #{$order->order_number}",
+            ];
+        }
+
+        // Credit: Online Tip included on Order
+        if ($tipAmount > 0) {
+            $lines[] = [
+                'account_id' => $tipsAccount->id,
+                'location_id' => $order->location_id,
+                'type' => 'credit',
+                'amount' => $tipAmount,
+                'currency' => $order->currency ?: 'AMD',
+                'memo' => "Tip on Order #{$order->order_number}",
+            ];
+        }
 
         // Credit: Tax Liability if applicable
         if ($tax > 0) {
@@ -103,6 +138,19 @@ class FinancialTransactionService
             ];
         }
 
+        // Credit: Food Sales Revenue (balancing gross food items)
+        $grossSales = round($total + $discount - $tax - $serviceFee - $deliveryFee - $tipAmount, 2);
+        if ($grossSales > 0) {
+            $lines[] = [
+                'account_id' => $foodRev->id,
+                'location_id' => $order->location_id,
+                'type' => 'credit',
+                'amount' => $grossSales,
+                'currency' => $order->currency ?: 'AMD',
+                'memo' => "Order #{$order->order_number} Food Sales Revenue",
+            ];
+        }
+
         return $this->ledgerService->postJournalEntry($vendor, [
             'entry_date' => $order->closed_at ? Carbon::parse($order->closed_at)->toDateString() : Carbon::now()->toDateString(),
             'source_type' => 'Order',
@@ -112,6 +160,24 @@ class FinancialTransactionService
             'description' => "Sales Revenue: Order #{$order->order_number}",
             'lines' => $lines,
         ], $user);
+    }
+
+    /**
+     * Reverse previously posted sales revenue for a cancelled order.
+     */
+    public function reverseOrderSale(Order $order, string $reason = 'Order cancelled', ?User $user = null): ?JournalEntry
+    {
+        $idempotencyKey = "order-sale-{$order->id}";
+        $existing = JournalEntry::where('vendor_id', $order->vendor_id)
+            ->where('idempotency_key', $idempotencyKey)
+            ->where('status', 'posted')
+            ->first();
+
+        if (! $existing) {
+            return null;
+        }
+
+        return $this->ledgerService->createReversalEntry($existing, "Order #{$order->order_number} cancelled: {$reason}", $user);
     }
 
     /**
@@ -202,10 +268,20 @@ class FinancialTransactionService
         float $refundAmount,
         string $paymentMethod = 'cash',
         ?string $reason = null,
-        ?User $user = null
+        ?User $user = null,
+        ?string $customIdempotencyKey = null
     ): JournalEntry {
         $vendor = $order->vendor;
-        $idempotencyKey = "refund-{$order->id}-".round($refundAmount, 2).'-'.Str::random(6);
+        $amount = round($refundAmount, 2);
+        $idempotencyKey = $customIdempotencyKey ?: "refund-{$order->id}-{$amount}";
+
+        $existing = JournalEntry::where('vendor_id', $vendor->id)
+            ->where('idempotency_key', $idempotencyKey)
+            ->first();
+
+        if ($existing) {
+            return $existing;
+        }
 
         $returnsAccount = $this->ledgerService->getAccountByCode($vendor, '4900'); // Sales Returns & Allowances (Contra-Rev)
 
@@ -220,7 +296,7 @@ class FinancialTransactionService
                 'account_id' => $returnsAccount->id,
                 'location_id' => $order->location_id,
                 'type' => 'debit',
-                'amount' => round($refundAmount, 2),
+                'amount' => $amount,
                 'currency' => $order->currency ?: 'AMD',
                 'memo' => "Refund for Order #{$order->order_number}: ".($reason ?: 'Customer Refund'),
             ],
@@ -228,7 +304,7 @@ class FinancialTransactionService
                 'account_id' => $disbAccount->id,
                 'location_id' => $order->location_id,
                 'type' => 'credit',
-                'amount' => round($refundAmount, 2),
+                'amount' => $amount,
                 'currency' => $order->currency ?: 'AMD',
                 'memo' => "Disbursement for Order #{$order->order_number} refund",
             ],

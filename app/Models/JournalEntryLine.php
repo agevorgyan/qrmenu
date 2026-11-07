@@ -33,6 +33,15 @@ class JournalEntryLine extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::deleting(function (self $model) {
+            if (in_array($model->journalEntry?->status, ['posted', 'reversed'], true)) {
+                throw new \LogicException('Lines of posted or reversed journal entries are immutable and cannot be deleted.');
+            }
+        });
+    }
+
     public function journalEntry(): BelongsTo
     {
         return $this->belongsTo(JournalEntry::class);

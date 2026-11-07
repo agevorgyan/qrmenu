@@ -7,6 +7,7 @@ use App\Models\BankTransaction;
 use App\Models\CashRegister;
 use App\Models\ChartOfAccount;
 use App\Models\Expense;
+use App\Models\JournalEntry;
 use App\Models\Order;
 use App\Models\PosShift;
 use App\Models\SupplierInvoice;
@@ -68,13 +69,14 @@ class FinancialReportingService
             } else {
                 $accounts[$code]['credit'] = round((float) $row->total_amount, 2);
             }
+        }
 
-            // For Revenue: Credit - Debit (Credits are normal, Debits are contra/reversals)
-            // For Expense: Debit - Credit (Debits are normal, Credits are returns/reversals)
-            if ($row->type === 'revenue') {
-                $accounts[$code]['net_amount'] = round($accounts[$code]['credit'] - $accounts[$code]['debit'], 2);
+        // Calculate net amount for each account
+        foreach ($accounts as $code => $acc) {
+            if ($acc['type'] === 'revenue') {
+                $accounts[$code]['net_amount'] = round($acc['credit'] - $acc['debit'], 2);
             } else {
-                $accounts[$code]['net_amount'] = round($accounts[$code]['debit'] - $accounts[$code]['credit'], 2);
+                $accounts[$code]['net_amount'] = round($acc['debit'] - $acc['credit'], 2);
             }
         }
 
@@ -86,10 +88,10 @@ class FinancialReportingService
 
         foreach ($accounts as $acc) {
             if ($acc['type'] === 'revenue') {
-                // Contra accounts (Discounts 4030, Refunds 4040)
-                if (in_array($acc['code'], ['4030', '4040'], true) || $acc['net_amount'] < 0) {
+                // Contra accounts (Discounts 4910, Returns 4900, or subtype contra_revenue)
+                if (in_array($acc['code'], ['4900', '4910'], true) || $acc['subtype'] === 'contra_revenue') {
                     $contraRevenueAccounts[] = $acc;
-                    $totalContra += abs($acc['net_amount']);
+                    $totalContra += abs($acc['debit'] - $acc['credit']);
                 } else {
                     $grossRevenueAccounts[] = $acc;
                     $grossRevenue += $acc['net_amount'];
@@ -183,7 +185,7 @@ class FinancialReportingService
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->join('chart_of_accounts', 'chart_of_accounts.id', '=', 'journal_entry_lines.account_id')
             ->where('journal_entries.vendor_id', $vendor->id)
-            ->where('journal_entries.status', 'posted')
+            ->whereIn('journal_entries.status', ['posted', 'reversed'])
             ->where('journal_entries.entry_date', '<=', $asOfDate->toDateString())
             ->when($locationId, function ($q) use ($locationId) {
                 $q->where(function ($sub) use ($locationId) {
@@ -362,7 +364,7 @@ class FinancialReportingService
         $cashLines = DB::table('journal_entry_lines')
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->where('journal_entries.vendor_id', $vendor->id)
-            ->where('journal_entries.status', 'posted')
+            ->whereIn('journal_entries.status', ['posted', 'reversed'])
             ->whereIn('journal_entry_lines.account_id', $cashAccountIds)
             ->whereBetween('journal_entries.entry_date', [$startDate->toDateString(), $endDate->toDateString()])
             ->when($locationId, function ($q) use ($locationId) {
@@ -513,7 +515,7 @@ class FinancialReportingService
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->join('chart_of_accounts', 'chart_of_accounts.id', '=', 'journal_entry_lines.account_id')
             ->where('journal_entries.vendor_id', $vendor->id)
-            ->where('journal_entries.status', 'posted')
+            ->whereIn('journal_entries.status', ['posted', 'reversed'])
             ->where('journal_entries.entry_date', '<=', $asOfDate->toDateString())
             ->when($locationId, function ($q) use ($locationId) {
                 $q->where(function ($sub) use ($locationId) {
@@ -720,7 +722,7 @@ class FinancialReportingService
         // Live Cash in Tills / Drawer Balances
         $registersLiveCash = (float) CashRegister::where('vendor_id', $vendor->id)
             ->when($locationId, fn ($q) => $q->where('location_id', $locationId))
-            ->where('is_active', true)
+            ->where('status', 'active')
             ->sum('current_balance');
 
         // Live Corporate Bank Balances
@@ -730,31 +732,28 @@ class FinancialReportingService
 
         // Outstanding Accounts Payable (Unpaid Supplier Invoices + Approved Unpaid Expenses)
         $unpaidSupplierInvoices = (float) SupplierInvoice::where('vendor_id', $vendor->id)
-            ->whereIn('payment_status', ['unpaid', 'partially_paid'])
-            ->selectRaw('SUM(total_amount - paid_amount) as outstanding')
-            ->value('outstanding') ?? 0.0;
+            ->whereIn('payment_status', [SupplierInvoice::PAYMENT_UNPAID, SupplierInvoice::PAYMENT_PARTIALLY_PAID])
+            ->sum('remaining_balance');
 
         $unpaidExpenses = (float) Expense::where('vendor_id', $vendor->id)
-            ->where('status', 'approved')
-            ->whereIn('payment_status', ['unpaid', 'partially_paid'])
-            ->selectRaw('SUM(total_amount - paid_amount) as outstanding')
-            ->value('outstanding') ?? 0.0;
+            ->whereIn('status', ['approved', 'partially_paid'])
+            ->sum('remaining_amount');
 
         $totalAccountsPayable = round($unpaidSupplierInvoices + $unpaidExpenses, 2);
 
-        // Total refunds in period
-        $totalRefunds = (float) DB::table('order_refunds')
-            ->where('vendor_id', $vendor->id)
-            ->where('status', 'completed')
-            ->whereBetween('created_at', [$startDate->copy()->startOfDay(), $endDate->copy()->endOfDay()])
-            ->sum('amount');
+        // Total refunds in period from double-entry General Ledger
+        $totalRefunds = (float) JournalEntry::where('vendor_id', $vendor->id)
+            ->where('status', 'posted')
+            ->where('source_type', 'Refund')
+            ->whereBetween('entry_date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->sum('total_debit');
 
         // Cash Variances (Over/Short) from closed shifts
         $shiftVariances = (float) PosShift::where('vendor_id', $vendor->id)
             ->where('status', 'closed')
             ->whereBetween('closed_at', [$startDate->copy()->startOfDay(), $endDate->copy()->endOfDay()])
             ->when($locationId, fn ($q) => $q->where('location_id', $locationId))
-            ->sum('cash_discrepancy');
+            ->sum('discrepancy');
 
         // Unreconciled Bank Transactions
         $unreconciledTransactionsCount = BankTransaction::where('vendor_id', $vendor->id)
@@ -844,7 +843,7 @@ class FinancialReportingService
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->join('chart_of_accounts', 'chart_of_accounts.id', '=', 'journal_entry_lines.account_id')
             ->where('journal_entries.vendor_id', $vendorId)
-            ->where('journal_entries.status', 'posted')
+            ->whereIn('journal_entries.status', ['posted', 'reversed'])
             ->whereBetween('journal_entries.entry_date', [$startDate->toDateString(), $endDate->toDateString()])
             ->when($locationId, function ($q) use ($locationId) {
                 $q->where(function ($sub) use ($locationId) {
@@ -866,7 +865,7 @@ class FinancialReportingService
         $lines = DB::table('journal_entry_lines')
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->where('journal_entries.vendor_id', $vendorId)
-            ->where('journal_entries.status', 'posted')
+            ->whereIn('journal_entries.status', ['posted', 'reversed'])
             ->whereIn('journal_entry_lines.account_id', $cashAccountIds)
             ->where('journal_entries.entry_date', '<=', $asOfDate->toDateString())
             ->when($locationId, function ($q) use ($locationId) {

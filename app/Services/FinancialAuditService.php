@@ -73,7 +73,7 @@ class FinancialAuditService
         $lineMismatches = DB::table('journal_entries')
             ->join('journal_entry_lines', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->where('journal_entries.vendor_id', $vendor->id)
-            ->where('journal_entries.status', 'posted')
+            ->whereIn('journal_entries.status', ['posted', 'reversed'])
             ->select([
                 'journal_entries.id',
                 'journal_entries.entry_number',
@@ -105,14 +105,14 @@ class FinancialAuditService
         foreach ($accounts as $account) {
             $debits = (float) JournalEntryLine::join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
                 ->where('journal_entries.vendor_id', $vendor->id)
-                ->where('journal_entries.status', 'posted')
+                ->whereIn('journal_entries.status', ['posted', 'reversed'])
                 ->where('journal_entry_lines.account_id', $account->id)
                 ->where('journal_entry_lines.type', 'debit')
                 ->sum('journal_entry_lines.amount_base_currency');
 
             $credits = (float) JournalEntryLine::join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
                 ->where('journal_entries.vendor_id', $vendor->id)
-                ->where('journal_entries.status', 'posted')
+                ->whereIn('journal_entries.status', ['posted', 'reversed'])
                 ->where('journal_entry_lines.account_id', $account->id)
                 ->where('journal_entry_lines.type', 'credit')
                 ->sum('journal_entry_lines.amount_base_currency');
@@ -146,6 +146,51 @@ class FinancialAuditService
                 'entry_number' => $dup->entry_number,
                 'message' => "Duplicate entry number found: {$dup->entry_number} appears {$dup->cnt} times.",
             ];
+        }
+
+        // 4. Verify Cryptographic HMAC-SHA256 Hash Chain
+        $postedEntries = JournalEntry::where('vendor_id', $vendor->id)
+            ->where('status', 'posted')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $appSecret = config('app.key') ?: 'qrmenu-finance-secret';
+        $expectedPrevHash = hash('sha256', "GENESIS-{$vendor->id}");
+
+        foreach ($postedEntries as $pEntry) {
+            if ($pEntry->entry_hash) {
+                // Verify link to previous entry
+                if ($pEntry->previous_hash !== $expectedPrevHash) {
+                    $issues[] = [
+                        'type' => 'cryptographic_chain_break',
+                        'severity' => 'critical',
+                        'entry_id' => $pEntry->id,
+                        'entry_number' => $pEntry->entry_number,
+                        'message' => "Cryptographic hash chain broken at entry {$pEntry->entry_number}: expected previous hash {$expectedPrevHash}, found {$pEntry->previous_hash}.",
+                    ];
+                }
+
+                $debitStr = number_format((float) $pEntry->total_debit, 2, '.', '');
+                $creditStr = number_format((float) $pEntry->total_credit, 2, '.', '');
+                // Verify entry payload HMAC signature
+                $expectedPayloadHash = hash_hmac(
+                    'sha256',
+                    "{$vendor->id}|{$pEntry->entry_number}|{$pEntry->entry_date->toDateString()}|{$debitStr}|{$creditStr}|{$pEntry->previous_hash}",
+                    $appSecret
+                );
+
+                if (! hash_equals($expectedPayloadHash, $pEntry->entry_hash)) {
+                    $issues[] = [
+                        'type' => 'cryptographic_signature_mismatch',
+                        'severity' => 'critical',
+                        'entry_id' => $pEntry->id,
+                        'entry_number' => $pEntry->entry_number,
+                        'message' => "Cryptographic HMAC signature invalid for entry {$pEntry->entry_number}. Stored hash does not match computed payload hash.",
+                    ];
+                }
+
+                $expectedPrevHash = $pEntry->entry_hash;
+            }
         }
 
         return [
