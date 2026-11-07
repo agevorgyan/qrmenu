@@ -64,7 +64,7 @@
                         <td style="padding: 1rem 1rem; font-size: 0.85rem;">
                             <span style="font-weight: 700;">{{ $p->payment_method }}</span>
                             @if($p->reference_number)
-                                <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">Ref: {{ $p->reference_number }}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">{{ __('Ref:') }} {{ $p->reference_number }}</div>
                             @endif
                         </td>
                         <td style="padding: 1rem 1rem; font-weight: 800; color: #10b981;">
@@ -72,7 +72,7 @@
                         </td>
                         <td style="padding: 1rem 1rem; font-family: monospace; font-size: 0.82rem;">
                             @if($p->journal_entry_id)
-                                <span style="color: #6366f1; font-weight: 700;">JE #{{ $p->journal_entry_id }}</span>
+                                <span style="color: #6366f1; font-weight: 700;">{{ __('JE #') }}{{ $p->journal_entry_id }}</span>
                             @else
                                 <span style="color: var(--text-muted);">—</span>
                             @endif

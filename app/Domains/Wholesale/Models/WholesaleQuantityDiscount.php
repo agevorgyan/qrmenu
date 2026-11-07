@@ -49,4 +49,3 @@ class WholesaleQuantityDiscount extends Model
         return $this->belongsTo(WholesalePriceList::class, 'price_list_id');
     }
 }
-

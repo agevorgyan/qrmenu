@@ -92,4 +92,3 @@ class TenantModuleAccess extends Model
             });
     }
 }
-

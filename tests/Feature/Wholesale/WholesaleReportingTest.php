@@ -30,10 +30,15 @@ class WholesaleReportingTest extends TestCase
     use RefreshDatabase;
 
     protected Vendor $vendor;
+
     protected User $user;
+
     protected WholesaleSeller $seller;
+
     protected WholesaleCustomer $customer;
+
     protected WholesaleProduct $product1;
+
     protected WholesaleProduct $product2;
 
     protected function setUp(): void
@@ -333,4 +338,3 @@ class WholesaleReportingTest extends TestCase
         $response->assertDontSee('7,230.00 AMD');
     }
 }
-

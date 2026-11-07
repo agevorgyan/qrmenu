@@ -54,7 +54,7 @@
                 <select name="customer_id" required style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main); font-size: 0.9rem;">
                     @foreach($customers as $c)
                         <option value="{{ $c->id }}" {{ (old('customer_id', $customerId ?? ($selectedSale?->customer_id))) == $c->id ? 'selected' : '' }}>
-                            {{ $c->name }} (AR Balance: {{ number_format($c->current_balance, 2) }} AMD)
+                            {{ $c->name }} ({{ __('AR Balance') }}: {{ number_format($c->current_balance, 2) }} AMD)
                         </option>
                     @endforeach
                 </select>

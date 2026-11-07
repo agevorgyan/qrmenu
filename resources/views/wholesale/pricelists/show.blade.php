@@ -108,7 +108,7 @@
                     </label>
                     <select name="product_id" required style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); font-size: 0.85rem;">
                         @foreach($availableProducts as $p)
-                            <option value="{{ $p->id }}">{{ $p->name }} [{{ $p->sku }}] (Base: {{ number_format($p->base_wholesale_price, 2) }})</option>
+                            <option value="{{ $p->id }}">{{ $p->name }} [{{ $p->sku }}] ({{ __('Base:') }} {{ number_format($p->base_wholesale_price, 2) }})</option>
                         @endforeach
                     </select>
                 </div>

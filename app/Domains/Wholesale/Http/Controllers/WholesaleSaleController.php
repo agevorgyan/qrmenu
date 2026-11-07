@@ -53,4 +53,3 @@ class WholesaleSaleController extends Controller
         return view('wholesale.sales.print', compact('sale', 'vendor'));
     }
 }
-

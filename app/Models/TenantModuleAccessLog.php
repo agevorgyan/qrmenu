@@ -52,4 +52,3 @@ class TenantModuleAccessLog extends Model
         return $this->belongsTo(User::class, 'acted_by');
     }
 }
-

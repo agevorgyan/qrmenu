@@ -42,4 +42,3 @@ class WholesaleAtgaaClassification extends Model
         return "{$this->code} — {$name}";
     }
 }
-

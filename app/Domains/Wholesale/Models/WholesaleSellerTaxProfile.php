@@ -41,4 +41,3 @@ class WholesaleSellerTaxProfile extends Model
         return $this->belongsTo(WholesaleSeller::class, 'seller_id');
     }
 }
-

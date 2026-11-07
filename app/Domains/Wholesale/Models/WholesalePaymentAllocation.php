@@ -37,4 +37,3 @@ class WholesalePaymentAllocation extends Model
         return $this->belongsTo(WholesaleSale::class, 'sale_id');
     }
 }
-

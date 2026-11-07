@@ -99,4 +99,3 @@ class WholesalePriceListController extends Controller
         return redirect()->back()->with('success', __('Price list item saved successfully.'));
     }
 }
-

@@ -77,4 +77,3 @@ class WholesaleReturn extends Model
         return $this->belongsTo(User::class, 'processed_by_user_id');
     }
 }
-

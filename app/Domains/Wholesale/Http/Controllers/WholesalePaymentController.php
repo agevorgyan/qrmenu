@@ -90,4 +90,3 @@ class WholesalePaymentController extends Controller
         return view('wholesale.payments.show', compact('payment', 'vendor'));
     }
 }
-

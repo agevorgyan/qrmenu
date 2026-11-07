@@ -33,4 +33,3 @@ class WholesaleCustomerContact extends Model
         return $this->belongsTo(WholesaleCustomer::class, 'customer_id');
     }
 }
-

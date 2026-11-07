@@ -83,4 +83,3 @@ class WholesaleReturnController extends Controller
         return view('wholesale.returns.show', compact('return', 'vendor'));
     }
 }
-

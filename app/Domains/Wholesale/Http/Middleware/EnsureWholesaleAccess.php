@@ -109,4 +109,3 @@ class EnsureWholesaleAccess
         return $next($request);
     }
 }
-

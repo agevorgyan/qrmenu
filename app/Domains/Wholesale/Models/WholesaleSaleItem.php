@@ -59,4 +59,3 @@ class WholesaleSaleItem extends Model
         return $this->belongsTo(WholesaleOrderItem::class, 'order_item_id');
     }
 }
-

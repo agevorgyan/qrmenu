@@ -91,4 +91,3 @@ class WholesaleCustomer extends Model
         return ((float) $this->current_balance + $amount) <= (float) $this->credit_limit;
     }
 }
-

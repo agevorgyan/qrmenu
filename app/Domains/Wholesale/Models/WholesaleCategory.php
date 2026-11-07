@@ -52,4 +52,3 @@ class WholesaleCategory extends Model
         return $this->hasMany(WholesaleProduct::class, 'category_id');
     }
 }
-

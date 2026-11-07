@@ -181,4 +181,3 @@ class WholesaleSellerController extends Controller
         return redirect()->back()->with('success', __('Supply location added successfully.'));
     }
 }
-

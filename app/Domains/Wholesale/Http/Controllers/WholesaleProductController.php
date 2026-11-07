@@ -181,4 +181,3 @@ class WholesaleProductController extends Controller
         return redirect()->back()->with('success', __('Packaging tier added successfully.'));
     }
 }
-

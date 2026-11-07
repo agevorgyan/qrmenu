@@ -111,12 +111,12 @@
                 <div class="box">
                     <strong>{{ __('ՄԱՏԱԿԱՐԱՐ / SUPPLIER') }}</strong><br>
                     <strong>{{ $sale->seller?->legal_name ?? $sale->seller?->name }}</strong><br>
-                    ՀՎՀՀ / TIN: <strong>{{ $sale->seller?->tin }}</strong><br>
-                    Հասցե / Address: {{ $sale->seller?->address }}<br>
-                    Հարկային ռեժիմ: {{ $sale->seller?->tax_regime->value }}<br>
+                    {{ __('ՀՎՀՀ / TIN:') }} <strong>{{ $sale->seller?->tin }}</strong><br>
+                    {{ __('Հասցե / Address:') }} {{ $sale->seller?->address }}<br>
+                    {{ __('Հարկային ռեժիմ:') }} {{ $sale->seller?->tax_regime->value }}<br>
                     @if($sale->seller?->defaultBankAccount)
-                        Բանկ: {{ $sale->seller->defaultBankAccount->bank_name }}<br>
-                        Հ/Հ: {{ $sale->seller->defaultBankAccount->account_number }}
+                        {{ __('Բանկ:') }} {{ $sale->seller->defaultBankAccount->bank_name }}<br>
+                        {{ __('Հ/Հ:') }} {{ $sale->seller->defaultBankAccount->account_number }}
                     @endif
                 </div>
             </td>
@@ -124,9 +124,9 @@
                 <div class="box">
                     <strong>{{ __('ԳՆՈՐԴ / BUYER') }}</strong><br>
                     <strong>{{ $sale->customer?->legal_name ?? $sale->customer?->name }}</strong><br>
-                    ՀՎՀՀ / TIN: <strong>{{ $sale->customer?->tin ?? '—' }}</strong><br>
-                    Հասցե / Address: {{ $sale->customer?->defaultAddress?->full_address ?? '—' }}<br>
-                    Հեռ. / Phone: {{ $sale->customer?->phone ?? '—' }}
+                    {{ __('ՀՎՀՀ / TIN:') }} <strong>{{ $sale->customer?->tin ?? '—' }}</strong><br>
+                    {{ __('Հասցե / Address:') }} {{ $sale->customer?->defaultAddress?->full_address ?? '—' }}<br>
+                    {{ __('Հեռ. / Phone:') }} {{ $sale->customer?->phone ?? '—' }}
                 </div>
             </td>
         </tr>
@@ -135,14 +135,14 @@
     <table class="items-table">
         <thead>
             <tr>
-                <th style="width: 30px;">Հ/Հ</th>
-                <th>Ապրանքի անվանում</th>
-                <th>ԱՏԳ ԱԱ</th>
-                <th>Չ/Մ</th>
-                <th class="text-right">Քանակ</th>
-                <th class="text-right">Գին</th>
-                <th class="text-right">ԱԱՀ (20%)</th>
-                <th class="text-right">Ընդամենը</th>
+                <th style="width: 30px;">{{ __('No.') }}</th>
+                <th>{{ __('Product Name') }}</th>
+                <th>{{ __('FEACN / ATGAA') }}</th>
+                <th>{{ __('Unit') }}</th>
+                <th class="text-right">{{ __('Qty') }}</th>
+                <th class="text-right">{{ __('Price') }}</th>
+                <th class="text-right">{{ __('VAT (20%)') }}</th>
+                <th class="text-right">{{ __('Total') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -151,7 +151,7 @@
                     <td>{{ $i + 1 }}</td>
                     <td>
                         <strong>{{ $item->product_name }}</strong><br>
-                        <span style="font-size: 11px; color: #555;">SKU: {{ $item->sku }}</span>
+                        <span style="font-size: 11px; color: #555;">{{ __('SKU:') }} {{ $item->sku }}</span>
                     </td>
                     <td>{{ $item->classifier_code }}</td>
                     <td>{{ $item->unit_code }}</td>
@@ -166,26 +166,26 @@
 
     <table class="totals-table">
         <tr>
-            <td>Ենթագումար / Subtotal:</td>
+            <td>{{ __('Ենթագումար / Subtotal:') }}</td>
             <td class="text-right">{{ number_format($sale->subtotal, 2) }} AMD</td>
         </tr>
         <tr>
-            <td>ԱԱՀ (20%) / VAT:</td>
+            <td>{{ __('ԱԱՀ (20%) / VAT:') }}</td>
             <td class="text-right">{{ number_format($sale->tax_total, 2) }} AMD</td>
         </tr>
         <tr class="grand-total">
-            <td>Ընդամենը / Total:</td>
+            <td>{{ __('Ընդամենը / Total:') }}</td>
             <td class="text-right">{{ number_format($sale->total_amount, 2) }} AMD</td>
         </tr>
     </table>
 
     <div class="signatures">
         <div>
-            <div>Հանձնեց (Մատակարար):</div>
+            <div>{{ __('Հանձնեց (Մատակարար):') }}</div>
             <div class="signature-line"></div>
         </div>
         <div>
-            <div>Ստացավ (Գնորդ):</div>
+            <div>{{ __('Ստացավ (Գնորդ):') }}</div>
             <div class="signature-line"></div>
         </div>
     </div>

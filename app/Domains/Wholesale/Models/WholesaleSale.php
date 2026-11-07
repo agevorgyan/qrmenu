@@ -102,4 +102,3 @@ class WholesaleSale extends Model
         ]);
     }
 }
-

@@ -43,4 +43,3 @@ class WholesaleCustomerAddress extends Model
         return implode(', ', $parts);
     }
 }
-

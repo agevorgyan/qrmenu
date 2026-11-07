@@ -80,7 +80,7 @@
                     <div><strong>{{ __('Bank') }}:</strong> {{ $seller->defaultBankAccount->bank_name }}</div>
                     <div><strong>{{ __('Account') }}:</strong> <span style="font-family: monospace;">{{ $seller->defaultBankAccount->account_number }}</span> ({{ $seller->defaultBankAccount->currency }})</div>
                     @if($seller->defaultBankAccount->iban)
-                        <div><strong>IBAN:</strong> {{ $seller->defaultBankAccount->iban }}</div>
+                        <div><strong>{{ __('IBAN:') }}</strong> {{ $seller->defaultBankAccount->iban }}</div>
                     @endif
                 </div>
             @else

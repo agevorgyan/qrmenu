@@ -97,16 +97,16 @@
                                     {{ $p->sku }}
                                 </span>
                                 <span style="font-size: 0.7rem; font-family: monospace; color: var(--text-muted);">
-                                    ATGAA: {{ $p->classifier_code }}
+                                    {{ __('FEACN / ATGAA') }}: {{ $p->classifier_code }}
                                 </span>
                             </div>
                             <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.5rem 0; line-height: 1.3;">
                                 {{ $p->name }}
                             </h3>
                             <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-                                {{ __('Unit') }}: {{ $p->unit?->name ?? 'unit' }}
+                                {{ __('Unit') }}: {{ $p->unit?->name ?? __('unit') }}
                                 @if((float)$p->min_order_quantity > 1)
-                                    &bull; MOQ: {{ (float)$p->min_order_quantity }}
+                                    &bull; {{ __('MOQ:') }} {{ (float)$p->min_order_quantity }}
                                 @endif
                             </div>
                         </div>

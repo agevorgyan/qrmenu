@@ -378,7 +378,7 @@
                                     <strong>{{ __('Reason') }}:</strong> <span x-text="log.reason"></span>
                                 </div>
                                 <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.4rem;">
-                                    IP: <span x-text="log.ip_address || 'N/A'"></span>
+                                    {{ __('IP Address:') }} <span x-text="log.ip_address || '{{ __('N/A') }}'"></span>
                                 </div>
                             </div>
                         </template>

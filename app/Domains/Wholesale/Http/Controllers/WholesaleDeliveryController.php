@@ -114,4 +114,3 @@ class WholesaleDeliveryController extends Controller
             ->with('success', __('Delivery confirmed and physical inventory updated.'));
     }
 }
-

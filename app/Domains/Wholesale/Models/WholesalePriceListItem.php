@@ -37,4 +37,3 @@ class WholesalePriceListItem extends Model
         return $this->belongsTo(WholesaleProduct::class, 'product_id');
     }
 }
-

@@ -79,8 +79,8 @@
                         <td style="padding: 1rem 1.25rem;">
                             <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">{{ $product->name }}</div>
                             <div style="font-size: 0.78rem; color: var(--text-muted); font-family: monospace;">
-                                SKU: <strong style="color: var(--text-main);">{{ $product->sku }}</strong> 
-                                @if($product->barcode) • Barcode: {{ $product->barcode }} @endif
+                                {{ __('SKU') }}: <strong style="color: var(--text-main);">{{ $product->sku }}</strong> 
+                                @if($product->barcode) • {{ __('Barcode:') }} {{ $product->barcode }} @endif
                             </div>
                         </td>
 
@@ -100,7 +100,7 @@
                                 {{ number_format((float) $product->base_wholesale_price, 2) }} ֏
                             </div>
                             <div style="font-size: 0.75rem; color: var(--text-muted);">
-                                / {{ $product->unit?->name ?? 'unit' }} {{ $product->is_vat_applicable ? '+ 20% VAT' : 'Exempt' }}
+                                / {{ $product->unit?->name ?? __('unit') }} {{ $product->is_vat_applicable ? __('+ 20% VAT') : __('Exempt') }}
                             </div>
                         </td>
 
@@ -112,10 +112,10 @@
 
                         <td style="padding: 1rem 1rem;">
                             <div style="font-size: 0.82rem; color: var(--text-main);">
-                                {{ (float) $product->units_per_package }} {{ $product->unit?->code ?? 'units' }} / {{ $product->packagingUnit?->name ?? __('Package') }}
+                                {{ (float) $product->units_per_package }} {{ $product->unit?->code ?? __('units') }} / {{ $product->packagingUnit?->name ?? __('Package') }}
                             </div>
                             <div style="font-size: 0.72rem; color: var(--text-muted);">
-                                MOQ: {{ (float) $product->min_order_quantity }} • Multiple: {{ (float) $product->order_quantity_multiple }}
+                                {{ __('MOQ:') }} {{ (float) $product->min_order_quantity }} • {{ __('Multiple:') }} {{ (float) $product->order_quantity_multiple }}
                             </div>
                         </td>
 

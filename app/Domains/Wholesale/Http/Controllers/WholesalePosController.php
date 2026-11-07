@@ -108,4 +108,3 @@ class WholesalePosController extends Controller
             ->with('success', __('Wholesale Order :num drafted successfully.', ['num' => $order->order_number]));
     }
 }
-

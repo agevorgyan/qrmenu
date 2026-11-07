@@ -35,4 +35,3 @@ enum SellerTaxRegime: string
         };
     }
 }
-

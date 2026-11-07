@@ -84,7 +84,7 @@
                 {{ $delivery->driver_name ?? '—' }}
             </div>
             <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem;">
-                {{ $delivery->driver_phone ?? '—' }} &bull; Plate: {{ $delivery->vehicle_number ?? '—' }}
+                {{ $delivery->driver_phone ?? '—' }} &bull; {{ __('Plate:') }} {{ $delivery->vehicle_number ?? '—' }}
             </div>
         </div>
 

@@ -129,4 +129,3 @@ class WholesaleOrder extends Model
         return true;
     }
 }
-

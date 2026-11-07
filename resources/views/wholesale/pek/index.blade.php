@@ -68,9 +68,9 @@
                                     <td style="padding: 0.6rem 0.75rem; font-weight: 600;">{{ number_format((float)$doc->total_amount, 2) }} AMD</td>
                                     <td style="padding: 0.6rem 0.75rem;">
                                         @if($doc->is_xsd_valid)
-                                            <span style="color: #059669; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Valid</span>
+                                            <span style="color: #059669; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> {{ __('Valid') }}</span>
                                         @else
-                                            <span style="color: #dc2626; font-weight: 600;"><i class="fa-solid fa-circle-exclamation"></i> Invalid</span>
+                                            <span style="color: #dc2626; font-weight: 600;"><i class="fa-solid fa-circle-exclamation"></i> {{ __('Invalid') }}</span>
                                         @endif
                                     </td>
                                 </tr>
@@ -115,13 +115,13 @@
                                 {{ $exp->document_type }}
                             </span>
                         </td>
-                        <td style="padding: 1rem; font-weight: 600;">{{ $exp->document_count }} docs</td>
+                        <td style="padding: 1rem; font-weight: 600;">{{ __(':count docs', ['count' => $exp->document_count]) }}</td>
                         <td style="padding: 1rem; font-family: monospace;">{{ number_format($exp->file_size_bytes / 1024, 1) }} KB</td>
-                        <td style="padding: 1rem; color: var(--text-muted);">{{ $exp->creator->name ?? 'System' }}</td>
+                        <td style="padding: 1rem; color: var(--text-muted);">{{ $exp->creator->name ?? __('System') }}</td>
                         <td style="padding: 1rem 1.25rem; text-align: right;">
                             <a href="{{ route('admin.wholesale.pek.download_zip', $exp) }}" 
                                style="padding: 0.4rem 0.85rem; border-radius: 8px; background: #10b981; color: #fff; font-weight: 700; text-decoration: none; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.35rem;">
-                                <i class="fa-solid fa-file-arrow-down"></i> ZIP
+                                <i class="fa-solid fa-file-arrow-down"></i> {{ __('ZIP') }}
                             </a>
                         </td>
                     </tr>

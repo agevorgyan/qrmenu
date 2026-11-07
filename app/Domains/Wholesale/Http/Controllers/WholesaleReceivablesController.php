@@ -32,4 +32,3 @@ class WholesaleReceivablesController extends Controller
         return view('wholesale.receivables.index', compact('vendor', 'summary', 'debtors'));
     }
 }
-

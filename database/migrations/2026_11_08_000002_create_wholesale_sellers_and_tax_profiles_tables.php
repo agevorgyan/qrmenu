@@ -111,4 +111,3 @@ return new class extends Migration
         Schema::dropIfExists('wholesale_sellers');
     }
 };
-

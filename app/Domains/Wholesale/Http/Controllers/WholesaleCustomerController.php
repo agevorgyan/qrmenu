@@ -170,4 +170,3 @@ class WholesaleCustomerController extends Controller
         return redirect()->back()->with('success', __('Pricing agreement assigned to customer.'));
     }
 }
-

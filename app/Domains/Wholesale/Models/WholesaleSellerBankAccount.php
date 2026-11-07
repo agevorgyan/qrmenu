@@ -45,4 +45,3 @@ class WholesaleSellerBankAccount extends Model
         return "{$this->bank_name} - {$this->account_number} ({$this->currency})";
     }
 }
-

@@ -76,4 +76,3 @@ class WholesaleCustomerPricing extends Model
         return true;
     }
 }
-

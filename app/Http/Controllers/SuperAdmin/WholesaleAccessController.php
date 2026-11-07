@@ -110,4 +110,3 @@ class WholesaleAccessController extends Controller
         return view('superadmin.wholesale.logs_partial', compact('vendor', 'logs'));
     }
 }
-
