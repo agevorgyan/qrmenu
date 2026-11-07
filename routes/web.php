@@ -779,6 +779,7 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', E
         Route::get('/ledger/entries', [GeneralLedgerController::class, 'entries'])->name('ledger.entries');
         Route::get('/ledger/entries/{entry}', [GeneralLedgerController::class, 'showEntry'])->name('ledger.entries.show');
         Route::post('/ledger/entries/{entry}/reverse', [GeneralLedgerController::class, 'reverse'])->name('ledger.entries.reverse');
+        Route::get('/ledger/export', [GeneralLedgerController::class, 'export'])->name('ledger.export');
 
         // Financial Reports
         Route::get('/reports', [FinancialReportController::class, 'index'])->name('reports.index');

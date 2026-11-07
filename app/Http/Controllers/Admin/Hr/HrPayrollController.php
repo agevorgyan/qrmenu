@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Admin\Hr;
 use App\Http\Controllers\Controller;
 use App\Models\PayrollItem;
 use App\Models\PayrollPeriod;
+use App\Services\FinancialTransactionService;
 use App\Services\HrPayrollService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class HrPayrollController extends Controller
@@ -126,6 +128,12 @@ class HrPayrollController extends Controller
             'approved_by' => Auth::id(),
             'approved_at' => Carbon::now(),
         ]);
+
+        try {
+            app(FinancialTransactionService::class)->recordPayrollAccrual($period, Auth::user());
+        } catch (\Throwable $e) {
+            Log::warning("Could not record GL for PayrollPeriod {$period->id}: {$e->getMessage()}");
+        }
 
         if ($request->wantsJson()) {
             return response()->json(['success' => true, 'message' => __('Payroll period approved successfully.')]);

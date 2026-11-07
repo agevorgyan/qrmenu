@@ -79,4 +79,3 @@ class BankAccount extends Model
         return $this->hasMany(Income::class, 'bank_account_id');
     }
 }
-

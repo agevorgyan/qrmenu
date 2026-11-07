@@ -92,4 +92,3 @@ class ChartOfAccount extends Model
         return (float) $this->current_balance;
     }
 }
-

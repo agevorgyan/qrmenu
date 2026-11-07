@@ -54,4 +54,3 @@ class AccountingPeriod extends Model
         return $this->status === 'closed';
     }
 }
-

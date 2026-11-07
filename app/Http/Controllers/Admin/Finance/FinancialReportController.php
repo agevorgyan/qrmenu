@@ -131,6 +131,49 @@ class FinancialReportController extends Controller
             }
             $csvContent .= 'Operating Profit (EBITDA),,,'.$data['operating_profit']."\n";
             $csvContent .= 'Net Profit,,,'.$data['net_profit']."\n";
+        } elseif ($type === 'balance-sheet') {
+            $data = $this->reportingService->getBalanceSheet($vendor, $locationId, $endDate);
+            $csvContent = "Section,Code,Name,Balance ({$data['currency']})\n";
+            $csvContent .= "CURRENT ASSETS,,,\n";
+            foreach ($data['assets']['current'] as $a) {
+                $csvContent .= "Asset,{$a['code']},\"{$a['name']}\",{$a['balance']}\n";
+            }
+            $csvContent .= "Total Current Assets,,,{$data['assets']['total_current']}\n";
+            $csvContent .= "NON-CURRENT ASSETS,,,\n";
+            foreach ($data['assets']['non_current'] as $a) {
+                $csvContent .= "Asset,{$a['code']},\"{$a['name']}\",{$a['balance']}\n";
+            }
+            $csvContent .= "Total Assets,,,{$data['assets']['total_assets']}\n";
+            $csvContent .= "CURRENT LIABILITIES,,,\n";
+            foreach ($data['liabilities']['current'] as $l) {
+                $csvContent .= "Liability,{$l['code']},\"{$l['name']}\",{$l['balance']}\n";
+            }
+            $csvContent .= "Total Liabilities,,,{$data['liabilities']['total_liabilities']}\n";
+            $csvContent .= "EQUITY,,,\n";
+            foreach ($data['equity']['accounts'] as $e) {
+                $csvContent .= "Equity,{$e['code']},\"{$e['name']}\",{$e['balance']}\n";
+            }
+            $csvContent .= "Retained Earnings (Current Period),,,{$data['equity']['retained_earnings_current_period']}\n";
+            $csvContent .= "Total Equity,,,{$data['equity']['total_equity']}\n";
+            $csvContent .= "Total Liabilities & Equity,,,{$data['total_liabilities_and_equity']}\n";
+        } elseif ($type === 'cash-flow') {
+            $data = $this->reportingService->getCashFlowStatement($vendor, $locationId, $startDate, $endDate);
+            $csvContent = "Activity,Line Item,Amount ({$data['currency']})\n";
+            $csvContent .= "Beginning Cash Balance,,,{$data['beginning_cash_balance']}\n";
+            $csvContent .= "Operating Activities,Customer Receipts,{$data['operating_activities']['customer_receipts']}\n";
+            $csvContent .= "Operating Activities,Other Inflows,{$data['operating_activities']['other_inflows']}\n";
+            $csvContent .= "Operating Activities,Supplier Payments,{$data['operating_activities']['supplier_payments']}\n";
+            $csvContent .= "Operating Activities,Operating Expense Payments,{$data['operating_activities']['operating_expense_payments']}\n";
+            $csvContent .= "Operating Activities,Payroll Payments,{$data['operating_activities']['payroll_payments']}\n";
+            $csvContent .= "Operating Activities,Customer Refunds,{$data['operating_activities']['customer_refunds']}\n";
+            $csvContent .= "Net Operating Cash Flow,,,{$data['operating_activities']['net_operating_cash']}\n";
+            $csvContent .= "Investing Activities,Capital Expenditures,{$data['investing_activities']['capital_expenditures']}\n";
+            $csvContent .= "Net Investing Cash Flow,,,{$data['investing_activities']['net_investing_cash']}\n";
+            $csvContent .= "Financing Activities,Capital Injections,{$data['financing_activities']['capital_and_loans_received']}\n";
+            $csvContent .= "Financing Activities,Dividends & Repayments,{$data['financing_activities']['loan_repayments_and_dividends']}\n";
+            $csvContent .= "Net Financing Cash Flow,,,{$data['financing_activities']['net_financing_cash']}\n";
+            $csvContent .= "Net Cash Change,,,{$data['net_cash_change']}\n";
+            $csvContent .= "Ending Cash Balance,,,{$data['ending_cash_balance']}\n";
         } elseif ($type === 'trial-balance') {
             $data = $this->reportingService->getTrialBalance($vendor, $locationId, $endDate);
             $csvContent = "Account Code,Account Name,Type,Debit ({$data['currency']}),Credit ({$data['currency']})\n";

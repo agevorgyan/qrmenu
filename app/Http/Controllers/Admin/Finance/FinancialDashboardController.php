@@ -136,4 +136,3 @@ class FinancialDashboardController extends Controller
         ));
     }
 }
-

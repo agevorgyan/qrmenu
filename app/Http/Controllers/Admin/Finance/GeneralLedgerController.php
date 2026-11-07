@@ -11,6 +11,7 @@ use App\Services\FinancialLedgerService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 class GeneralLedgerController extends Controller
@@ -132,5 +133,41 @@ class GeneralLedgerController extends Controller
 
         return back()->with('success', 'Chart of Accounts initialized successfully.');
     }
-}
 
+    public function export(Request $request): Response
+    {
+        $this->authorizePermission(Permission::FINANCE_REPORTS_EXPORT);
+
+        $vendor = $this->getActiveVendor();
+
+        $query = JournalEntry::where('vendor_id', $vendor->id)
+            ->with(['lines.account']);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        if ($request->filled('start_date')) {
+            $query->where('entry_date', '>=', Carbon::parse($request->input('start_date'))->toDateString());
+        }
+
+        if ($request->filled('end_date')) {
+            $query->where('entry_date', '<=', Carbon::parse($request->input('end_date'))->toDateString());
+        }
+
+        $entries = $query->orderBy('entry_date', 'desc')->get();
+
+        $csv = "Entry Number,Date,Status,Source Type,Description,Total Debit,Total Credit,Currency\n";
+        foreach ($entries as $e) {
+            $cleanDesc = str_replace('"', '""', $e->description ?? '');
+            $csv .= "{$e->entry_number},{$e->entry_date},{$e->status},{$e->source_type},\"{$cleanDesc}\",{$e->total_debit},{$e->total_credit},{$e->currency}\n";
+        }
+
+        $filename = 'journal-entries-'.Carbon::now()->format('Y-m-d').'.csv';
+
+        return response($csv, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
+    }
+}

@@ -58,6 +58,11 @@ class PayrollPeriod extends Model
         return $this->hasMany(PayrollItem::class, 'payroll_period_id');
     }
 
+    public function payrollItems(): HasMany
+    {
+        return $this->items();
+    }
+
     public function payments(): HasMany
     {
         return $this->hasMany(SalaryPayment::class, 'payroll_period_id');

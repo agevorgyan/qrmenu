@@ -74,4 +74,3 @@ class ExpensePayment extends Model
         return $this->belongsTo(JournalEntry::class);
     }
 }
-

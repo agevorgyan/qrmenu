@@ -100,4 +100,3 @@ class JournalEntry extends Model
         return $this->status === 'reversed';
     }
 }
-

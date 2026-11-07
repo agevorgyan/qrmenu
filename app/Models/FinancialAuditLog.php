@@ -96,4 +96,3 @@ class FinancialAuditLog extends Model
         ]);
     }
 }
-

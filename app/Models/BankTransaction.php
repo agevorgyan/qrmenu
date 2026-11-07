@@ -74,4 +74,3 @@ class BankTransaction extends Model
         return in_array($this->reconciliation_status, ['matched', 'manually_reconciled'], true);
     }
 }
-

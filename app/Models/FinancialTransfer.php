@@ -65,4 +65,3 @@ class FinancialTransfer extends Model
         return $this->belongsTo(JournalEntry::class);
     }
 }
-

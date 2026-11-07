@@ -109,4 +109,3 @@ class CashRegisterController extends Controller
         return back()->with('success', "Cash drawer kick instruction recorded for {$register->name}.");
     }
 }
-

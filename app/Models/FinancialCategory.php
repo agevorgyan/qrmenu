@@ -58,4 +58,3 @@ class FinancialCategory extends Model
         return $this->type === 'income';
     }
 }
-

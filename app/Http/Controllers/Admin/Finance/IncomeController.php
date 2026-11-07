@@ -77,4 +77,3 @@ class IncomeController extends Controller
         }
     }
 }
-

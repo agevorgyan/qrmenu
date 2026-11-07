@@ -512,7 +512,7 @@ class FinancialTransactionService
         $gross = round((float) $period->total_gross, 2);
         $net = round((float) $period->total_net, 2);
         $tax = round((float) $period->total_tax, 2);
-        $advances = round((float) ($period->payrollItems()->sum('advance_deduction') ?? 0), 2);
+        $advances = round((float) ($period->items()->sum('advance_deduction') ?? 0), 2);
         $otherDeductions = round((float) $period->total_deductions - $tax - $advances, 2);
 
         $lines = [];

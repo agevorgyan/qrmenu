@@ -58,4 +58,3 @@ class JournalEntryLine extends Model
         return $this->type === 'credit';
     }
 }
-

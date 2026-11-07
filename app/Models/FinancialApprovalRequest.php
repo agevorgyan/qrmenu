@@ -65,4 +65,3 @@ class FinancialApprovalRequest extends Model
         return $this->status === 'pending';
     }
 }
-

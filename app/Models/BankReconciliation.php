@@ -64,4 +64,3 @@ class BankReconciliation extends Model
         return $this->status === 'completed';
     }
 }
-

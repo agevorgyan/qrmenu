@@ -449,4 +449,3 @@ class FinancialLedgerService
         return $period->fresh();
     }
 }
-

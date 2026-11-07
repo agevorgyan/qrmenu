@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Vendor;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
@@ -74,6 +75,12 @@ class HrPaymentService
                 'status' => $periodStatus,
             ]);
 
+            try {
+                app(FinancialTransactionService::class)->recordSalaryPayout($payment, $actor);
+            } catch (\Throwable $e) {
+                Log::warning("Could not record GL for SalaryPayment {$payment->id}: {$e->getMessage()}");
+            }
+
             return $payment;
         });
     }
@@ -129,6 +136,12 @@ class HrPaymentService
             'approved_by' => $actor->id,
             'disbursement_date' => Carbon::now()->toDateString(),
         ]);
+
+        try {
+            app(FinancialTransactionService::class)->recordSalaryAdvance($advance, $actor);
+        } catch (\Throwable $e) {
+            Log::warning("Could not record GL for EmployeeAdvance {$advance->id}: {$e->getMessage()}");
+        }
 
         return $advance->fresh();
     }

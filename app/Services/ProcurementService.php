@@ -15,6 +15,7 @@ use App\Models\Warehouse;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
@@ -396,6 +397,12 @@ class ProcurementService
             // Update supplier balance
             $po->supplier->recalculateBalance();
 
+            try {
+                app(FinancialTransactionService::class)->recordSupplierInvoice($invoice, $user);
+            } catch (\Throwable $e) {
+                Log::warning("Could not record GL for SupplierInvoice {$invoice->id}: {$e->getMessage()}");
+            }
+
             return $invoice;
         });
     }
@@ -469,6 +476,12 @@ class ProcurementService
 
             $supplier->recalculateBalance();
 
+            try {
+                app(FinancialTransactionService::class)->recordSupplierInvoice($invoice, $user);
+            } catch (\Throwable $e) {
+                Log::warning("Could not record GL for SupplierInvoice {$invoice->id}: {$e->getMessage()}");
+            }
+
             return $invoice;
         });
     }
@@ -536,6 +549,12 @@ class ProcurementService
             }
 
             $supplier->recalculateBalance();
+
+            try {
+                app(FinancialTransactionService::class)->recordSupplierPayment($payment, $user);
+            } catch (\Throwable $e) {
+                Log::warning("Could not record GL for SupplierPayment {$payment->id}: {$e->getMessage()}");
+            }
 
             return $payment;
         });

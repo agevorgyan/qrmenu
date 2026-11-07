@@ -36,4 +36,3 @@ trait AuthorizesFinance
         return $user->vendor;
     }
 }
-
