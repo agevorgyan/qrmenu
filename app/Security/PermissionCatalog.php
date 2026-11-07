@@ -1969,6 +1969,25 @@ class PermissionCatalog
                     Permission::STORAGE_MANAGE,
                     Permission::AUDIT_LOGS_VIEW,
                     'roles.view',
+                    Permission::FINANCE_VIEW,
+                    Permission::FINANCE_DASHBOARD,
+                    Permission::FINANCE_REGISTERS_MANAGE,
+                    Permission::FINANCE_SHIFTS_VIEW,
+                    Permission::FINANCE_SHIFTS_MANAGE,
+                    Permission::FINANCE_SHIFTS_APPROVE,
+                    Permission::FINANCE_EXPENSES_VIEW,
+                    Permission::FINANCE_EXPENSES_CREATE,
+                    Permission::FINANCE_EXPENSES_APPROVE,
+                    Permission::FINANCE_EXPENSES_PAY,
+                    Permission::FINANCE_INCOME_MANAGE,
+                    Permission::FINANCE_TRANSFERS_MANAGE,
+                    Permission::FINANCE_BANK_MANAGE,
+                    Permission::FINANCE_BANK_RECONCILE,
+                    Permission::FINANCE_LEDGER_VIEW,
+                    Permission::FINANCE_LEDGER_MANAGE,
+                    Permission::FINANCE_REPORTS_VIEW,
+                    Permission::FINANCE_REPORTS_EXPORT,
+                    Permission::FINANCE_PERIOD_CLOSE,
                     Permission::PROFILE_VIEW_OWN,
                     Permission::PROFILE_UPDATE_OWN,
                     Permission::PASSWORD_CHANGE_OWN,
@@ -2041,6 +2060,8 @@ class PermissionCatalog
                     Permission::SHIFTS_CLOSE,
                     Permission::SHIFTS_VIEW_OWN,
                     Permission::REFUNDS_REQUEST,
+                    Permission::FINANCE_SHIFTS_VIEW,
+                    Permission::FINANCE_SHIFTS_MANAGE,
                     Permission::PROFILE_VIEW_OWN,
                     Permission::PROFILE_UPDATE_OWN,
                     Permission::PASSWORD_CHANGE_OWN,
@@ -2069,6 +2090,10 @@ class PermissionCatalog
                     Permission::SHIFTS_VIEW_ALL,
                     Permission::REFUNDS_REQUEST,
                     Permission::POS_DISCOUNTS,
+                    Permission::FINANCE_SHIFTS_VIEW,
+                    Permission::FINANCE_SHIFTS_MANAGE,
+                    Permission::FINANCE_SHIFTS_APPROVE,
+                    Permission::FINANCE_REGISTERS_MANAGE,
                     Permission::PROFILE_VIEW_OWN,
                     Permission::PROFILE_UPDATE_OWN,
                     Permission::PASSWORD_CHANGE_OWN,
@@ -2140,6 +2165,25 @@ class PermissionCatalog
                     Permission::SHIFTS_VIEW_ALL,
                     Permission::BILLING_VIEW,
                     Permission::AUDIT_LOGS_VIEW,
+                    Permission::FINANCE_VIEW,
+                    Permission::FINANCE_DASHBOARD,
+                    Permission::FINANCE_REGISTERS_MANAGE,
+                    Permission::FINANCE_SHIFTS_VIEW,
+                    Permission::FINANCE_SHIFTS_MANAGE,
+                    Permission::FINANCE_SHIFTS_APPROVE,
+                    Permission::FINANCE_EXPENSES_VIEW,
+                    Permission::FINANCE_EXPENSES_CREATE,
+                    Permission::FINANCE_EXPENSES_APPROVE,
+                    Permission::FINANCE_EXPENSES_PAY,
+                    Permission::FINANCE_INCOME_MANAGE,
+                    Permission::FINANCE_TRANSFERS_MANAGE,
+                    Permission::FINANCE_BANK_MANAGE,
+                    Permission::FINANCE_BANK_RECONCILE,
+                    Permission::FINANCE_LEDGER_VIEW,
+                    Permission::FINANCE_LEDGER_MANAGE,
+                    Permission::FINANCE_REPORTS_VIEW,
+                    Permission::FINANCE_REPORTS_EXPORT,
+                    Permission::FINANCE_PERIOD_CLOSE,
                     Permission::PROFILE_VIEW_OWN,
                     Permission::PASSWORD_CHANGE_OWN,
                 ],
@@ -2211,15 +2255,13 @@ class PermissionCatalog
                 ]
             );
 
-            if ($role->wasRecentlyCreated || $role->permissions()->count() === 0) {
-                $permissionIds = [];
-                foreach ($data['permissions'] as $permKey) {
-                    if (isset($permissionModels[$permKey])) {
-                        $permissionIds[] = $permissionModels[$permKey]->id;
-                    }
+            $permissionIds = [];
+            foreach ($data['permissions'] as $permKey) {
+                if (isset($permissionModels[$permKey])) {
+                    $permissionIds[] = $permissionModels[$permKey]->id;
                 }
-                $role->permissions()->sync($permissionIds);
             }
+            $role->permissions()->sync($permissionIds);
         }
     }
 }
