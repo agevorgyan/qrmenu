@@ -40,7 +40,18 @@ class WholesaleReturnController extends Controller
     {
         $vendor = $this->tenantContext->getTenant() ?? $request->user()->vendor;
         $customers = WholesaleCustomer::where('vendor_id', $vendor->id)->where('is_active', true)->orderBy('name')->get();
-        $warehouses = Warehouse::where('vendor_id', $vendor->id)->where('is_active', true)->get();
+        $warehouses = Warehouse::where('vendor_id', $vendor->id)->where('is_active', true)->orderBy('is_default', 'desc')->orderBy('name')->get();
+        if ($warehouses->isEmpty()) {
+            $defaultWh = Warehouse::create([
+                'vendor_id' => $vendor->id,
+                'name' => __('Հիմնական Կենտրոնական Պահեստ'),
+                'code' => 'WH-MAIN',
+                'type' => Warehouse::TYPE_MAIN,
+                'is_active' => true,
+                'is_default' => true,
+            ]);
+            $warehouses = collect([$defaultWh]);
+        }
         $products = WholesaleProduct::where('vendor_id', $vendor->id)->where('is_active', true)->get();
 
         return view('wholesale.returns.create', compact('vendor', 'customers', 'warehouses', 'products'));

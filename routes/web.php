@@ -15,6 +15,7 @@ use App\Domains\Loyalty\Http\Controllers\Customer\CustomerLoyaltyPortalControlle
 use App\Domains\Loyalty\Http\Controllers\Customer\CustomerWalletController;
 use App\Domains\Loyalty\Http\Controllers\Staff\StaffLoyaltyOperationsController;
 use App\Domains\Loyalty\Http\Controllers\Webhooks\ApplePassKitWebserviceController;
+use App\Domains\Wholesale\Http\Controllers\WholesaleCategoryController;
 use App\Domains\Wholesale\Http\Controllers\WholesaleCustomerController;
 use App\Domains\Wholesale\Http\Controllers\WholesaleDashboardController;
 use App\Domains\Wholesale\Http\Controllers\WholesaleDeliveryController;
@@ -792,6 +793,14 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', E
         Route::put('/customers/{customer}', [WholesaleCustomerController::class, 'update'])->name('customers.update');
         Route::post('/customers/{customer}/addresses', [WholesaleCustomerController::class, 'storeAddress'])->name('customers.addresses.store');
         Route::post('/customers/{customer}/pricing', [WholesaleCustomerController::class, 'storePricing'])->name('customers.pricing.store');
+
+        // Wholesale Product Categories
+        Route::get('/categories', [WholesaleCategoryController::class, 'index'])->name('categories.index');
+        Route::get('/categories/create', [WholesaleCategoryController::class, 'create'])->name('categories.create');
+        Route::post('/categories', [WholesaleCategoryController::class, 'store'])->name('categories.store');
+        Route::get('/categories/{category}/edit', [WholesaleCategoryController::class, 'edit'])->name('categories.edit');
+        Route::put('/categories/{category}', [WholesaleCategoryController::class, 'update'])->name('categories.update');
+        Route::delete('/categories/{category}', [WholesaleCategoryController::class, 'destroy'])->name('categories.destroy');
 
         // Wholesale Product Catalog & ATGAA Classification
         Route::get('/products', [WholesaleProductController::class, 'index'])->name('products.index');

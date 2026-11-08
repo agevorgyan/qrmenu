@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Wholesale;
 
+use App\Domains\Wholesale\Enums\SellerTaxRegime;
 use App\Domains\Wholesale\Models\WholesaleCustomer;
 use App\Domains\Wholesale\Models\WholesaleProduct;
+use App\Domains\Wholesale\Models\WholesaleSeller;
 use App\Domains\Wholesale\Services\WholesaleAccessService;
 use App\Domains\Wholesale\Services\WholesaleCustomerService;
 use App\Domains\Wholesale\Services\WholesalePricingEngine;
@@ -177,12 +179,14 @@ class WholesalePricingEngineTest extends TestCase
         $result = $this->pricingEngine->resolvePrice($this->productPelmeni, null, 1.0);
 
         $this->assertEquals(2000.00, $result['base_price']);
-        $this->assertEquals(2000.00, $result['resolved_unit_price']);
+        $this->assertEquals(2000.00, $result['gross_unit_price']);
+        $this->assertEquals(1666.66667, $result['resolved_unit_price']);
+        $this->assertEquals(333.33333, $result['unit_vat_amount']);
         $this->assertEquals('BASE_PRICE', $result['applied_rule']);
         $this->assertEquals(0.00, $result['discount_total']);
-        $this->assertEquals(2000.00, $result['subtotal']);
-        $this->assertEquals(400.00, $result['vat_amount']); // 20% VAT on 2000
-        $this->assertEquals(2400.00, $result['total_amount']);
+        $this->assertEquals(1666.67, $result['subtotal']);
+        $this->assertEquals(333.33, $result['vat_amount']);
+        $this->assertEquals(2000.00, $result['total_amount']);
     }
 
     public function test_pricing_engine_applies_volume_tier_break_when_quantity_threshold_met(): void
@@ -195,18 +199,23 @@ class WholesalePricingEngineTest extends TestCase
 
         // When qty = 5 -> base price
         $res5 = $this->pricingEngine->resolvePrice($this->productPelmeni, null, 5.0);
-        $this->assertEquals(2000.00, $res5['resolved_unit_price']);
+        $this->assertEquals(2000.00, $res5['gross_unit_price']);
+        $this->assertEquals(1666.66667, $res5['resolved_unit_price']);
         $this->assertEquals('BASE_PRICE', $res5['applied_rule']);
+        $this->assertEquals(8333.33, $res5['subtotal']);
+        $this->assertEquals(1666.67, $res5['vat_amount']);
+        $this->assertEquals(10000.00, $res5['total_amount']);
 
-        // When qty = 15 -> 10% volume discount (2000 * 0.9 = 1800)
+        // When qty = 15 -> 10% volume discount (2000 * 0.9 = 1800 gross)
         $res15 = $this->pricingEngine->resolvePrice($this->productPelmeni, null, 15.0);
-        $this->assertEquals(1800.00, $res15['resolved_unit_price']);
+        $this->assertEquals(1800.00, $res15['gross_unit_price']);
+        $this->assertEquals(1500.00, $res15['resolved_unit_price']);
         $this->assertEquals('VOLUME_TIER_PERCENT', $res15['applied_rule']);
         $this->assertEquals(200.00, $res15['discount_unit_amount']);
         $this->assertEquals(3000.00, $res15['discount_total']);
-        $this->assertEquals(27000.00, $res15['subtotal']); // 15 * 1800
-        $this->assertEquals(5400.00, $res15['vat_amount']); // 20% on 27000
-        $this->assertEquals(32400.00, $res15['total_amount']);
+        $this->assertEquals(22500.00, $res15['subtotal']); // 15 * 1800 / 1.2
+        $this->assertEquals(4500.00, $res15['vat_amount']);
+        $this->assertEquals(27000.00, $res15['total_amount']);
     }
 
     public function test_pricing_engine_applies_assigned_customer_price_list_over_volume_discount(): void
@@ -234,7 +243,8 @@ class WholesalePricingEngineTest extends TestCase
 
         $result = $this->pricingEngine->resolvePrice($this->productPelmeni, $customer, 2.0);
 
-        $this->assertEquals(1750.00, $result['resolved_unit_price']);
+        $this->assertEquals(1750.00, $result['gross_unit_price']);
+        $this->assertEquals(1458.33333, $result['resolved_unit_price']);
         $this->assertEquals('CUSTOMER_PRICE_LIST', $result['applied_rule']);
     }
 
@@ -255,7 +265,9 @@ class WholesalePricingEngineTest extends TestCase
 
         $result = $this->pricingEngine->resolvePrice($this->productPelmeni, $customer, 1.0);
 
-        $this->assertEquals(1600.00, $result['resolved_unit_price']);
+        $this->assertEquals(1600.00, $result['gross_unit_price']);
+        $this->assertEquals(1333.33333, $result['resolved_unit_price']);
+        $this->assertEquals(266.66667, $result['unit_vat_amount']);
         $this->assertEquals('CONTRACT_PRICE', $result['applied_rule']);
     }
 
@@ -277,13 +289,88 @@ class WholesalePricingEngineTest extends TestCase
 
         // Without override permission -> Floor enforced at 1500.00
         $result = $this->pricingEngine->resolvePrice($this->productPelmeni, $customer, 1.0, false);
-        $this->assertEquals(1500.00, $result['resolved_unit_price']);
+        $this->assertEquals(1500.00, $result['gross_unit_price']);
+        $this->assertEquals(1250.00, $result['resolved_unit_price']);
         $this->assertTrue($result['floor_enforced']);
 
         // With explicit override permission -> Allows 1200.00
         $resultOverride = $this->pricingEngine->resolvePrice($this->productPelmeni, $customer, 1.0, true);
-        $this->assertEquals(1200.00, $resultOverride['resolved_unit_price']);
+        $this->assertEquals(1200.00, $resultOverride['gross_unit_price']);
+        $this->assertEquals(1000.00, $resultOverride['resolved_unit_price']);
         $this->assertFalse($resultOverride['floor_enforced']);
+    }
+
+    public function test_pricing_engine_respects_vat_payer_vs_non_vat_seller_with_inclusive_tax(): void
+    {
+        $sellerVat = WholesaleSeller::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Sales Plus LLC',
+            'legal_name' => 'Sales Plus LLC',
+            'tin' => '08293072',
+            'tax_regime' => SellerTaxRegime::VAT_PAYER,
+            'address' => 'Yerevan',
+            'is_active' => true,
+        ]);
+
+        $sellerNonVat = WholesaleSeller::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Gayane Kitchen LLC',
+            'legal_name' => 'Gayane Kitchen LLC',
+            'tin' => '08285927',
+            'tax_regime' => SellerTaxRegime::MICRO_BUSINESS,
+            'address' => 'Yerevan',
+            'is_active' => true,
+        ]);
+
+        $product = WholesaleProduct::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Պելմենի Ֆիրմային (450գր)',
+            'sku' => 'PELM-FIRM-450',
+            'classifier_code' => '1902',
+            'unit_id' => $this->unitKg->id,
+            'base_wholesale_price' => 1600.00,
+            'is_vat_applicable' => true,
+            'vat_rate' => 20.00,
+            'is_active' => true,
+        ]);
+
+        // 1. VAT Payer Seller -> VAT calculated, inclusive in price
+        $resVat = $this->pricingEngine->resolvePrice(
+            product: $product,
+            customer: null,
+            quantity: 5.0,
+            allowOverride: false,
+            seller: $sellerVat
+        );
+
+        $this->assertEquals(1600.00, $resVat['base_price']);
+        $this->assertEquals(1600.00, $resVat['gross_unit_price']);
+        $this->assertEquals(1333.33333, $resVat['resolved_unit_price']);
+        $this->assertEquals(266.66667, $resVat['unit_vat_amount']);
+        $this->assertTrue($resVat['is_vat_applicable']);
+        $this->assertEquals(20.00, $resVat['vat_rate']);
+        $this->assertEquals(6666.67, $resVat['subtotal']);
+        $this->assertEquals(1333.33, $resVat['vat_amount']);
+        $this->assertEquals(8000.00, $resVat['total_amount']);
+
+        // 2. Non-VAT Seller (micro_business) -> No VAT calculated
+        $resNonVat = $this->pricingEngine->resolvePrice(
+            product: $product,
+            customer: null,
+            quantity: 5.0,
+            allowOverride: false,
+            seller: $sellerNonVat
+        );
+
+        $this->assertEquals(1600.00, $resNonVat['base_price']);
+        $this->assertEquals(1600.00, $resNonVat['gross_unit_price']);
+        $this->assertEquals(1600.00, $resNonVat['resolved_unit_price']);
+        $this->assertEquals(0.00, $resNonVat['unit_vat_amount']);
+        $this->assertFalse($resNonVat['is_vat_applicable']);
+        $this->assertEquals(0.00, $resNonVat['vat_rate']);
+        $this->assertEquals(8000.00, $resNonVat['subtotal']);
+        $this->assertEquals(0.00, $resNonVat['vat_amount']);
+        $this->assertEquals(8000.00, $resNonVat['total_amount']);
     }
 
     public function test_customer_credit_limits_and_affordability(): void

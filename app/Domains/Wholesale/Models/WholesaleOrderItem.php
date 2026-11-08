@@ -39,7 +39,7 @@ class WholesaleOrderItem extends Model
             'quantity_ordered' => 'decimal:4',
             'quantity_delivered' => 'decimal:4',
             'base_price' => 'decimal:4',
-            'unit_price' => 'decimal:4',
+            'unit_price' => 'decimal:5',
             'discount_percent' => 'decimal:2',
             'discount_amount' => 'decimal:4',
             'subtotal' => 'decimal:4',

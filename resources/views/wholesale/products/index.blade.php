@@ -20,11 +20,18 @@
             </p>
         </div>
 
-        <a href="{{ route('admin.wholesale.products.create') }}" 
-           style="padding: 0.65rem 1.25rem; border-radius: 10px; background: #6366f1; color: #fff; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);">
-            <i class="fa-solid fa-plus"></i>
-            <span>{{ __('Add Wholesale Product') }}</span>
-        </a>
+        <div style="display: flex; gap: 0.75rem;">
+            <a href="{{ route('admin.wholesale.categories.index') }}" 
+               style="padding: 0.65rem 1.15rem; border-radius: 10px; background: var(--bg-card); color: var(--text-main); font-weight: 700; border: 1px solid var(--border-color); text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-folder-tree" style="color: #14b8a6;"></i>
+                <span>{{ __('Categories') }}</span>
+            </a>
+            <a href="{{ route('admin.wholesale.products.create') }}" 
+               style="padding: 0.65rem 1.25rem; border-radius: 10px; background: #6366f1; color: #fff; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);">
+                <i class="fa-solid fa-plus"></i>
+                <span>{{ __('Add Wholesale Product') }}</span>
+            </a>
+        </div>
     </div>
 
     <!-- Alert Messages -->
@@ -81,6 +88,18 @@
                             <div style="font-size: 0.78rem; color: var(--text-muted); font-family: monospace;">
                                 {{ __('SKU') }}: <strong style="color: var(--text-main);">{{ $product->sku }}</strong> 
                                 @if($product->barcode) • {{ __('Barcode:') }} {{ $product->barcode }} @endif
+                            </div>
+                            <div style="display: flex; gap: 0.4rem; align-items: center; margin-top: 0.35rem; flex-wrap: wrap;">
+                                @if($product->category)
+                                    <span style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.72rem; color: #14b8a6; background: rgba(20, 184, 166, 0.1); padding: 0.15rem 0.45rem; border-radius: 4px; font-weight: 600;">
+                                        <i class="fa-solid fa-folder"></i> {{ $product->category->name }}
+                                    </span>
+                                @endif
+                                @if($product->recipe)
+                                    <span style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.72rem; color: #6366f1; background: rgba(99, 102, 241, 0.1); padding: 0.15rem 0.45rem; border-radius: 4px; font-weight: 600;" title="{{ __('Technological Card / Recipe linked') }}">
+                                        <i class="fa-solid fa-scroll"></i> {{ __('Recipe:') }} {{ $product->recipe->code }}
+                                    </span>
+                                @endif
                             </div>
                         </td>
 

@@ -171,7 +171,7 @@ class WholesaleGeneralLedgerPostingTest extends TestCase
 
     public function test_commercial_sale_posts_balanced_double_entry_to_general_ledger(): void
     {
-        // 10 units at 2,000 AMD = 20,000 Subtotal + 4,000 VAT (20%) = 24,000 Total
+        // 10 units at 2,000 AMD gross = 20,000 Total, 16,666.67 Subtotal + 3,333.33 VAT (20% inclusive)
         $sale = $this->orderService->createSale($this->vendorA, [
             'seller_id' => $this->sellerA->id,
             'customer_id' => $this->customerA->id,
@@ -184,31 +184,31 @@ class WholesaleGeneralLedgerPostingTest extends TestCase
 
         $this->assertNotNull($journalEntry);
         $this->assertEquals($this->vendorA->id, $journalEntry->vendor_id);
-        $this->assertEquals(24000.00, (float) $journalEntry->total_debit);
-        $this->assertEquals(24000.00, (float) $journalEntry->total_credit);
+        $this->assertEquals(20000.00, (float) $journalEntry->total_debit);
+        $this->assertEquals(20000.00, (float) $journalEntry->total_credit);
 
         // Verify GL Lines:
-        // Debit: 2211 Trade Receivables (24,000)
-        // Credit: 6111 Sales Revenue (20,000)
-        // Credit: 5243 Armenia SRC VAT Payable (4,000)
+        // Debit: 2211 Trade Receivables (20,000)
+        // Credit: 6111 Sales Revenue (16,666.67)
+        // Credit: 5243 Armenia SRC VAT Payable (3,333.33)
         $lines = JournalEntryLine::where('journal_entry_id', $journalEntry->id)->with('account')->get();
 
         $debitLine = $lines->firstWhere('type', 'debit');
         $this->assertEquals('2211', $debitLine->account->code);
-        $this->assertEquals(24000.00, (float) $debitLine->amount);
+        $this->assertEquals(20000.00, (float) $debitLine->amount);
 
         $creditRevenue = $lines->where('type', 'credit')->first(fn ($l) => $l->account->code === '6111');
         $this->assertNotNull($creditRevenue);
-        $this->assertEquals(20000.00, (float) $creditRevenue->amount);
+        $this->assertEquals(16666.67, (float) $creditRevenue->amount);
 
         $creditVat = $lines->where('type', 'credit')->first(fn ($l) => $l->account->code === '5243');
         $this->assertNotNull($creditVat);
-        $this->assertEquals(4000.00, (float) $creditVat->amount);
+        $this->assertEquals(3333.33, (float) $creditVat->amount);
     }
 
     public function test_recording_bank_transfer_payment_reduces_ar_and_posts_to_bank_account_2521(): void
     {
-        // Create an unpaid sale of 36,000 AMD (15 units * 2000 + 6000 VAT)
+        // Create an unpaid sale of 30,000 AMD (15 units * 2000 gross)
         $sale = $this->orderService->createSale($this->vendorA, [
             'seller_id' => $this->sellerA->id,
             'customer_id' => $this->customerA->id,
@@ -218,21 +218,21 @@ class WholesaleGeneralLedgerPostingTest extends TestCase
             ],
         ], null, $this->ownerA);
 
-        $this->assertEquals(36000.00, (float) $this->customerA->fresh()->current_balance);
+        $this->assertEquals(30000.00, (float) $this->customerA->fresh()->current_balance);
         $this->assertEquals('ISSUED', $sale->status);
 
-        // Record Bank Wire payment of 36,000 AMD allocated to this sale
+        // Record Bank Wire payment of 30,000 AMD allocated to this sale
         $payment = $this->accountingService->recordPayment($this->vendorA, [
             'customer_id' => $this->customerA->id,
             'seller_id' => $this->sellerA->id,
             'payment_method' => 'BANK_TRANSFER',
-            'amount' => 36000.00,
+            'amount' => 30000.00,
             'reference_number' => 'AMERIABANK-WIRE-9922',
             'sale_id' => $sale->id,
         ], $this->ownerA);
 
         $this->assertEquals('COMPLETED', $payment->status);
-        $this->assertEquals(36000.00, $payment->allocated_amount);
+        $this->assertEquals(30000.00, $payment->allocated_amount);
         $this->assertEquals(0.00, $payment->unallocated_amount);
 
         // Customer AR balance must be fully cleared to 0
@@ -240,15 +240,15 @@ class WholesaleGeneralLedgerPostingTest extends TestCase
 
         // Sale status must be transitioned to PAID
         $this->assertEquals('PAID', $sale->fresh()->status);
-        $this->assertEquals(36000.00, (float) $sale->fresh()->paid_amount);
+        $this->assertEquals(30000.00, (float) $sale->fresh()->paid_amount);
 
         // Verify GL Double-Entry:
-        // Debit: 2521 Operating Bank Account (36,000)
-        // Credit: 2211 Trade Receivables (36,000)
+        // Debit: 2521 Operating Bank Account (30,000)
+        // Credit: 2211 Trade Receivables (30,000)
         $this->assertNotNull($payment->journal_entry_id);
         $je = JournalEntry::find($payment->journal_entry_id);
-        $this->assertEquals(36000.00, (float) $je->total_debit);
-        $this->assertEquals(36000.00, (float) $je->total_credit);
+        $this->assertEquals(30000.00, (float) $je->total_debit);
+        $this->assertEquals(30000.00, (float) $je->total_credit);
 
         $debitLine = $je->lines->firstWhere('type', 'debit');
         $this->assertEquals('2521', $debitLine->account->code);

@@ -27,9 +27,11 @@
                 <label style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.25rem;">
                     {{ __('Issuing Seller Company') }} *
                 </label>
-                <select x-model="selectedSellerId" style="padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main); font-size: 0.88rem; font-weight: 700;">
+                <select x-model="selectedSellerId" @change="onSellerChange()" style="padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main); font-size: 0.88rem; font-weight: 700;">
                     @foreach($sellers as $s)
-                        <option value="{{ $s->id }}">{{ $s->name }} ({{ $s->tin }}) &mdash; {{ $s->tax_regime->value }}</option>
+                        <option value="{{ $s->id }}" data-vat="{{ $s->tax_regime->isVatPayer() ? 1 : 0 }}">
+                            {{ $s->name }} ({{ $s->tin }}) &mdash; {{ $s->tax_regime->value }}
+                        </option>
                     @endforeach
                 </select>
             </div>
@@ -148,6 +150,11 @@
                             </div>
                             <div style="font-size: 0.75rem; color: #6366f1; font-weight: 600; margin-top: 0.2rem;">
                                 <span x-text="formatCurrency(item.unit_price) + ' AMD'"></span>
+                                <template x-if="isVatPayer">
+                                    <span style="color: var(--text-muted); font-size: 0.7rem; font-weight: 400; margin-left: 0.35rem;" 
+                                          x-text="'(' + '{{ __('առանց ԱԱՀ') }}: ' + formatHighPrecision(item.unit_price / 1.20) + ' AMD, ' + '{{ __('ԱԱՀ') }}: ' + formatHighPrecision(item.unit_price - (item.unit_price / 1.20)) + ' AMD)'">
+                                    </span>
+                                </template>
                             </div>
                         </div>
 
@@ -171,15 +178,15 @@
             <!-- Totals Breakdown -->
             <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-bottom: 1.5rem;">
                 <div style="display: flex; justify-content: space-between; font-size: 0.88rem; margin-bottom: 0.4rem; color: var(--text-muted);">
-                    <span>{{ __('Subtotal') }}</span>
+                    <span x-text="isVatPayer ? '{{ __('Ենթագումար (առանց ԱԱՀ)') }}' : '{{ __('Ենթագումար') }}'"></span>
                     <span style="font-weight: 700; color: var(--text-main);" x-text="formatCurrency(subtotal) + ' AMD'"></span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.88rem; margin-bottom: 0.4rem; color: var(--text-muted);">
-                    <span>{{ __('VAT (20%)') }}</span>
+                    <span x-text="isVatPayer ? '{{ __('ԱԱՀ (20%)') }}' : '{{ __('ԱԱՀ (վճարող չէ)') }}'"></span>
                     <span style="font-weight: 700; color: var(--text-main);" x-text="formatCurrency(taxTotal) + ' AMD'"></span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 1.25rem; font-weight: 800; color: var(--text-main); padding-top: 0.5rem; border-top: 2px solid var(--border-color);">
-                    <span>{{ __('Grand Total') }}</span>
+                    <span>{{ __('Ընդհանուր գումար') }}</span>
                     <span style="color: #6366f1;" x-text="formatCurrency(grandTotal) + ' AMD'"></span>
                 </div>
             </div>
@@ -225,6 +232,7 @@
 function wholesalePos() {
     return {
         selectedSellerId: '{{ $sellers->first()?->id }}',
+        isVatPayer: {{ ($sellers->first()?->tax_regime?->isVatPayer() ?? true) ? 'true' : 'false' }},
         selectedCustomerId: '',
         searchQuery: '',
         selectedCategory: '',
@@ -235,6 +243,19 @@ function wholesalePos() {
         subtotal: 0,
         taxTotal: 0,
         grandTotal: 0,
+
+        init() {
+            this.onSellerChange();
+        },
+
+        onSellerChange() {
+            const select = document.querySelector('select[x-model="selectedSellerId"]');
+            if (select && select.selectedIndex >= 0) {
+                const opt = select.options[select.selectedIndex];
+                this.isVatPayer = opt ? opt.dataset.vat === '1' : true;
+            }
+            this.recalculateTotals();
+        },
 
         onCustomerChange() {
             const select = document.querySelector('select[x-model="selectedCustomerId"]');
@@ -301,17 +322,26 @@ function wholesalePos() {
         },
 
         recalculateTotals() {
-            let sum = 0;
+            let grossTotal = 0;
             this.cart.forEach(i => {
-                sum += (i.unit_price * i.quantity);
+                grossTotal += (i.unit_price * i.quantity);
             });
-            this.subtotal = sum;
-            this.taxTotal = Math.round(sum * 0.20 * 100) / 100;
-            this.grandTotal = Math.round((this.subtotal + this.taxTotal) * 100) / 100;
+            this.grandTotal = Math.round(grossTotal * 100) / 100;
+            if (this.isVatPayer) {
+                this.subtotal = Math.round((this.grandTotal / 1.20) * 100) / 100;
+                this.taxTotal = Math.round((this.grandTotal - this.subtotal) * 100) / 100;
+            } else {
+                this.subtotal = this.grandTotal;
+                this.taxTotal = 0.00;
+            }
         },
 
         formatCurrency(num) {
             return new Intl.NumberFormat('hy-AM', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num || 0);
+        },
+
+        formatHighPrecision(num) {
+            return Number(num || 0).toFixed(5);
         },
 
         prepareSubmission(e) {

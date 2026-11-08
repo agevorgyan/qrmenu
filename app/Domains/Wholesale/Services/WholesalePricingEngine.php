@@ -2,11 +2,13 @@
 
 namespace App\Domains\Wholesale\Services;
 
+use App\Domains\Wholesale\Enums\SellerTaxRegime;
 use App\Domains\Wholesale\Models\WholesaleCustomer;
 use App\Domains\Wholesale\Models\WholesaleCustomerPricing;
 use App\Domains\Wholesale\Models\WholesalePriceListItem;
 use App\Domains\Wholesale\Models\WholesaleProduct;
 use App\Domains\Wholesale\Models\WholesaleQuantityDiscount;
+use App\Domains\Wholesale\Models\WholesaleSeller;
 
 class WholesalePricingEngine
 {
@@ -20,6 +22,8 @@ class WholesalePricingEngine
      *     base_price: float,
      *     min_price_floor: float,
      *     resolved_unit_price: float,
+     *     gross_unit_price: float,
+     *     unit_vat_amount: float,
      *     discount_unit_amount: float,
      *     discount_total: float,
      *     subtotal: float,
@@ -36,7 +40,8 @@ class WholesalePricingEngine
         WholesaleProduct $product,
         ?WholesaleCustomer $customer = null,
         float $quantity = 1.0,
-        bool $allowOverride = false
+        bool $allowOverride = false,
+        ?WholesaleSeller $seller = null
     ): array {
         $basePrice = (float) $product->base_wholesale_price;
         $minFloor = (float) ($product->min_wholesale_price ?? 0);
@@ -126,16 +131,36 @@ class WholesalePricingEngine
             }
         }
 
-        // 5. Calculations
-        $resolvedUnitPrice = round($resolved, 4);
-        $discountPerUnit = max(0, round($basePrice - $resolvedUnitPrice, 4));
-        $discountTotal = round($discountPerUnit * $quantity, 2);
-        $subtotal = round($resolvedUnitPrice * $quantity, 2);
+        // 5. Seller Tax Regime Verification
+        $sellerIsVatPayer = $seller !== null
+            ? ($seller->tax_regime instanceof SellerTaxRegime ? $seller->tax_regime->isVatPayer() : ($seller->tax_regime === 'vat_payer' || $seller->tax_regime === SellerTaxRegime::VAT_PAYER->value))
+            : true;
 
-        $isVatApplicable = (bool) $product->is_vat_applicable;
+        $isVatApplicable = $sellerIsVatPayer && (bool) $product->is_vat_applicable;
         $vatRate = $isVatApplicable ? (float) ($product->vat_rate ?? 20.00) : 0.00;
-        $vatAmount = $isVatApplicable ? round($subtotal * ($vatRate / 100), 2) : 0.00;
-        $totalAmount = round($subtotal + $vatAmount, 2);
+
+        // 6. Calculations (Armenian Tax Rules: Catalog price is VAT-inclusive)
+        $grossUnitPrice = round($resolved, 4);
+        $grossBasePrice = round($basePrice, 4);
+        $discountPerUnit = max(0, round($grossBasePrice - $grossUnitPrice, 4));
+        $discountTotal = round($discountPerUnit * $quantity, 2);
+        $totalAmount = round($grossUnitPrice * $quantity, 2);
+
+        if ($isVatApplicable && $vatRate > 0) {
+            $vatMultiplier = 1 + ($vatRate / 100);
+            $netUnitPrice = round($grossUnitPrice / $vatMultiplier, 5);
+            $unitVatAmount = round($grossUnitPrice - $netUnitPrice, 5);
+            $subtotal = round($totalAmount / $vatMultiplier, 2);
+            $vatAmount = round($totalAmount - $subtotal, 2);
+            $resolvedUnitPrice = $netUnitPrice;
+        } else {
+            $isVatApplicable = false;
+            $vatRate = 0.00;
+            $unitVatAmount = 0.00;
+            $subtotal = $totalAmount;
+            $vatAmount = 0.00;
+            $resolvedUnitPrice = $grossUnitPrice;
+        }
 
         return [
             'product_id' => $product->id,
@@ -144,6 +169,8 @@ class WholesalePricingEngine
             'base_price' => $basePrice,
             'min_price_floor' => $minFloor,
             'resolved_unit_price' => $resolvedUnitPrice,
+            'gross_unit_price' => $grossUnitPrice,
+            'unit_vat_amount' => $unitVatAmount,
             'discount_unit_amount' => $discountPerUnit,
             'discount_total' => $discountTotal,
             'subtotal' => $subtotal,

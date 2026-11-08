@@ -182,21 +182,90 @@
             4. {{ __('Explicit Core Physical Stock Mapping (Optional)') }}
         </h2>
 
-        <div style="margin-bottom: 1.5rem;">
-            <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem;">
-                {{ __('Link to Core Inventory Ingredient / Stock Item') }}
-            </label>
-            <select name="physical_stock_ingredient_id" style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main); font-size: 0.9rem;">
-                <option value="">{{ __('No Physical Stock Link (Virtual Wholesale Item)') }}</option>
-                @foreach($physicalIngredients as $ing)
-                    <option value="{{ $ing->id }}" {{ old('physical_stock_ingredient_id') == $ing->id ? 'selected' : '' }}>
-                        {{ $ing->name }} [SKU: {{ $ing->sku ?? 'N/A' }}] ({{ $ing->unit?->name ?? 'unit' }})
-                    </option>
-                @endforeach
-            </select>
-            <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
-                {{ __('When linked, wholesale order deliveries will atomically deplete available balance from the designated warehouse in the core inventory ledger.') }}
-            </span>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem;">
+            <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem;">
+                    {{ __('Default Fulfillment Warehouse') }}
+                </label>
+                <select name="default_warehouse_id" style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main); font-size: 0.9rem;">
+                    @foreach($warehouses as $wh)
+                        <option value="{{ $wh->id }}" {{ old('default_warehouse_id') == $wh->id || ($wh->is_default && !old('default_warehouse_id')) ? 'selected' : '' }}>
+                            {{ $wh->name }} ({{ $wh->code ?: 'WH-'.$wh->id }}) {{ $wh->is_default ? '[' . __('Default') . ']' : '' }}
+                        </option>
+                    @endforeach
+                </select>
+                <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                    {{ __('Warehouse from which deliveries will be dispatched by default.') }}
+                </span>
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem;">
+                    {{ __('Link to Core Inventory Ingredient / Stock Item') }}
+                </label>
+                <select name="physical_stock_ingredient_id" style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main); font-size: 0.9rem;">
+                    <option value="">{{ __('No Physical Stock Link (Virtual Wholesale Item)') }}</option>
+                    @foreach($physicalIngredients as $ing)
+                        <option value="{{ $ing->id }}" {{ old('physical_stock_ingredient_id') == $ing->id ? 'selected' : '' }}>
+                            {{ $ing->name }} [SKU: {{ $ing->sku ?? 'N/A' }}] ({{ $ing->unit?->name ?? 'unit' }}) &bull; {{ __('Stock:') }} {{ number_format($ing->total_stock_on_hand, 2) }}
+                        </option>
+                    @endforeach
+                </select>
+                <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                    {{ __('When linked, wholesale order deliveries will atomically deplete available balance from the designated warehouse in the core inventory ledger.') }}
+                </span>
+            </div>
+        </div>
+
+        @if($physicalIngredients->isEmpty())
+            <div style="margin-bottom: 1.5rem; padding: 1rem 1.25rem; border-radius: 12px; background: rgba(99, 102, 241, 0.08); border: 1px dashed #6366f1; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                <div style="font-size: 0.85rem; color: var(--text-main);">
+                    <i class="fa-solid fa-boxes-stacked" style="color: #6366f1; margin-right: 0.5rem; font-size: 1.1rem;"></i>
+                    <strong>{{ __('No items in core inventory yet.') }}</strong>
+                    <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.25rem;">
+                        {{ __('To enable automatic physical stock deductions upon delivery, add items or raw materials to your inventory catalog.') }}
+                    </div>
+                </div>
+                <a href="{{ route('admin.inventory.ingredients.create') }}" target="_blank"
+                   style="padding: 0.5rem 1rem; border-radius: 8px; background: #6366f1; color: #fff; font-size: 0.82rem; font-weight: 700; text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.4rem; box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);">
+                    <i class="fa-solid fa-plus"></i> {{ __('Add Stock Item') }}
+                </a>
+            </div>
+        @endif
+
+        <!-- Section 5: Technological Card / Recipe (Production & BOM) -->
+        <h2 style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin: 2rem 0 1.25rem 0; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+            5. {{ __('Տեխնոլոգիական Քարտ (Արտադրություն և Բաղադրատոմս)') }}
+        </h2>
+
+        <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem;">
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: flex-end;">
+                <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.4rem;">
+                        {{ __('Կապել Տեխնոլոգիական Քարտի (Recipe / BOM) հետ') }}
+                    </label>
+                    <select name="recipe_id" style="width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); font-size: 0.9rem;">
+                        <option value="">{{ __('Առանց Տեխնոլոգիական Քարտի (Պատրաստի գնված / Վերավաճառվող ապրանք)') }}</option>
+                        @foreach($recipes as $rec)
+                            <option value="{{ $rec->id }}" {{ old('recipe_id') == $rec->id ? 'selected' : '' }}>
+                                {{ $rec->name }} [{{ $rec->code }}] &bull; {{ __('Ելք:') }} {{ (float)$rec->yield_quantity }} {{ $rec->yieldUnit?->name ?? '' }} 
+                                @if($rec->latestCost)
+                                    &bull; {{ __('Ինքնարժեք:') }} {{ number_format($rec->latestCost->cost_per_portion ?: $rec->latestCost->total_cost, 2) }} AMD
+                                @endif
+                            </option>
+                        @endforeach
+                    </select>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
+                        {{ __('Տեխնոլոգիական քարտը կապակցում է մեծածախ ապրանքը հումքերի ծախսի, արտադրության և ինքնարժեքի հետ:') }}
+                    </span>
+                </div>
+                <div>
+                    <a href="{{ route('admin.inventory.recipes.create') }}" target="_blank"
+                       style="padding: 0.65rem 1rem; border-radius: 10px; background: #6366f1; color: #fff; font-size: 0.82rem; font-weight: 700; text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.4rem; box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);">
+                        <i class="fa-solid fa-plus"></i> {{ __('Նոր Տեխ․ Քարտ') }}
+                    </a>
+                </div>
+            </div>
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">

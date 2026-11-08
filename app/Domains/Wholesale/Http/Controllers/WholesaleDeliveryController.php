@@ -44,7 +44,18 @@ class WholesaleDeliveryController extends Controller
             ->with(['items.product.unit', 'customer.addresses'])
             ->findOrFail($orderId);
 
-        $warehouses = Warehouse::where('vendor_id', $vendor->id)->where('is_active', true)->get();
+        $warehouses = Warehouse::where('vendor_id', $vendor->id)->where('is_active', true)->orderBy('is_default', 'desc')->orderBy('name')->get();
+        if ($warehouses->isEmpty()) {
+            $defaultWh = Warehouse::create([
+                'vendor_id' => $vendor->id,
+                'name' => __('Հիմնական Կենտրոնական Պահեստ'),
+                'code' => 'WH-MAIN',
+                'type' => Warehouse::TYPE_MAIN,
+                'is_active' => true,
+                'is_default' => true,
+            ]);
+            $warehouses = collect([$defaultWh]);
+        }
 
         return view('wholesale.deliveries.create', compact('vendor', 'order', 'warehouses'));
     }

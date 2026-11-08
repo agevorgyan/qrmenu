@@ -10,6 +10,7 @@ use App\Models\SubscriptionPlan;
 use App\Models\Unit;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Models\Warehouse;
 use Database\Seeders\SubscriptionPlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -329,5 +330,68 @@ class WholesaleCatalogManagementTest extends TestCase
             'base_wholesale_price' => 1.00,
         ]);
         $updateResponse->assertStatus(404);
+    }
+
+    public function test_wholesale_product_can_map_default_warehouse_and_physical_stock_ingredient(): void
+    {
+        $warehouse = Warehouse::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Central Depot',
+            'code' => 'DEPOT-01',
+            'type' => 'main',
+            'is_active' => true,
+            'is_default' => true,
+        ]);
+
+        $ingredient = Ingredient::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Physical Beef Ribeye',
+            'sku' => 'ING-RIBEYE-01',
+            'unit_id' => $this->unitKg->id,
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($this->ownerA)->post(route('admin.wholesale.products.store'), [
+            'name' => 'Mapped Wholesale Ribeye',
+            'sku' => 'WS-RIBEYE-MAPPED',
+            'classifier_code' => '0201',
+            'unit_id' => $this->unitKg->id,
+            'base_wholesale_price' => 6000.00,
+            'min_wholesale_price' => 5500.00,
+            'is_vat_applicable' => 1,
+            'vat_rate' => 20.00,
+            'default_warehouse_id' => $warehouse->id,
+            'physical_stock_ingredient_id' => $ingredient->id,
+        ]);
+
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('wholesale_products', [
+            'vendor_id' => $this->vendorA->id,
+            'sku' => 'WS-RIBEYE-MAPPED',
+            'default_warehouse_id' => $warehouse->id,
+            'physical_stock_ingredient_id' => $ingredient->id,
+        ]);
+
+        $product = WholesaleProduct::where('sku', 'WS-RIBEYE-MAPPED')->firstOrFail();
+        $this->assertEquals($warehouse->id, $product->defaultWarehouse->id);
+        $this->assertEquals($ingredient->id, $product->physicalStockIngredient->id);
+        $this->assertTrue($product->hasPhysicalInventory());
+    }
+
+    public function test_product_create_and_edit_page_auto_provisions_warehouse_and_displays_inventory(): void
+    {
+        // Initially no warehouse exists for vendorA
+        $this->assertEquals(0, Warehouse::where('vendor_id', $this->vendorA->id)->count());
+
+        $response = $this->actingAs($this->ownerA)->get(route('admin.wholesale.products.create'));
+        $response->assertOk();
+        $response->assertViewHas('warehouses');
+        $response->assertViewHas('physicalIngredients');
+
+        // Automatically provisioned default warehouse
+        $this->assertEquals(1, Warehouse::where('vendor_id', $this->vendorA->id)->count());
+        $warehouse = Warehouse::where('vendor_id', $this->vendorA->id)->first();
+        $this->assertTrue($warehouse->is_default);
     }
 }

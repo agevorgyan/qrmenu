@@ -26,7 +26,7 @@ class WholesaleReturnItem extends Model
     {
         return [
             'quantity' => 'decimal:4',
-            'unit_price' => 'decimal:4',
+            'unit_price' => 'decimal:5',
             'total_amount' => 'decimal:4',
             'is_restocked' => 'boolean',
         ];

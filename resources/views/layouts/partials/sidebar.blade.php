@@ -546,6 +546,13 @@
                             </span>
                         </a>
 
+                        <a href="{{ route('admin.wholesale.categories.index') }}" class="nav-sub-item {{ request()->routeIs('admin.wholesale.categories.*') ? 'active' : '' }}" title="{{ __('Wholesale Categories') }}">
+                            <span style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fa-solid fa-folder-tree" style="font-size: 0.85rem; color: #14b8a6;"></i>
+                                <span>{{ __('Wholesale Categories') }}</span>
+                            </span>
+                        </a>
+
                         <a href="{{ route('admin.wholesale.pricelists.index') }}" class="nav-sub-item {{ request()->routeIs('admin.wholesale.pricelists.*') ? 'active' : '' }}" title="{{ __('Price Lists') }}">
                             <span style="display: flex; align-items: center; gap: 0.6rem;">
                                 <i class="fa-solid fa-tags" style="font-size: 0.85rem; color: #8b5cf6;"></i>

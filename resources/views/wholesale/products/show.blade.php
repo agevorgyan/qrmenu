@@ -142,11 +142,25 @@
             </div>
 
             <div style="padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                <div style="margin-bottom: 0.75rem;">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.35rem;">{{ __('Default Fulfillment Warehouse') }}</div>
+                    @if($product->defaultWarehouse)
+                        <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.35rem 0.65rem; font-size: 0.85rem; font-weight: 700; color: var(--text-main);">
+                            <i class="fa-solid fa-warehouse" style="color: #6366f1;"></i>
+                            <span>{{ $product->defaultWarehouse->name }} ({{ $product->defaultWarehouse->code ?: 'WH-'.$product->defaultWarehouse->id }})</span>
+                        </div>
+                    @else
+                        <span style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">
+                            {{ __('Central / System Default Warehouse') }}
+                        </span>
+                    @endif
+                </div>
+
                 <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.35rem;">{{ __('Core Inventory Link') }}</div>
                 @if($product->physicalStockIngredient)
                     <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 8px; padding: 0.4rem 0.75rem; font-size: 0.85rem; font-weight: 700; color: #6366f1;">
                         <i class="fa-solid fa-link"></i>
-                        <span>{{ $product->physicalStockIngredient->name }} [SKU: {{ $product->physicalStockIngredient->sku ?? 'N/A' }}]</span>
+                        <span>{{ $product->physicalStockIngredient->name }} [SKU: {{ $product->physicalStockIngredient->sku ?? 'N/A' }}] ({{ __('Stock:') }} {{ number_format($product->physicalStockIngredient->total_stock_on_hand, 2) }})</span>
                     </div>
                     <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem;">
                         {{ __('Deliveries will automatically deplete stock balances in core warehouse storage.') }}
@@ -158,6 +172,162 @@
                 @endif
             </div>
         </div>
+    </div>
+
+    <!-- Technological Card (Recipe / BOM) & Production Integration Section -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.75rem; margin-bottom: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; background: rgba(99, 102, 241, 0.15); color: #6366f1;">
+                        <i class="fa-solid fa-scroll"></i>
+                    </span>
+                    <h2 style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin: 0;">
+                        {{ __('Տեխնոլոգիական Քարտ (Recipe / BOM) և Արտադրություն') }}
+                    </h2>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">
+                    {{ __('Արտադրական բաղադրատոմս, հումքերի ծախս, ինքնարժեք և ինտեգրում Պահեստ և Արտադրություն մոդուլի հետ:') }}
+                </p>
+            </div>
+
+            @if($product->recipe)
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <a href="{{ route('admin.inventory.recipes.show', $product->recipe) }}" target="_blank"
+                       style="padding: 0.5rem 0.9rem; border-radius: 8px; background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.82rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> {{ __('Դիտել Տեխ․ Քարտը') }}
+                    </a>
+                    <a href="{{ route('admin.inventory.production.create', ['recipe_id' => $product->recipe->id, 'destination_warehouse_id' => $product->default_warehouse_id]) }}" target="_blank"
+                       style="padding: 0.5rem 1rem; border-radius: 8px; background: #10b981; color: #fff; font-size: 0.82rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                        <i class="fa-solid fa-industry"></i> {{ __('Սկսել Արտադրություն') }}
+                    </a>
+                </div>
+            @endif
+        </div>
+
+        @if($product->recipe)
+            @php
+                $recipe = $product->recipe;
+                $cost = $recipe->latestCost;
+                $unitCost = $cost ? ($cost->cost_per_portion ?: $cost->total_cost) : 0;
+                $marginPercent = $product->base_wholesale_price > 0 && $unitCost > 0
+                    ? round((($product->base_wholesale_price - $unitCost) / $product->base_wholesale_price) * 100, 1)
+                    : null;
+            @endphp
+
+            <!-- Recipe Summary Cards -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem;">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">{{ __('Քարտի Անվանում և Կոդ') }}</div>
+                    <div style="font-size: 1rem; font-weight: 800; color: var(--text-main); margin-top: 0.25rem;">{{ $recipe->name }}</div>
+                    <div style="font-size: 0.75rem; font-family: monospace; color: #6366f1; margin-top: 0.15rem;">{{ $recipe->code }} &bull; v{{ $recipe->current_version }}</div>
+                </div>
+
+                <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem;">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">{{ __('Ելքի Քանակ (Yield)') }}</div>
+                    <div style="font-size: 1.25rem; font-weight: 800; color: #10b981; margin-top: 0.25rem;">
+                        {{ (float)$recipe->yield_quantity }} <span style="font-size: 0.85rem; font-weight: 600;">{{ $recipe->yieldUnit?->name ?? 'unit' }}</span>
+                    </div>
+                    @if($recipe->portion_size)
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem;">
+                            {{ __('Բաժին:') }} {{ (float)$recipe->portion_size }} {{ $recipe->portionUnit?->code ?? '' }}
+                        </div>
+                    @endif
+                </div>
+
+                <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem;">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">{{ __('Հաշվարկված Ինքնարժեք') }}</div>
+                    <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-top: 0.25rem;">
+                        {{ number_format($unitCost, 2) }} <span style="font-size: 0.85rem; font-weight: 600;">AMD</span>
+                    </div>
+                    @if($marginPercent !== null)
+                        <div style="font-size: 0.75rem; font-weight: 700; color: {{ $marginPercent > 0 ? '#10b981' : '#ef4444' }}; margin-top: 0.15rem;">
+                            {{ __('Մարժա:') }} {{ $marginPercent }}%
+                        </div>
+                    @endif
+                </div>
+
+                <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem;">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">{{ __('Կարգավիճակ') }}</div>
+                    <div style="margin-top: 0.4rem;">
+                        <span style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.65rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; background: rgba(16, 185, 129, 0.12); color: #10b981;">
+                            <i class="fa-solid fa-circle-check"></i> {{ ucfirst($recipe->status) }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ingredients / BOM Table -->
+            @if($recipe->items->count() > 0)
+                <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-main); margin-bottom: 0.75rem;">
+                    <i class="fa-solid fa-list-check" style="color: #6366f1; margin-right: 0.4rem;"></i>
+                    {{ __('Բաղադրիչների և Հումքերի Ցանկ (BOM Items)') }} ({{ $recipe->items->count() }})
+                </div>
+                <div style="overflow-x: auto; margin-bottom: 1.5rem; border: 1px solid var(--border-color); border-radius: 10px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                        <thead>
+                            <tr style="background: var(--bg-main); border-bottom: 1px solid var(--border-color); text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">
+                                <th style="padding: 0.65rem 0.85rem;">{{ __('Բաղադրիչ / Հումք') }}</th>
+                                <th style="padding: 0.65rem 0.85rem;">{{ __('Բրուտտո Քանակ') }}</th>
+                                <th style="padding: 0.65rem 0.85rem;">{{ __('Նետտո Քանակ') }}</th>
+                                <th style="padding: 0.65rem 0.85rem;">{{ __('Կորուստ (%)') }}</th>
+                                <th style="padding: 0.65rem 0.85rem;">{{ __('Միավոր') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($recipe->items as $item)
+                                <tr style="border-bottom: 1px solid var(--border-color);">
+                                    <td style="padding: 0.65rem 0.85rem; font-weight: 600; color: var(--text-main);">
+                                        @if($item->ingredient)
+                                            <i class="fa-solid fa-seedling" style="color: #10b981; margin-right: 0.35rem; font-size: 0.75rem;"></i>
+                                            {{ $item->ingredient->name }}
+                                        @elseif($item->subRecipe)
+                                            <i class="fa-solid fa-cubes-stacked" style="color: #8b5cf6; margin-right: 0.35rem; font-size: 0.75rem;"></i>
+                                            {{ $item->subRecipe->name }} [{{ __('Կիսաֆաբրիկատ') }}]
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
+                                    <td style="padding: 0.65rem 0.85rem; font-family: monospace; font-weight: 700; color: var(--text-main);">
+                                        {{ (float)$item->gross_quantity }}
+                                    </td>
+                                    <td style="padding: 0.65rem 0.85rem; font-family: monospace; color: var(--text-muted);">
+                                        {{ (float)$item->net_quantity }}
+                                    </td>
+                                    <td style="padding: 0.65rem 0.85rem; color: var(--text-muted);">
+                                        {{ (float)$item->waste_percent > 0 ? (float)$item->waste_percent . '%' : '0%' }}
+                                    </td>
+                                    <td style="padding: 0.65rem 0.85rem; color: var(--text-muted);">
+                                        {{ $item->unit?->name ?? $item->unit?->code ?? ($item->ingredient?->unit?->code ?? '') }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        @else
+            <!-- Empty state when no recipe is linked -->
+            <div style="text-align: center; padding: 2rem; background: var(--bg-main); border-radius: 12px; border: 1px dashed var(--border-color);">
+                <i class="fa-solid fa-scroll" style="font-size: 2.2rem; opacity: 0.3; margin-bottom: 0.5rem; display: block; color: #6366f1;"></i>
+                <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-main); margin-bottom: 0.25rem;">
+                    {{ __('Ապրանքին կցված չէ Տեխնոլոգիական Քարտ') }}
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0 0 1rem 0; max-width: 550px; margin-left: auto; margin-right: auto;">
+                    {{ __('Կցեք գոյություն ունեցող կամ ստեղծեք նոր Տեխնոլոգիական Քարտ (Recipe / BOM)՝ հումքերի դուրսգրումը, ինքնարժեքը և արտադրության պատվերներն ավտոմատացնելու համար:') }}
+                </p>
+                <div style="display: inline-flex; gap: 0.75rem;">
+                    <a href="{{ route('admin.wholesale.products.edit', $product) }}" 
+                       style="padding: 0.55rem 1.15rem; border-radius: 8px; background: #6366f1; color: #fff; font-size: 0.85rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;">
+                        <i class="fa-solid fa-link"></i> {{ __('Կցել Տեխնոլոգիական Քարտ') }}
+                    </a>
+                    <a href="{{ route('admin.inventory.recipes.create') }}" target="_blank"
+                       style="padding: 0.55rem 1.15rem; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.85rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;">
+                        <i class="fa-solid fa-plus"></i> {{ __('Ստեղծել նոր Քարտ') }}
+                    </a>
+                </div>
+            </div>
+        @endif
     </div>
 
     <!-- Packaging Tiers Section -->

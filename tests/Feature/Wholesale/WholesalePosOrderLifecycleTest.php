@@ -169,6 +169,7 @@ class WholesalePosOrderLifecycleTest extends TestCase
         $response = $this->actingAs($this->ownerA)->postJson(route('admin.wholesale.pos.calculate_line'), [
             'product_id' => $this->productPelmeni->id,
             'customer_id' => $this->customerA->id,
+            'seller_id' => $this->sellerA->id,
             'quantity' => 10,
         ]);
 
@@ -177,10 +178,11 @@ class WholesalePosOrderLifecycleTest extends TestCase
             'success' => true,
             'pricing' => [
                 'product_id' => $this->productPelmeni->id,
-                'resolved_unit_price' => 2000.00,
-                'subtotal' => 20000.00,
-                'vat_amount' => 4000.00,
-                'total_amount' => 24000.00,
+                'resolved_unit_price' => 1666.66667,
+                'gross_unit_price' => 2000.00,
+                'subtotal' => 16666.67,
+                'vat_amount' => 3333.33,
+                'total_amount' => 20000.00,
             ],
         ]);
     }
@@ -210,9 +212,9 @@ class WholesalePosOrderLifecycleTest extends TestCase
         $this->assertNotNull($order);
         $this->assertEquals('DRAFT', $order->status);
         $this->assertStringStartsWith('WO-'.now()->format('Ymd'), $order->order_number);
-        $this->assertEquals(40000.00, $order->subtotal);
-        $this->assertEquals(8000.00, $order->tax_total); // 20% on 40,000
-        $this->assertEquals(48000.00, $order->total_amount);
+        $this->assertEquals(33333.33, (float) $order->subtotal);
+        $this->assertEquals(6666.67, (float) $order->tax_total); // 20% inclusive VAT on 40,000
+        $this->assertEquals(40000.00, (float) $order->total_amount);
 
         // Verify item snapshot
         $item = $order->items->first();
@@ -285,12 +287,67 @@ class WholesalePosOrderLifecycleTest extends TestCase
         $this->assertNotNull($sale);
         $this->assertStringStartsWith('WS-'.now()->format('Ymd'), $sale->invoice_number);
         $this->assertEquals('ISSUED', $sale->status);
-        $this->assertEquals(30000.00, $sale->subtotal); // 15 * 2000
-        $this->assertEquals(6000.00, $sale->tax_total); // 20% on 30,000
-        $this->assertEquals(36000.00, $sale->total_amount);
+        $this->assertEquals(25000.00, (float) $sale->subtotal); // 15 * 2000 = 30000 gross; 30000 / 1.2 = 25000
+        $this->assertEquals(5000.00, (float) $sale->tax_total); // 20% on 25,000 = 5000
+        $this->assertEquals(30000.00, (float) $sale->total_amount);
 
-        // Verify customer AR balance incremented by 36,000
-        $this->assertEquals(36000.00, (float) $this->customerA->fresh()->current_balance);
+        // Verify customer AR balance incremented by 30,000
+        $this->assertEquals(30000.00, (float) $this->customerA->fresh()->current_balance);
+    }
+
+    public function test_pos_order_with_non_vat_seller_calculates_zero_tax_and_exact_inclusive_price(): void
+    {
+        $nonVatSeller = WholesaleSeller::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Gayane Kitchen LLC',
+            'legal_name' => 'Gayane Kitchen LLC',
+            'tin' => '08285927',
+            'tax_regime' => SellerTaxRegime::MICRO_BUSINESS,
+            'address' => 'Yerevan',
+            'is_active' => true,
+        ]);
+
+        $product1600 = WholesaleProduct::create([
+            'vendor_id' => $this->vendorA->id,
+            'name' => 'Պելմենի Ֆիրմային (450գր)',
+            'sku' => 'PELM-FIRM-450',
+            'classifier_code' => '1902',
+            'unit_id' => $this->unitKg->id,
+            'base_wholesale_price' => 1600.00,
+            'is_vat_applicable' => true,
+            'vat_rate' => 20.00,
+            'is_active' => true,
+        ]);
+
+        // 1. Non-VAT seller order: 5 * 1600 = 8000. Subtotal = 8000, VAT = 0
+        $orderNonVat = $this->orderService->createOrder($this->vendorA, [
+            'seller_id' => $nonVatSeller->id,
+            'customer_id' => $this->customerA->id,
+            'items' => [
+                ['product_id' => $product1600->id, 'quantity' => 5],
+            ],
+        ], $this->ownerA);
+
+        $this->assertEquals(8000.00, (float) $orderNonVat->subtotal);
+        $this->assertEquals(0.00, (float) $orderNonVat->tax_total);
+        $this->assertEquals(8000.00, (float) $orderNonVat->total_amount);
+        $this->assertEquals(1600.00, (float) $orderNonVat->items->first()->unit_price);
+        $this->assertEquals(0.00, (float) $orderNonVat->items->first()->vat_amount);
+
+        // 2. VAT-payer seller order: 5 * 1600 = 8000. Subtotal = 6666.67, VAT = 1333.33
+        $orderVat = $this->orderService->createOrder($this->vendorA, [
+            'seller_id' => $this->sellerA->id,
+            'customer_id' => $this->customerA->id,
+            'items' => [
+                ['product_id' => $product1600->id, 'quantity' => 5],
+            ],
+        ], $this->ownerA);
+
+        $this->assertEquals(6666.67, (float) $orderVat->subtotal);
+        $this->assertEquals(1333.33, (float) $orderVat->tax_total);
+        $this->assertEquals(8000.00, (float) $orderVat->total_amount);
+        $this->assertEquals(1333.33333, (float) $orderVat->items->first()->unit_price);
+        $this->assertEquals(1333.33, (float) $orderVat->items->first()->vat_amount);
     }
 
     public function test_printable_wholesale_commercial_invoice_renders_with_official_requisites(): void

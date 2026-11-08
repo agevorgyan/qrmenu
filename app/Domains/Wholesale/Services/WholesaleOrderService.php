@@ -122,7 +122,7 @@ class WholesaleOrderService
                 $product = WholesaleProduct::where('vendor_id', $vendor->id)->findOrFail($itemData['product_id']);
                 $qty = (float) $itemData['quantity'];
 
-                $pricing = $this->pricingEngine->resolvePrice($product, $customer, $qty);
+                $pricing = $this->pricingEngine->resolvePrice($product, $customer, $qty, false, $seller);
 
                 WholesaleOrderItem::create([
                     'order_id' => $order->id,
@@ -256,7 +256,7 @@ class WholesaleOrderService
                 foreach ($data['items'] as $itemData) {
                     $product = WholesaleProduct::where('vendor_id', $vendor->id)->findOrFail($itemData['product_id']);
                     $qty = (float) $itemData['quantity'];
-                    $pricing = $this->pricingEngine->resolvePrice($product, $customer, $qty);
+                    $pricing = $this->pricingEngine->resolvePrice($product, $customer, $qty, false, $seller);
 
                     WholesaleSaleItem::create([
                         'sale_id' => $sale->id,

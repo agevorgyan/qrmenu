@@ -3,9 +3,11 @@
 namespace App\Domains\Wholesale\Models;
 
 use App\Models\Ingredient;
+use App\Models\Recipe;
 use App\Models\Traits\BelongsToVendor;
 use App\Models\Unit;
 use App\Models\Vendor;
+use App\Models\Warehouse;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -37,6 +39,8 @@ class WholesaleProduct extends Model
         'is_vat_applicable',
         'vat_rate',
         'physical_stock_ingredient_id',
+        'default_warehouse_id',
+        'recipe_id',
         'description',
         'image',
         'is_active',
@@ -89,6 +93,16 @@ class WholesaleProduct extends Model
     public function physicalStockIngredient(): BelongsTo
     {
         return $this->belongsTo(Ingredient::class, 'physical_stock_ingredient_id');
+    }
+
+    public function defaultWarehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class, 'default_warehouse_id');
+    }
+
+    public function recipe(): BelongsTo
+    {
+        return $this->belongsTo(Recipe::class, 'recipe_id');
     }
 
     public function packagings(): HasMany

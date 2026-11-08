@@ -50,17 +50,27 @@ class WholesalePosController extends Controller
         $vendor = $this->tenantContext->getTenant() ?? $request->user()->vendor;
 
         $validated = $request->validate([
+            'seller_id' => ['nullable', 'integer'],
             'product_id' => ['required', 'integer'],
             'customer_id' => ['nullable', 'integer'],
             'quantity' => ['required', 'numeric', 'min:0.0001'],
         ]);
 
         $product = WholesaleProduct::where('vendor_id', $vendor->id)->findOrFail($validated['product_id']);
+        $seller = ! empty($validated['seller_id'])
+            ? WholesaleSeller::where('vendor_id', $vendor->id)->find($validated['seller_id'])
+            : null;
         $customer = ! empty($validated['customer_id'])
             ? WholesaleCustomer::where('vendor_id', $vendor->id)->find($validated['customer_id'])
             : null;
 
-        $pricing = $this->pricingEngine->resolvePrice($product, $customer, (float) $validated['quantity']);
+        $pricing = $this->pricingEngine->resolvePrice(
+            product: $product,
+            customer: $customer,
+            quantity: (float) $validated['quantity'],
+            allowOverride: false,
+            seller: $seller
+        );
 
         return response()->json([
             'success' => true,

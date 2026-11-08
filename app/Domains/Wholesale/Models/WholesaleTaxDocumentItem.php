@@ -22,7 +22,7 @@ class WholesaleTaxDocumentItem extends Model
         return [
             'line_number' => 'integer',
             'quantity' => 'decimal:4',
-            'unit_price' => 'decimal:4',
+            'unit_price' => 'decimal:5',
             'taxable_price' => 'decimal:2',
             'discount_percent' => 'decimal:2',
             'vat_rate' => 'decimal:2',

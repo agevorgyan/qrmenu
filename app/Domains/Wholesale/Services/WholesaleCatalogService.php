@@ -10,6 +10,7 @@ use App\Models\Vendor;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
 class WholesaleCatalogService
@@ -22,7 +23,7 @@ class WholesaleCatalogService
     public function listProducts(Vendor $vendor, array $filters = [], int $perPage = 20): LengthAwarePaginator
     {
         $query = WholesaleProduct::where('vendor_id', $vendor->id)
-            ->with(['category', 'unit', 'packagingUnit', 'physicalStockIngredient', 'atgaaClassification'])
+            ->with(['category', 'unit', 'packagingUnit', 'physicalStockIngredient', 'atgaaClassification', 'recipe'])
             ->orderBy('id', 'desc');
 
         if (! empty($filters['search'])) {
@@ -93,6 +94,8 @@ class WholesaleCatalogService
                 'is_vat_applicable' => $data['is_vat_applicable'] ?? true,
                 'vat_rate' => $data['vat_rate'] ?? 20.00,
                 'physical_stock_ingredient_id' => $data['physical_stock_ingredient_id'] ?? null,
+                'default_warehouse_id' => $data['default_warehouse_id'] ?? null,
+                'recipe_id' => $data['recipe_id'] ?? null,
                 'description' => $data['description'] ?? null,
                 'is_active' => $data['is_active'] ?? true,
             ]);
@@ -109,7 +112,7 @@ class WholesaleCatalogService
                 ]);
             }
 
-            return $product->fresh(['category', 'unit', 'packagingUnit', 'physicalStockIngredient', 'atgaaClassification']);
+            return $product->fresh(['category', 'unit', 'packagingUnit', 'physicalStockIngredient', 'defaultWarehouse', 'atgaaClassification']);
         });
     }
 
@@ -144,7 +147,7 @@ class WholesaleCatalogService
 
         $product->update($data);
 
-        return $product->fresh(['category', 'unit', 'packagingUnit', 'physicalStockIngredient', 'atgaaClassification']);
+        return $product->fresh(['category', 'unit', 'packagingUnit', 'physicalStockIngredient', 'defaultWarehouse', 'atgaaClassification']);
     }
 
     /**
@@ -195,6 +198,41 @@ class WholesaleCatalogService
             'sort_order' => $data['sort_order'] ?? 0,
             'is_active' => $data['is_active'] ?? true,
         ]);
+    }
+
+    /**
+     * Update an existing category.
+     */
+    public function updateCategory(WholesaleCategory $category, array $data): WholesaleCategory
+    {
+        $category->update([
+            'name' => trim($data['name']),
+            'parent_id' => ! empty($data['parent_id']) && (int) $data['parent_id'] !== $category->id ? (int) $data['parent_id'] : null,
+            'description' => $data['description'] ?? null,
+            'sort_order' => $data['sort_order'] ?? 0,
+            'is_active' => $data['is_active'] ?? true,
+        ]);
+
+        return $category->fresh();
+    }
+
+    /**
+     * Delete a category.
+     *
+     * @throws ValidationException
+     */
+    public function deleteCategory(WholesaleCategory $category): bool
+    {
+        if ($category->products()->exists()) {
+            throw ValidationException::withMessages([
+                'category' => __('Cannot delete category because it contains :count products. Reassign products first.', ['count' => $category->products()->count()]),
+            ]);
+        }
+
+        // Reassign children categories to parent or null
+        WholesaleCategory::where('parent_id', $category->id)->update(['parent_id' => $category->parent_id]);
+
+        return (bool) $category->delete();
     }
 
     /**

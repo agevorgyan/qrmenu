@@ -6,7 +6,9 @@ use App\Domains\Wholesale\Models\WholesaleProduct;
 use App\Domains\Wholesale\Services\WholesaleCatalogService;
 use App\Http\Controllers\Controller;
 use App\Models\Ingredient;
+use App\Models\Recipe;
 use App\Models\Unit;
+use App\Models\Warehouse;
 use App\Services\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,10 +47,24 @@ class WholesaleProductController extends Controller
             $q->whereNull('vendor_id')->orWhere('vendor_id', $vendor->id);
         })->where('is_active', true)->orderBy('name')->get();
 
-        $physicalIngredients = Ingredient::where('vendor_id', $vendor->id)->where('is_active', true)->orderBy('name')->get();
+        $warehouses = Warehouse::where('vendor_id', $vendor->id)->where('is_active', true)->orderBy('is_default', 'desc')->orderBy('name')->get();
+        if ($warehouses->isEmpty()) {
+            $defaultWh = Warehouse::create([
+                'vendor_id' => $vendor->id,
+                'name' => __('Հիմնական Կենտրոնական Պահեստ'),
+                'code' => 'WH-MAIN',
+                'type' => Warehouse::TYPE_MAIN,
+                'is_active' => true,
+                'is_default' => true,
+            ]);
+            $warehouses = collect([$defaultWh]);
+        }
+
+        $physicalIngredients = Ingredient::with(['unit', 'balances'])->where('vendor_id', $vendor->id)->where('is_active', true)->orderBy('name')->get();
+        $recipes = Recipe::where('vendor_id', $vendor->id)->where('is_active', true)->with(['yieldUnit', 'latestCost'])->orderBy('name')->get();
         $atgaaCodes = $this->catalogService->getAtgaaClassifications();
 
-        return view('wholesale.products.create', compact('vendor', 'categories', 'units', 'physicalIngredients', 'atgaaCodes'));
+        return view('wholesale.products.create', compact('vendor', 'categories', 'units', 'warehouses', 'physicalIngredients', 'recipes', 'atgaaCodes'));
     }
 
     /**
@@ -81,6 +97,8 @@ class WholesaleProductController extends Controller
             'is_vat_applicable' => ['boolean'],
             'vat_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'physical_stock_ingredient_id' => ['nullable', 'integer', Rule::exists('ingredients', 'id')->where('vendor_id', $vendor->id)],
+            'default_warehouse_id' => ['nullable', 'integer', Rule::exists('warehouses', 'id')->where('vendor_id', $vendor->id)],
+            'recipe_id' => ['nullable', 'integer', Rule::exists('recipes', 'id')->where('vendor_id', $vendor->id)],
             'description' => ['nullable', 'string'],
             'packaging_type' => ['nullable', 'string', 'max:50'],
             'packaging_units_count' => ['nullable', 'numeric', 'min:1'],
@@ -100,7 +118,22 @@ class WholesaleProductController extends Controller
      */
     public function show(WholesaleProduct $product): View
     {
-        $product->load(['category', 'unit', 'packagingUnit', 'physicalStockIngredient', 'packagings', 'atgaaClassification']);
+        $product->load([
+            'category',
+            'unit',
+            'packagingUnit',
+            'physicalStockIngredient.unit',
+            'physicalStockIngredient.balances',
+            'defaultWarehouse',
+            'packagings',
+            'atgaaClassification',
+            'recipe.yieldUnit',
+            'recipe.portionUnit',
+            'recipe.latestCost',
+            'recipe.items.ingredient.unit',
+            'recipe.items.subRecipe',
+            'recipe.packagings',
+        ]);
         $vendor = $this->tenantContext->getTenant();
 
         return view('wholesale.products.show', compact('product', 'vendor'));
@@ -117,10 +150,24 @@ class WholesaleProductController extends Controller
             $q->whereNull('vendor_id')->orWhere('vendor_id', $vendor->id);
         })->where('is_active', true)->orderBy('name')->get();
 
-        $physicalIngredients = Ingredient::where('vendor_id', $vendor->id)->where('is_active', true)->orderBy('name')->get();
+        $warehouses = Warehouse::where('vendor_id', $vendor->id)->where('is_active', true)->orderBy('is_default', 'desc')->orderBy('name')->get();
+        if ($warehouses->isEmpty()) {
+            $defaultWh = Warehouse::create([
+                'vendor_id' => $vendor->id,
+                'name' => __('Հիմնական Կենտրոնական Պահեստ'),
+                'code' => 'WH-MAIN',
+                'type' => Warehouse::TYPE_MAIN,
+                'is_active' => true,
+                'is_default' => true,
+            ]);
+            $warehouses = collect([$defaultWh]);
+        }
+
+        $physicalIngredients = Ingredient::with(['unit', 'balances'])->where('vendor_id', $vendor->id)->where('is_active', true)->orderBy('name')->get();
+        $recipes = Recipe::where('vendor_id', $vendor->id)->where('is_active', true)->with(['yieldUnit', 'latestCost'])->orderBy('name')->get();
         $atgaaCodes = $this->catalogService->getAtgaaClassifications();
 
-        return view('wholesale.products.edit', compact('product', 'vendor', 'categories', 'units', 'physicalIngredients', 'atgaaCodes'));
+        return view('wholesale.products.edit', compact('product', 'vendor', 'categories', 'units', 'warehouses', 'physicalIngredients', 'recipes', 'atgaaCodes'));
     }
 
     /**
@@ -153,6 +200,8 @@ class WholesaleProductController extends Controller
             'is_vat_applicable' => ['boolean'],
             'vat_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'physical_stock_ingredient_id' => ['nullable', 'integer', Rule::exists('ingredients', 'id')->where('vendor_id', $vendor->id)],
+            'default_warehouse_id' => ['nullable', 'integer', Rule::exists('warehouses', 'id')->where('vendor_id', $vendor->id)],
+            'recipe_id' => ['nullable', 'integer', Rule::exists('recipes', 'id')->where('vendor_id', $vendor->id)],
             'description' => ['nullable', 'string'],
             'is_active' => ['boolean'],
         ]);

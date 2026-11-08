@@ -34,7 +34,7 @@ class WholesaleSaleItem extends Model
     {
         return [
             'quantity' => 'decimal:4',
-            'unit_price' => 'decimal:4',
+            'unit_price' => 'decimal:5',
             'discount_amount' => 'decimal:4',
             'subtotal' => 'decimal:4',
             'is_vat_applicable' => 'boolean',

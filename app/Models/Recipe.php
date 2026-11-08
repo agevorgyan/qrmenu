@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domains\Wholesale\Models\WholesaleProduct;
 use App\Models\Traits\BelongsToVendor;
 use App\Models\Traits\HasContentTranslations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -41,6 +42,7 @@ class Recipe extends Model
     protected $fillable = [
         'vendor_id',
         'product_id',
+        'wholesale_product_id',
         'produced_ingredient_id',
         'category_id',
         'name',
@@ -87,6 +89,16 @@ class Recipe extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    public function wholesaleProduct(): BelongsTo
+    {
+        return $this->belongsTo(WholesaleProduct::class, 'wholesale_product_id');
+    }
+
+    public function wholesaleProducts(): HasMany
+    {
+        return $this->hasMany(WholesaleProduct::class, 'recipe_id');
     }
 
     public function producedIngredient(): BelongsTo
