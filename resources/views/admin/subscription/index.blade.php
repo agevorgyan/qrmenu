@@ -477,7 +477,7 @@
         backdrop-filter: blur(10px) !important;
         -webkit-backdrop-filter: blur(10px) !important;
         z-index: 99999 !important;
-        display: flex !important;
+        display: flex;
         align-items: center !important;
         justify-content: center !important;
         padding: 1.25rem !important;
@@ -485,6 +485,10 @@
         overflow-y: auto !important;
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
+    }
+
+    .sub-modal-overlay[style*="display: none"] {
+        display: none !important;
     }
 
     .subscription-modal-container {
