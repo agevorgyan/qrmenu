@@ -61,6 +61,26 @@ class SubscriptionAddon extends Model
         return $this->hasMany(VendorSubscriptionAddon::class, 'subscription_addon_id');
     }
 
+    public function getValueIncrementAttribute(): ?int
+    {
+        return $this->quantity_value;
+    }
+
+    public function setValueIncrementAttribute(?int $value): void
+    {
+        $this->attributes['quantity_value'] = $value;
+    }
+
+    public function getBillingPeriodAttribute(): ?string
+    {
+        return $this->billing_type;
+    }
+
+    public function setBillingPeriodAttribute(?string $value): void
+    {
+        $this->attributes['billing_type'] = $value;
+    }
+
     public function localizedName(?string $locale = null): string
     {
         $loc = strtolower(trim($locale ?: app()->getLocale() ?: 'hy'));

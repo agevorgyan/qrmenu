@@ -3,6 +3,7 @@
 namespace App\Services\Payments\Gateways;
 
 use App\Models\PaymentAttempt;
+use App\Models\SystemSetting;
 use App\Services\Payments\Contracts\PaymentGatewayInterface;
 use App\Services\Payments\DTOs\PaymentInitiationResult;
 use App\Services\Payments\DTOs\PaymentVerificationResult;
@@ -105,9 +106,15 @@ class FastShiftGateway implements PaymentGatewayInterface
         }
 
         $vendor = $attempt->vendor;
-        $settings = $vendor->getPaymentSettings()['gateways']['fastshift'] ?? [];
-        $merchantId = $settings['merchant_id'] ?? '';
-        $secretKey = $settings['secret_key'] ?? '';
+        $vendorSettings = $vendor?->getPaymentSettings()['gateways']['fastshift'] ?? [];
+        $platformSettings = SystemSetting::getPaymentGatewaySettings()['fastshift'] ?? [];
+        $vMerc = ! empty($vendorSettings['merchant_id']) ? $vendorSettings['merchant_id'] : '';
+        $pMerc = ! empty($platformSettings['merchant_id']) ? $platformSettings['merchant_id'] : '';
+        $merchantId = ($attempt->isSubscriptionPayment() || empty($vMerc)) ? ($pMerc ?: $vMerc) : $vMerc;
+
+        $vSecret = ! empty($vendorSettings['api_key']) ? $vendorSettings['api_key'] : ($vendorSettings['secret_key'] ?? '');
+        $pSecret = ! empty($platformSettings['api_key']) ? $platformSettings['api_key'] : '';
+        $secretKey = ($attempt->isSubscriptionPayment() || empty($vSecret)) ? ($pSecret ?: $vSecret) : $vSecret;
 
         if (! empty($secretKey) && $hash) {
             $formattedAmount = number_format((float) $amount, 2, '.', '');

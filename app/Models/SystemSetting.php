@@ -200,4 +200,58 @@ class SystemSetting extends Model
 
         return static::getLogoDark();
     }
+
+    /**
+     * Get platform payment gateway settings with defaults.
+     *
+     * @return array<string, mixed>
+     */
+    public static function getPaymentGatewaySettings(): array
+    {
+        $all = static::getAll();
+
+        return [
+            'idram' => [
+                'enabled' => filter_var($all['payment_idram_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'merchant_id' => $all['payment_idram_merchant_id'] ?? '',
+                'secret_key' => $all['payment_idram_secret_key'] ?? '',
+                'sandbox' => filter_var($all['payment_idram_sandbox'] ?? true, FILTER_VALIDATE_BOOLEAN),
+            ],
+            'telcell' => [
+                'enabled' => filter_var($all['payment_telcell_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'shop_id' => $all['payment_telcell_shop_id'] ?? '',
+                'key' => $all['payment_telcell_key'] ?? '',
+                'sandbox' => filter_var($all['payment_telcell_sandbox'] ?? true, FILTER_VALIDATE_BOOLEAN),
+            ],
+            'fastshift' => [
+                'enabled' => filter_var($all['payment_fastshift_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'merchant_id' => $all['payment_fastshift_merchant_id'] ?? '',
+                'api_key' => $all['payment_fastshift_api_key'] ?? '',
+                'sandbox' => filter_var($all['payment_fastshift_sandbox'] ?? true, FILTER_VALIDATE_BOOLEAN),
+            ],
+            'arca' => [
+                'enabled' => filter_var($all['payment_arca_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'merchant_id' => $all['payment_arca_merchant_id'] ?? '',
+                'terminal_id' => $all['payment_arca_terminal_id'] ?? '',
+                'username' => $all['payment_arca_username'] ?? '',
+                'password' => $all['payment_arca_password'] ?? '',
+                'sandbox' => filter_var($all['payment_arca_sandbox'] ?? true, FILTER_VALIDATE_BOOLEAN),
+            ],
+            'stripe' => [
+                'enabled' => filter_var($all['payment_stripe_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'publishable_key' => $all['payment_stripe_publishable_key'] ?? '',
+                'secret_key' => $all['payment_stripe_secret_key'] ?? '',
+                'webhook_secret' => $all['payment_stripe_webhook_secret'] ?? '',
+                'sandbox' => filter_var($all['payment_stripe_sandbox'] ?? true, FILTER_VALIDATE_BOOLEAN),
+            ],
+            'bank_transfer' => [
+                'enabled' => filter_var($all['payment_bank_transfer_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                'company_name' => $all['payment_bank_transfer_company_name'] ?? '«Մենյու ԷյԷմ» ՍՊԸ',
+                'tin' => $all['payment_bank_transfer_tin'] ?? '02893072',
+                'bank_name' => $all['payment_bank_transfer_bank_name'] ?? '«Ամերիաբանկ» ՓԲԸ',
+                'account_number' => $all['payment_bank_transfer_account_number'] ?? '1570055555550100',
+                'notes' => $all['payment_bank_transfer_notes'] ?? 'Վճարման նպատակ՝ QR Menu բաժանորդագրություն (նշել հաշվի համարը)',
+            ],
+        ];
+    }
 }

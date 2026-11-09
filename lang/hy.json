@@ -7615,5 +7615,20 @@
     "Subscription payment failed or was rejected.": "Բաժանորդագրության վճարումը մերժվել է կամ չի հաստատվել։",
     "Payment request is pending confirmation. Your subscription will be activated once verified.": "Վճարման հարցումը գտնվում է հաստատման փուլում։ Բաժանորդագրությունը կակտիվանա ստուգումից հետո։",
     "1. Select Plan to Renew": "1. Ընտրել երկարաձգվող փաթեթը",
-    "Renew & Pay": "Երկարաձգել և Վճարել"
+    "Renew & Pay": "Երկարաձգել և Վճարել",
+    "Payment Gateways": "Վճարային համակարգեր",
+    "Edit Subscription Add-on": "Խմբագրել բաժանորդագրության հավելումը",
+    "Add-on is Active and available to partners": "Հավելումն ակտիվ է և հասանելի գործընկերներին",
+    "Payment Gateway Credentials": "Վճարային համակարգերի տվյալներ",
+    "Configure Idram, Telcell, FastShift, ArCa, Stripe credentials and official bank requisites.": "Կարգավորեք Իդրամ, Թելսել, FastShift, ArCa, Stripe տվյալները և բանկային ռեկվիզիտները:",
+    "Configure Gateways": "Կարգավորել համակարգերը",
+    "SaaS Platform Payment Gateways & Requisites": "SaaS հարթակի վճարային համակարգեր և ռեկվիզիտներ",
+    "Configure credentials for online subscription renewals and platform-level gateway processing. If a partner does not have dedicated credentials, platform gateways can also be used as fallback.": "Կարգավորեք տվյալներ բաժանորդագրությունների օնլայն երկարաձգման և վճարումների համար: Գործընկերոջ անձնական տվյալների բացակայության դեպքում այս կարգավորումները կծառայեն որպես հիմնական:",
+    "Save All Payment Settings": "Պահպանել վճարային կարգավորումները",
+    "Bank Transfer & Invoice Requisites": "Բանկային փոխանցման և հաշվի ռեկվիզիտներ",
+    "Invoice Instructions \/ Notes": "Հաշվի նշումներ \/ Ցուցումներ",
+    "Beneficiary Company": "Շահառու ընկերություն",
+    "TIN \/ Tax ID (ՀՎՀՀ)": "ՀՎՀՀ",
+    "Account Number (AMD) \/ IBAN": "Հաշվեհամար (AMD) \/ IBAN",
+    "Are you sure you want to delete this add-on?": "Վստա՞հ եք, որ ցանկանում եք հեռացնել այս հավելումը:"
 }

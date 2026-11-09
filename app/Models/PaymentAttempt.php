@@ -95,6 +95,11 @@ class PaymentAttempt extends Model
         return $this->status === PaymentStatus::Paid;
     }
 
+    public function isSubscriptionPayment(): bool
+    {
+        return ! empty($this->subscription_id);
+    }
+
     public function isExpired(): bool
     {
         if ($this->status === PaymentStatus::Expired) {

@@ -3,6 +3,7 @@
 namespace App\Services\Payments\Gateways;
 
 use App\Models\PaymentAttempt;
+use App\Models\SystemSetting;
 use App\Services\Payments\Contracts\PaymentGatewayInterface;
 use App\Services\Payments\DTOs\PaymentInitiationResult;
 use App\Services\Payments\DTOs\PaymentVerificationResult;
@@ -29,9 +30,15 @@ class ArcaGateway implements PaymentGatewayInterface
     public function initiatePayment(PaymentAttempt $attempt, array $options = []): PaymentInitiationResult
     {
         $vendor = $attempt->vendor;
-        $settings = $vendor->getPaymentSettings()['gateways']['arca'] ?? [];
-        $userName = $settings['username'] ?? $settings['merchant_id'] ?? null;
-        $password = $settings['password'] ?? $settings['secret_key'] ?? null;
+        $vendorSettings = $vendor?->getPaymentSettings()['gateways']['arca'] ?? [];
+        $platformSettings = SystemSetting::getPaymentGatewaySettings()['arca'] ?? [];
+        $vUser = ! empty($vendorSettings['username']) ? $vendorSettings['username'] : ($vendorSettings['merchant_id'] ?? null);
+        $pUser = ! empty($platformSettings['username']) ? $platformSettings['username'] : (! empty($platformSettings['merchant_id']) ? $platformSettings['merchant_id'] : null);
+        $userName = ($attempt->isSubscriptionPayment() || empty($vUser)) ? ($pUser ?: $vUser) : $vUser;
+
+        $vPass = ! empty($vendorSettings['password']) ? $vendorSettings['password'] : ($vendorSettings['secret_key'] ?? null);
+        $pPass = ! empty($platformSettings['password']) ? $platformSettings['password'] : null;
+        $password = ($attempt->isSubscriptionPayment() || empty($vPass)) ? ($pPass ?: $vPass) : $vPass;
 
         $returnUrl = route('client.payment.callback', [
             'vendor_slug' => $vendor->slug,
@@ -106,9 +113,15 @@ class ArcaGateway implements PaymentGatewayInterface
         }
 
         $vendor = $attempt->vendor;
-        $settings = $vendor->getPaymentSettings()['gateways']['arca'] ?? [];
-        $userName = $settings['username'] ?? $settings['merchant_id'] ?? null;
-        $password = $settings['password'] ?? $settings['secret_key'] ?? null;
+        $vendorSettings = $vendor?->getPaymentSettings()['gateways']['arca'] ?? [];
+        $platformSettings = SystemSetting::getPaymentGatewaySettings()['arca'] ?? [];
+        $vUser = ! empty($vendorSettings['username']) ? $vendorSettings['username'] : ($vendorSettings['merchant_id'] ?? null);
+        $pUser = ! empty($platformSettings['username']) ? $platformSettings['username'] : (! empty($platformSettings['merchant_id']) ? $platformSettings['merchant_id'] : null);
+        $userName = ($attempt->isSubscriptionPayment() || empty($vUser)) ? ($pUser ?: $vUser) : $vUser;
+
+        $vPass = ! empty($vendorSettings['password']) ? $vendorSettings['password'] : ($vendorSettings['secret_key'] ?? null);
+        $pPass = ! empty($platformSettings['password']) ? $platformSettings['password'] : null;
+        $password = ($attempt->isSubscriptionPayment() || empty($vPass)) ? ($pPass ?: $vPass) : $vPass;
 
         if (empty($userName) || empty($password)) {
             return PaymentVerificationResult::pending(
@@ -202,9 +215,15 @@ class ArcaGateway implements PaymentGatewayInterface
 
         // Verify authenticity against ArCa server if credentials configured
         $vendor = $attempt->vendor;
-        $settings = $vendor->getPaymentSettings()['gateways']['arca'] ?? [];
-        $userName = $settings['username'] ?? $settings['merchant_id'] ?? null;
-        $password = $settings['password'] ?? $settings['secret_key'] ?? null;
+        $vendorSettings = $vendor?->getPaymentSettings()['gateways']['arca'] ?? [];
+        $platformSettings = SystemSetting::getPaymentGatewaySettings()['arca'] ?? [];
+        $vUser = ! empty($vendorSettings['username']) ? $vendorSettings['username'] : ($vendorSettings['merchant_id'] ?? null);
+        $pUser = ! empty($platformSettings['username']) ? $platformSettings['username'] : (! empty($platformSettings['merchant_id']) ? $platformSettings['merchant_id'] : null);
+        $userName = ($attempt->isSubscriptionPayment() || empty($vUser)) ? ($pUser ?: $vUser) : $vUser;
+
+        $vPass = ! empty($vendorSettings['password']) ? $vendorSettings['password'] : ($vendorSettings['secret_key'] ?? null);
+        $pPass = ! empty($platformSettings['password']) ? $platformSettings['password'] : null;
+        $password = ($attempt->isSubscriptionPayment() || empty($vPass)) ? ($pPass ?: $vPass) : $vPass;
         $checksum = $payload['checksum'] ?? null;
 
         // If checksum passed by ArCa callback, verify it

@@ -3,6 +3,7 @@
 namespace App\Services\Payments\Gateways;
 
 use App\Models\PaymentAttempt;
+use App\Models\SystemSetting;
 use App\Services\Payments\Contracts\PaymentGatewayInterface;
 use App\Services\Payments\DTOs\PaymentInitiationResult;
 use App\Services\Payments\DTOs\PaymentVerificationResult;
@@ -27,8 +28,11 @@ class TelcellGateway implements PaymentGatewayInterface
     public function initiatePayment(PaymentAttempt $attempt, array $options = []): PaymentInitiationResult
     {
         $vendor = $attempt->vendor;
-        $settings = $vendor->getPaymentSettings()['gateways']['telcell'] ?? [];
-        $shopId = $settings['shop_id'] ?? $settings['merchant_id'] ?? null;
+        $vendorSettings = $vendor?->getPaymentSettings()['gateways']['telcell'] ?? [];
+        $platformSettings = SystemSetting::getPaymentGatewaySettings()['telcell'] ?? [];
+        $vShop = ! empty($vendorSettings['shop_id']) ? $vendorSettings['shop_id'] : ($vendorSettings['merchant_id'] ?? null);
+        $pShop = ! empty($platformSettings['shop_id']) ? $platformSettings['shop_id'] : null;
+        $shopId = ($attempt->isSubscriptionPayment() || empty($vShop)) ? ($pShop ?: $vShop) : $vShop;
 
         $returnUrl = route('client.payment.callback', [
             'vendor_slug' => $vendor->slug,
@@ -104,9 +108,15 @@ class TelcellGateway implements PaymentGatewayInterface
         }
 
         $vendor = $attempt->vendor;
-        $settings = $vendor->getPaymentSettings()['gateways']['telcell'] ?? [];
-        $expectedIssuer = $settings['shop_id'] ?? $settings['merchant_id'] ?? null;
-        $securityKey = $settings['security_key'] ?? $settings['secret_key'] ?? null;
+        $vendorSettings = $vendor?->getPaymentSettings()['gateways']['telcell'] ?? [];
+        $platformSettings = SystemSetting::getPaymentGatewaySettings()['telcell'] ?? [];
+        $vShop = ! empty($vendorSettings['shop_id']) ? $vendorSettings['shop_id'] : ($vendorSettings['merchant_id'] ?? null);
+        $pShop = ! empty($platformSettings['shop_id']) ? $platformSettings['shop_id'] : null;
+        $expectedIssuer = ($attempt->isSubscriptionPayment() || empty($vShop)) ? ($pShop ?: $vShop) : $vShop;
+
+        $vKey = ! empty($vendorSettings['key']) ? $vendorSettings['key'] : (! empty($vendorSettings['security_key']) ? $vendorSettings['security_key'] : ($vendorSettings['secret_key'] ?? null));
+        $pKey = ! empty($platformSettings['key']) ? $platformSettings['key'] : null;
+        $securityKey = ($attempt->isSubscriptionPayment() || empty($vKey)) ? ($pKey ?: $vKey) : $vKey;
 
         if ($expectedIssuer && $issuer !== $expectedIssuer) {
             return PaymentVerificationResult::failed(

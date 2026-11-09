@@ -306,8 +306,12 @@
             <i class="fa-brands fa-telegram" style="color: #229ed9;"></i>
             <span>{{ __('Telegram Notifications') }}</span>
         </button>
+        <button type="button" class="settings-tab-btn" :class="activeTab === 'payments' ? 'active' : ''" @click="activeTab = 'payments'; window.location.hash = 'payments'">
+            <i class="fa-solid fa-credit-card" style="color: #6366f1;"></i>
+            <span>{{ __('Payment Gateways') }}</span>
+        </button>
         <button type="button" class="settings-tab-btn" :class="activeTab === 'security' ? 'active' : ''" @click="activeTab = 'security'; window.location.hash = 'security'">
-            <i class="fa-solid fa-shield-halved" style="color: #6366f1;"></i>
+            <i class="fa-solid fa-shield-halved" style="color: #10b981;"></i>
             <span>{{ __('Security & 2FA') }}</span>
         </button>
     </div>
@@ -357,13 +361,16 @@
         <!-- ============================================== -->
         <x-superadmin.settings.telegram-tab :settings="$settings" />
 
-        <!-- Submit Button (shown across all config tabs) -->
-        <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem; margin-bottom: 2.5rem;" x-show="activeTab !== 'security'">
+        <!-- Submit Button (shown across config tabs 1-5) -->
+        <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem; margin-bottom: 2.5rem;" x-show="activeTab !== 'security' && activeTab !== 'payments'">
             <button type="submit" class="btn-save">
                 <i class="fa-solid fa-floppy-disk"></i> {{ __('Save All Settings') }}
             </button>
         </div>
     </form>
+
+    <!-- TAB 6: PAYMENT GATEWAYS & REQUISITES -->
+    <x-superadmin.settings.payments-tab :settings="$settings" :paymentGatewaySettings="$paymentGatewaySettings" />
 
     <!-- 5. Admin Profile & Security Settings (2FA, Email & Password Change) -->
     <div id="security-section" x-show="activeTab === 'security'" x-cloak style="margin-top: 1.5rem; padding-top: 2rem; border-top: 2px solid var(--border-color); margin-bottom: 3rem;" x-data="securityModule()">

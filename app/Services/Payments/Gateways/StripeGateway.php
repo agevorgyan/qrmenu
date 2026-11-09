@@ -3,6 +3,7 @@
 namespace App\Services\Payments\Gateways;
 
 use App\Models\PaymentAttempt;
+use App\Models\SystemSetting;
 use App\Services\Payments\Contracts\PaymentGatewayInterface;
 use App\Services\Payments\DTOs\PaymentInitiationResult;
 use App\Services\Payments\DTOs\PaymentVerificationResult;
@@ -29,8 +30,13 @@ class StripeGateway implements PaymentGatewayInterface
     public function initiatePayment(PaymentAttempt $attempt, array $options = []): PaymentInitiationResult
     {
         $vendor = $attempt->vendor;
-        $settings = $vendor->getPaymentSettings()['gateways']['stripe'] ?? [];
-        $secretKey = ! empty($settings['secret_key']) ? $settings['secret_key'] : config('services.stripe.secret');
+        $vendorSettings = $vendor?->getPaymentSettings()['gateways']['stripe'] ?? [];
+        $platformSettings = SystemSetting::getPaymentGatewaySettings()['stripe'] ?? [];
+        $vendorSecret = ! empty($vendorSettings['secret_key']) ? $vendorSettings['secret_key'] : null;
+        $platformSecret = ! empty($platformSettings['secret_key']) ? $platformSettings['secret_key'] : null;
+        $secretKey = ($attempt->isSubscriptionPayment() || empty($vendorSecret))
+            ? ($platformSecret ?: $vendorSecret ?: config('services.stripe.secret'))
+            : ($vendorSecret ?: config('services.stripe.secret'));
 
         // Build checkout redirect URL or fallback to internal checkout URL
         $returnUrl = route('client.payment.callback', [
@@ -124,8 +130,13 @@ class StripeGateway implements PaymentGatewayInterface
         }
 
         $vendor = $attempt->vendor;
-        $settings = $vendor->getPaymentSettings()['gateways']['stripe'] ?? [];
-        $secretKey = ! empty($settings['secret_key']) ? $settings['secret_key'] : config('services.stripe.secret');
+        $vendorSettings = $vendor?->getPaymentSettings()['gateways']['stripe'] ?? [];
+        $platformSettings = SystemSetting::getPaymentGatewaySettings()['stripe'] ?? [];
+        $vendorSecret = ! empty($vendorSettings['secret_key']) ? $vendorSettings['secret_key'] : null;
+        $platformSecret = ! empty($platformSettings['secret_key']) ? $platformSettings['secret_key'] : null;
+        $secretKey = ($attempt->isSubscriptionPayment() || empty($vendorSecret))
+            ? ($platformSecret ?: $vendorSecret ?: config('services.stripe.secret'))
+            : ($vendorSecret ?: config('services.stripe.secret'));
 
         if (empty($secretKey)) {
             return PaymentVerificationResult::pending(
@@ -292,8 +303,13 @@ class StripeGateway implements PaymentGatewayInterface
     public function queryTransactionStatus(PaymentAttempt $attempt): PaymentVerificationResult
     {
         $vendor = $attempt->vendor;
-        $settings = $vendor?->getPaymentSettings()['gateways']['stripe'] ?? [];
-        $secretKey = ! empty($settings['secret_key']) ? $settings['secret_key'] : config('services.stripe.secret');
+        $vendorSettings = $vendor?->getPaymentSettings()['gateways']['stripe'] ?? [];
+        $platformSettings = SystemSetting::getPaymentGatewaySettings()['stripe'] ?? [];
+        $vendorSecret = ! empty($vendorSettings['secret_key']) ? $vendorSettings['secret_key'] : null;
+        $platformSecret = ! empty($platformSettings['secret_key']) ? $platformSettings['secret_key'] : null;
+        $secretKey = ($attempt->isSubscriptionPayment() || empty($vendorSecret))
+            ? ($platformSecret ?: $vendorSecret ?: config('services.stripe.secret'))
+            : ($vendorSecret ?: config('services.stripe.secret'));
 
         if (empty($secretKey)) {
             return PaymentVerificationResult::pending(

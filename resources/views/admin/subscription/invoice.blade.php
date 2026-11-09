@@ -87,6 +87,9 @@
             </table>
 
             @if($invoice->payment_method === 'bank_transfer' || $invoice->status === 'pending')
+                @php
+                    $bankConfig = \App\Models\SystemSetting::getPaymentGatewaySettings()['bank_transfer'] ?? [];
+                @endphp
                 <div class="mt-8 p-6 bg-slate-50 border border-slate-200 rounded-xl">
                     <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3">
                         <i class="fa-solid fa-building-columns text-emerald-600 mr-1.5"></i>
@@ -95,24 +98,27 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-700">
                         <div>
                             <span class="text-slate-400 block">{{ __('Beneficiary Company:') }}</span>
-                            <strong class="text-slate-900 text-sm">«ԷԼԱԲ» ՍՊԸ (ELAB LLC)</strong>
+                            <strong class="text-slate-900 text-sm">{{ $bankConfig['company_name'] ?? '«ԷԼԱԲ» ՍՊԸ (ELAB LLC)' }}</strong>
                         </div>
                         <div>
                             <span class="text-slate-400 block">{{ __('Tax ID (ՀՎՀՀ):') }}</span>
-                            <strong class="text-slate-900 text-sm">02859273</strong>
+                            <strong class="text-slate-900 text-sm">{{ $bankConfig['tin'] ?? '02859273' }}</strong>
                         </div>
                         <div>
                             <span class="text-slate-400 block">{{ __('Bank Name:') }}</span>
-                            <strong class="text-slate-900 text-sm">«Ամերիաբանկ» ՓԲԸ / Ameriabank CJSC</strong>
+                            <strong class="text-slate-900 text-sm">{{ $bankConfig['bank_name'] ?? '«Ամերիաբանկ» ՓԲԸ / Ameriabank CJSC' }}</strong>
                         </div>
                         <div>
                             <span class="text-slate-400 block">{{ __('Account Number (AMD):') }}</span>
-                            <strong class="text-emerald-700 font-mono text-sm">1570055555550100</strong>
+                            <strong class="text-emerald-700 font-mono text-sm">{{ $bankConfig['account_number'] ?? '1570055555550100' }}</strong>
                         </div>
                     </div>
                     <div class="mt-3 pt-3 border-t border-slate-200 text-xs text-slate-600">
                         <span class="font-semibold text-slate-700">{{ __('Payment Purpose / Նպատակ:') }}</span>
                         {{ __('Բաժանորդագրության վճարում (Հաշիվ :invoice)', ['invoice' => $invoice->invoice_number]) }}
+                        @if(!empty($bankConfig['notes']))
+                            <div class="mt-1 text-slate-500">{{ $bankConfig['notes'] }}</div>
+                        @endif
                     </div>
                 </div>
             @endif

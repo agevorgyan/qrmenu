@@ -822,7 +822,7 @@
                     </select>
                 </div>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.85rem; margin-bottom: 1rem;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.85rem; margin-bottom: 0.85rem;">
                 <div>
                     <label class="form-label">{{ __('Name (HY)') }} *</label>
                     <input type="text" name="name_translations[hy]" class="form-input" required>
@@ -836,6 +836,20 @@
                     <input type="text" name="name_translations[ru]" class="form-input" required>
                 </div>
             </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.85rem; margin-bottom: 1rem;">
+                <div>
+                    <label class="form-label">{{ __('Description (HY)') }}</label>
+                    <input type="text" name="description_translations[hy]" class="form-input" placeholder="Նկարագրություն հայերեն">
+                </div>
+                <div>
+                    <label class="form-label">{{ __('Description (EN)') }}</label>
+                    <input type="text" name="description_translations[en]" class="form-input" placeholder="Description in English">
+                </div>
+                <div>
+                    <label class="form-label">{{ __('Description (RU)') }}</label>
+                    <input type="text" name="description_translations[ru]" class="form-input" placeholder="Описание на русском">
+                </div>
+            </div>
             <button type="submit" class="btn btn-primary" style="border-radius: 10px; font-size: 0.82rem;">
                 <i class="fa-solid fa-plus"></i> {{ __('Create Add-on') }}
             </button>
@@ -844,15 +858,37 @@
 
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem;">
         @foreach($subscriptionAddons as $addon)
-            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-                    <strong>{{ $addon->localizedName() }}</strong>
-                    <span class="badge badge-indigo">{{ $addon->addon_type }}</span>
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                        <div>
+                            <strong style="font-size: 1rem;">{{ $addon->localizedName() }}</strong>
+                            <div style="font-size: 0.72rem; color: var(--text-muted);"><code>{{ $addon->code }}</code></div>
+                        </div>
+                        <span class="badge {{ $addon->is_active ? 'badge-indigo' : 'badge-amber' }}">{{ $addon->addon_type }}</span>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">{{ $addon->localizedDescription() ?: __('No description.') }}</p>
+                    <div style="font-size: 0.8rem; color: var(--text-main); margin-bottom: 1rem;">
+                        <div><strong>{{ __('Feature') }}:</strong> <code>{{ $addon->feature_code }}</code> (+{{ $addon->value_increment }})</div>
+                        <div><strong>{{ __('Monthly Price') }}:</strong> {{ number_format((float)$addon->monthly_price, 0) }} {{ $addon->currency }}</div>
+                        @if((float)$addon->yearly_price > 0)
+                            <div><strong>{{ __('Yearly Price') }}:</strong> {{ number_format((float)$addon->yearly_price, 0) }} {{ $addon->currency }}</div>
+                        @endif
+                        <div><strong>{{ __('Status') }}:</strong> <span style="color: {{ $addon->is_active ? '#10b981' : '#f59e0b' }}; font-weight: 700;">{{ $addon->is_active ? __('Active') : __('Disabled') }}</span></div>
+                    </div>
                 </div>
-                <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem;">{{ $addon->localizedDescription() }}</p>
-                <div style="font-size: 0.78rem; color: var(--text-main);">
-                    <div><strong>{{ __('Feature') }}:</strong> <code>{{ $addon->feature_code }}</code> (+{{ $addon->value_increment }})</div>
-                    <div><strong>{{ __('Monthly Price') }}:</strong> {{ number_format((float)$addon->monthly_price, 0) }} {{ $addon->currency }}</div>
+
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+                    <button type="button" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.35rem 0.75rem; border-radius: 8px;" onclick="openEditAddonModal({{ json_encode($addon) }})">
+                        <i class="fa-solid fa-pen-to-square"></i> {{ __('Edit') }}
+                    </button>
+                    <form action="{{ route('superadmin.addons.destroy', $addon->id) }}" method="POST" onsubmit="return confirm('{{ __('Վստա՞հ եք, որ ցանկանում եք հեռացնել այս հավելումը:') }}');" style="margin: 0;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.35rem 0.75rem; border-radius: 8px; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">
+                            <i class="fa-solid fa-trash-can"></i> {{ __('Delete') }}
+                        </button>
+                    </form>
                 </div>
             </div>
         @endforeach
@@ -861,7 +897,17 @@
 
 <!-- TAB 8: SUBSCRIPTION SETTINGS -->
 <div id="tab-settings" class="plan-tab-pane" style="display: none;">
-    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 1.5rem; max-width: 720px;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 1.5rem; max-width: 720px; margin-bottom: 1.5rem;">
+        <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <div>
+                <strong style="color: var(--text-main); font-size: 0.95rem;"><i class="fa-solid fa-credit-card" style="color: var(--primary);"></i> {{ __('Payment Gateway Credentials') }}</strong>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">{{ __('Configure Idram, Telcell, FastShift, ArCa, Stripe credentials and official bank requisites.') }}</div>
+            </div>
+            <a href="{{ route('superadmin.settings.index') }}#payments" class="btn btn-primary" style="font-size: 0.82rem; border-radius: 8px;">
+                <i class="fa-solid fa-gear"></i> {{ __('Configure Gateways') }}
+            </a>
+        </div>
+
         <h3 style="font-family: 'Outfit'; font-size: 1.25rem; font-weight: 800; margin: 0 0 1rem;">
             <i class="fa-solid fa-gear" style="color: var(--primary);"></i> {{ __('Global Subscription & Entitlement Settings') }}
         </h3>
@@ -1061,6 +1107,99 @@
     </div>
 </div>
 
+<!-- Modern Edit Add-on Modal -->
+<div id="editAddonModal" class="modern-modal-overlay" style="display: none;">
+    <div class="modern-modal-box" style="max-width: 650px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color);">
+            <h3 style="font-family: 'Outfit'; font-weight: 800; font-size: 1.2rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-pen-to-square" style="color: var(--primary);"></i>
+                <span>{{ __('Edit Subscription Add-on') }}</span>
+            </h3>
+            <button onclick="document.getElementById('editAddonModal').style.display='none'" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem;">✕</button>
+        </div>
+        <form id="editAddonForm" method="POST">
+            @csrf
+            @method('PUT')
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.85rem; margin-bottom: 0.85rem;">
+                <div>
+                    <label class="form-label">{{ __('Add-on Type') }} *</label>
+                    <select id="edit_addon_type" name="addon_type" class="form-select" required>
+                        <option value="LIMIT">LIMIT (+Limit Increment)</option>
+                        <option value="USAGE">USAGE (+Quota Increment)</option>
+                        <option value="FEATURE">FEATURE (Boolean Unlock)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">{{ __('Target Feature Code') }} *</label>
+                    <input type="text" id="edit_feature_code" name="feature_code" class="form-input" required>
+                </div>
+                <div>
+                    <label class="form-label">{{ __('Increment Value') }}</label>
+                    <input type="number" id="edit_value_increment" name="value_increment" min="1" class="form-input">
+                </div>
+                <div>
+                    <label class="form-label">{{ __('Monthly Price (AMD)') }} *</label>
+                    <input type="number" id="edit_monthly_price" name="monthly_price" min="0" step="100" class="form-input" required>
+                </div>
+                <div>
+                    <label class="form-label">{{ __('Yearly Price (AMD)') }}</label>
+                    <input type="number" id="edit_yearly_price" name="yearly_price" min="0" step="100" class="form-input">
+                </div>
+                <div>
+                    <label class="form-label">{{ __('Billing Period') }} *</label>
+                    <select id="edit_billing_period" name="billing_period" class="form-select" required>
+                        <option value="monthly">{{ __('Monthly') }}</option>
+                        <option value="yearly">{{ __('Yearly') }}</option>
+                        <option value="one_time">{{ __('One-Time') }}</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.85rem; margin-bottom: 0.85rem;">
+                <div>
+                    <label class="form-label">{{ __('Name (HY)') }} *</label>
+                    <input type="text" id="edit_name_hy" name="name_translations[hy]" class="form-input" required>
+                </div>
+                <div>
+                    <label class="form-label">{{ __('Name (EN)') }} *</label>
+                    <input type="text" id="edit_name_en" name="name_translations[en]" class="form-input" required>
+                </div>
+                <div>
+                    <label class="form-label">{{ __('Name (RU)') }} *</label>
+                    <input type="text" id="edit_name_ru" name="name_translations[ru]" class="form-input" required>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.85rem; margin-bottom: 1rem;">
+                <div>
+                    <label class="form-label">{{ __('Description (HY)') }}</label>
+                    <input type="text" id="edit_desc_hy" name="description_translations[hy]" class="form-input">
+                </div>
+                <div>
+                    <label class="form-label">{{ __('Description (EN)') }}</label>
+                    <input type="text" id="edit_desc_en" name="description_translations[en]" class="form-input">
+                </div>
+                <div>
+                    <label class="form-label">{{ __('Description (RU)') }}</label>
+                    <input type="text" id="edit_desc_ru" name="description_translations[ru]" class="form-input">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.88rem; font-weight: 700;">
+                    <input type="checkbox" id="edit_is_active" name="is_active" value="1" style="width: 18px; height: 18px; accent-color: var(--primary);">
+                    <span>{{ __('Add-on is Active and available to partners') }}</span>
+                </label>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('editAddonModal').style.display='none'">{{ __('Cancel') }}</button>
+                <button type="submit" class="btn btn-primary">{{ __('Save Changes') }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     function switchPlanTab(tabKey, btnEl) {
         document.querySelectorAll('.plan-tab-pane').forEach(el => el.style.display = 'none');
@@ -1134,6 +1273,31 @@
         document.getElementById('edit_is_active').checked = plan.is_active;
 
         document.getElementById('editPlanModal').style.display = 'flex';
+    }
+
+    function openEditAddonModal(addon) {
+        const form = document.getElementById('editAddonForm');
+        form.action = '/superadmin/addons/' + addon.id;
+        document.getElementById('edit_addon_type').value = addon.addon_type || 'LIMIT';
+        document.getElementById('edit_feature_code').value = addon.feature_code || '';
+        document.getElementById('edit_value_increment').value = addon.value_increment || addon.quantity_value || 1;
+        document.getElementById('edit_monthly_price').value = addon.monthly_price || 0;
+        document.getElementById('edit_yearly_price').value = addon.yearly_price || '';
+        document.getElementById('edit_billing_period').value = addon.billing_period || addon.billing_type || 'monthly';
+
+        const names = addon.name_translations || {};
+        document.getElementById('edit_name_hy').value = names.hy || addon.name || '';
+        document.getElementById('edit_name_en').value = names.en || addon.name || '';
+        document.getElementById('edit_name_ru').value = names.ru || addon.name || '';
+
+        const descs = addon.description_translations || {};
+        document.getElementById('edit_desc_hy').value = descs.hy || addon.description || '';
+        document.getElementById('edit_desc_en').value = descs.en || addon.description || '';
+        document.getElementById('edit_desc_ru').value = descs.ru || addon.description || '';
+
+        document.getElementById('edit_is_active').checked = !!addon.is_active;
+
+        document.getElementById('editAddonModal').style.display = 'flex';
     }
 </script>
 @endsection

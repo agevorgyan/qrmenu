@@ -378,10 +378,27 @@ class SuperAdminController extends Controller
         return back()->with('success', __('Փաթեթի կարգավիճակը թարմացվեց։'));
     }
 
-    public function destroyPlan(SubscriptionPlan $plan)
+    public function destroyPlan(Request $request, SubscriptionPlan $plan)
     {
-        if ($plan->vendors()->count() > 0 || $plan->subscriptions()->count() > 0) {
-            return back()->with('error', __('Հնարավոր չէ ջնջել փաթեթը, քանի որ այն կցված է գործընկերների։'));
+        $vendorCount = $plan->vendors()->count();
+        $subCount = $plan->subscriptions()->count();
+
+        if ($vendorCount > 0 || $subCount > 0) {
+            $fallbackPlan = SubscriptionPlan::where('id', '!=', $plan->id)
+                ->where('is_active', true)
+                ->orderBy('sort_order', 'asc')
+                ->first();
+
+            if ($request->boolean('force') && $fallbackPlan) {
+                Vendor::where('subscription_plan_id', $plan->id)
+                    ->update(['subscription_plan_id' => $fallbackPlan->id]);
+                Subscription::where('subscription_plan_id', $plan->id)
+                    ->update(['subscription_plan_id' => $fallbackPlan->id]);
+            } else {
+                return back()->with('error', __('Հնարավոր չէ ջնջել փաթեթը, քանի որ այն կցված է :count գործընկերների։ Նախ տեղափոխեք գործընկերներին այլ փաթեթ կամ արխիվացրեք այն։', [
+                    'count' => $vendorCount ?: $subCount,
+                ]));
+            }
         }
 
         app(SecurityAuditService::class)->record(
@@ -393,6 +410,7 @@ class SuperAdminController extends Controller
         );
 
         $plan->prices()->delete();
+        $plan->features()->detach();
         $plan->delete();
 
         return back()->with('success', __('Փաթեթը հաջողությամբ ջնջվեց։'));
@@ -519,6 +537,49 @@ class SuperAdminController extends Controller
         );
 
         return back()->with('success', __(':name-ի բաժանորդագրությունը թարմացվեց։', ['name' => $vendor->name]));
+    }
+
+    /**
+     * Terminate / cancel and delete a vendor's active subscription.
+     */
+    public function destroyVendorSubscription(
+        Vendor $vendor,
+        SubscriptionAuditService $auditService
+    ): RedirectResponse {
+        $subscription = $vendor->subscription;
+        $previous = $subscription ? $subscription->toArray() : [
+            'vendor_id' => $vendor->id,
+            'subscription_status' => $vendor->subscription_status,
+        ];
+
+        if ($subscription) {
+            $auditService->record(
+                actionType: 'subscription.deleted',
+                entityType: Subscription::class,
+                entityId: $subscription->id,
+                previousValues: $previous,
+                actor: Auth::user()
+            );
+            $subscription->delete();
+        }
+
+        $vendor->update([
+            'subscription_plan_id' => null,
+            'subscription_status' => 'cancelled',
+            'subscription_expires_at' => null,
+            'trial_ends_at' => null,
+            'cancelled_at' => now(),
+        ]);
+
+        app(SecurityAuditService::class)->record(
+            event: SecurityAuditLog::EVENT_SUBSCRIPTION_CHANGED,
+            action: "Terminated and removed subscription for vendor [{$vendor->name}] (ID: {$vendor->id}).",
+            actor: Auth::user(),
+            targetType: Vendor::class,
+            targetId: $vendor->id
+        );
+
+        return back()->with('success', __('Գործընկերոջ բաժանորդագրությունը հաջողությամբ չեղարկվեց և հեռացվեց։'));
     }
 
     /**
@@ -882,8 +943,9 @@ class SuperAdminController extends Controller
         $setupSecret = $user->two_factor_secret ?: TwoFactorAuthService::generateSecretKey();
         $otpAuthUri = TwoFactorAuthService::getOtpAuthUri($user, $setupSecret);
         $qrCodeUrl = app(QrCodeService::class)->generateDataUri($otpAuthUri, 200);
+        $paymentGatewaySettings = SystemSetting::getPaymentGatewaySettings();
 
-        return view('superadmin.settings.index', compact('settings', 'user', 'setupSecret', 'otpAuthUri', 'qrCodeUrl'));
+        return view('superadmin.settings.index', compact('settings', 'user', 'setupSecret', 'otpAuthUri', 'qrCodeUrl', 'paymentGatewaySettings'));
     }
 
     public function updateSettings(UpdateSystemSettingsRequest $request)
@@ -1980,18 +2042,27 @@ class SuperAdminController extends Controller
             'compatible_plan_slugs' => 'nullable|array',
         ]);
 
+        $primaryName = $validated['name_translations']['hy']
+            ?? $validated['name_translations']['en']
+            ?? reset($validated['name_translations']);
+        $primaryDesc = $validated['description_translations']['hy']
+            ?? $validated['description_translations']['en']
+            ?? (isset($validated['description_translations']) ? reset($validated['description_translations']) : null);
+
         $addon = SubscriptionAddon::create([
             'code' => strtolower(trim($validated['code'])),
+            'name' => $primaryName ?: $validated['code'],
             'name_translations' => $validated['name_translations'],
+            'description' => $primaryDesc,
             'description_translations' => $validated['description_translations'] ?? [],
             'addon_type' => $validated['addon_type'],
+            'billing_type' => $validated['billing_period'],
             'feature_code' => $validated['feature_code'],
-            'value_increment' => isset($validated['value_increment']) ? (int) $validated['value_increment'] : 1,
+            'quantity_value' => isset($validated['value_increment']) ? (int) $validated['value_increment'] : 1,
             'monthly_price' => (float) $validated['monthly_price'],
-            'yearly_price' => isset($validated['yearly_price']) ? (float) $validated['yearly_price'] : null,
-            'one_time_price' => isset($validated['one_time_price']) ? (float) $validated['one_time_price'] : null,
+            'yearly_price' => isset($validated['yearly_price']) && $validated['yearly_price'] !== null ? (float) $validated['yearly_price'] : 0,
+            'one_time_price' => isset($validated['one_time_price']) && $validated['one_time_price'] !== null ? (float) $validated['one_time_price'] : 0,
             'currency' => strtoupper($validated['currency'] ?? 'AMD'),
-            'billing_period' => $validated['billing_period'],
             'compatible_plan_slugs' => $validated['compatible_plan_slugs'] ?? ['basic', 'pro', 'advanced'],
             'is_active' => true,
             'sort_order' => (SubscriptionAddon::max('sort_order') ?? 0) + 1,
@@ -2032,16 +2103,25 @@ class SuperAdminController extends Controller
 
         $previous = $addon->toArray();
 
+        $primaryName = $validated['name_translations']['hy']
+            ?? $validated['name_translations']['en']
+            ?? reset($validated['name_translations']);
+        $primaryDesc = $validated['description_translations']['hy']
+            ?? $validated['description_translations']['en']
+            ?? (isset($validated['description_translations']) ? reset($validated['description_translations']) : null);
+
         $addon->update([
+            'name' => $primaryName ?: $addon->name,
             'name_translations' => $validated['name_translations'],
+            'description' => $primaryDesc ?: $addon->description,
             'description_translations' => $validated['description_translations'] ?? $addon->description_translations,
             'addon_type' => $validated['addon_type'],
+            'billing_type' => $validated['billing_period'],
             'feature_code' => $validated['feature_code'],
-            'value_increment' => isset($validated['value_increment']) ? (int) $validated['value_increment'] : $addon->value_increment,
+            'quantity_value' => isset($validated['value_increment']) ? (int) $validated['value_increment'] : $addon->quantity_value,
             'monthly_price' => (float) $validated['monthly_price'],
-            'yearly_price' => isset($validated['yearly_price']) ? (float) $validated['yearly_price'] : $addon->yearly_price,
-            'one_time_price' => isset($validated['one_time_price']) ? (float) $validated['one_time_price'] : $addon->one_time_price,
-            'billing_period' => $validated['billing_period'],
+            'yearly_price' => isset($validated['yearly_price']) && $validated['yearly_price'] !== null ? (float) $validated['yearly_price'] : ($addon->yearly_price ?? 0),
+            'one_time_price' => isset($validated['one_time_price']) && $validated['one_time_price'] !== null ? (float) $validated['one_time_price'] : ($addon->one_time_price ?? 0),
             'compatible_plan_slugs' => $validated['compatible_plan_slugs'] ?? $addon->compatible_plan_slugs,
             'is_active' => $request->has('is_active') ? $request->boolean('is_active') : $addon->is_active,
         ]);
@@ -2056,6 +2136,33 @@ class SuperAdminController extends Controller
         );
 
         return back()->with('success', __('Add-on updated successfully.'));
+    }
+
+    /**
+     * Delete an existing Subscription Add-on.
+     */
+    public function destroyAddon(
+        SubscriptionAddon $addon,
+        SubscriptionAuditService $auditService
+    ): RedirectResponse {
+        $activeUsageCount = $addon->vendorAddons()->where('status', 'active')->count();
+
+        if ($activeUsageCount > 0) {
+            return back()->with('error', __('Չի կարող հեռացվել․ հավելումն ակտիվ է :count գործընկերների մոտ։', ['count' => $activeUsageCount]));
+        }
+
+        $auditService->record(
+            actionType: 'addon.deleted',
+            entityType: SubscriptionAddon::class,
+            entityId: $addon->id,
+            previousValues: $addon->toArray(),
+            actor: Auth::user()
+        );
+
+        $addon->vendorAddons()->delete();
+        $addon->delete();
+
+        return back()->with('success', __('Հավելումը հաջողությամբ հեռացվեց։'));
     }
 
     /**
@@ -2138,5 +2245,97 @@ class SuperAdminController extends Controller
         );
 
         return back()->with('success', __('Subscription settings updated successfully.'));
+    }
+
+    /**
+     * Update SuperAdmin platform payment gateway credentials and bank requisites.
+     */
+    public function updatePaymentGatewaySettings(
+        Request $request,
+        SecurityAuditService $securityAuditService
+    ): RedirectResponse {
+        $validated = $request->validate([
+            // Idram
+            'payment_idram_enabled' => 'nullable|boolean',
+            'payment_idram_merchant_id' => 'nullable|string|max:100',
+            'payment_idram_secret_key' => 'nullable|string|max:255',
+            'payment_idram_sandbox' => 'nullable|boolean',
+
+            // Telcell
+            'payment_telcell_enabled' => 'nullable|boolean',
+            'payment_telcell_shop_id' => 'nullable|string|max:100',
+            'payment_telcell_key' => 'nullable|string|max:255',
+            'payment_telcell_sandbox' => 'nullable|boolean',
+
+            // FastShift
+            'payment_fastshift_enabled' => 'nullable|boolean',
+            'payment_fastshift_merchant_id' => 'nullable|string|max:100',
+            'payment_fastshift_api_key' => 'nullable|string|max:255',
+            'payment_fastshift_sandbox' => 'nullable|boolean',
+
+            // ArCa / Ameriabank
+            'payment_arca_enabled' => 'nullable|boolean',
+            'payment_arca_merchant_id' => 'nullable|string|max:100',
+            'payment_arca_terminal_id' => 'nullable|string|max:100',
+            'payment_arca_username' => 'nullable|string|max:100',
+            'payment_arca_password' => 'nullable|string|max:255',
+            'payment_arca_sandbox' => 'nullable|boolean',
+
+            // Stripe
+            'payment_stripe_enabled' => 'nullable|boolean',
+            'payment_stripe_publishable_key' => 'nullable|string|max:255',
+            'payment_stripe_secret_key' => 'nullable|string|max:255',
+            'payment_stripe_webhook_secret' => 'nullable|string|max:255',
+            'payment_stripe_sandbox' => 'nullable|boolean',
+
+            // Bank Transfer Requisites
+            'payment_bank_transfer_enabled' => 'nullable|boolean',
+            'payment_bank_transfer_company_name' => 'nullable|string|max:255',
+            'payment_bank_transfer_tin' => 'nullable|string|max:50',
+            'payment_bank_transfer_bank_name' => 'nullable|string|max:255',
+            'payment_bank_transfer_account_number' => 'nullable|string|max:100',
+            'payment_bank_transfer_notes' => 'nullable|string|max:1000',
+        ]);
+
+        $booleanFields = [
+            'payment_idram_enabled', 'payment_idram_sandbox',
+            'payment_telcell_enabled', 'payment_telcell_sandbox',
+            'payment_fastshift_enabled', 'payment_fastshift_sandbox',
+            'payment_arca_enabled', 'payment_arca_sandbox',
+            'payment_stripe_enabled', 'payment_stripe_sandbox',
+            'payment_bank_transfer_enabled',
+        ];
+
+        foreach ($booleanFields as $field) {
+            $val = $request->boolean($field) ? '1' : '0';
+            SystemSetting::set($field, $val, 'payment');
+        }
+
+        $textFields = [
+            'payment_idram_merchant_id', 'payment_idram_secret_key',
+            'payment_telcell_shop_id', 'payment_telcell_key',
+            'payment_fastshift_merchant_id', 'payment_fastshift_api_key',
+            'payment_arca_merchant_id', 'payment_arca_terminal_id', 'payment_arca_username', 'payment_arca_password',
+            'payment_stripe_publishable_key', 'payment_stripe_secret_key', 'payment_stripe_webhook_secret',
+            'payment_bank_transfer_company_name', 'payment_bank_transfer_tin', 'payment_bank_transfer_bank_name',
+            'payment_bank_transfer_account_number', 'payment_bank_transfer_notes',
+        ];
+
+        foreach ($textFields as $field) {
+            if ($request->has($field)) {
+                SystemSetting::set($field, $request->input($field), 'payment');
+            }
+        }
+
+        $securityAuditService->record(
+            event: SecurityAuditLog::EVENT_SECURITY_CONFIG_CHANGED,
+            action: 'Updated platform payment gateway settings and bank requisites.',
+            actor: Auth::user(),
+            targetType: SystemSetting::class,
+            targetId: null,
+            metadata: ['group' => 'payment']
+        );
+
+        return back()->with('success', __('Վճարային համակարգերի և ռեկվիզիտների կարգավորումները հաջողությամբ պահպանվեցին:'));
     }
 }

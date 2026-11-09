@@ -5,6 +5,16 @@
 @section('content')
 @php
     $plansMap = $allPlans->mapWithKeys(fn($p) => [$p->id => (float) $p->price])->toArray();
+    $addonsMap = $availableAddons->mapWithKeys(fn($a) => [$a->id => [
+        'id' => $a->id,
+        'name' => $a->localizedName(),
+        'description' => $a->localizedDescription(),
+        'addon_type' => $a->addon_type,
+        'monthly_price' => (float) $a->monthly_price,
+        'yearly_price' => (float) ($a->yearly_price ?: ($a->monthly_price * 10)),
+        'currency' => $a->currency,
+        'billing_period' => $a->billing_period ?? 'monthly',
+    ]])->toArray();
     $subStatus = $subscription->status;
     $isCancelAtPeriodEnd = $subscription->cancel_at_period_end;
 @endphp
@@ -18,6 +28,7 @@
     periodMonths: 1,
     paymentMethod: 'bank_transfer',
     pricesMap: @json($plansMap),
+    addonsMap: @json($addonsMap),
     selectedAddon: null,
     addonQuantity: 1,
     addonBillingPeriod: 'monthly',
@@ -28,7 +39,9 @@
         this.modalTab = tab;
         this.renewModalOpen = true;
     },
-    openAddonModal(addon) {
+    openAddonModal(addonId) {
+        const addon = this.addonsMap[addonId];
+        if (!addon) return;
         this.selectedAddon = addon;
         this.addonQuantity = 1;
         this.addonBillingPeriod = addon.billing_period || 'monthly';
@@ -397,16 +410,7 @@
                         </div>
 
                         <button type="button"
-                                @click="openAddonModal(@js([
-                                    'id' => $addon->id,
-                                    'name' => $addon->localizedName(),
-                                    'description' => $addon->localizedDescription(),
-                                    'addon_type' => $addon->addon_type,
-                                    'monthly_price' => (float)$addon->monthly_price,
-                                    'yearly_price' => (float)($addon->yearly_price ?: ($addon->monthly_price * 10)),
-                                    'currency' => $addon->currency,
-                                    'billing_period' => $addon->billing_period ?? 'monthly',
-                                ]))"
+                                @click="openAddonModal({{ $addon->id }})"
                                 class="btn btn-primary"
                                 style="border-radius: 10px; font-weight: 700; font-size: 0.82rem; padding: 0.5rem 0.95rem; display: inline-flex; align-items: center; gap: 0.4rem; box-shadow: 0 2px 8px var(--primary-glow);">
                             <i class="fa-solid fa-plus"></i> {{ __('Add to Plan') }}

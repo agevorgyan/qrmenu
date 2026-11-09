@@ -3,6 +3,7 @@
 namespace App\Services\Payments\Gateways;
 
 use App\Models\PaymentAttempt;
+use App\Models\SystemSetting;
 use App\Services\Payments\Contracts\PaymentGatewayInterface;
 use App\Services\Payments\DTOs\PaymentInitiationResult;
 use App\Services\Payments\DTOs\PaymentVerificationResult;
@@ -28,8 +29,13 @@ class IdramGateway implements PaymentGatewayInterface
     public function initiatePayment(PaymentAttempt $attempt, array $options = []): PaymentInitiationResult
     {
         $vendor = $attempt->vendor;
-        $settings = $vendor->getPaymentSettings()['gateways']['idram'] ?? [];
-        $recAccount = $settings['merchant_id'] ?? null;
+        $vendorSettings = $vendor?->getPaymentSettings()['gateways']['idram'] ?? [];
+        $platformSettings = SystemSetting::getPaymentGatewaySettings()['idram'] ?? [];
+        $vAccount = ! empty($vendorSettings['merchant_id']) ? $vendorSettings['merchant_id'] : null;
+        $pAccount = ! empty($platformSettings['merchant_id']) ? $platformSettings['merchant_id'] : null;
+        $recAccount = ($attempt->isSubscriptionPayment() || empty($vAccount))
+            ? ($pAccount ?: $vAccount)
+            : $vAccount;
 
         if (empty($recAccount)) {
             Log::warning("Idram payment initiated without configured merchant_id for vendor {$vendor->id}");
@@ -111,9 +117,19 @@ class IdramGateway implements PaymentGatewayInterface
         }
 
         $vendor = $attempt->vendor;
-        $settings = $vendor->getPaymentSettings()['gateways']['idram'] ?? [];
-        $expectedAccount = $settings['merchant_id'] ?? null;
-        $secretKey = $settings['secret_key'] ?? null;
+        $vendorSettings = $vendor?->getPaymentSettings()['gateways']['idram'] ?? [];
+        $platformSettings = SystemSetting::getPaymentGatewaySettings()['idram'] ?? [];
+        $vAccount = ! empty($vendorSettings['merchant_id']) ? $vendorSettings['merchant_id'] : null;
+        $pAccount = ! empty($platformSettings['merchant_id']) ? $platformSettings['merchant_id'] : null;
+        $expectedAccount = ($attempt->isSubscriptionPayment() || empty($vAccount))
+            ? ($pAccount ?: $vAccount)
+            : $vAccount;
+
+        $vSecret = ! empty($vendorSettings['secret_key']) ? $vendorSettings['secret_key'] : null;
+        $pSecret = ! empty($platformSettings['secret_key']) ? $platformSettings['secret_key'] : null;
+        $secretKey = ($attempt->isSubscriptionPayment() || empty($vSecret))
+            ? ($pSecret ?: $vSecret)
+            : $vSecret;
 
         // Verify merchant account
         if ($expectedAccount && $recAccount !== $expectedAccount) {

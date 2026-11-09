@@ -7315,5 +7315,20 @@
     "Subscription payment failed or was rejected.": "Subscription payment failed or was rejected.",
     "Payment request is pending confirmation. Your subscription will be activated once verified.": "Payment request is pending confirmation. Your subscription will be activated once verified.",
     "1. Select Plan to Renew": "1. Select Plan to Renew",
-    "Renew & Pay": "Renew & Pay"
+    "Renew & Pay": "Renew & Pay",
+    "Payment Gateways": "Payment Gateways",
+    "Edit Subscription Add-on": "Edit Subscription Add-on",
+    "Add-on is Active and available to partners": "Add-on is Active and available to partners",
+    "Payment Gateway Credentials": "Payment Gateway Credentials",
+    "Configure Idram, Telcell, FastShift, ArCa, Stripe credentials and official bank requisites.": "Configure Idram, Telcell, FastShift, ArCa, Stripe credentials and official bank requisites.",
+    "Configure Gateways": "Configure Gateways",
+    "SaaS Platform Payment Gateways & Requisites": "SaaS Platform Payment Gateways & Requisites",
+    "Configure credentials for online subscription renewals and platform-level gateway processing. If a partner does not have dedicated credentials, platform gateways can also be used as fallback.": "Configure credentials for online subscription renewals and platform-level gateway processing. If a partner does not have dedicated credentials, platform gateways can also be used as fallback.",
+    "Save All Payment Settings": "Save All Payment Settings",
+    "Bank Transfer & Invoice Requisites": "Bank Transfer & Invoice Requisites",
+    "Invoice Instructions \/ Notes": "Invoice Instructions \/ Notes",
+    "Beneficiary Company": "Beneficiary Company",
+    "TIN \/ Tax ID (ՀՎՀՀ)": "TIN \/ Tax ID",
+    "Account Number (AMD) \/ IBAN": "Account Number (AMD) \/ IBAN",
+    "Are you sure you want to delete this add-on?": "Are you sure you want to delete this add-on?"
 }

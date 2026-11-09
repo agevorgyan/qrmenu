@@ -414,6 +414,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::delete('/features/dependencies/{dependency}', [SuperAdminController::class, 'destroyFeatureDependency'])->name('features.dependencies.destroy');
     Route::post('/addons', [SuperAdminController::class, 'storeAddon'])->name('addons.store');
     Route::put('/addons/{addon}', [SuperAdminController::class, 'updateAddon'])->name('addons.update');
+    Route::delete('/addons/{addon}', [SuperAdminController::class, 'destroyAddon'])->name('addons.destroy');
 
     // Vendor Subscriptions & Payment Logs
     Route::get('/subscriptions', [SuperAdminController::class, 'subscriptionsIndex'])->name('subscriptions.index');
@@ -421,6 +422,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::get('/subscriptions/audit-logs', [SuperAdminController::class, 'subscriptionAuditLogs'])->name('subscriptions.audit_logs');
     Route::post('/subscriptions/settings', [SuperAdminController::class, 'updateSubscriptionSettings'])->name('subscriptions.settings.update');
     Route::post('/subscriptions/{vendor}', [SuperAdminController::class, 'updateVendorSubscription'])->name('subscriptions.update');
+    Route::delete('/subscriptions/{vendor}', [SuperAdminController::class, 'destroyVendorSubscription'])->name('subscriptions.destroy');
     Route::post('/subscriptions/{vendor}/suspend', [SuperAdminController::class, 'suspendVendorSubscription'])->name('subscriptions.suspend');
     Route::post('/subscriptions/{vendor}/restore', [SuperAdminController::class, 'restoreVendorSubscription'])->name('subscriptions.restore');
     Route::get('/subscriptions/{vendor}/lifecycle', [SuperAdminController::class, 'vendorLifecycleHistory'])->name('subscriptions.lifecycle');
@@ -446,6 +448,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     // Landing, System & Security Settings Management
     Route::get('/settings', [SuperAdminController::class, 'settingsIndex'])->name('settings.index');
     Route::post('/settings', [SuperAdminController::class, 'updateSettings'])->name('settings.update');
+    Route::post('/settings/payments', [SuperAdminController::class, 'updatePaymentGatewaySettings'])->name('settings.payments.update');
     Route::post('/settings/telegram/test', [SuperAdminController::class, 'testTelegramConnection'])->name('settings.telegram.test');
     Route::post('/settings/security', [SuperAdminController::class, 'updateProfileSecurity'])->name('settings.security');
 

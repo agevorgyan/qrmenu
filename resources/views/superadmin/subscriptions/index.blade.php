@@ -91,6 +91,9 @@
             </h1>
         </div>
         <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+            <a href="{{ route('superadmin.settings.index') }}#payments" class="btn btn-secondary" style="border-radius: 10px; font-size: 0.82rem;">
+                <i class="fa-solid fa-credit-card"></i> {{ __('Payment Gateways') }}
+            </a>
             <a href="{{ route('superadmin.plans.index') }}" class="btn btn-secondary" style="border-radius: 10px; font-size: 0.82rem;">
                 <i class="fa-solid fa-sliders"></i> {{ __('Plan Builder & Catalog') }}
             </a>
@@ -276,6 +279,13 @@
                                     <button class="btn btn-primary" style="font-size: 0.78rem; padding: 0.4rem 0.75rem; border-radius: 8px;" title="{{ __('Record Payment') }}" onclick="openPaymentModal({{ json_encode($v) }})">
                                         <i class="fa-solid fa-receipt"></i> {{ __('+ Payment') }}
                                     </button>
+                                    <form action="{{ route('superadmin.subscriptions.destroy', $v->id) }}" method="POST" onsubmit="return confirm('{{ __('Վստա՞հ եք, որ ցանկանում եք չեղարկել և հեռացնել այս գործընկերոջ բաժանորդագրությունը:') }}');" style="display: inline; margin: 0;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.4rem 0.65rem; border-radius: 8px; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" title="{{ __('Հեռացնել / Չեղարկել բաժանորդագրությունը') }}">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -326,7 +336,7 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 0.5rem;">
                     <button class="btn btn-secondary" style="justify-content: center; font-size: 0.82rem; padding: 0.55rem 0.75rem;" onclick="openSubModal({{ json_encode($v) }})">
                         <i class="fa-solid fa-pen-to-square"></i> {{ __('Modify') }}
                     </button>
@@ -334,6 +344,13 @@
                         <i class="fa-solid fa-receipt"></i> {{ __('+ Payment') }}
                     </button>
                 </div>
+                <form action="{{ route('superadmin.subscriptions.destroy', $v->id) }}" method="POST" onsubmit="return confirm('{{ __('Վստա՞հ եք, որ ցանկանում եք չեղարկել և հեռացնել այս գործընկերոջ բաժանորդագրությունը:') }}');" style="margin: 0;">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 0.78rem; padding: 0.45rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">
+                        <i class="fa-solid fa-trash-can"></i> {{ __('Հեռացնել / Չեղարկել բաժանորդագրությունը') }}
+                    </button>
+                </form>
             </div>
         @endforeach
     </div>
