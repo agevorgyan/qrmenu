@@ -62,26 +62,7 @@
     </div>
 @endif
 
-@if(session('warning'))
-    <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; color: #d97706;">
-        <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.2rem; flex-shrink: 0;"></i>
-        <div style="font-size: 0.9rem; font-weight: 600;">{{ session('warning') }}</div>
-    </div>
-@endif
 
-@if(session('error'))
-    <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; color: #dc2626;">
-        <i class="fa-solid fa-circle-exclamation" style="font-size: 1.2rem; flex-shrink: 0;"></i>
-        <div style="font-size: 0.9rem; font-weight: 600;">{{ session('error') }}</div>
-    </div>
-@endif
-
-@if(session('success'))
-    <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; color: #059669;">
-        <i class="fa-solid fa-circle-check" style="font-size: 1.2rem; flex-shrink: 0;"></i>
-        <div style="font-size: 0.9rem; font-weight: 600;">{{ session('success') }}</div>
-    </div>
-@endif
 
 <!-- Cancellation Notice Banner if Scheduled to Cancel -->
 @if($isCancelAtPeriodEnd)
@@ -184,12 +165,12 @@
         </div>
 
         <div style="display: flex; gap: 0.5rem; justify-content: space-between; align-items: center; margin-top: 0.75rem; flex-wrap: wrap;">
-            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <button type="button" @click="openRenewModal({{ $vendor->subscription_plan_id ?? ($allPlans->first()?->id ?? 1) }}, 'change_plan')" class="btn btn-secondary" style="border-radius: 10px; font-weight: 700; font-size: 0.82rem; padding: 0.5rem 0.95rem; display: inline-flex; align-items: center; gap: 0.4rem;">
-                    <i class="fa-solid fa-arrows-rotate"></i> {{ __('Change Plan') }}
+            <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+                <button type="button" @click="openRenewModal({{ $vendor->subscription_plan_id ?? ($allPlans->first()?->id ?? 1) }}, 'change_plan')" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700; font-size: 0.85rem; padding: 0.55rem 1.05rem; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s ease;">
+                    <i class="fa-solid fa-arrows-rotate" style="color: var(--primary);"></i> {{ __('Change Plan') }}
                 </button>
-                <button type="button" @click="openRenewModal({{ $vendor->subscription_plan_id ?? ($allPlans->first()?->id ?? 1) }}, 'renew')" class="btn btn-primary" style="border-radius: 10px; font-weight: 700; font-size: 0.82rem; padding: 0.5rem 0.95rem; display: inline-flex; align-items: center; gap: 0.4rem; box-shadow: 0 2px 8px var(--primary-glow);">
-                    <i class="fa-solid fa-bolt"></i> {{ __('Renew') }}
+                <button type="button" @click="openRenewModal({{ $vendor->subscription_plan_id ?? ($allPlans->first()?->id ?? 1) }}, 'renew')" class="btn btn-primary" style="border-radius: 12px; font-weight: 800; font-size: 0.85rem; padding: 0.55rem 1.15rem; display: inline-flex; align-items: center; gap: 0.45rem; box-shadow: 0 3px 12px var(--primary-glow); transition: all 0.2s ease;">
+                    <i class="fa-solid fa-bolt" style="color: #f59e0b;"></i> {{ __('Renew & Pay') }}
                 </button>
             </div>
             @if($subStatus->allowsAccess() && ! $isCancelAtPeriodEnd)
@@ -216,15 +197,15 @@
             <button type="button" 
                     @click="openRenewModal({{ $vendor->subscription_plan_id ?? ($allPlans->first()?->id ?? 1) }}, 'renew')" 
                     class="btn btn-primary" 
-                    style="flex: 1; min-width: 170px; justify-content: center; border-radius: 12px; font-weight: 800; padding: 0.85rem 1.25rem; box-shadow: 0 4px 14px var(--primary-glow); display: inline-flex; align-items: center; gap: 0.5rem;">
-                <i class="fa-solid fa-bolt"></i>
-                <span>{{ __('Renew Subscription') }}</span>
+                    style="flex: 1; min-width: 170px; justify-content: center; border-radius: 14px; font-weight: 800; padding: 0.85rem 1.25rem; font-size: 0.95rem; box-shadow: 0 4px 16px var(--primary-glow); display: inline-flex; align-items: center; gap: 0.55rem; transition: all 0.2s ease;">
+                <i class="fa-solid fa-bolt" style="color: #f59e0b;"></i>
+                <span>{{ __('Renew & Pay') }}</span>
             </button>
             <button type="button" 
                     @click="openRenewModal({{ $vendor->subscription_plan_id ?? ($allPlans->first()?->id ?? 1) }}, 'change_plan')" 
                     class="btn btn-secondary" 
-                    style="flex: 1; min-width: 170px; justify-content: center; border-radius: 12px; font-weight: 700; padding: 0.85rem 1.25rem; display: inline-flex; align-items: center; gap: 0.5rem;">
-                <i class="fa-solid fa-arrows-rotate"></i>
+                    style="flex: 1; min-width: 170px; justify-content: center; border-radius: 14px; font-weight: 700; padding: 0.85rem 1.25rem; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 0.55rem; transition: all 0.2s ease;">
+                <i class="fa-solid fa-arrows-rotate" style="color: var(--primary);"></i>
                 <span>{{ __('Change Plan') }}</span>
             </button>
         </div>
@@ -484,6 +465,261 @@
         -webkit-appearance: none !important;
     }
 
+    .sub-modal-overlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(10, 14, 26, 0.78) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        z-index: 99999 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 1.25rem !important;
+        box-sizing: border-box !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .subscription-modal-container {
+        margin: auto !important;
+        position: relative !important;
+        width: 100% !important;
+        max-width: 960px !important;
+        height: 640px !important;
+        max-height: calc(100vh - 2.5rem) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 24px !important;
+        box-shadow: 0 25px 70px -15px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Modal Header */
+    .sub-modal-header {
+        padding: 1.15rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+        background: var(--bg-card);
+        gap: 1rem;
+    }
+
+    .sub-modal-title-group {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+    }
+
+    .sub-modal-icon-badge {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: rgba(37, 99, 235, 0.12);
+        color: var(--primary);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    .sub-modal-title {
+        margin: 0;
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text-main);
+        line-height: 1.2;
+    }
+
+    .sub-modal-subtitle {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-top: 3px;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .sub-modal-close-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: var(--bg-body);
+        border: 1px solid var(--border-color);
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s ease;
+    }
+    .sub-modal-close-btn:hover {
+        color: var(--text-main);
+        border-color: var(--primary);
+        background: var(--nav-hover);
+    }
+
+    /* Segmented Tab Navigation Bar */
+    .sub-tab-bar-container {
+        padding: 0.75rem 1.5rem;
+        background: var(--bg-body);
+        border-bottom: 1px solid var(--border-color);
+        flex-shrink: 0;
+    }
+
+    .sub-tab-bar {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        background: var(--bg-card);
+        padding: 5px;
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+    }
+
+    .sub-tab-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.65rem;
+        padding: 0.65rem 1.25rem;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        user-select: none;
+        outline: none;
+    }
+    .sub-tab-btn:hover {
+        color: var(--text-main);
+        background: var(--nav-hover);
+    }
+    .sub-tab-btn.is-active {
+        background: var(--bg-card) !important;
+        color: var(--primary) !important;
+        border-color: var(--border-color) !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08), 0 0 0 1px var(--primary-glow) !important;
+        font-weight: 800 !important;
+    }
+
+    .sub-tab-icon-wrap {
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        background: var(--bg-body);
+        color: var(--text-muted);
+        transition: all 0.2s ease;
+    }
+    .sub-tab-btn.is-active .sub-tab-icon-wrap {
+        background: var(--primary-glow);
+        color: var(--primary);
+    }
+
+    .sub-tab-pill-badge {
+        font-size: 0.68rem;
+        font-weight: 800;
+        background: var(--primary);
+        color: #ffffff;
+        padding: 1px 7px;
+        border-radius: 9999px;
+        letter-spacing: 0.02em;
+    }
+
+    /* Modal Grid & Split Columns */
+    .subscription-modal-grid {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        flex: 1 1 auto;
+        min-height: 0 !important;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .sub-modal-scrollable-col {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        min-height: 0 !important;
+        max-height: 100% !important;
+        flex: 1 1 auto !important;
+        padding: 1.5rem !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1.35rem !important;
+        scrollbar-width: thin;
+        scrollbar-color: var(--scrollbar-thumb) transparent;
+    }
+    .sub-modal-scrollable-col::-webkit-scrollbar {
+        width: 6px;
+    }
+    .sub-modal-scrollable-col::-webkit-scrollbar-thumb {
+        background: var(--scrollbar-thumb);
+        border-radius: 9999px;
+    }
+
+    .subscription-summary-pane {
+        background: var(--bg-body);
+        border-left: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 0 !important;
+        overflow: hidden;
+    }
+
+    .sub-summary-scroll-content {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 1.25rem 1.25rem 0.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+        scrollbar-width: thin;
+        scrollbar-color: var(--scrollbar-thumb) transparent;
+    }
+    .sub-summary-scroll-content::-webkit-scrollbar {
+        width: 5px;
+    }
+    .sub-summary-scroll-content::-webkit-scrollbar-thumb {
+        background: var(--scrollbar-thumb);
+        border-radius: 9999px;
+    }
+
+    .sub-summary-bottom-action {
+        flex-shrink: 0;
+        padding: 1rem 1.25rem 1.25rem;
+        border-top: 1px solid var(--border-color);
+        background: var(--bg-card);
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    /* Cards & Steps */
     .sub-step-header {
         display: flex;
         align-items: center;
@@ -523,13 +759,11 @@
         user-select: none;
         box-sizing: border-box;
     }
-
     .sub-card:hover {
         border-color: rgba(37, 99, 235, 0.4);
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
-
     .sub-card.is-selected {
         border-color: var(--primary) !important;
         background: var(--bg-card) !important;
@@ -549,14 +783,12 @@
         transition: all 0.2s ease;
         background: transparent;
     }
-
     .sub-card.is-selected .sub-radio-dot,
     .is-selected .sub-radio-dot {
         border-color: var(--primary) !important;
         background: var(--primary) !important;
         box-shadow: 0 0 0 3px var(--primary-glow);
     }
-
     .sub-radio-dot i {
         color: #ffffff;
         font-size: 0.65rem;
@@ -578,19 +810,16 @@
         user-select: none;
         text-align: center;
     }
-
     .sub-period-card:hover {
         border-color: rgba(37, 99, 235, 0.4);
         transform: translateY(-1px);
     }
-
     .sub-period-card.is-selected {
         border-color: var(--primary) !important;
         background: rgba(37, 99, 235, 0.04) !important;
         box-shadow: 0 0 0 3px var(--primary-glow) !important;
         transform: translateY(-2px);
     }
-
     .sub-period-card .period-discount-badge {
         position: absolute;
         top: -9px;
@@ -617,12 +846,10 @@
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         user-select: none;
     }
-
     .sub-pay-card:hover {
         border-color: rgba(37, 99, 235, 0.4);
         transform: translateY(-1px);
     }
-
     .sub-pay-card.is-selected {
         border-color: var(--primary) !important;
         background: var(--bg-card) !important;
@@ -646,24 +873,41 @@
         padding: 0.45rem 0;
         color: var(--text-muted);
     }
-
     .sub-receipt-row strong {
         color: var(--text-main);
         font-weight: 700;
     }
 
-    @media (max-width: 860px) {
+    @media (max-width: 768px) {
         .subscription-modal-container {
-            max-width: 580px !important;
+            max-width: 96% !important;
             height: auto !important;
-            max-height: 94vh !important;
+            max-height: 92vh !important;
+            overflow-y: auto !important;
         }
         .subscription-modal-grid {
             grid-template-columns: 1fr !important;
+            height: auto !important;
+            overflow: visible !important;
+        }
+        .sub-modal-scrollable-col {
+            overflow-y: visible !important;
+            max-height: none !important;
+            padding: 1.15rem !important;
         }
         .subscription-summary-pane {
             border-left: none !important;
             border-top: 1px solid var(--border-color) !important;
+            height: auto !important;
+            overflow: visible !important;
+        }
+    }
+
+    @media (max-height: 700px) {
+        .sub-modal-overlay {
+            align-items: flex-start !important;
+            padding-top: 1rem !important;
+            padding-bottom: 1rem !important;
         }
     }
 </style>
@@ -676,7 +920,7 @@
      x-transition:leave="transition ease-in duration-150"
      x-transition:leave-start="opacity-100"
      x-transition:leave-end="opacity-0"
-     style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.72); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 999; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+     class="sub-modal-overlay">
     
     <div @click.away="renewModalOpen = false" 
          x-transition:enter="transition ease-out duration-200"
@@ -685,55 +929,62 @@
          x-transition:leave="transition ease-in duration-150"
          x-transition:leave-start="opacity-100 scale-100"
          x-transition:leave-end="opacity-0 scale-95"
-         class="subscription-modal-container"
-         style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; width: 100%; max-width: 960px; height: auto; min-height: 560px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 60px -15px rgba(0,0,0,0.5);">
+         class="subscription-modal-container">
         
-        <!-- Fixed Header with Title & Segmented Navigation -->
-        <div style="padding: 1.15rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; background: var(--bg-card); gap: 1rem; flex-wrap: wrap;">
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(37, 99, 235, 0.12); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
+        <!-- Fixed Header with Title & Close Button -->
+        <div class="sub-modal-header">
+            <div class="sub-modal-title-group">
+                <span class="sub-modal-icon-badge">
                     <i class="fa-solid fa-gem"></i>
                 </span>
                 <div>
-                    <h3 style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--text-main); line-height: 1.2;">
+                    <h3 class="sub-modal-title">
                         {{ __('Subscription Management') }}
                     </h3>
-                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">
+                    <div class="sub-modal-subtitle">
                         {{ $vendor->name }} &bull; <span style="font-weight: 700; color: var(--primary);">{{ $vendor->subscriptionPlan?->name ?? __('Current Plan') }}</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Segmented Switcher in Header -->
-            <div style="background: var(--bg-body); padding: 4px; border-radius: 12px; display: inline-flex; gap: 4px; border: 1px solid var(--border-color);">
-                <button type="button" 
-                        @click="modalTab = 'renew'"
-                        :style="modalTab === 'renew' ? 'background: var(--bg-card); color: var(--primary); font-weight: 800; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-color: var(--border-color);' : 'background: transparent; color: var(--text-muted); font-weight: 600; border-color: transparent;'"
-                        style="padding: 0.5rem 1rem; border-width: 1px; border-style: solid; border-radius: 9px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 0.45rem; outline: none;">
-                    <i class="fa-solid fa-bolt" style="color: #f59e0b;"></i>
-                    <span>{{ __('Renew & Pay') }}</span>
-                </button>
-                <button type="button" 
-                        @click="modalTab = 'change_plan'"
-                        :style="modalTab === 'change_plan' ? 'background: var(--bg-card); color: var(--primary); font-weight: 800; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-color: var(--border-color);' : 'background: transparent; color: var(--text-muted); font-weight: 600; border-color: transparent;'"
-                        style="padding: 0.5rem 1rem; border-width: 1px; border-style: solid; border-radius: 9px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 0.45rem; outline: none;">
-                    <i class="fa-solid fa-arrows-rotate"></i>
-                    <span>{{ __('Change Plan') }}</span>
-                </button>
-            </div>
-
-            <button type="button" @click="renewModalOpen = false" style="width: 36px; height: 36px; border-radius: 10px; background: var(--bg-body); border: 1px solid var(--border-color); font-size: 1.1rem; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;" title="{{ __('Close') }}">
+            <button type="button" @click="renewModalOpen = false" class="sub-modal-close-btn" title="{{ __('Close') }}">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
 
+        <!-- Modern Dedicated Segmented Navigation Bar -->
+        <div class="sub-tab-bar-container">
+            <div class="sub-tab-bar">
+                <button type="button" 
+                        @click="modalTab = 'renew'"
+                        class="sub-tab-btn" 
+                        :class="{ 'is-active': modalTab === 'renew' }">
+                    <span class="sub-tab-icon-wrap">
+                        <i class="fa-solid fa-bolt" :style="modalTab === 'renew' ? 'color: #f59e0b;' : ''"></i>
+                    </span>
+                    <span>{{ __('Renew & Pay') }}</span>
+                    <span class="sub-tab-pill-badge" x-show="modalTab === 'renew'">{{ __('Active') }}</span>
+                </button>
+                <button type="button" 
+                        @click="modalTab = 'change_plan'"
+                        class="sub-tab-btn" 
+                        :class="{ 'is-active': modalTab === 'change_plan' }">
+                    <span class="sub-tab-icon-wrap">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                    </span>
+                    <span>{{ __('Change Plan') }}</span>
+                    <span class="sub-tab-pill-badge" x-show="modalTab === 'change_plan'">{{ __('Active') }}</span>
+                </button>
+            </div>
+        </div>
+
         <!-- TAB 1: Direct Plan Change (2-Column Split) -->
-        <div x-show="modalTab === 'change_plan'" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
-            <form action="{{ route('admin.subscription.change_plan') }}" method="POST" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; margin: 0;">
+        <div x-show="modalTab === 'change_plan'" style="display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden;">
+            <form action="{{ route('admin.subscription.change_plan') }}" method="POST" style="display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; margin: 0;">
                 @csrf
-                <div class="subscription-modal-grid" style="display: grid; grid-template-columns: 1fr 340px; flex: 1; min-height: 0; overflow: hidden;">
-                    <!-- Left: Plan Selection -->
-                    <div style="overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
+                <div class="subscription-modal-grid">
+                    <!-- Left: Plan Selection (Independently Scrollable) -->
+                    <div class="sub-modal-scrollable-col">
                         <div>
                             <div class="sub-step-header" style="justify-content: space-between;">
                                 <div style="display: flex; align-items: center; gap: 0.6rem;">
@@ -790,9 +1041,9 @@
                         </div>
                     </div>
 
-                    <!-- Right: Plan Preview & Action -->
-                    <div class="subscription-summary-pane" style="background: var(--bg-body); border-left: 1px solid var(--border-color); padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; overflow-y: auto;">
-                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <!-- Right: Plan Preview & Action (Pinned Bottom Action) -->
+                    <div class="subscription-summary-pane">
+                        <div class="sub-summary-scroll-content">
                             <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;">
                                 <div style="display: flex; align-items: center; gap: 0.6rem;">
                                     <span style="width: 32px; height: 32px; border-radius: 10px; background: rgba(37, 99, 235, 0.12); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem;">
@@ -837,16 +1088,17 @@
                             </div>
                         </div>
 
-                        <div style="margin-top: 1.5rem;">
+                        <!-- Pinned Bottom Action Area -->
+                        <div class="sub-summary-bottom-action">
                             <!-- Case 1: UPGRADE (Requires payment) -->
                             <template x-if="isUpgradeSelected()">
-                                <div>
-                                    <button type="button" @click="modalTab = 'renew'" class="btn btn-primary" style="width: 100%; border-radius: 14px; font-weight: 800; padding: 0.95rem 1.25rem; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.65rem; box-shadow: 0 8px 24px var(--primary-glow); cursor: pointer;">
+                                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                    <button type="button" @click="modalTab = 'renew'" class="btn btn-primary" style="width: 100%; border-radius: 12px; font-weight: 800; padding: 0.85rem 1.25rem; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 0.65rem; box-shadow: 0 8px 24px var(--primary-glow); cursor: pointer;">
                                         <i class="fa-solid fa-credit-card"></i>
                                         <span>{{ __('Proceed to Payment (Upgrade)') }}</span>
                                         <i class="fa-solid fa-arrow-right" style="font-size: 0.85rem;"></i>
                                     </button>
-                                    <div style="display: flex; align-items: center; justify-content: center; gap: 0.45rem; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.85rem; font-weight: 600;">
+                                    <div style="display: flex; align-items: center; justify-content: center; gap: 0.45rem; font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">
                                         <i class="fa-solid fa-shield-halved" style="color: #10b981;"></i>
                                         <span>{{ __('Activated immediately upon payment confirmation') }}</span>
                                     </div>
@@ -855,12 +1107,12 @@
 
                             <!-- Case 2: DOWNGRADE (Takes effect at period end) -->
                             <template x-if="isDowngradeSelected()">
-                                <div>
-                                    <button type="submit" class="btn btn-secondary" style="width: 100%; border-radius: 14px; font-weight: 800; padding: 0.95rem 1.25rem; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.65rem; cursor: pointer; border-color: var(--border-color); background: var(--bg-card); color: var(--text-main);">
+                                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                    <button type="submit" class="btn btn-secondary" style="width: 100%; border-radius: 12px; font-weight: 800; padding: 0.85rem 1.25rem; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 0.65rem; cursor: pointer; border-color: var(--border-color); background: var(--bg-card); color: var(--text-main);">
                                         <i class="fa-solid fa-clock-rotate-left" style="color: #f59e0b;"></i>
                                         <span>{{ __('Schedule Downgrade (At Period End)') }}</span>
                                     </button>
-                                    <div style="display: flex; align-items: center; justify-content: center; gap: 0.45rem; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.85rem; font-weight: 600;">
+                                    <div style="display: flex; align-items: center; justify-content: center; gap: 0.45rem; font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">
                                         <i class="fa-solid fa-circle-check" style="color: #10b981;"></i>
                                         <span>{{ __('Current features remain active until period expiration') }}</span>
                                     </div>
@@ -870,7 +1122,7 @@
                             <!-- Case 3: SAME PLAN -->
                             <template x-if="isSameSelected()">
                                 <div>
-                                    <button type="button" @click="modalTab = 'renew'" class="btn btn-primary" style="width: 100%; border-radius: 14px; font-weight: 800; padding: 0.95rem 1.25rem; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.65rem; cursor: pointer;">
+                                    <button type="button" @click="modalTab = 'renew'" class="btn btn-primary" style="width: 100%; border-radius: 12px; font-weight: 800; padding: 0.85rem 1.25rem; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 0.65rem; cursor: pointer;">
                                         <i class="fa-solid fa-bolt" style="color: #f59e0b;"></i>
                                         <span>{{ __('Renew This Plan') }}</span>
                                     </button>
@@ -883,13 +1135,13 @@
         </div>
 
         <!-- TAB 2: Renewal & Payment Form (2-Column Split) -->
-        <div x-show="modalTab === 'renew'" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
-            <form action="{{ route('admin.subscription.renew') }}" method="POST" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; margin: 0;">
+        <div x-show="modalTab === 'renew'" style="display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden;">
+            <form action="{{ route('admin.subscription.renew') }}" method="POST" style="display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; margin: 0;">
                 @csrf
-                <div class="subscription-modal-grid" style="display: grid; grid-template-columns: 1fr 340px; flex: 1; min-height: 0; overflow: hidden;">
+                <div class="subscription-modal-grid">
                     
-                    <!-- Left: Configuration Canvas -->
-                    <div style="overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.35rem;">
+                    <!-- Left: Configuration Canvas (Independently Scrollable) -->
+                    <div class="sub-modal-scrollable-col">
                         
                         <!-- 1. Select Plan to Renew -->
                         <div>
@@ -1001,9 +1253,9 @@
                         </div>
                     </div>
 
-                    <!-- Right: Order Summary & Checkout Card -->
-                    <div class="subscription-summary-pane" style="background: var(--bg-body); border-left: 1px solid var(--border-color); padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; overflow-y: auto;">
-                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <!-- Right: Order Summary & Pinned Checkout Area -->
+                    <div class="subscription-summary-pane">
+                        <div class="sub-summary-scroll-content">
                             <!-- Summary Header -->
                             <div style="display: flex; align-items: center; gap: 0.6rem;">
                                 <span style="width: 32px; height: 32px; border-radius: 10px; background: rgba(37, 99, 235, 0.12); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem;">
@@ -1053,27 +1305,27 @@
                             </div>
                         </div>
 
-                        <!-- Summary Bottom Action Area -->
-                        <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.85rem;">
-                            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center;">
+                        <!-- Pinned Summary Bottom Action Area (Always Visible) -->
+                        <div class="sub-summary-bottom-action">
+                            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.75rem 0.95rem; display: flex; justify-content: space-between; align-items: center;">
                                 <div>
-                                    <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--text-muted); letter-spacing: 0.05em;">
+                                    <div style="font-size: 0.7rem; text-transform: uppercase; font-weight: 800; color: var(--text-muted); letter-spacing: 0.05em;">
                                         {{ __('Total Due') }}
                                     </div>
-                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 1px;">
+                                    <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 1px;">
                                         {{ __('One-time payment') }}
                                     </div>
                                 </div>
-                                <div style="font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.65rem; color: var(--primary); text-align: right; line-height: 1;" x-text="calculateTotal() + ' ' + '{{ $vendor->currency ?? '֏' }}'"></div>
+                                <div style="font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.55rem; color: var(--primary); text-align: right; line-height: 1;" x-text="calculateTotal() + ' ' + '{{ $vendor->currency ?? '֏' }}'"></div>
                             </div>
 
-                            <button type="submit" class="btn btn-primary" style="width: 100%; border-radius: 14px; font-weight: 800; padding: 0.95rem 1.25rem; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.65rem; box-shadow: 0 8px 24px var(--primary-glow); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;">
+                            <button type="submit" class="btn btn-primary" style="width: 100%; border-radius: 12px; font-weight: 800; padding: 0.85rem 1.25rem; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 0.65rem; box-shadow: 0 8px 24px var(--primary-glow); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;">
                                 <i class="fa-solid fa-lock"></i>
                                 <span>{{ __('Proceed to Payment') }}</span>
                                 <i class="fa-solid fa-arrow-right" style="font-size: 0.85rem; margin-left: 2px;"></i>
                             </button>
 
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.45rem; font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.45rem; font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">
                                 <i class="fa-solid fa-shield-halved" style="color: #10b981;"></i>
                                 <span>{{ __('SSL 256-bit Encrypted & Secure Payment') }}</span>
                             </div>
@@ -1094,7 +1346,7 @@
      x-transition:leave="transition ease-in duration-150"
      x-transition:leave-start="opacity-100"
      x-transition:leave-end="opacity-0"
-     style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.72); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 999; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+     class="sub-modal-overlay">
     <div @click.away="addonModalOpen = false" 
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0 scale-95"
@@ -1102,7 +1354,7 @@
          x-transition:leave="transition ease-in duration-150"
          x-transition:leave-start="opacity-100 scale-100"
          x-transition:leave-end="opacity-0 scale-95"
-         style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; width: 100%; max-width: 480px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 60px -15px rgba(0,0,0,0.5);">
+         style="margin: auto !important; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; width: 100%; max-width: 480px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 60px -15px rgba(0,0,0,0.5);">
         
         <!-- Header -->
         <div style="padding: 1.15rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; background: var(--bg-card);">
@@ -1117,7 +1369,7 @@
                     <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;" x-text="selectedAddon ? selectedAddon.name : ''"></div>
                 </div>
             </div>
-            <button type="button" @click="addonModalOpen = false" style="width: 36px; height: 36px; border-radius: 10px; background: var(--bg-body); border: 1px solid var(--border-color); font-size: 1.1rem; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;">
+            <button type="button" @click="addonModalOpen = false" class="sub-modal-close-btn" title="{{ __('Close') }}">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -1189,8 +1441,55 @@
 </div>
 
 <!-- Cancel Subscription Confirmation Modal (Alpine.js) -->
-<div x-show="cancelModalOpen" x-cloak style="position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 999; display: flex; align-items: center; justify-content: center; padding: 1.25rem;">
-    <div @click.away="cancelModalOpen = false" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; width: 100%; max-width: 480px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35); padding: 1.75rem;">
+<div x-show="cancelModalOpen" 
+     x-cloak 
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="sub-modal-overlay">
+    <div @click.away="cancelModalOpen = false" 
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         style="margin: auto !important; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; width: 100%; max-width: 480px; box-shadow: 0 25px 60px -12px rgba(0,0,0,0.4); padding: 1.75rem; border: 1px solid var(--border-color);">
+        <div style="text-align: center; margin-bottom: 1.25rem;">
+            <div style="width: 56px; height: 56px; border-radius: 18px; background: rgba(239, 68, 68, 0.12); color: #ef4444; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 0.75rem;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.35rem 0;">
+                {{ __('Cancel Subscription?') }}
+            </h3>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+                {{ __('Your subscription will remain active until the end of the current billing period (:date). No further charges will be made.', ['date' => $subscription->current_period_end ? $subscription->current_period_end->format('d.m.Y') : __('current cycle')]) }}
+            </p>
+        </div>
+
+        <form action="{{ route('admin.subscription.cancel') }}" method="POST">
+            @csrf
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">
+                    {{ __('Reason for cancellation (optional):') }}
+                </label>
+                <textarea name="reason" rows="2" class="form-input" placeholder="{{ __('Let us know how we can improve...') }}" style="width: 100%; border-radius: 10px; font-size: 0.85rem;"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem;">
+                <button type="button" @click="cancelModalOpen = false" class="btn btn-secondary" style="flex: 1; justify-content: center; border-radius: 12px; font-weight: 700;">
+                    {{ __('Keep Subscription') }}
+                </button>
+                <button type="submit" class="btn btn-danger" style="flex: 1; justify-content: center; border-radius: 12px; font-weight: 800; background: #ef4444; color: #fff;">
+                    {{ __('Confirm Cancel') }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
         <div style="text-align: center; margin-bottom: 1.25rem;">
             <div style="width: 56px; height: 56px; border-radius: 18px; background: rgba(239, 68, 68, 0.12); color: #ef4444; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 0.75rem;">
                 <i class="fa-solid fa-triangle-exclamation"></i>
