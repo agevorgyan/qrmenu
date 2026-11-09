@@ -920,6 +920,29 @@ self.addEventListener('fetch', event => {
             ])->with('error', 'Վճարման գրառումը չի գտնվել։');
         }
 
+        // Handle SaaS Subscription Payment callback
+        if ($attempt->subscription_id) {
+            if ($attempt->status === PaymentStatus::Paid) {
+                return redirect()->route('admin.subscription')
+                    ->with('success', __('Subscription payment successful! Your subscription and entitlements have been updated.'));
+            }
+
+            $result = $verificationService->verifyAndFinalizeAttempt($attempt, $request->all(), $request->headers->all());
+
+            if ($result->success && $result->status === PaymentStatus::Paid) {
+                return redirect()->route('admin.subscription')
+                    ->with('success', __('Subscription payment successful! Your subscription and entitlements have been updated.'));
+            }
+
+            if ($result->status === PaymentStatus::Failed) {
+                return redirect()->route('admin.subscription')
+                    ->with('error', __('Subscription payment failed or was rejected.'));
+            }
+
+            return redirect()->route('admin.subscription')
+                ->with('info', __('Payment request is pending confirmation. Your subscription will be activated once verified.'));
+        }
+
         $order = $attempt->order;
 
         // 1. If already verified by server-to-server webhook

@@ -522,6 +522,9 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', E
         Route::get('/subscription', [VendorAdminController::class, 'subscriptionIndex'])->name('subscription');
         Route::get('/subscription/overview', [VendorAdminController::class, 'subscriptionIndex'])->name('subscription.index');
         Route::post('/subscription/renew', [VendorAdminController::class, 'renewSubscription'])->name('subscription.renew');
+        Route::post('/subscription/change-plan', [VendorAdminController::class, 'changeSubscriptionPlan'])->name('subscription.change_plan');
+        Route::post('/subscription/addons', [VendorAdminController::class, 'storeAddon'])->name('subscription.addons.store');
+        Route::post('/subscription/addons/{vendorAddon}/cancel', [VendorAdminController::class, 'cancelAddon'])->name('subscription.addons.cancel');
         Route::post('/subscription/cancel', [VendorAdminController::class, 'cancelSubscription'])->name('subscription.cancel');
         Route::post('/subscription/resume', [VendorAdminController::class, 'resumeSubscription'])->name('subscription.resume');
         Route::get('/subscription/invoices/{invoice}', [VendorAdminController::class, 'showInvoice'])->name('subscription.invoices.show');

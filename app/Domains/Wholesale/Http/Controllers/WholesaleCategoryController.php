@@ -147,4 +147,3 @@ class WholesaleCategoryController extends Controller
         }
     }
 }
-

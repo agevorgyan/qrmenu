@@ -11,11 +11,13 @@ use App\Models\SubscriptionAddon;
 use App\Models\SubscriptionPayment;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
+use App\Models\VendorSubscriptionAddon;
 use App\Security\FeatureCatalog;
 use App\Security\QuotaCatalog;
 use App\Services\EntitlementService;
 use App\Services\PaymentGatewayService;
 use App\Services\QuotaService;
+use App\Services\SubscriptionAddonService;
 use App\Services\SubscriptionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -290,6 +292,90 @@ class VendorAdminController extends Controller
                 'invoice' => $payment->invoice_number,
             ])
         );
+    }
+
+    /**
+     * Change vendor subscription plan directly.
+     */
+    public function changeSubscriptionPlan(Request $request, SubscriptionService $subscriptionService)
+    {
+        $vendor = Auth::user()->vendor;
+        $this->authorize('manageBilling', $vendor);
+
+        $validated = $request->validate([
+            'subscription_plan_id' => 'required|integer|exists:subscription_plans,id',
+        ]);
+
+        $newPlan = SubscriptionPlan::where('is_active', true)->findOrFail($validated['subscription_plan_id']);
+
+        $subscription = $vendor->subscription ?? $subscriptionService->getOrCreateForVendor($vendor);
+        $subscriptionService->changePlan(
+            subscription: $subscription,
+            newPlan: $newPlan,
+            reason: 'Plan changed by tenant administrator',
+            actor: Auth::user()
+        );
+
+        app(EntitlementService::class)->clearCache($vendor);
+
+        return back()->with(
+            'success',
+            __('Subscription plan successfully changed to :plan.', ['plan' => __($newPlan->name)])
+        );
+    }
+
+    /**
+     * Add or purchase a subscription add-on for vendor.
+     */
+    public function storeAddon(Request $request, SubscriptionAddonService $addonService)
+    {
+        $vendor = Auth::user()->vendor;
+        $this->authorize('manageBilling', $vendor);
+
+        $validated = $request->validate([
+            'subscription_addon_id' => 'required|integer|exists:subscription_addons,id',
+            'quantity' => 'nullable|integer|min:1|max:100',
+            'billing_period' => 'nullable|string|in:monthly,yearly,one_time',
+        ]);
+
+        $addon = SubscriptionAddon::where('is_active', true)->findOrFail($validated['subscription_addon_id']);
+        $quantity = (int) ($validated['quantity'] ?? 1);
+        $billingPeriod = $validated['billing_period'] ?? $addon->billing_period ?? 'monthly';
+
+        $addonService->assignAddon(
+            vendor: $vendor,
+            addon: $addon,
+            quantity: $quantity,
+            billingPeriod: $billingPeriod,
+            actor: Auth::user(),
+            notes: 'Requested by tenant administrator'
+        );
+
+        app(EntitlementService::class)->clearCache($vendor);
+
+        return back()->with(
+            'success',
+            __('Add-on ":name" has been added to your account.', ['name' => $addon->localizedName()])
+        );
+    }
+
+    /**
+     * Cancel an active vendor add-on.
+     */
+    public function cancelAddon(VendorSubscriptionAddon $vendorAddon, SubscriptionAddonService $addonService)
+    {
+        $vendor = Auth::user()->vendor;
+        $this->authorize('manageBilling', $vendor);
+
+        if ((int) $vendorAddon->vendor_id !== (int) $vendor->id) {
+            abort(403, 'Unauthorized access to other tenant add-on.');
+        }
+
+        $addonService->cancelVendorAddon($vendorAddon, Auth::user(), 'Cancelled by tenant administrator');
+
+        app(EntitlementService::class)->clearCache($vendor);
+
+        return back()->with('success', __('Add-on has been cancelled.'));
     }
 
     /**

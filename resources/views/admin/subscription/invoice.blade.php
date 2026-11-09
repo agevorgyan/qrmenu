@@ -78,13 +78,44 @@
                 </tbody>
                 <tfoot>
                     <tr class="border-t-2 border-slate-200 font-bold text-slate-900">
-                        <td colspan="2" class="py-4 text-right">{{ __('Total Paid') }}:</td>
+                        <td colspan="2" class="py-4 text-right">{{ __('Total Due') }}:</td>
                         <td class="py-4 text-right font-mono text-base">
                             {{ number_format($invoice->amount, 2) }} {{ $invoice->currency }}
                         </td>
                     </tr>
                 </tfoot>
             </table>
+
+            @if($invoice->payment_method === 'bank_transfer' || $invoice->status === 'pending')
+                <div class="mt-8 p-6 bg-slate-50 border border-slate-200 rounded-xl">
+                    <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3">
+                        <i class="fa-solid fa-building-columns text-emerald-600 mr-1.5"></i>
+                        {{ __('Bank Transfer Requisites') }}
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-700">
+                        <div>
+                            <span class="text-slate-400 block">{{ __('Beneficiary Company:') }}</span>
+                            <strong class="text-slate-900 text-sm">«ԷԼԱԲ» ՍՊԸ (ELAB LLC)</strong>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block">{{ __('Tax ID (ՀՎՀՀ):') }}</span>
+                            <strong class="text-slate-900 text-sm">02859273</strong>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block">{{ __('Bank Name:') }}</span>
+                            <strong class="text-slate-900 text-sm">«Ամերիաբանկ» ՓԲԸ / Ameriabank CJSC</strong>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block">{{ __('Account Number (AMD):') }}</span>
+                            <strong class="text-emerald-700 font-mono text-sm">1570055555550100</strong>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-200 text-xs text-slate-600">
+                        <span class="font-semibold text-slate-700">{{ __('Payment Purpose / Նպատակ:') }}</span>
+                        {{ __('Բաժանորդագրության վճարում (Հաշիվ :invoice)', ['invoice' => $invoice->invoice_number]) }}
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 </div>
