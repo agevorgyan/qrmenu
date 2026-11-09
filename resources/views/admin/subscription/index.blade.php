@@ -1490,38 +1490,6 @@
         </form>
     </div>
 </div>
-        <div style="text-align: center; margin-bottom: 1.25rem;">
-            <div style="width: 56px; height: 56px; border-radius: 18px; background: rgba(239, 68, 68, 0.12); color: #ef4444; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 0.75rem;">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-            <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.35rem 0;">
-                {{ __('Cancel Subscription?') }}
-            </h3>
-            <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
-                {{ __('Your subscription will remain active until the end of the current billing period (:date). No further charges will be made.', ['date' => $subscription->current_period_end ? $subscription->current_period_end->format('d.m.Y') : __('current cycle')]) }}
-            </p>
-        </div>
-
-        <form action="{{ route('admin.subscription.cancel') }}" method="POST">
-            @csrf
-            <div style="margin-bottom: 1.25rem;">
-                <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">
-                    {{ __('Reason for cancellation (optional):') }}
-                </label>
-                <textarea name="reason" rows="2" class="form-input" placeholder="{{ __('Let us know how we can improve...') }}" style="width: 100%; border-radius: 10px; font-size: 0.85rem;"></textarea>
-            </div>
-
-            <div style="display: flex; gap: 0.75rem;">
-                <button type="button" @click="cancelModalOpen = false" class="btn btn-secondary" style="flex: 1; justify-content: center; border-radius: 12px; font-weight: 700;">
-                    {{ __('Keep Subscription') }}
-                </button>
-                <button type="submit" class="btn btn-danger" style="flex: 1; justify-content: center; border-radius: 12px; font-weight: 800; background: #ef4444; color: #fff;">
-                    {{ __('Confirm Cancel') }}
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
 
 <!-- Payment History Table -->
 <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 0; overflow: hidden; box-shadow: var(--shadow-card);">
