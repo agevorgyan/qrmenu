@@ -27,7 +27,7 @@
     $isCancelAtPeriodEnd = $subscription->cancel_at_period_end;
 @endphp
 
-<div x-data="subscriptionManagerApp()">
+<div x-data="subscriptionManagerApp()" @keydown.escape.window="renewModalOpen = false; cancelModalOpen = false; addonModalOpen = false">
 
 <!-- Alerts / Messages -->
 @php
@@ -496,7 +496,7 @@
         position: relative !important;
         width: 100% !important;
         max-width: 960px !important;
-        height: 640px !important;
+        height: min(720px, calc(100vh - 2.5rem)) !important;
         max-height: calc(100vh - 2.5rem) !important;
         display: flex !important;
         flex-direction: column !important;
@@ -652,14 +652,36 @@
         letter-spacing: 0.02em;
     }
 
+    /* Modal Content & Tabs */
+    .sub-modal-tab-content {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+    .sub-modal-tab-content[style*="display: none"] {
+        display: none !important;
+    }
+
+    .sub-modal-form {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+    }
+
     /* Modal Grid & Split Columns */
     .subscription-modal-grid {
-        display: grid;
-        grid-template-columns: 1fr 340px;
-        flex: 1 1 auto;
+        display: grid !important;
+        grid-template-columns: 1fr 340px !important;
+        grid-template-rows: 100% !important;
+        flex: 1 1 0% !important;
         min-height: 0 !important;
-        height: 100%;
-        overflow: hidden;
+        height: 100% !important;
+        overflow: hidden !important;
     }
 
     .sub-modal-scrollable-col {
@@ -667,7 +689,7 @@
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         min-height: 0 !important;
-        max-height: 100% !important;
+        height: 100% !important;
         flex: 1 1 auto !important;
         padding: 1.5rem !important;
         display: flex !important;
@@ -685,23 +707,24 @@
     }
 
     .subscription-summary-pane {
-        background: var(--bg-body);
-        border-left: 1px solid var(--border-color);
-        display: flex;
-        flex-direction: column;
-        height: 100%;
+        background: var(--bg-body) !important;
+        border-left: 1px solid var(--border-color) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100% !important;
         min-height: 0 !important;
-        overflow: hidden;
+        overflow: hidden !important;
     }
 
     .sub-summary-scroll-content {
-        flex: 1 1 auto;
-        min-height: 0;
-        overflow-y: auto;
-        padding: 1.25rem 1.25rem 0.5rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.85rem;
+        flex: 1 1 0% !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        padding: 1.25rem 1.25rem 0.5rem !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.85rem !important;
         scrollbar-width: thin;
         scrollbar-color: var(--scrollbar-thumb) transparent;
     }
@@ -714,13 +737,13 @@
     }
 
     .sub-summary-bottom-action {
-        flex-shrink: 0;
-        padding: 1rem 1.25rem 1.25rem;
-        border-top: 1px solid var(--border-color);
-        background: var(--bg-card);
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
+        flex-shrink: 0 !important;
+        padding: 1rem 1.25rem 1.25rem !important;
+        border-top: 1px solid var(--border-color) !important;
+        background: var(--bg-card) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.65rem !important;
     }
 
     /* Cards & Steps */
@@ -889,14 +912,27 @@
             max-height: 92vh !important;
             overflow-y: auto !important;
         }
+        .sub-modal-tab-content {
+            flex: 1 1 auto !important;
+            height: auto !important;
+            overflow: visible !important;
+        }
+        .sub-modal-form {
+            flex: 1 1 auto !important;
+            height: auto !important;
+            overflow: visible !important;
+        }
         .subscription-modal-grid {
             grid-template-columns: 1fr !important;
+            grid-template-rows: auto !important;
+            flex: 1 1 auto !important;
             height: auto !important;
             overflow: visible !important;
         }
         .sub-modal-scrollable-col {
             overflow-y: visible !important;
             max-height: none !important;
+            height: auto !important;
             padding: 1.15rem !important;
         }
         .subscription-summary-pane {
@@ -983,8 +1019,8 @@
         </div>
 
         <!-- TAB 1: Direct Plan Change (2-Column Split) -->
-        <div x-show="modalTab === 'change_plan'" style="display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden;">
-            <form action="{{ route('admin.subscription.change_plan') }}" method="POST" style="display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; margin: 0;">
+        <div x-show="modalTab === 'change_plan'" class="sub-modal-tab-content">
+            <form action="{{ route('admin.subscription.change_plan') }}" method="POST" class="sub-modal-form">
                 @csrf
                 <div class="subscription-modal-grid">
                     <!-- Left: Plan Selection (Independently Scrollable) -->
@@ -1132,6 +1168,10 @@
                                     </button>
                                 </div>
                             </template>
+
+                            <button type="button" @click="renewModalOpen = false" class="btn btn-secondary" style="width: 100%; border-radius: 12px; font-weight: 700; padding: 0.65rem 1rem; font-size: 0.88rem; justify-content: center; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); margin-top: 0.25rem;">
+                                {{ __('Close') }}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1139,8 +1179,8 @@
         </div>
 
         <!-- TAB 2: Renewal & Payment Form (2-Column Split) -->
-        <div x-show="modalTab === 'renew'" style="display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden;">
-            <form action="{{ route('admin.subscription.renew') }}" method="POST" style="display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; margin: 0;">
+        <div x-show="modalTab === 'renew'" class="sub-modal-tab-content">
+            <form action="{{ route('admin.subscription.renew') }}" method="POST" class="sub-modal-form">
                 @csrf
                 <div class="subscription-modal-grid">
                     
@@ -1329,6 +1369,10 @@
                                 <i class="fa-solid fa-arrow-right" style="font-size: 0.85rem; margin-left: 2px;"></i>
                             </button>
 
+                            <button type="button" @click="renewModalOpen = false" class="btn btn-secondary" style="width: 100%; border-radius: 12px; font-weight: 700; padding: 0.65rem 1rem; font-size: 0.88rem; justify-content: center; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main);">
+                                {{ __('Close') }}
+                            </button>
+
                             <div style="display: flex; align-items: center; justify-content: center; gap: 0.45rem; font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">
                                 <i class="fa-solid fa-shield-halved" style="color: #10b981;"></i>
                                 <span>{{ __('SSL 256-bit Encrypted & Secure Payment') }}</span>
@@ -1461,7 +1505,10 @@
          x-transition:leave="transition ease-in duration-150"
          x-transition:leave-start="opacity-100 scale-100"
          x-transition:leave-end="opacity-0 scale-95"
-         style="margin: auto !important; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; width: 100%; max-width: 480px; box-shadow: 0 25px 60px -12px rgba(0,0,0,0.4); padding: 1.75rem; border: 1px solid var(--border-color);">
+         style="margin: auto !important; position: relative !important; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; width: 100%; max-width: 480px; box-shadow: 0 25px 60px -12px rgba(0,0,0,0.4); padding: 1.75rem;">
+        <button type="button" @click="cancelModalOpen = false" class="sub-modal-close-btn" style="position: absolute; top: 1.25rem; right: 1.25rem;" title="{{ __('Close') }}">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
         <div style="text-align: center; margin-bottom: 1.25rem;">
             <div style="width: 56px; height: 56px; border-radius: 18px; background: rgba(239, 68, 68, 0.12); color: #ef4444; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 0.75rem;">
                 <i class="fa-solid fa-triangle-exclamation"></i>

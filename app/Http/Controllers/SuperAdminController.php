@@ -412,7 +412,8 @@ class SuperAdminController extends Controller
         );
 
         $plan->prices()->delete();
-        $plan->features()->detach();
+        $plan->planFeatures()->delete();
+        $plan->versions()->delete();
         $plan->delete();
 
         return back()->with('success', __('Փաթեթը հաջողությամբ ջնջվեց։'));
