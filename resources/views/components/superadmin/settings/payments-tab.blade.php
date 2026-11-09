@@ -45,6 +45,12 @@
                         <input type="password" name="payment_idram_secret_key" class="form-input" value="{{ old('payment_idram_secret_key', $paymentGatewaySettings['idram']['secret_key'] ?? '') }}" placeholder="••••••••••••••••">
                         <span class="input-hint">Օգտագործվում է callback հեշի (checksum) ստուգման համար</span>
                     </div>
+                    <div class="form-group full-width" style="margin-bottom: 0.5rem; background: rgba(249, 115, 22, 0.06); padding: 0.6rem 0.75rem; border-radius: 8px; border: 1px dashed rgba(249, 115, 22, 0.25);">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #ea580c; display: block; margin-bottom: 0.25rem;">
+                            <i class="fa-solid fa-link"></i> RESULT_URL (Իդրամի պայմանագրի համար)
+                        </span>
+                        <code style="font-size: 0.75rem; word-break: break-all; color: var(--text-main); user-select: all;">{{ route('api.webhooks.payment', ['gateway' => 'idram']) }}</code>
+                    </div>
                     <div class="form-group full-width" style="margin-bottom: 0;">
                         <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.82rem; color: var(--text-muted);">
                             <input type="checkbox" name="payment_idram_sandbox" value="1" {{ !empty($paymentGatewaySettings['idram']['sandbox']) ? 'checked' : '' }}>

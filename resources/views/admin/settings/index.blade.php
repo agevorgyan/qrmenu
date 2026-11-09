@@ -1448,6 +1448,10 @@ if (window.Alpine) {
                             <div style="display: flex; flex-direction: column; gap: 0.65rem;">
                                 <input type="text" name="payment_settings[gateways][idram][merchant_id]" value="{{ $paymentSettings['gateways']['idram']['merchant_id'] ?? '' }}" placeholder="Receiver / Merchant ID" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
                                 <input type="password" name="payment_settings[gateways][idram][secret_key]" value="" placeholder="{{ !empty($paymentSettings['gateways']['idram']['configured']) ? '•••••••• (' . ($paymentSettings['gateways']['idram']['masked'] ?? 'Configured') . ')' : 'Secret Key' }}" class="form-control" style="width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.88rem; font-weight: 600; padding: 0.65rem 0.85rem; border-radius: 10px;">
+                                <div style="background: rgba(249, 115, 22, 0.06); padding: 0.5rem 0.65rem; border-radius: 8px; border: 1px dashed rgba(249, 115, 22, 0.25); font-size: 0.75rem;">
+                                    <span style="font-weight: 700; color: #ea580c; display: block; margin-bottom: 0.15rem;">RESULT_URL:</span>
+                                    <code style="word-break: break-all; color: var(--text-main); user-select: all;">{{ route('api.webhooks.payment', ['gateway' => 'idram']) }}</code>
+                                </div>
                                 <label style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--text-muted); cursor: pointer;">
                                     <input type="checkbox" name="payment_settings[gateways][idram][sandbox]" value="1" {{ !empty($paymentSettings['gateways']['idram']['sandbox']) ? 'checked' : '' }} style="accent-color: #ff6f00;">
                                     <span>{{ __('Sandbox / Test Mode') }}</span>
