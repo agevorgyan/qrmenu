@@ -19,49 +19,7 @@
     $isCancelAtPeriodEnd = $subscription->cancel_at_period_end;
 @endphp
 
-<div x-data="{
-    renewModalOpen: false,
-    cancelModalOpen: false,
-    addonModalOpen: false,
-    modalTab: 'renew',
-    selectedPlanId: {{ $vendor->subscription_plan_id ?? ($allPlans->first()?->id ?? 1) }},
-    periodMonths: 1,
-    paymentMethod: 'bank_transfer',
-    pricesMap: @json($plansMap),
-    addonsMap: @json($addonsMap),
-    selectedAddon: null,
-    addonQuantity: 1,
-    addonBillingPeriod: 'monthly',
-    openRenewModal(planId, tab = 'renew') {
-        if (planId) {
-            this.selectedPlanId = planId;
-        }
-        this.modalTab = tab;
-        this.renewModalOpen = true;
-    },
-    openAddonModal(addonId) {
-        const addon = this.addonsMap[addonId];
-        if (!addon) return;
-        this.selectedAddon = addon;
-        this.addonQuantity = 1;
-        this.addonBillingPeriod = addon.billing_period || 'monthly';
-        this.addonModalOpen = true;
-    },
-    calculateTotal() {
-        const base = this.pricesMap[this.selectedPlanId] || 0;
-        let total = base * this.periodMonths;
-        if (this.periodMonths == 12) total = total * 0.80;
-        else if (this.periodMonths == 6) total = total * 0.90;
-        return Number(Math.round(total)).toLocaleString();
-    },
-    calculateAddonTotal() {
-        if (!this.selectedAddon) return '0';
-        let price = (this.addonBillingPeriod === 'yearly' && this.selectedAddon.yearly_price > 0)
-            ? this.selectedAddon.yearly_price
-            : (this.selectedAddon.monthly_price || 0);
-        return Number(Math.round(price * this.addonQuantity)).toLocaleString();
-    }
-}">
+<div x-data="subscriptionManagerApp()">
 
 <!-- Alerts / Messages -->
 @if(session('warning'))
@@ -867,4 +825,52 @@
     @endif
 </div>
 </div>
+
+<script>
+function subscriptionManagerApp() {
+    return {
+        renewModalOpen: false,
+        cancelModalOpen: false,
+        addonModalOpen: false,
+        modalTab: 'renew',
+        selectedPlanId: {{ $vendor->subscription_plan_id ?? ($allPlans->first()?->id ?? 1) }},
+        periodMonths: 1,
+        paymentMethod: 'bank_transfer',
+        pricesMap: @json($plansMap),
+        addonsMap: @json($addonsMap),
+        selectedAddon: null,
+        addonQuantity: 1,
+        addonBillingPeriod: 'monthly',
+        openRenewModal(planId, tab = 'renew') {
+            if (planId) {
+                this.selectedPlanId = planId;
+            }
+            this.modalTab = tab;
+            this.renewModalOpen = true;
+        },
+        openAddonModal(addonId) {
+            const addon = this.addonsMap[addonId];
+            if (!addon) return;
+            this.selectedAddon = addon;
+            this.addonQuantity = 1;
+            this.addonBillingPeriod = addon.billing_period || 'monthly';
+            this.addonModalOpen = true;
+        },
+        calculateTotal() {
+            const base = this.pricesMap[this.selectedPlanId] || 0;
+            let total = base * this.periodMonths;
+            if (this.periodMonths == 12) total = total * 0.80;
+            else if (this.periodMonths == 6) total = total * 0.90;
+            return Number(Math.round(total)).toLocaleString();
+        },
+        calculateAddonTotal() {
+            if (!this.selectedAddon) return '0';
+            let price = (this.addonBillingPeriod === 'yearly' && this.selectedAddon.yearly_price > 0)
+                ? this.selectedAddon.yearly_price
+                : (this.selectedAddon.monthly_price || 0);
+            return Number(Math.round(price * this.addonQuantity)).toLocaleString();
+        }
+    };
+}
+</script>
 @endsection
