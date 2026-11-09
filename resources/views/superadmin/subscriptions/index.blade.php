@@ -426,6 +426,14 @@
 
             <form id="payForm" method="POST">
                 @csrf
+                <div style="margin-bottom: 1rem;">
+                    <label class="form-label">{{ __('Target Plan (for Upgrade or Renewal)') }}</label>
+                    <select id="pay_plan_id" name="subscription_plan_id" class="form-select">
+                        @foreach($plans as $p)
+                            <option value="{{ $p->id }}" data-price="{{ (float) $p->price }}">{{ $p->name }} ({{ number_format($p->price, 0, '.', ' ') }} {{ $p->currency }})</option>
+                        @endforeach
+                    </select>
+                </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label class="form-label">{{ __('Amount (֏)') }} *</label>
@@ -638,11 +646,21 @@
     function openPaymentModal(vendor) {
         document.getElementById('payModalTitle').innerText = i18nPay + ' ' + vendor.name;
         document.getElementById('payForm').action = '/superadmin/subscriptions/' + vendor.id + '/payments';
+        if (vendor.subscription_plan_id) {
+            document.getElementById('pay_plan_id').value = vendor.subscription_plan_id;
+        }
         if (vendor.plan) {
             document.getElementById('pay_amount').value = vendor.plan.price;
         }
 
         document.getElementById('paymentModal').style.display = 'flex';
     }
+
+    document.getElementById('pay_plan_id')?.addEventListener('change', function() {
+        const opt = this.options[this.selectedIndex];
+        if (opt && opt.dataset.price) {
+            document.getElementById('pay_amount').value = opt.dataset.price;
+        }
+    });
 </script>
 @endsection

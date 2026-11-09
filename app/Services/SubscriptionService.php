@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Enums\PaymentStatus;
 use App\Enums\SubscriptionStatus;
 use App\Exceptions\InvalidSubscriptionTransitionException;
+use App\Mail\SubscriptionDowngradedMail;
+use App\Mail\SubscriptionDowngradeScheduledMail;
 use App\Models\PaymentAttempt;
 use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
@@ -15,6 +17,7 @@ use App\Models\Vendor;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class SubscriptionService
 {
@@ -195,6 +198,15 @@ class SubscriptionService
             $priceObj = $plan->priceFor($payment->period_end ? 'monthly' : 'monthly', Vendor::normalizeCurrencyCode($payment->currency ?: 'AMD'));
             $oldStatus = $lockedSub->status;
 
+            $metadata = $lockedSub->metadata ?? [];
+            unset(
+                $metadata['pending_downgrade_plan_id'],
+                $metadata['pending_downgrade_plan_name'],
+                $metadata['pending_downgrade_scheduled_at'],
+                $metadata['pending_downgrade_effective_at'],
+                $metadata['pending_downgrade_reason']
+            );
+
             $lockedSub->update([
                 'subscription_plan_id' => $plan->id,
                 'subscription_plan_price_id' => $priceObj?->id ?? $lockedSub->subscription_plan_price_id,
@@ -209,6 +221,7 @@ class SubscriptionService
                 'renewal_state' => 'active',
                 'auto_renew' => true,
                 'last_payment_reference' => $ref,
+                'metadata' => $metadata,
             ]);
 
             $payment->update([
@@ -305,6 +318,15 @@ class SubscriptionService
             $planPrice = $plan?->priceFor($interval, Vendor::normalizeCurrencyCode($payment->currency ?: ($lockedSub->getRawOriginal('currency') ?: $lockedSub->currency ?: 'AMD')));
             $priceId = $attempt->request_payload['subscription_plan_price_id'] ?? $planPrice?->id ?? $lockedSub->subscription_plan_price_id;
 
+            $metadata = $lockedSub->metadata ?? [];
+            unset(
+                $metadata['pending_downgrade_plan_id'],
+                $metadata['pending_downgrade_plan_name'],
+                $metadata['pending_downgrade_scheduled_at'],
+                $metadata['pending_downgrade_effective_at'],
+                $metadata['pending_downgrade_reason']
+            );
+
             $lockedSub->update([
                 'subscription_plan_id' => $planId,
                 'subscription_plan_price_id' => $priceId,
@@ -319,6 +341,7 @@ class SubscriptionService
                 'cancel_at_period_end' => false,
                 'renewal_state' => 'active',
                 'last_payment_reference' => $ref,
+                'metadata' => $metadata,
             ]);
 
             $payment->update([
@@ -734,11 +757,21 @@ class SubscriptionService
             $priceObj = $newPrice ?? $newPlan->priceFor($lockedSub->billing_interval ?: 'monthly', Vendor::normalizeCurrencyCode($lockedSub->getRawOriginal('currency') ?: $lockedSub->currency ?: 'AMD'));
             $newPriceAmount = $priceObj ? (float) $priceObj->price : (float) $newPlan->price;
 
+            $metadata = $lockedSub->metadata ?? [];
+            unset(
+                $metadata['pending_downgrade_plan_id'],
+                $metadata['pending_downgrade_plan_name'],
+                $metadata['pending_downgrade_scheduled_at'],
+                $metadata['pending_downgrade_effective_at'],
+                $metadata['pending_downgrade_reason']
+            );
+
             $lockedSub->update([
                 'subscription_plan_id' => $newPlan->id,
                 'subscription_plan_price_id' => $priceObj?->id,
                 'price' => $newPriceAmount,
                 'currency' => Vendor::normalizeCurrencyCode($priceObj?->currency ?: $newPlan->getRawOriginal('currency') ?: $newPlan->currency ?: $lockedSub->getRawOriginal('currency') ?: $lockedSub->currency ?: 'AMD'),
+                'metadata' => $metadata,
             ]);
 
             $lockedSub->recordLifecycleEvent(
@@ -756,6 +789,194 @@ class SubscriptionService
 
             Log::info("Subscription {$lockedSub->id} plan changed to {$newPlan->slug}");
         });
+    }
+
+    /**
+     * Determine if changing from currentPlan to newPlan is an upgrade.
+     */
+    public function isUpgrade(?SubscriptionPlan $currentPlan, SubscriptionPlan $newPlan): bool
+    {
+        if (! $currentPlan) {
+            return true;
+        }
+
+        if ((float) $newPlan->price > (float) $currentPlan->price) {
+            return true;
+        }
+
+        if ((float) $newPlan->price < (float) $currentPlan->price) {
+            return false;
+        }
+
+        return (int) $newPlan->sort_order > (int) $currentPlan->sort_order;
+    }
+
+    /**
+     * Determine if changing from currentPlan to newPlan is a downgrade.
+     */
+    public function isDowngrade(?SubscriptionPlan $currentPlan, SubscriptionPlan $newPlan): bool
+    {
+        if (! $currentPlan) {
+            return false;
+        }
+
+        if ((float) $newPlan->price < (float) $currentPlan->price) {
+            return true;
+        }
+
+        if ((float) $newPlan->price > (float) $currentPlan->price) {
+            return false;
+        }
+
+        return (int) $newPlan->sort_order < (int) $currentPlan->sort_order;
+    }
+
+    /**
+     * Schedule a plan downgrade to take effect only after the current billing period expires.
+     * Notifies the partner/vendor and records lifecycle events.
+     */
+    public function scheduleDowngrade(
+        Subscription $subscription,
+        SubscriptionPlan $newPlan,
+        ?User $actor = null,
+        ?string $reason = null
+    ): void {
+        DB::transaction(function () use ($subscription, $newPlan, $actor, $reason) {
+            $lockedSub = Subscription::withoutTenantQuery()->where('id', $subscription->id)->lockForUpdate()->first();
+            if (! $lockedSub) {
+                return;
+            }
+
+            $effectiveDate = $lockedSub->current_period_end ?? now();
+            $metadata = $lockedSub->metadata ?? [];
+            $metadata['pending_downgrade_plan_id'] = $newPlan->id;
+            $metadata['pending_downgrade_plan_name'] = $newPlan->name;
+            $metadata['pending_downgrade_scheduled_at'] = now()->toIso8601String();
+            $metadata['pending_downgrade_effective_at'] = $effectiveDate->toIso8601String();
+            $metadata['pending_downgrade_reason'] = $reason ?: 'Requested by tenant administrator';
+
+            $lockedSub->update(['metadata' => $metadata]);
+
+            $lockedSub->recordLifecycleEvent(
+                event: 'downgrade_scheduled',
+                toStatus: $lockedSub->status,
+                fromStatus: $lockedSub->status,
+                reason: $reason ?: "Downgrade to {$newPlan->name} scheduled for {$effectiveDate->toDateString()}",
+                actor: $actor,
+                metadata: [
+                    'pending_downgrade_plan_id' => $newPlan->id,
+                    'pending_downgrade_plan_name' => $newPlan->name,
+                    'effective_at' => $effectiveDate->toIso8601String(),
+                ],
+                fromPlanId: $lockedSub->subscription_plan_id,
+                toPlanId: $newPlan->id
+            );
+
+            // Notify partner via email
+            $this->notifyDowngradeScheduled($lockedSub, $newPlan, $effectiveDate);
+
+            Log::info("Subscription {$lockedSub->id} downgrade to {$newPlan->name} scheduled for {$effectiveDate->toDateString()}");
+        });
+    }
+
+    /**
+     * Cancel any scheduled plan downgrade.
+     */
+    public function cancelScheduledDowngrade(Subscription $subscription, ?User $actor = null): void
+    {
+        DB::transaction(function () use ($subscription, $actor) {
+            $lockedSub = Subscription::withoutTenantQuery()->where('id', $subscription->id)->lockForUpdate()->first();
+            if (! $lockedSub) {
+                return;
+            }
+
+            $metadata = $lockedSub->metadata ?? [];
+            $targetPlanId = $metadata['pending_downgrade_plan_id'] ?? null;
+            unset(
+                $metadata['pending_downgrade_plan_id'],
+                $metadata['pending_downgrade_plan_name'],
+                $metadata['pending_downgrade_scheduled_at'],
+                $metadata['pending_downgrade_effective_at'],
+                $metadata['pending_downgrade_reason']
+            );
+
+            $lockedSub->update(['metadata' => $metadata]);
+
+            $lockedSub->recordLifecycleEvent(
+                event: 'downgrade_cancelled',
+                toStatus: $lockedSub->status,
+                fromStatus: $lockedSub->status,
+                reason: 'Scheduled downgrade cancelled by user',
+                actor: $actor,
+                metadata: ['cancelled_plan_id' => $targetPlanId]
+            );
+
+            Log::info("Subscription {$lockedSub->id} scheduled downgrade cancelled.");
+        });
+    }
+
+    /**
+     * Execute a scheduled downgrade once the billing period has elapsed.
+     */
+    public function executeScheduledDowngrade(Subscription $subscription, SubscriptionPlan $newPlan): void
+    {
+        $this->changePlan(
+            subscription: $subscription,
+            newPlan: $newPlan,
+            reason: 'Scheduled downgrade executed upon billing period expiration'
+        );
+
+        $this->notifyDowngradeExecuted($subscription, $newPlan);
+
+        Log::info("Subscription {$subscription->id} automatically downgraded to {$newPlan->name} after period elapsed.");
+    }
+
+    /**
+     * Notify vendor that a downgrade has been scheduled.
+     */
+    public function notifyDowngradeScheduled(Subscription $subscription, SubscriptionPlan $newPlan, ?Carbon $effectiveDate = null): void
+    {
+        $vendor = $subscription->vendor ?? Vendor::withoutGlobalScopes()->find($subscription->vendor_id);
+        if (! $vendor) {
+            return;
+        }
+
+        try {
+            $recipients = array_filter(array_unique([
+                $vendor->email,
+                $vendor->users()->where('role', 'vendor_owner')->value('email'),
+            ]));
+
+            foreach ($recipients as $recipient) {
+                Mail::to($recipient)->queue(new SubscriptionDowngradeScheduledMail($vendor, $newPlan, $effectiveDate));
+            }
+        } catch (\Throwable $e) {
+            Log::warning("Could not dispatch scheduled downgrade email for vendor {$vendor->id}: ".$e->getMessage());
+        }
+    }
+
+    /**
+     * Notify vendor that a downgrade has now taken effect.
+     */
+    public function notifyDowngradeExecuted(Subscription $subscription, SubscriptionPlan $newPlan): void
+    {
+        $vendor = $subscription->vendor ?? Vendor::withoutGlobalScopes()->find($subscription->vendor_id);
+        if (! $vendor) {
+            return;
+        }
+
+        try {
+            $recipients = array_filter(array_unique([
+                $vendor->email,
+                $vendor->users()->where('role', 'vendor_owner')->value('email'),
+            ]));
+
+            foreach ($recipients as $recipient) {
+                Mail::to($recipient)->queue(new SubscriptionDowngradedMail($vendor, $newPlan));
+            }
+        } catch (\Throwable $e) {
+            Log::warning("Could not dispatch downgrade executed email for vendor {$vendor->id}: ".$e->getMessage());
+        }
     }
 
     /**
@@ -948,6 +1169,21 @@ class SubscriptionService
                 $lockedSub = Subscription::withoutTenantQuery()->where('id', $sub->id)->lockForUpdate()->first();
                 if (! $lockedSub) {
                     return;
+                }
+
+                // Check if a scheduled downgrade exists and period has elapsed
+                $pendingDowngradePlanId = $lockedSub->metadata['pending_downgrade_plan_id'] ?? null;
+                $periodEnded = ($lockedSub->current_period_end && $lockedSub->current_period_end->isPast())
+                    || ($lockedSub->trial_ends_at && $lockedSub->trial_ends_at->isPast());
+
+                if ($pendingDowngradePlanId && $periodEnded) {
+                    $pendingPlan = SubscriptionPlan::find($pendingDowngradePlanId);
+                    if ($pendingPlan) {
+                        $this->executeScheduledDowngrade($lockedSub, $pendingPlan);
+                        $transitionedCount++;
+
+                        return;
+                    }
                 }
 
                 if ($lockedSub->status === SubscriptionStatus::Trialing && $lockedSub->trial_ends_at && $lockedSub->trial_ends_at->isPast()) {

@@ -3,6 +3,9 @@
 namespace Tests\Feature;
 
 use App\Enums\PaymentStatus;
+use App\Enums\SubscriptionStatus;
+use App\Mail\SubscriptionDowngradedMail;
+use App\Mail\SubscriptionDowngradeScheduledMail;
 use App\Models\MenuTemplate;
 use App\Models\PaymentAttempt;
 use App\Models\SubscriptionAddon;
@@ -14,6 +17,7 @@ use App\Models\VendorSubscriptionAddon;
 use App\Services\SubscriptionService;
 use Database\Seeders\SubscriptionPlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -119,7 +123,7 @@ class VendorSubscriptionManagementAndAddonsTest extends TestCase
         $response->assertSee(__('Available Plans'));
     }
 
-    public function test_vendor_owner_can_change_subscription_plan_directly(): void
+    public function test_vendor_owner_cannot_upgrade_plan_directly_without_payment(): void
     {
         $this->assertEquals($this->basicPlan->id, $this->vendor->subscription_plan_id);
 
@@ -128,11 +132,140 @@ class VendorSubscriptionManagementAndAddonsTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $response->assertSessionHas('success');
+        $response->assertSessionHas('error');
 
         $this->vendor->refresh();
+        $this->assertEquals($this->basicPlan->id, $this->vendor->subscription_plan_id);
+    }
+
+    public function test_vendor_owner_can_schedule_downgrade_effective_at_period_end_and_is_notified(): void
+    {
+        Mail::fake();
+
+        // Put vendor on Pro plan with active period until 30 days in future
+        $subService = app(SubscriptionService::class);
+        $subscription = $subService->getOrCreateForVendor($this->vendor);
+        $subscription->update([
+            'subscription_plan_id' => $this->proPlan->id,
+            'status' => SubscriptionStatus::Active,
+            'current_period_end' => now()->addDays(30),
+        ]);
+        $subService->syncVendor($subscription);
+        $this->vendor->refresh();
         $this->assertEquals($this->proPlan->id, $this->vendor->subscription_plan_id);
-        $this->assertEquals($this->proPlan->slug, $this->vendor->subscription_plan);
+
+        // Vendor requests downgrade to Basic
+        $response = $this->actingAs($this->vendorOwner)->post(route('admin.subscription.change_plan'), [
+            'subscription_plan_id' => $this->basicPlan->id,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        // Current plan MUST remain Pro during the active period
+        $this->vendor->refresh();
+        $subscription->refresh();
+        $this->assertEquals($this->proPlan->id, $this->vendor->subscription_plan_id);
+
+        // Downgrade is scheduled in metadata
+        $this->assertEquals($this->basicPlan->id, $subscription->metadata['pending_downgrade_plan_id'] ?? null);
+
+        // Partner is notified via email
+        Mail::assertQueued(SubscriptionDowngradeScheduledMail::class);
+    }
+
+    public function test_scheduled_downgrade_executes_automatically_when_period_expires(): void
+    {
+        Mail::fake();
+
+        $subService = app(SubscriptionService::class);
+        $subscription = $subService->getOrCreateForVendor($this->vendor);
+        $subscription->update([
+            'subscription_plan_id' => $this->proPlan->id,
+            'status' => SubscriptionStatus::Active,
+            'current_period_end' => now()->subDay(), // period expired yesterday!
+            'metadata' => [
+                'pending_downgrade_plan_id' => $this->basicPlan->id,
+                'pending_downgrade_plan_name' => $this->basicPlan->name,
+                'pending_downgrade_scheduled_at' => now()->subDays(5)->toIso8601String(),
+                'pending_downgrade_effective_at' => now()->subDay()->toIso8601String(),
+            ],
+        ]);
+        $subService->syncVendor($subscription);
+
+        // Reconcile expired subscriptions
+        $result = $subService->reconcileExpiredSubscriptions(graceDays: 3);
+        $this->assertGreaterThan(0, $result['transitioned']);
+
+        // Subscription has now automatically downgraded to Basic
+        $subscription->refresh();
+        $this->vendor->refresh();
+        $this->assertEquals($this->basicPlan->id, $subscription->subscription_plan_id);
+        $this->assertEquals($this->basicPlan->id, $this->vendor->subscription_plan_id);
+        $this->assertNull($subscription->metadata['pending_downgrade_plan_id'] ?? null);
+
+        // Partner is notified that downgrade executed
+        Mail::assertQueued(SubscriptionDowngradedMail::class);
+    }
+
+    public function test_vendor_can_cancel_scheduled_downgrade(): void
+    {
+        $subService = app(SubscriptionService::class);
+        $subscription = $subService->getOrCreateForVendor($this->vendor);
+        $subscription->update([
+            'subscription_plan_id' => $this->proPlan->id,
+            'status' => SubscriptionStatus::Active,
+            'current_period_end' => now()->addDays(20),
+            'metadata' => [
+                'pending_downgrade_plan_id' => $this->basicPlan->id,
+            ],
+        ]);
+
+        $response = $this->actingAs($this->vendorOwner)->post(route('admin.subscription.cancel_downgrade'));
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $subscription->refresh();
+        $this->assertNull($subscription->metadata['pending_downgrade_plan_id'] ?? null);
+    }
+
+    public function test_superadmin_can_confirm_offline_payment_and_upgrade_subscription(): void
+    {
+        $superadmin = User::factory()->create([
+            'role' => 'superadmin',
+            'is_active' => true,
+        ]);
+
+        $subService = app(SubscriptionService::class);
+        $subscription = $subService->getOrCreateForVendor($this->vendor);
+        $this->assertEquals($this->basicPlan->id, $this->vendor->subscription_plan_id);
+
+        // Create pending offline payment for Pro plan
+        $payment = SubscriptionPayment::create([
+            'vendor_id' => $this->vendor->id,
+            'subscription_id' => $subscription->id,
+            'subscription_plan_id' => $this->proPlan->id,
+            'amount' => 19900,
+            'currency' => 'AMD',
+            'payment_method' => 'bank_transfer',
+            'invoice_number' => 'INV-TEST-OFFLINE',
+            'period_start' => now()->toDateString(),
+            'period_end' => now()->addMonth()->toDateString(),
+            'status' => 'pending',
+        ]);
+
+        // SuperAdmin confirms offline payment
+        $response = $this->actingAs($superadmin)->post(route('superadmin.subscriptions.payments.confirm', $payment->id));
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $payment->refresh();
+        $this->assertEquals('completed', $payment->status);
+
+        $subscription->refresh();
+        $this->vendor->refresh();
+        $this->assertEquals($this->proPlan->id, $this->vendor->subscription_plan_id);
+        $this->assertEquals(SubscriptionStatus::Active, $subscription->status);
     }
 
     public function test_vendor_owner_can_order_and_activate_subscription_addon(): void

@@ -419,6 +419,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     // Vendor Subscriptions & Payment Logs
     Route::get('/subscriptions', [SuperAdminController::class, 'subscriptionsIndex'])->name('subscriptions.index');
     Route::get('/subscriptions/payments', [SuperAdminController::class, 'allPaymentsIndex'])->name('subscriptions.payments.index');
+    Route::post('/subscriptions/payments/{payment}/confirm', [SuperAdminController::class, 'confirmSubscriptionPayment'])->name('subscriptions.payments.confirm');
     Route::get('/subscriptions/audit-logs', [SuperAdminController::class, 'subscriptionAuditLogs'])->name('subscriptions.audit_logs');
     Route::post('/subscriptions/settings', [SuperAdminController::class, 'updateSubscriptionSettings'])->name('subscriptions.settings.update');
     Route::post('/subscriptions/{vendor}', [SuperAdminController::class, 'updateVendorSubscription'])->name('subscriptions.update');
@@ -526,6 +527,7 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', E
         Route::get('/subscription/overview', [VendorAdminController::class, 'subscriptionIndex'])->name('subscription.index');
         Route::post('/subscription/renew', [VendorAdminController::class, 'renewSubscription'])->name('subscription.renew');
         Route::post('/subscription/change-plan', [VendorAdminController::class, 'changeSubscriptionPlan'])->name('subscription.change_plan');
+        Route::post('/subscription/cancel-downgrade', [VendorAdminController::class, 'cancelScheduledDowngrade'])->name('subscription.cancel_downgrade');
         Route::post('/subscription/addons', [VendorAdminController::class, 'storeAddon'])->name('subscription.addons.store');
         Route::post('/subscription/addons/{vendorAddon}/cancel', [VendorAdminController::class, 'cancelAddon'])->name('subscription.addons.cancel');
         Route::post('/subscription/cancel', [VendorAdminController::class, 'cancelSubscription'])->name('subscription.cancel');

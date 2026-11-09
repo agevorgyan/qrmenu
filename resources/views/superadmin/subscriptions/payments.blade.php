@@ -132,9 +132,19 @@
                                 @endif
                             </td>
                             <td style="text-align: right; white-space: nowrap;">
-                                <a href="{{ route('admin.subscription.invoices.show', $p->id) }}" target="_blank" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.65rem; border-radius: 8px;">
-                                    <i class="fa-solid fa-file-invoice"></i> {{ __('Invoice') }}
-                                </a>
+                                <div style="display: inline-flex; align-items: center; gap: 0.4rem; justify-content: flex-end;">
+                                    @if($p->status === 'pending')
+                                        <form action="{{ route('superadmin.subscriptions.payments.confirm', $p->id) }}" method="POST" style="display: inline; margin: 0;" onsubmit="return confirm('{{ __('Հաստատե՞լ offline վճարումը և ակտիվացնել/թարմացնել գործընկերոջ բաժանորդագրությունը:') }}');">
+                                            @csrf
+                                            <button type="submit" class="btn btn-primary" style="font-size: 0.75rem; padding: 0.35rem 0.65rem; border-radius: 8px; background: #10b981; border-color: #10b981;">
+                                                <i class="fa-solid fa-check"></i> {{ __('Հաստատել վճարումը') }}
+                                            </button>
+                                        </form>
+                                    @endif
+                                    <a href="{{ route('admin.subscription.invoices.show', $p->id) }}" target="_blank" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.65rem; border-radius: 8px;">
+                                        <i class="fa-solid fa-file-invoice"></i> {{ __('Invoice') }}
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     @endforeach

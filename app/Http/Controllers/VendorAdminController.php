@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\SubscriptionStatus;
 use App\Http\Requests\RenewSubscriptionRequest;
 use App\Models\AnalyticsLog;
 use App\Models\FeatureCategory;
@@ -295,7 +296,10 @@ class VendorAdminController extends Controller
     }
 
     /**
-     * Change vendor subscription plan directly.
+     * Handle vendor subscription plan change request.
+     * Enforces business rules:
+     * 1. Upgrades require payment confirmation (cannot be changed directly without payment).
+     * 2. Downgrades take effect only after the current billing period expires, and partner is notified.
      */
     public function changeSubscriptionPlan(Request $request, SubscriptionService $subscriptionService)
     {
@@ -307,20 +311,79 @@ class VendorAdminController extends Controller
         ]);
 
         $newPlan = SubscriptionPlan::where('is_active', true)->findOrFail($validated['subscription_plan_id']);
-
         $subscription = $vendor->subscription ?? $subscriptionService->getOrCreateForVendor($vendor);
+        $currentPlan = $subscription->plan ?? $vendor->plan ?? SubscriptionPlan::find($vendor->subscription_plan_id);
+
+        if ($currentPlan && (int) $currentPlan->id === (int) $newPlan->id) {
+            return back()->with('info', __('Դուք արդեն օգտվում եք :plan փաթեթից:', ['plan' => __($newPlan->name)]));
+        }
+
+        $isUpgrade = $currentPlan ? $subscriptionService->isUpgrade($currentPlan, $newPlan) : true;
+
+        // RULE 1: UPGRADE requires payment confirmation! Cannot be done directly without payment!
+        if ($isUpgrade) {
+            return back()->with(
+                'error',
+                __('Փաթեթի բարձրացումը (Upgrade) պահանջում է վճարման հաստատում: Խնդրում ենք կատարել վճարումը կամ դիմել ադմինիստրատորին:')
+            );
+        }
+
+        // RULE 2: DOWNGRADE happens only after time has expired!
+        $hasActiveTimeRemaining = $subscription->status === SubscriptionStatus::Active
+            && $subscription->current_period_end
+            && $subscription->current_period_end->isFuture();
+
+        if ($hasActiveTimeRemaining) {
+            $subscriptionService->scheduleDowngrade(
+                subscription: $subscription,
+                newPlan: $newPlan,
+                actor: Auth::user(),
+                reason: 'Requested by tenant administrator via dashboard'
+            );
+
+            return back()->with(
+                'success',
+                __('Փաթեթի իջեցումը դեպի :plan հաջողությամբ գրանցվել է: Ձեր ընթացիկ փաթեթը կգործի մինչև ժամկետի ավարտը (:date), որից հետո այն ավտոմատ կփոխանցվի նոր փաթեթին: Ծանուցումը ուղարկվել է Ձեր էլ. հասցեին:', [
+                    'plan' => __($newPlan->name),
+                    'date' => $subscription->current_period_end->format('d.m.Y'),
+                ])
+            );
+        }
+
+        // If period is already expired, past due, or no active period: apply downgrade now and notify
         $subscriptionService->changePlan(
             subscription: $subscription,
             newPlan: $newPlan,
-            reason: 'Plan changed by tenant administrator',
+            reason: 'Downgraded after period elapsed',
             actor: Auth::user()
         );
+
+        $subscriptionService->notifyDowngradeExecuted($subscription, $newPlan);
 
         app(EntitlementService::class)->clearCache($vendor);
 
         return back()->with(
             'success',
             __('Subscription plan successfully changed to :plan.', ['plan' => __($newPlan->name)])
+        );
+    }
+
+    /**
+     * Cancel scheduled subscription plan downgrade.
+     */
+    public function cancelScheduledDowngrade(SubscriptionService $subscriptionService)
+    {
+        $vendor = Auth::user()->vendor;
+        $this->authorize('manageBilling', $vendor);
+
+        $subscription = $vendor->subscription;
+        if ($subscription) {
+            $subscriptionService->cancelScheduledDowngrade($subscription, actor: Auth::user());
+        }
+
+        return back()->with(
+            'success',
+            __('Փաթեթի իջեցումը չեղարկվել է: Ձեր ընթացիկ փաթեթը կշարունակի գործել:')
         );
     }
 

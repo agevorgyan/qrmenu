@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PaymentStatus;
 use App\Enums\SubscriptionStatus;
 use App\Http\Requests\UpdateSystemSettingsRequest;
 use App\Models\EmailLog;
@@ -11,6 +12,7 @@ use App\Models\FeatureDependency;
 use App\Models\Location;
 use App\Models\MenuTemplate;
 use App\Models\Order;
+use App\Models\PaymentAttempt;
 use App\Models\SecurityAuditLog;
 use App\Models\Subscription;
 use App\Models\SubscriptionAddon;
@@ -514,13 +516,33 @@ class SuperAdminController extends Controller
 
         $oldStatus = $subscription->status->value;
 
+        $metadata = $subscription->metadata ?? [];
+        unset(
+            $metadata['pending_downgrade_plan_id'],
+            $metadata['pending_downgrade_plan_name'],
+            $metadata['pending_downgrade_scheduled_at'],
+            $metadata['pending_downgrade_effective_at'],
+            $metadata['pending_downgrade_reason']
+        );
+
         $subscription->update([
             'subscription_plan_id' => $plan->id,
             'status' => $status,
             'current_period_end' => $newExpiry,
             'grace_ends_at' => $status === SubscriptionStatus::Grace ? ($vendor->grace_ends_at ?? now()->addDays(3)) : null,
             'cancelled_at' => $status === SubscriptionStatus::Cancelled ? ($vendor->cancelled_at ?? now()) : null,
+            'metadata' => $metadata,
         ]);
+
+        $subscription->recordLifecycleEvent(
+            event: 'superadmin_granted',
+            toStatus: $status,
+            fromStatus: SubscriptionStatus::tryFrom($oldStatus),
+            reason: $validated['custom_plan_notes'] ?: 'Upgraded/Modified on Free or Administrative basis by SuperAdmin',
+            actor: Auth::user(),
+            actorType: 'superadmin',
+            toPlanId: $plan->id
+        );
 
         $subscriptionService->syncVendor($subscription);
         if (isset($validated['custom_plan_notes'])) {
@@ -742,6 +764,7 @@ class SuperAdminController extends Controller
     public function storeVendorPayment(Request $request, Vendor $vendor)
     {
         $validated = $request->validate([
+            'subscription_plan_id' => 'nullable|exists:subscription_plans,id',
             'amount' => 'required|numeric|min:0',
             'payment_method' => 'required|string',
             'invoice_number' => 'nullable|string',
@@ -755,11 +778,13 @@ class SuperAdminController extends Controller
         $subscription = $vendor->subscription ?? $subscriptionService->getOrCreateForVendor($vendor);
 
         $paymentStatus = in_array($validated['status'], ['paid', 'completed'], true) ? 'completed' : $validated['status'];
+        $targetPlanId = $validated['subscription_plan_id'] ?? $vendor->subscription_plan_id;
+        $targetPlan = SubscriptionPlan::find($targetPlanId) ?? $vendor->plan ?? SubscriptionPlan::find($vendor->subscription_plan_id);
 
         $subPayment = SubscriptionPayment::create([
             'vendor_id' => $vendor->id,
             'subscription_id' => $subscription->id,
-            'subscription_plan_id' => $vendor->subscription_plan_id,
+            'subscription_plan_id' => $targetPlan?->id ?? $vendor->subscription_plan_id,
             'amount' => $validated['amount'],
             'currency' => Vendor::normalizeCurrencyCode($vendor->getRawOriginal('currency') ?: $vendor->currency),
             'payment_method' => $validated['payment_method'],
@@ -771,9 +796,8 @@ class SuperAdminController extends Controller
         ]);
 
         if ($request->has('extend_subscription') && $paymentStatus === 'completed') {
-            $plan = $vendor->plan ?? SubscriptionPlan::find($vendor->subscription_plan_id);
-            if ($plan) {
-                $subscriptionService->activate($subscription, $plan, $subPayment);
+            if ($targetPlan) {
+                $subscriptionService->activate($subscription, $targetPlan, $subPayment, actor: Auth::user());
             }
         } elseif ($paymentStatus === 'failed') {
             $subscriptionService->handlePaymentFailure($subscription, $subPayment);
@@ -788,6 +812,52 @@ class SuperAdminController extends Controller
         );
 
         return back()->with('success', __('Վճարման գրանցումը հաջողությամբ պահպանվեց։'));
+    }
+
+    /**
+     * Confirm a pending offline/online subscription payment and upgrade/renew subscription.
+     */
+    public function confirmSubscriptionPayment(SubscriptionPayment $payment, SubscriptionService $subscriptionService)
+    {
+        $vendor = $payment->vendor;
+        if (! $vendor) {
+            return back()->with('error', __('Գործընկերը չի գտնվել:'));
+        }
+
+        $subscription = $vendor->subscription ?? $subscriptionService->getOrCreateForVendor($vendor);
+        $targetPlan = $payment->plan ?? SubscriptionPlan::find($payment->subscription_plan_id) ?? $vendor->plan;
+
+        $payment->update([
+            'status' => 'completed',
+        ]);
+
+        $attempt = PaymentAttempt::where('subscription_id', $payment->id)->latest()->first();
+
+        $subscriptionService->renew(
+            subscription: $subscription,
+            payment: $payment,
+            attempt: $attempt ?? new PaymentAttempt([
+                'uuid' => (string) Str::uuid(),
+                'vendor_id' => $vendor->id,
+                'gateway' => $payment->payment_method ?? 'bank_transfer',
+                'amount' => $payment->amount,
+                'currency' => $payment->currency,
+                'merchant_reference' => $payment->invoice_number,
+                'provider_transaction_id' => $payment->invoice_number,
+                'status' => PaymentStatus::Paid,
+            ]),
+            actor: Auth::user()
+        );
+
+        app(SecurityAuditService::class)->logPaymentStatusChange(
+            orderOrPaymentId: $payment->id,
+            oldStatus: 'pending',
+            newStatus: 'completed',
+            vendor: $vendor,
+            metadata: ['amount' => $payment->amount, 'method' => $payment->payment_method, 'confirmed_by' => Auth::id()]
+        );
+
+        return back()->with('success', __('Offline վճարումը հաջողությամբ հաստատվեց: Բաժանորդագրությունն ակտիվացվել/թարմացվել է:'));
     }
 
     public function storeFeatureOverride(Request $request, Vendor $vendor)
