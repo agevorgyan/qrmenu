@@ -43,6 +43,10 @@ class PaymentGatewayManager
     public function gateway(string $id): PaymentGatewayInterface
     {
         $id = strtolower($id);
+        if ($id === 'ameriabank' || $id === 'vpos') {
+            $id = 'arca';
+        }
+
         if (! isset($this->gateways[$id])) {
             throw new InvalidArgumentException("Unsupported payment gateway: {$id}");
         }
@@ -52,7 +56,12 @@ class PaymentGatewayManager
 
     public function hasGateway(string $id): bool
     {
-        return isset($this->gateways[strtolower($id)]);
+        $id = strtolower($id);
+        if ($id === 'ameriabank' || $id === 'vpos') {
+            $id = 'arca';
+        }
+
+        return isset($this->gateways[$id]);
     }
 
     /**

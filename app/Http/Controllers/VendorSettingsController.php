@@ -547,8 +547,9 @@ class VendorSettingsController extends Controller
             if (! empty($inputPayments['gateways']['fastshift']['api_key'])) {
                 $credentialService->set($vendor, 'fastshift', 'api_key', (string) $inputPayments['gateways']['fastshift']['api_key']);
             }
-            if (! empty($inputPayments['gateways']['arca']['secret_key'])) {
-                $credentialService->set($vendor, 'arca', 'secret_key', (string) $inputPayments['gateways']['arca']['secret_key']);
+            $arcaSecret = $inputPayments['gateways']['arca']['password'] ?? $inputPayments['gateways']['arca']['secret_key'] ?? null;
+            if (! empty($arcaSecret)) {
+                $credentialService->set($vendor, 'arca', 'secret_key', (string) $arcaSecret);
             }
             if (! empty($inputPayments['gateways']['stripe']['secret_key'])) {
                 $credentialService->set($vendor, 'stripe', 'secret_key', (string) $inputPayments['gateways']['stripe']['secret_key']);
@@ -588,6 +589,7 @@ class VendorSettingsController extends Controller
                         'enabled' => ! empty($inputPayments['gateways']['arca']['enabled']),
                         'title' => 'ArCa / Ameriabank vPOS',
                         'merchant_id' => (string) ($inputPayments['gateways']['arca']['merchant_id'] ?? ''),
+                        'username' => (string) ($inputPayments['gateways']['arca']['username'] ?? ''),
                         'terminal_id' => (string) ($inputPayments['gateways']['arca']['terminal_id'] ?? ''),
                         'secret_key' => '', // Stored securely in vendor_credentials
                         'sandbox' => ! empty($inputPayments['gateways']['arca']['sandbox']),
