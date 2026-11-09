@@ -82,6 +82,7 @@ class IdentifyTenant
                 if (Auth::check()) {
                     $user = Auth::user();
                     if (! $user->isSuperAdmin() && (int) $user->vendor_id !== (int) $customDomainVendor->id) {
+                        $this->tenantContext->clear();
                         Auth::logout();
                         $request->session()->invalidate();
                         $request->session()->regenerateToken();

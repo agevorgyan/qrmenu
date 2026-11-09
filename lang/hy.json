@@ -7663,5 +7663,10 @@
     "Select Target Plan": "Ընտրեք նոր փաթեթը",
     "Upgrade": "Թարմացում",
     "Downgrade": "Իջեցում",
-    "One-time payment": "Միանվագ վճարում"
+    "One-time payment": "Միանվագ վճարում",
+    "This invoice is generated electronically and is valid without physical seal or signature.": "Այս հաշիվ-ապրանքագիրը գեներացվել է էլեկտրոնային եղանակով և վավեր է առանց կնիքի կամ ստորագրության:",
+    "Copied": "Պատճենված է",
+    "Copy Account Number": "Պատճենել հաշվեհամարը",
+    "Copy Payment Purpose": "Պատճենել վճարման նպատակը",
+    "Payment Information": "Վճարման տվյալներ"
 }

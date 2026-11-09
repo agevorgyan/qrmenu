@@ -51,4 +51,3 @@ class SubscriptionDowngradeScheduledMail extends Mailable
         );
     }
 }
-

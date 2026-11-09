@@ -51,7 +51,7 @@ jobs:
         run: composer install --no-progress --prefer-dist --optimize-autoloader
 
       - name: Security Vulnerability Audit
-        run: composer audit
+        run: composer audit --locked
 
       - name: Code Style Check (Laravel Pint)
         run: vendor/bin/pint --test
