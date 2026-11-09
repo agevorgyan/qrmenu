@@ -425,197 +425,285 @@
 </div>
 
 <!-- Interactive Renewal & Plan Change Modal (Alpine.js) -->
-<div x-show="renewModalOpen" x-cloak style="position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 999; display: flex; align-items: center; justify-content: center; padding: 1.25rem;">
-    <div @click.away="renewModalOpen = false" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35);">
+<div x-show="renewModalOpen" 
+     x-cloak 
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 999; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+    
+    <div @click.away="renewModalOpen = false" 
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; width: 100%; max-width: 640px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 60px -15px rgba(0,0,0,0.45);">
         
-        <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center; gap: 0.65rem;">
-                <span style="width: 36px; height: 36px; border-radius: 10px; background: rgba(16, 185, 129, 0.15); color: #10b981; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+        <!-- Fixed Header -->
+        <div style="padding: 1.15rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; background: var(--bg-card);">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span style="width: 40px; height: 40px; border-radius: 12px; background: rgba(37, 99, 235, 0.12); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.15rem;">
                     <i class="fa-solid fa-credit-card"></i>
                 </span>
-                <h3 style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--text-main);">
-                    {{ __('Subscription Management') }}
-                </h3>
+                <div>
+                    <h3 style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--text-main); line-height: 1.2;">
+                        {{ __('Subscription Management') }}
+                    </h3>
+                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">
+                        {{ $vendor->name }} &bull; {{ $vendor->subscriptionPlan?->name ?? __('Current Plan') }}
+                    </div>
+                </div>
             </div>
-            <button type="button" @click="renewModalOpen = false" style="background: transparent; border: none; font-size: 1.25rem; color: var(--text-muted); cursor: pointer;">
+            <button type="button" @click="renewModalOpen = false" style="width: 34px; height: 34px; border-radius: 10px; background: var(--bg-body); border: 1px solid var(--border-color); font-size: 1.1rem; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
 
-        <!-- Tab Switcher: Change Plan vs Renew & Pay -->
-        <div style="display: flex; border-bottom: 1px solid var(--border-color); background: var(--bg-body);">
-            <button type="button" @click="modalTab = 'change_plan'"
-                    :style="modalTab === 'change_plan' ? 'border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 800; background: var(--bg-card);' : 'color: var(--text-muted); font-weight: 600;'"
-                    style="flex: 1; padding: 0.85rem; border: none; font-size: 0.88rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                <i class="fa-solid fa-arrows-rotate"></i>
-                <span>{{ __('Change Plan') }}</span>
-            </button>
-            <button type="button" @click="modalTab = 'renew'"
-                    :style="modalTab === 'renew' ? 'border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 800; background: var(--bg-card);' : 'color: var(--text-muted); font-weight: 600;'"
-                    style="flex: 1; padding: 0.85rem; border: none; font-size: 0.88rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                <i class="fa-solid fa-bolt"></i>
-                <span>{{ __('Renew & Pay') }}</span>
-            </button>
+        <!-- Fixed Segmented Tab Switcher -->
+        <div style="padding: 0.75rem 1.5rem; background: var(--bg-card); border-bottom: 1px solid var(--border-color); flex-shrink: 0;">
+            <div style="background: var(--bg-body); padding: 4px; border-radius: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; border: 1px solid var(--border-color);">
+                <button type="button" 
+                        @click="modalTab = 'change_plan'"
+                        :style="modalTab === 'change_plan' ? 'background: var(--bg-card); color: var(--primary); font-weight: 800; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-color: var(--border-color);' : 'background: transparent; color: var(--text-muted); font-weight: 600; border-color: transparent;'"
+                        style="padding: 0.65rem 1rem; border-width: 1px; border-style: solid; border-radius: 10px; font-size: 0.88rem; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem; outline: none;">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                    <span>{{ __('Change Plan') }}</span>
+                </button>
+                <button type="button" 
+                        @click="modalTab = 'renew'"
+                        :style="modalTab === 'renew' ? 'background: var(--bg-card); color: var(--primary); font-weight: 800; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-color: var(--border-color);' : 'background: transparent; color: var(--text-muted); font-weight: 600; border-color: transparent;'"
+                        style="padding: 0.65rem 1rem; border-width: 1px; border-style: solid; border-radius: 10px; font-size: 0.88rem; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem; outline: none;">
+                    <i class="fa-solid fa-bolt" style="color: #f59e0b;"></i>
+                    <span>{{ __('Renew & Pay') }}</span>
+                </button>
+            </div>
         </div>
 
         <!-- TAB 1: Direct Plan Change Form -->
-        <div x-show="modalTab === 'change_plan'" style="padding: 1.5rem;">
-            <form action="{{ route('admin.subscription.change_plan') }}" method="POST">
+        <div x-show="modalTab === 'change_plan'" style="display: flex; flex-direction: column; flex: 1; overflow: hidden; min-height: 0;">
+            <form action="{{ route('admin.subscription.change_plan') }}" method="POST" style="display: flex; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; margin: 0;">
                 @csrf
-                <div style="margin-bottom: 1.25rem;">
-                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em;">
-                        {{ __('Select New Plan') }}
-                    </label>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.65rem;">
-                        @foreach($allPlans as $p)
-                            <label style="display: flex; flex-direction: column; padding: 0.85rem; border-radius: 12px; border: 2px solid; cursor: pointer; transition: all 0.2s;"
-                                   :style="selectedPlanId == {{ $p->id }} ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.05);' : 'border-color: var(--border-color); background: var(--bg-body);'">
-                                <input type="radio" name="subscription_plan_id" value="{{ $p->id }}" x-model="selectedPlanId" style="display: none;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">{{ __($p->name) }}</span>
-                                    @if($vendor->subscription_plan_id == $p->id)
-                                        <span class="badge" style="font-size: 0.65rem; background: var(--primary); color: #fff;">{{ __('Current') }}</span>
-                                    @endif
-                                </div>
-                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--primary); margin-top: 0.25rem;">{{ number_format($p->price, 0, '.', ' ') }} {{ $p->currency }}/{{ __('mo') }}</span>
+                <div style="flex: 1; overflow-y: auto; padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem;">
+                            <label style="font-size: 0.82rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">
+                                {{ __('Select New Plan') }}
                             </label>
-                        @endforeach
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">{{ count($allPlans) }} {{ __('plans available') }}</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
+                            @foreach($allPlans as $p)
+                                <label style="position: relative; display: flex; flex-direction: column; justify-content: space-between; padding: 0.95rem 1rem; border-radius: 16px; border: 2px solid; cursor: pointer; transition: all 0.2s ease;"
+                                       :style="selectedPlanId == {{ $p->id }} ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.06); box-shadow: 0 0 0 1px var(--primary);' : 'border-color: var(--border-color); background: var(--bg-body);'">
+                                    <input type="radio" name="subscription_plan_id" value="{{ $p->id }}" x-model="selectedPlanId" style="display: none;">
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+                                            <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main); line-height: 1.3;">{{ __($p->name) }}</span>
+                                            <span style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"
+                                                  :style="selectedPlanId == {{ $p->id }} ? 'border-color: var(--primary); background: var(--primary);' : 'border-color: var(--border-color); background: transparent;'">
+                                                <i class="fa-solid fa-check" style="color: #fff; font-size: 0.65rem;" x-show="selectedPlanId == {{ $p->id }}"></i>
+                                            </span>
+                                        </div>
+                                        <div style="margin-top: 0.45rem; display: flex; align-items: baseline; gap: 0.25rem;">
+                                            <span style="font-size: 1.15rem; font-weight: 900; color: var(--primary); font-family: 'Outfit', sans-serif;">{{ number_format($p->price, 0, '.', ' ') }}</span>
+                                            <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">{{ $p->currency }}/{{ __('mo') }}</span>
+                                        </div>
+                                    </div>
+                                    @if($vendor->subscription_plan_id == $p->id)
+                                        <div style="margin-top: 0.65rem;">
+                                            <span style="font-size: 0.68rem; font-weight: 800; background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                                <i class="fa-solid fa-check" style="font-size: 0.6rem;"></i> {{ __('Current Plan') }}
+                                            </span>
+                                        </div>
+                                    @endif
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(37, 99, 235, 0.06); border: 1px solid rgba(37, 99, 235, 0.2); border-radius: 16px; padding: 1rem 1.25rem; display: flex; gap: 0.85rem; align-items: flex-start;">
+                        <span style="width: 32px; height: 32px; border-radius: 10px; background: rgba(37, 99, 235, 0.15); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; margin-top: 2px;">
+                            <i class="fa-solid fa-circle-info"></i>
+                        </span>
+                        <div style="font-size: 0.86rem; color: var(--text-main); line-height: 1.5;">
+                            {{ __('Changing your plan will immediately update your account entitlements, quotas, and unlock all features included in the chosen tier.') }}
+                        </div>
                     </div>
                 </div>
 
-                <div style="background: rgba(37, 99, 235, 0.06); border: 1px solid rgba(37, 99, 235, 0.2); border-radius: 14px; padding: 0.9rem 1.15rem; margin-bottom: 1.5rem; display: flex; gap: 0.75rem; align-items: center;">
-                    <i class="fa-solid fa-circle-info" style="color: var(--primary); font-size: 1.15rem; flex-shrink: 0;"></i>
-                    <div style="font-size: 0.84rem; color: var(--text-main); line-height: 1.5;">
-                        {{ __('Changing your plan will immediately update your account entitlements, quotas, and unlock all features included in the chosen tier.') }}
+                <!-- Fixed Footer -->
+                <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); background: var(--bg-card); display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-shrink: 0; box-shadow: 0 -4px 12px rgba(0,0,0,0.03);">
+                    <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">
+                        {{ __('Plan changes apply immediately') }}
+                    </span>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <button type="button" @click="renewModalOpen = false" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700; padding: 0.7rem 1.25rem;">
+                            {{ __('Close') }}
+                        </button>
+                        <button type="submit" class="btn btn-primary" style="border-radius: 12px; font-weight: 800; padding: 0.7rem 1.75rem; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 14px var(--primary-glow);">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                            <span>{{ __('Confirm Plan Change') }}</span>
+                        </button>
                     </div>
-                </div>
-
-                <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
-                    <button type="button" @click="renewModalOpen = false" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700; padding: 0.75rem 1.25rem;">
-                        {{ __('Close') }}
-                    </button>
-                    <button type="submit" class="btn btn-primary" style="border-radius: 12px; font-weight: 800; padding: 0.75rem 1.75rem; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 14px var(--primary-glow);">
-                        <i class="fa-solid fa-arrows-rotate"></i>
-                        <span>{{ __('Confirm Plan Change') }}</span>
-                    </button>
                 </div>
             </form>
         </div>
 
         <!-- TAB 2: Renewal & Payment Form -->
-        <div x-show="modalTab === 'renew'" style="padding: 1.5rem;">
-            <form action="{{ route('admin.subscription.renew') }}" method="POST">
+        <div x-show="modalTab === 'renew'" style="display: flex; flex-direction: column; flex: 1; overflow: hidden; min-height: 0;">
+            <form action="{{ route('admin.subscription.renew') }}" method="POST" style="display: flex; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; margin: 0;">
                 @csrf
+                <div style="flex: 1; overflow-y: auto; padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 1.35rem;">
+                    
+                    <!-- 1. Select Plan to Renew -->
+                    <div>
+                        <label style="display: block; font-size: 0.82rem; font-weight: 800; color: var(--text-muted); margin-bottom: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                            {{ __('1. Select Plan to Renew') }}
+                        </label>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
+                            @foreach($allPlans as $p)
+                                <label style="position: relative; display: flex; flex-direction: column; justify-content: space-between; padding: 0.95rem 1rem; border-radius: 16px; border: 2px solid; cursor: pointer; transition: all 0.2s ease;"
+                                       :style="selectedPlanId == {{ $p->id }} ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.06); box-shadow: 0 0 0 1px var(--primary);' : 'border-color: var(--border-color); background: var(--bg-body);'">
+                                    <input type="radio" name="subscription_plan_id" value="{{ $p->id }}" x-model="selectedPlanId" style="display: none;">
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+                                            <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main); line-height: 1.3;">{{ __($p->name) }}</span>
+                                            <span style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"
+                                                  :style="selectedPlanId == {{ $p->id }} ? 'border-color: var(--primary); background: var(--primary);' : 'border-color: var(--border-color); background: transparent;'">
+                                                <i class="fa-solid fa-check" style="color: #fff; font-size: 0.65rem;" x-show="selectedPlanId == {{ $p->id }}"></i>
+                                            </span>
+                                        </div>
+                                        <div style="margin-top: 0.45rem; display: flex; align-items: baseline; gap: 0.25rem;">
+                                            <span style="font-size: 1.15rem; font-weight: 900; color: var(--primary); font-family: 'Outfit', sans-serif;">{{ number_format($p->price, 0, '.', ' ') }}</span>
+                                            <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">{{ $p->currency }}/{{ __('mo') }}</span>
+                                        </div>
+                                    </div>
+                                    @if($vendor->subscription_plan_id == $p->id)
+                                        <div style="margin-top: 0.65rem;">
+                                            <span style="font-size: 0.68rem; font-weight: 800; background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                                <i class="fa-solid fa-check" style="font-size: 0.6rem;"></i> {{ __('Current Plan') }}
+                                            </span>
+                                        </div>
+                                    @endif
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
 
-                <!-- 1. Select Plan -->
-                <div style="margin-bottom: 1.25rem;">
-                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em;">
-                        {{ __('1. Select Plan to Renew') }}
-                    </label>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.6rem;">
-                        @foreach($allPlans as $p)
-                            <label style="display: flex; flex-direction: column; padding: 0.85rem; border-radius: 12px; border: 2px solid; cursor: pointer; transition: all 0.2s;"
-                                   :style="selectedPlanId == {{ $p->id }} ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.05);' : 'border-color: var(--border-color); background: var(--bg-body);'">
-                                <input type="radio" name="subscription_plan_id" value="{{ $p->id }}" x-model="selectedPlanId" style="display: none;">
-                                <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">{{ __($p->name) }}</span>
-                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--primary); margin-top: 0.25rem;">{{ number_format($p->price, 0, '.', ' ') }} {{ $p->currency }}/{{ __('mo') }}</span>
+                    <!-- 2. Select Duration Period -->
+                    <div>
+                        <label style="display: block; font-size: 0.82rem; font-weight: 800; color: var(--text-muted); margin-bottom: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                            {{ __('2. Select Billing Interval') }}
+                        </label>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.65rem;">
+                            <!-- 1 Mo -->
+                            <label style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.85rem 0.5rem; border-radius: 14px; border: 2px solid; cursor: pointer; text-align: center; transition: all 0.2s ease;"
+                                   :style="periodMonths == 1 ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.06); box-shadow: 0 0 0 1px var(--primary);' : 'border-color: var(--border-color); background: var(--bg-body);'">
+                                <input type="radio" name="period_months" value="1" x-model="periodMonths" style="display: none;">
+                                <span style="font-weight: 800; font-size: 1rem; color: var(--text-main);">{{ __('1 Mo') }}</span>
+                                <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; margin-top: 3px;">{{ __('Standard') }}</span>
                             </label>
-                        @endforeach
-                    </div>
-                </div>
 
-                <!-- 2. Select Duration Period -->
-                <div style="margin-bottom: 1.25rem;">
-                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em;">
-                        {{ __('2. Select Billing Interval') }}
-                    </label>
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">
-                        <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.75rem 0.5rem; border-radius: 12px; border: 2px solid; cursor: pointer; text-align: center; transition: all 0.2s;"
-                               :style="periodMonths == 1 ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.05);' : 'border-color: var(--border-color); background: var(--bg-body);'">
-                            <input type="radio" name="period_months" value="1" x-model="periodMonths" style="display: none;">
-                            <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">{{ __('1 Mo') }}</span>
-                            <span style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">{{ __('Standard') }}</span>
-                        </label>
-
-                        <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.75rem 0.5rem; border-radius: 12px; border: 2px solid; cursor: pointer; text-align: center; transition: all 0.2s;"
-                               :style="periodMonths == 3 ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.05);' : 'border-color: var(--border-color); background: var(--bg-body);'">
-                            <input type="radio" name="period_months" value="3" x-model="periodMonths" style="display: none;">
-                            <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">{{ __('3 Mo') }}</span>
-                            <span style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">{{ __('Quarterly') }}</span>
-                        </label>
-
-                        <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.75rem 0.5rem; border-radius: 12px; border: 2px solid; cursor: pointer; text-align: center; position: relative; transition: all 0.2s;"
-                               :style="periodMonths == 6 ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.05);' : 'border-color: var(--border-color); background: var(--bg-body);'">
-                            <input type="radio" name="period_months" value="6" x-model="periodMonths" style="display: none;">
-                            <span style="position: absolute; top: -8px; right: 4px; background: #10b981; color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 4px; border-radius: 4px;">-10%</span>
-                            <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">{{ __('6 Mo') }}</span>
-                            <span style="font-size: 0.7rem; color: #10b981; font-weight: 700; margin-top: 2px;">{{ __('10% Off') }}</span>
-                        </label>
-
-                        <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.75rem 0.5rem; border-radius: 12px; border: 2px solid; cursor: pointer; text-align: center; position: relative; transition: all 0.2s;"
-                               :style="periodMonths == 12 ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.05);' : 'border-color: var(--border-color); background: var(--bg-body);'">
-                            <input type="radio" name="period_months" value="12" x-model="periodMonths" style="display: none;">
-                            <span style="position: absolute; top: -8px; right: 4px; background: #ea580c; color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 4px; border-radius: 4px;">-20%</span>
-                            <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">{{ __('12 Mo') }}</span>
-                            <span style="font-size: 0.7rem; color: #ea580c; font-weight: 700; margin-top: 2px;">{{ __('20% Off') }}</span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- 3. Select Payment Method -->
-                <div style="margin-bottom: 1.5rem;">
-                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em;">
-                        {{ __('3. Select Payment Method') }}
-                    </label>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.6rem;">
-                        @php
-                            $paymentMethods = [
-                                ['code' => 'bank_transfer', 'name' => __('Bank Transfer'), 'icon' => 'fa-solid fa-building-columns', 'color' => '#10b981'],
-                                ['code' => 'idram', 'name' => __('Idram Wallet / QR'), 'icon' => 'fa-solid fa-wallet', 'color' => '#f97316'],
-                                ['code' => 'telcell', 'name' => __('Telcell Wallet'), 'icon' => 'fa-solid fa-mobile-screen-button', 'color' => '#eab308'],
-                                ['code' => 'fastshift', 'name' => __('FastShift'), 'icon' => 'fa-solid fa-bolt', 'color' => '#06b6d4'],
-                                ['code' => 'arca', 'name' => __('ArCa / Ameriabank'), 'icon' => 'fa-solid fa-credit-card', 'color' => '#2563eb'],
-                                ['code' => 'stripe', 'name' => __('Stripe (Cards)'), 'icon' => 'fa-brands fa-stripe', 'color' => '#6366f1'],
-                            ];
-                        @endphp
-                        @foreach($paymentMethods as $pm)
-                            <label style="display: flex; align-items: center; gap: 0.65rem; padding: 0.75rem 0.85rem; border-radius: 12px; border: 2px solid; cursor: pointer; transition: all 0.2s;"
-                                   :style="paymentMethod == '{{ $pm['code'] }}' ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.05);' : 'border-color: var(--border-color); background: var(--bg-body);'">
-                                <input type="radio" name="payment_method" value="{{ $pm['code'] }}" x-model="paymentMethod" style="display: none;">
-                                <span style="width: 28px; height: 28px; border-radius: 8px; background: {{ $pm['color'] }}20; color: {{ $pm['color'] }}; display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0;">
-                                    <i class="{{ $pm['icon'] }}"></i>
-                                </span>
-                                <span style="font-weight: 700; font-size: 0.84rem; color: var(--text-main);">{{ $pm['name'] }}</span>
+                            <!-- 3 Mo -->
+                            <label style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.85rem 0.5rem; border-radius: 14px; border: 2px solid; cursor: pointer; text-align: center; transition: all 0.2s ease;"
+                                   :style="periodMonths == 3 ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.06); box-shadow: 0 0 0 1px var(--primary);' : 'border-color: var(--border-color); background: var(--bg-body);'">
+                                <input type="radio" name="period_months" value="3" x-model="periodMonths" style="display: none;">
+                                <span style="font-weight: 800; font-size: 1rem; color: var(--text-main);">{{ __('3 Mo') }}</span>
+                                <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; margin-top: 3px;">{{ __('Quarterly') }}</span>
                             </label>
-                        @endforeach
+
+                            <!-- 6 Mo -->
+                            <label style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.85rem 0.5rem; border-radius: 14px; border: 2px solid; cursor: pointer; text-align: center; transition: all 0.2s ease;"
+                                   :style="periodMonths == 6 ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.06); box-shadow: 0 0 0 1px var(--primary);' : 'border-color: var(--border-color); background: var(--bg-body);'">
+                                <input type="radio" name="period_months" value="6" x-model="periodMonths" style="display: none;">
+                                <span style="position: absolute; top: -9px; background: #10b981; color: #fff; font-size: 0.65rem; font-weight: 800; padding: 2px 6px; border-radius: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.3);">-10%</span>
+                                <span style="font-weight: 800; font-size: 1rem; color: var(--text-main);">{{ __('6 Mo') }}</span>
+                                <span style="font-size: 0.72rem; color: #10b981; font-weight: 700; margin-top: 3px;">{{ __('10% Off') }}</span>
+                            </label>
+
+                            <!-- 12 Mo -->
+                            <label style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.85rem 0.5rem; border-radius: 14px; border: 2px solid; cursor: pointer; text-align: center; transition: all 0.2s ease;"
+                                   :style="periodMonths == 12 ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.06); box-shadow: 0 0 0 1px var(--primary);' : 'border-color: var(--border-color); background: var(--bg-body);'">
+                                <input type="radio" name="period_months" value="12" x-model="periodMonths" style="display: none;">
+                                <span style="position: absolute; top: -9px; background: #f97316; color: #fff; font-size: 0.65rem; font-weight: 800; padding: 2px 6px; border-radius: 6px; box-shadow: 0 2px 4px rgba(249,115,22,0.3);">-20%</span>
+                                <span style="font-weight: 800; font-size: 1rem; color: var(--text-main);">{{ __('12 Mo') }}</span>
+                                <span style="font-size: 0.72rem; color: #f97316; font-weight: 700; margin-top: 3px;">{{ __('20% Off') }}</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 3. Select Payment Method -->
+                    <div>
+                        <label style="display: block; font-size: 0.82rem; font-weight: 800; color: var(--text-muted); margin-bottom: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                            {{ __('3. Select Payment Method') }}
+                        </label>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.65rem;">
+                            @php
+                                $paymentMethods = [
+                                    ['code' => 'bank_transfer', 'name' => __('Bank Transfer'), 'icon' => 'fa-solid fa-building-columns', 'color' => '#10b981'],
+                                    ['code' => 'idram', 'name' => __('Idram Wallet / QR'), 'icon' => 'fa-solid fa-wallet', 'color' => '#f97316'],
+                                    ['code' => 'telcell', 'name' => __('Telcell Wallet'), 'icon' => 'fa-solid fa-mobile-screen-button', 'color' => '#eab308'],
+                                    ['code' => 'fastshift', 'name' => __('FastShift'), 'icon' => 'fa-solid fa-bolt', 'color' => '#06b6d4'],
+                                    ['code' => 'arca', 'name' => __('ArCa / Ameriabank'), 'icon' => 'fa-solid fa-credit-card', 'color' => '#2563eb'],
+                                    ['code' => 'stripe', 'name' => __('Stripe (Cards)'), 'icon' => 'fa-brands fa-stripe', 'color' => '#6366f1'],
+                                ];
+                            @endphp
+                            @foreach($paymentMethods as $pm)
+                                <label style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.75rem 0.95rem; border-radius: 14px; border: 2px solid; cursor: pointer; transition: all 0.2s ease;"
+                                       :style="paymentMethod == '{{ $pm['code'] }}' ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.06); box-shadow: 0 0 0 1px var(--primary);' : 'border-color: var(--border-color); background: var(--bg-body);'">
+                                    <input type="radio" name="payment_method" value="{{ $pm['code'] }}" x-model="paymentMethod" style="display: none;">
+                                    <div style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                                        <span style="width: 32px; height: 32px; border-radius: 10px; background: {{ $pm['color'] }}18; color: {{ $pm['color'] }}; display: inline-flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;">
+                                            <i class="{{ $pm['icon'] }}"></i>
+                                        </span>
+                                        <span style="font-weight: 700; font-size: 0.85rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $pm['name'] }}</span>
+                                    </div>
+                                    <span style="width: 18px; height: 18px; border-radius: 50%; border: 2px solid; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"
+                                          :style="paymentMethod == '{{ $pm['code'] }}' ? 'border-color: var(--primary); background: var(--primary);' : 'border-color: var(--border-color); background: transparent;'">
+                                        <i class="fa-solid fa-check" style="color: #fff; font-size: 0.6rem;" x-show="paymentMethod == '{{ $pm['code'] }}'"></i>
+                                    </span>
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Price Breakdown Summary Box -->
+                    <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 16px; padding: 1rem 1.25rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.86rem; color: var(--text-muted); margin-bottom: 0.45rem;">
+                            <span>{{ __('Selected billing interval:') }}</span>
+                            <span style="font-weight: 700; color: var(--text-main);" x-text="periodMonths + ' ' + (periodMonths === 1 ? '{{ __('month') }}' : '{{ __('months') }}')"></span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.86rem; color: var(--text-muted); margin-bottom: 0.45rem;">
+                            <span>{{ __('Discount:') }}</span>
+                            <span style="font-weight: 700;" :style="periodMonths >= 6 ? 'color: #10b981;' : 'color: var(--text-muted);'" x-text="periodMonths == 12 ? '20%' : (periodMonths == 6 ? '10%' : '0%')"></span>
+                        </div>
+                        <div style="border-top: 1px dashed var(--border-color); margin-top: 0.65rem; padding-top: 0.65rem; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">{{ __('Total Due:') }}</span>
+                            <span style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--primary);" x-text="calculateTotal() + ' ' + '{{ $vendor->currency ?? '֏' }}'"></span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Price Breakdown Summary Box -->
-                <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 16px; padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.86rem; color: var(--text-muted); margin-bottom: 0.4rem;">
-                        <span>{{ __('Selected billing interval:') }}</span>
-                        <span style="font-weight: 700; color: var(--text-main);" x-text="periodMonths + ' ' + (periodMonths === 1 ? '{{ __('month') }}' : '{{ __('months') }}')"></span>
+                <!-- Fixed Sticky Footer (Always Visible!) -->
+                <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); background: var(--bg-card); display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-shrink: 0; box-shadow: 0 -4px 12px rgba(0,0,0,0.03);">
+                    <div>
+                        <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--text-muted); letter-spacing: 0.05em;">{{ __('Total Due') }}</div>
+                        <div style="font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.45rem; color: var(--primary); line-height: 1.1;" x-text="calculateTotal() + ' ' + '{{ $vendor->currency ?? '֏' }}'"></div>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.86rem; color: var(--text-muted); margin-bottom: 0.65rem;">
-                        <span>{{ __('Discount:') }}</span>
-                        <span style="font-weight: 700; color: #10b981;" x-text="periodMonths == 12 ? '20%' : (periodMonths == 6 ? '10%' : '0%')"></span>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <button type="button" @click="renewModalOpen = false" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700; padding: 0.7rem 1.25rem;">
+                            {{ __('Close') }}
+                        </button>
+                        <button type="submit" class="btn btn-primary" style="border-radius: 12px; font-weight: 800; padding: 0.7rem 1.75rem; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 14px var(--primary-glow);">
+                            <i class="fa-solid fa-lock"></i>
+                            <span>{{ __('Proceed to Payment') }}</span>
+                        </button>
                     </div>
-                    <div style="border-top: 1px dashed var(--border-color); padding-top: 0.65rem; display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: 800; font-size: 1rem; color: var(--text-main);">{{ __('Total Due:') }}</span>
-                        <span style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.35rem; color: var(--primary);" x-text="calculateTotal() + ' ' + '{{ $vendor->currency ?? '֏' }}'"></span>
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
-                    <button type="button" @click="renewModalOpen = false" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700; padding: 0.75rem 1.25rem;">
-                        {{ __('Close') }}
-                    </button>
-                    <button type="submit" class="btn btn-primary" style="border-radius: 12px; font-weight: 800; padding: 0.75rem 1.75rem; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 14px var(--primary-glow);">
-                        <i class="fa-solid fa-lock"></i>
-                        <span>{{ __('Proceed to Payment') }}</span>
-                    </button>
                 </div>
             </form>
         </div>
@@ -623,80 +711,103 @@
 </div>
 
 <!-- Add-on Activation / Purchase Modal (Alpine.js) -->
-<div x-show="addonModalOpen" x-cloak style="position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 999; display: flex; align-items: center; justify-content: center; padding: 1.25rem;">
-    <div @click.away="addonModalOpen = false" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35);">
-        <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center; gap: 0.65rem;">
-                <span style="width: 36px; height: 36px; border-radius: 10px; background: rgba(99, 102, 241, 0.15); color: #6366f1; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+<div x-show="addonModalOpen" 
+     x-cloak 
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 999; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+    <div @click.away="addonModalOpen = false" 
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; width: 100%; max-width: 520px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 60px -15px rgba(0,0,0,0.45);">
+        
+        <!-- Fixed Header -->
+        <div style="padding: 1.15rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; background: var(--bg-card);">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span style="width: 40px; height: 40px; border-radius: 12px; background: rgba(99, 102, 241, 0.12); color: #6366f1; display: inline-flex; align-items: center; justify-content: center; font-size: 1.15rem;">
                     <i class="fa-solid fa-puzzle-piece"></i>
                 </span>
-                <h3 style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--text-main);">
-                    {{ __('Add-on Activation') }}
-                </h3>
+                <div>
+                    <h3 style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--text-main); line-height: 1.2;">
+                        {{ __('Add-on Activation') }}
+                    </h3>
+                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;" x-text="selectedAddon ? selectedAddon.name : ''"></div>
+                </div>
             </div>
-            <button type="button" @click="addonModalOpen = false" style="background: transparent; border: none; font-size: 1.25rem; color: var(--text-muted); cursor: pointer;">
+            <button type="button" @click="addonModalOpen = false" style="width: 34px; height: 34px; border-radius: 10px; background: var(--bg-body); border: 1px solid var(--border-color); font-size: 1.1rem; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
 
-        <form action="{{ route('admin.subscription.addons.store') }}" method="POST" style="padding: 1.5rem;">
+        <form action="{{ route('admin.subscription.addons.store') }}" method="POST" style="display: flex; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; margin: 0;">
             @csrf
             <input type="hidden" name="subscription_addon_id" :value="selectedAddon ? selectedAddon.id : ''">
 
-            <div style="margin-bottom: 1.25rem; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem 1.15rem;">
-                <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);" x-text="selectedAddon ? selectedAddon.name : ''"></div>
-                <div style="font-size: 0.84rem; color: var(--text-muted); margin-top: 0.35rem; line-height: 1.5;" x-text="selectedAddon ? selectedAddon.description : ''"></div>
-            </div>
+            <div style="flex: 1; overflow-y: auto; padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
+                <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 16px; padding: 1rem 1.25rem;">
+                    <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);" x-text="selectedAddon ? selectedAddon.name : ''"></div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.35rem; line-height: 1.5;" x-text="selectedAddon ? selectedAddon.description : ''"></div>
+                </div>
 
-            <!-- Quantity Selector -->
-            <div style="margin-bottom: 1.25rem;">
-                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em;">
-                    {{ __('Quantity / Multiplier') }}
-                </label>
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <button type="button" @click="if (addonQuantity > 1) addonQuantity--" class="btn btn-secondary" style="width: 40px; height: 40px; border-radius: 10px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; font-weight: 800;">
-                        -
-                    </button>
-                    <input type="number" name="quantity" min="1" max="50" x-model.number="addonQuantity" style="width: 80px; text-align: center; font-size: 1.1rem; font-weight: 800; padding: 0.5rem; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-main);">
-                    <button type="button" @click="if (addonQuantity < 50) addonQuantity++" class="btn btn-secondary" style="width: 40px; height: 40px; border-radius: 10px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; font-weight: 800;">
-                        +
-                    </button>
+                <!-- Quantity Selector -->
+                <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 800; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                        {{ __('Quantity / Multiplier') }}
+                    </label>
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <button type="button" @click="if (addonQuantity > 1) addonQuantity--" class="btn btn-secondary" style="width: 44px; height: 44px; border-radius: 12px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; font-weight: 800;">
+                            -
+                        </button>
+                        <input type="number" name="quantity" min="1" max="50" x-model.number="addonQuantity" style="width: 80px; text-align: center; font-size: 1.15rem; font-weight: 800; padding: 0.6rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-main); font-family: 'Outfit', sans-serif;">
+                        <button type="button" @click="if (addonQuantity < 50) addonQuantity++" class="btn btn-secondary" style="width: 44px; height: 44px; border-radius: 12px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; font-weight: 800;">
+                            +
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Billing Period -->
+                <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 800; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                        {{ __('Billing Period') }}
+                    </label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <label style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 0.5rem; border-radius: 12px; border: 2px solid; cursor: pointer; transition: all 0.2s ease;"
+                               :style="addonBillingPeriod === 'monthly' ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.06); color: var(--primary); font-weight: 800;' : 'border-color: var(--border-color); background: var(--bg-body); color: var(--text-muted);'">
+                            <input type="radio" name="billing_period" value="monthly" x-model="addonBillingPeriod" style="display: none;">
+                            <span>{{ __('Monthly') }}</span>
+                        </label>
+                        <label style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 0.5rem; border-radius: 12px; border: 2px solid; cursor: pointer; transition: all 0.2s ease;"
+                               :style="addonBillingPeriod === 'yearly' ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.06); color: var(--primary); font-weight: 800;' : 'border-color: var(--border-color); background: var(--bg-body); color: var(--text-muted);'">
+                            <input type="radio" name="billing_period" value="yearly" x-model="addonBillingPeriod" style="display: none;">
+                            <span>{{ __('Yearly') }}</span>
+                        </label>
+                    </div>
                 </div>
             </div>
 
-            <!-- Billing Period -->
-            <div style="margin-bottom: 1.25rem;">
-                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em;">
-                    {{ __('Billing Period') }}
-                </label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                    <label style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 0.5rem; border-radius: 10px; border: 2px solid; cursor: pointer;"
-                           :style="addonBillingPeriod === 'monthly' ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.05); color: var(--primary); font-weight: 800;' : 'border-color: var(--border-color); background: var(--bg-body); color: var(--text-muted);'">
-                        <input type="radio" name="billing_period" value="monthly" x-model="addonBillingPeriod" style="display: none;">
-                        <span>{{ __('Monthly') }}</span>
-                    </label>
-                    <label style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 0.5rem; border-radius: 10px; border: 2px solid; cursor: pointer;"
-                           :style="addonBillingPeriod === 'yearly' ? 'border-color: var(--primary); background: rgba(37, 99, 235, 0.05); color: var(--primary); font-weight: 800;' : 'border-color: var(--border-color); background: var(--bg-body); color: var(--text-muted);'">
-                        <input type="radio" name="billing_period" value="yearly" x-model="addonBillingPeriod" style="display: none;">
-                        <span>{{ __('Yearly') }}</span>
-                    </label>
+            <!-- Fixed Footer -->
+            <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); background: var(--bg-card); display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-shrink: 0; box-shadow: 0 -4px 12px rgba(0,0,0,0.03);">
+                <div>
+                    <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--text-muted); letter-spacing: 0.05em;">{{ __('Total') }}</div>
+                    <div style="font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.45rem; color: var(--primary); line-height: 1.1;" x-text="calculateAddonTotal() + ' ' + (selectedAddon ? selectedAddon.currency : '֏')"></div>
                 </div>
-            </div>
-
-            <!-- Total Calculation -->
-            <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem 1.15rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: 700; font-size: 0.9rem; color: var(--text-muted);">{{ __('Total:') }}</span>
-                <span style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--primary);" x-text="calculateAddonTotal() + ' ' + (selectedAddon ? selectedAddon.currency : '֏')"></span>
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
-                <button type="button" @click="addonModalOpen = false" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700; padding: 0.75rem 1.25rem;">
-                    {{ __('Close') }}
-                </button>
-                <button type="submit" class="btn btn-primary" style="border-radius: 12px; font-weight: 800; padding: 0.75rem 1.75rem; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 14px var(--primary-glow);">
-                    <i class="fa-solid fa-check"></i>
-                    <span>{{ __('Activate Add-on') }}</span>
-                </button>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button type="button" @click="addonModalOpen = false" class="btn btn-secondary" style="border-radius: 12px; font-weight: 700; padding: 0.7rem 1.25rem;">
+                        {{ __('Close') }}
+                    </button>
+                    <button type="submit" class="btn btn-primary" style="border-radius: 12px; font-weight: 800; padding: 0.7rem 1.75rem; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 14px var(--primary-glow);">
+                        <i class="fa-solid fa-check"></i>
+                        <span>{{ __('Activate Add-on') }}</span>
+                    </button>
+                </div>
             </div>
         </form>
     </div>

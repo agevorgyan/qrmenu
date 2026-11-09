@@ -350,7 +350,7 @@ class AdminLocaleSwitchTest extends TestCase
             ->get(route('admin.subscription'));
 
         $resRuSub->assertOk();
-        $resRuSub->assertSee('Все возможности тарифа Basic');
+        $resRuSub->assertSee('Базовая статистика');
         $resRuSub->assertSee('Онлайн-заказы');
         $resRuSub->assertSee('Кошелек Idram / QR');
         $resRuSub->assertSee('/ мес');
@@ -361,7 +361,7 @@ class AdminLocaleSwitchTest extends TestCase
             ->get(route('admin.subscription'));
 
         $resHySub->assertOk();
-        $resHySub->assertSee('Basic-ի բոլոր հնարավորությունները');
+        $resHySub->assertSee('Հիմնական վիճակագրություն');
         $resHySub->assertSee('Օնլայն պատվերներ');
         $resHySub->assertSee('/ ամիս');
 

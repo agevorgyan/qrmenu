@@ -7630,5 +7630,7 @@
     "Beneficiary Company": "Շահառու ընկերություն",
     "TIN \/ Tax ID (ՀՎՀՀ)": "ՀՎՀՀ",
     "Account Number (AMD) \/ IBAN": "Հաշվեհամար (AMD) \/ IBAN",
-    "Are you sure you want to delete this add-on?": "Վստա՞հ եք, որ ցանկանում եք հեռացնել այս հավելումը:"
+    "Are you sure you want to delete this add-on?": "Վստա՞հ եք, որ ցանկանում եք հեռացնել այս հավելումը:",
+    "Plan changes apply immediately": "Փաթեթի փոփոխությունն ակտիվանում է անմիջապես",
+    "plans available": "հասանելի փաթեթ"
 }
