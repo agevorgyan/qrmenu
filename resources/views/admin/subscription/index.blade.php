@@ -466,11 +466,197 @@
 
 <!-- Interactive Renewal & Plan Change Modal (Alpine.js) -->
 <style>
+    /* Scoped styles for Subscription Modal */
+    .sub-hidden-input {
+        position: absolute !important;
+        opacity: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        pointer-events: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        clip: rect(0 0 0 0) !important;
+        clip-path: inset(50%) !important;
+        overflow: hidden !important;
+        white-space: nowrap !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+    }
+
+    .sub-step-header {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .sub-step-num {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: rgba(37, 99, 235, 0.12);
+        color: var(--primary);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 800;
+        font-family: 'Outfit', sans-serif;
+        flex-shrink: 0;
+    }
+
+    .sub-step-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--text-main);
+        letter-spacing: -0.01em;
+    }
+
+    .sub-card {
+        position: relative;
+        border-radius: 16px;
+        border: 2px solid var(--border-color);
+        background: var(--bg-card);
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        user-select: none;
+        box-sizing: border-box;
+    }
+
+    .sub-card:hover {
+        border-color: rgba(37, 99, 235, 0.4);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .sub-card.is-selected {
+        border-color: var(--primary) !important;
+        background: var(--bg-card) !important;
+        box-shadow: 0 0 0 3px var(--primary-glow), 0 8px 20px -4px rgba(37, 99, 235, 0.15) !important;
+        transform: translateY(-2px);
+    }
+
+    .sub-radio-dot {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid var(--border-color);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+        background: transparent;
+    }
+
+    .sub-card.is-selected .sub-radio-dot,
+    .is-selected .sub-radio-dot {
+        border-color: var(--primary) !important;
+        background: var(--primary) !important;
+        box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+
+    .sub-radio-dot i {
+        color: #ffffff;
+        font-size: 0.65rem;
+        line-height: 1;
+    }
+
+    .sub-period-card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0.9rem 0.6rem;
+        border-radius: 14px;
+        border: 2px solid var(--border-color);
+        background: var(--bg-card);
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        user-select: none;
+        text-align: center;
+    }
+
+    .sub-period-card:hover {
+        border-color: rgba(37, 99, 235, 0.4);
+        transform: translateY(-1px);
+    }
+
+    .sub-period-card.is-selected {
+        border-color: var(--primary) !important;
+        background: rgba(37, 99, 235, 0.04) !important;
+        box-shadow: 0 0 0 3px var(--primary-glow) !important;
+        transform: translateY(-2px);
+    }
+
+    .sub-period-card .period-discount-badge {
+        position: absolute;
+        top: -9px;
+        font-size: 0.65rem;
+        font-weight: 800;
+        padding: 2px 8px;
+        border-radius: 9999px;
+        color: #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        letter-spacing: 0.02em;
+    }
+
+    .sub-pay-card {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.85rem 1rem;
+        border-radius: 14px;
+        border: 2px solid var(--border-color);
+        background: var(--bg-card);
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        user-select: none;
+    }
+
+    .sub-pay-card:hover {
+        border-color: rgba(37, 99, 235, 0.4);
+        transform: translateY(-1px);
+    }
+
+    .sub-pay-card.is-selected {
+        border-color: var(--primary) !important;
+        background: var(--bg-card) !important;
+        box-shadow: 0 0 0 3px var(--primary-glow) !important;
+        transform: translateY(-2px);
+    }
+
+    .sub-receipt-box {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 18px;
+        padding: 1.25rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    }
+
+    .sub-receipt-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        padding: 0.45rem 0;
+        color: var(--text-muted);
+    }
+
+    .sub-receipt-row strong {
+        color: var(--text-main);
+        font-weight: 700;
+    }
+
     @media (max-width: 860px) {
         .subscription-modal-container {
             max-width: 580px !important;
             height: auto !important;
-            max-height: 92vh !important;
+            max-height: 94vh !important;
         }
         .subscription-modal-grid {
             grid-template-columns: 1fr !important;
@@ -500,10 +686,10 @@
          x-transition:leave-start="opacity-100 scale-100"
          x-transition:leave-end="opacity-0 scale-95"
          class="subscription-modal-container"
-         style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; width: 100%; max-width: 960px; height: 680px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 60px -15px rgba(0,0,0,0.5);">
+         style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; width: 100%; max-width: 960px; height: auto; min-height: 560px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 60px -15px rgba(0,0,0,0.5);">
         
         <!-- Fixed Header with Title & Segmented Navigation -->
-        <div style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; background: var(--bg-card); gap: 1rem; flex-wrap: wrap;">
+        <div style="padding: 1.15rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; background: var(--bg-card); gap: 1rem; flex-wrap: wrap;">
             <div style="display: flex; align-items: center; gap: 0.75rem;">
                 <span style="width: 42px; height: 42px; border-radius: 12px; background: rgba(37, 99, 235, 0.12); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
                     <i class="fa-solid fa-gem"></i>
@@ -536,7 +722,7 @@
                 </button>
             </div>
 
-            <button type="button" @click="renewModalOpen = false" style="width: 36px; height: 36px; border-radius: 10px; background: var(--bg-body); border: 1px solid var(--border-color); font-size: 1.1rem; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;">
+            <button type="button" @click="renewModalOpen = false" style="width: 36px; height: 36px; border-radius: 10px; background: var(--bg-body); border: 1px solid var(--border-color); font-size: 1.1rem; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;" title="{{ __('Close') }}">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -549,23 +735,24 @@
                     <!-- Left: Plan Selection -->
                     <div style="overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
                         <div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                                <label style="font-size: 0.82rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">
-                                    {{ __('Select Plan to Change') }}
-                                </label>
+                            <div class="sub-step-header" style="justify-content: space-between;">
+                                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <span class="sub-step-num"><i class="fa-solid fa-arrows-rotate" style="font-size: 0.65rem;"></i></span>
+                                    <span class="sub-step-label">{{ __('Select Target Plan') }}</span>
+                                </div>
                                 <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">{{ count($allPlans) }} {{ __('plans available') }}</span>
                             </div>
                             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
                                 @foreach($allPlans as $p)
-                                    <label style="position: relative; display: flex; flex-direction: column; justify-content: space-between; padding: 1rem 1.15rem; border-radius: 16px; border: 2px solid; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); user-select: none;"
-                                           :style="selectedPlanId == {{ $p->id }} ? 'border-color: var(--primary); background: var(--bg-card); box-shadow: 0 0 0 3px var(--primary-glow), 0 8px 20px -4px rgba(37, 99, 235, 0.12); transform: translateY(-1px);' : 'border-color: var(--border-color); background: var(--bg-body);'">
-                                        <input type="radio" name="subscription_plan_id" value="{{ $p->id }}" x-model="selectedPlanId" style="display: none;">
+                                    <label class="sub-card"
+                                           :class="{ 'is-selected': selectedPlanId == {{ $p->id }} }"
+                                           style="padding: 1rem 1.15rem; display: flex; flex-direction: column; justify-content: space-between; min-height: 106px;">
+                                        <input type="radio" name="subscription_plan_id" value="{{ $p->id }}" x-model="selectedPlanId" class="sub-hidden-input">
                                         <div>
                                             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
                                                 <span style="font-weight: 800; font-size: 1rem; color: var(--text-main); line-height: 1.3;">{{ __($p->name) }}</span>
-                                                <span style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"
-                                                      :style="selectedPlanId == {{ $p->id }} ? 'border-color: var(--primary); background: var(--primary);' : 'border-color: var(--border-color); background: transparent;'">
-                                                    <i class="fa-solid fa-check" style="color: #fff; font-size: 0.65rem;" x-show="selectedPlanId == {{ $p->id }}"></i>
+                                                <span class="sub-radio-dot">
+                                                    <i class="fa-solid fa-check" x-show="selectedPlanId == {{ $p->id }}"></i>
                                                 </span>
                                             </div>
                                             <div style="margin-top: 0.45rem; display: flex; align-items: baseline; gap: 0.25rem;">
@@ -573,13 +760,13 @@
                                                 <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">{{ $p->currency }}/{{ __('mo') }}</span>
                                             </div>
                                         </div>
-                                        @if($vendor->subscription_plan_id == $p->id)
-                                            <div style="margin-top: 0.65rem;">
+                                        <div style="margin-top: 0.65rem; min-height: 22px; display: flex; align-items: center;">
+                                            @if($vendor->subscription_plan_id == $p->id)
                                                 <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #10b981; font-weight: 800; font-size: 0.68rem; padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem; border: 1px solid rgba(16, 185, 129, 0.25);">
                                                     <i class="fa-solid fa-circle-check" style="font-size: 0.6rem;"></i> {{ __('Current Plan') }}
                                                 </span>
-                                            </div>
-                                        @endif
+                                            @endif
+                                        </div>
                                     </label>
                                 @endforeach
                             </div>
@@ -605,8 +792,8 @@
 
                     <!-- Right: Plan Preview & Action -->
                     <div class="subscription-summary-pane" style="background: var(--bg-body); border-left: 1px solid var(--border-color); padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; overflow-y: auto;">
-                        <div>
-                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; margin-bottom: 1.25rem;">
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;">
                                 <div style="display: flex; align-items: center; gap: 0.6rem;">
                                     <span style="width: 32px; height: 32px; border-radius: 10px; background: rgba(37, 99, 235, 0.12); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem;">
                                         <i class="fa-solid fa-sparkles"></i>
@@ -632,7 +819,7 @@
                                 </template>
                             </div>
 
-                            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                            <div class="sub-receipt-box">
                                 <div style="font-size: 1.2rem; font-weight: 800; color: var(--text-main);" x-text="plansInfo[selectedPlanId]?.name"></div>
                                 <div style="font-family: 'Outfit'; font-size: 1.55rem; font-weight: 900; color: var(--primary); margin: 0.35rem 0;" x-text="plansInfo[selectedPlanId]?.formatted_price + ' / {{ __('mo') }}'"></div>
                                 
@@ -650,7 +837,7 @@
                             </div>
                         </div>
 
-                        <div>
+                        <div style="margin-top: 1.5rem;">
                             <!-- Case 1: UPGRADE (Requires payment) -->
                             <template x-if="isUpgradeSelected()">
                                 <div>
@@ -689,10 +876,6 @@
                                     </button>
                                 </div>
                             </template>
-
-                            <button type="button" @click="renewModalOpen = false" class="btn btn-secondary" style="width: 100%; border-radius: 12px; font-weight: 700; padding: 0.65rem; margin-top: 0.75rem; font-size: 0.85rem; justify-content: center;">
-                                {{ __('Close') }}
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -710,20 +893,21 @@
                         
                         <!-- 1. Select Plan to Renew -->
                         <div>
-                            <label style="display: block; font-size: 0.82rem; font-weight: 800; color: var(--text-muted); margin-bottom: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em;">
-                                {{ __('1. Select Plan to Renew') }}
-                            </label>
+                            <div class="sub-step-header">
+                                <span class="sub-step-num">1</span>
+                                <span class="sub-step-label">{{ __('Select Plan to Renew') }}</span>
+                            </div>
                             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
                                 @foreach($allPlans as $p)
-                                    <label style="position: relative; display: flex; flex-direction: column; justify-content: space-between; padding: 0.95rem 1.15rem; border-radius: 16px; border: 2px solid; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); user-select: none;"
-                                           :style="selectedPlanId == {{ $p->id }} ? 'border-color: var(--primary); background: var(--bg-card); box-shadow: 0 0 0 3px var(--primary-glow), 0 8px 20px -4px rgba(37, 99, 235, 0.12); transform: translateY(-1px);' : 'border-color: var(--border-color); background: var(--bg-body);'">
-                                        <input type="radio" name="subscription_plan_id" value="{{ $p->id }}" x-model="selectedPlanId" style="display: none;">
+                                    <label class="sub-card"
+                                           :class="{ 'is-selected': selectedPlanId == {{ $p->id }} }"
+                                           style="padding: 1rem 1.15rem; display: flex; flex-direction: column; justify-content: space-between; min-height: 106px;">
+                                        <input type="radio" name="subscription_plan_id" value="{{ $p->id }}" x-model="selectedPlanId" class="sub-hidden-input">
                                         <div>
                                             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
                                                 <span style="font-weight: 800; font-size: 1rem; color: var(--text-main); line-height: 1.3;">{{ __($p->name) }}</span>
-                                                <span style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"
-                                                      :style="selectedPlanId == {{ $p->id }} ? 'border-color: var(--primary); background: var(--primary);' : 'border-color: var(--border-color); background: transparent;'">
-                                                    <i class="fa-solid fa-check" style="color: #fff; font-size: 0.65rem;" x-show="selectedPlanId == {{ $p->id }}"></i>
+                                                <span class="sub-radio-dot">
+                                                    <i class="fa-solid fa-check" x-show="selectedPlanId == {{ $p->id }}"></i>
                                                 </span>
                                             </div>
                                             <div style="margin-top: 0.45rem; display: flex; align-items: baseline; gap: 0.25rem;">
@@ -731,13 +915,13 @@
                                                 <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">{{ $p->currency }}/{{ __('mo') }}</span>
                                             </div>
                                         </div>
-                                        @if($vendor->subscription_plan_id == $p->id)
-                                            <div style="margin-top: 0.65rem;">
+                                        <div style="margin-top: 0.65rem; min-height: 22px; display: flex; align-items: center;">
+                                            @if($vendor->subscription_plan_id == $p->id)
                                                 <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #10b981; font-weight: 800; font-size: 0.68rem; padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem; border: 1px solid rgba(16, 185, 129, 0.25);">
                                                     <i class="fa-solid fa-circle-check" style="font-size: 0.6rem;"></i> {{ __('Current Plan') }}
                                                 </span>
-                                            </div>
-                                        @endif
+                                            @endif
+                                        </div>
                                     </label>
                                 @endforeach
                             </div>
@@ -745,40 +929,37 @@
 
                         <!-- 2. Select Duration Period -->
                         <div>
-                            <label style="display: block; font-size: 0.82rem; font-weight: 800; color: var(--text-muted); margin-bottom: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em;">
-                                {{ __('2. Select Billing Interval') }}
-                            </label>
+                            <div class="sub-step-header">
+                                <span class="sub-step-num">2</span>
+                                <span class="sub-step-label">{{ __('Select Billing Interval') }}</span>
+                            </div>
                             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.65rem;">
                                 <!-- 1 Mo -->
-                                <label style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.85rem 0.5rem; border-radius: 14px; border: 2px solid; cursor: pointer; text-align: center; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); user-select: none;"
-                                       :style="periodMonths == 1 ? 'border-color: var(--primary); background: var(--bg-card); box-shadow: 0 0 0 3px var(--primary-glow); transform: translateY(-1px);' : 'border-color: var(--border-color); background: var(--bg-body);'">
-                                    <input type="radio" name="period_months" value="1" x-model="periodMonths" style="display: none;">
+                                <label class="sub-period-card" :class="{ 'is-selected': periodMonths == 1 }">
+                                    <input type="radio" name="period_months" value="1" x-model="periodMonths" class="sub-hidden-input">
                                     <span style="font-weight: 800; font-size: 1.05rem; color: var(--text-main); font-family: 'Outfit', sans-serif;">{{ __('1 Mo') }}</span>
                                     <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; margin-top: 3px;">{{ __('Standard') }}</span>
                                 </label>
 
                                 <!-- 3 Mo -->
-                                <label style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.85rem 0.5rem; border-radius: 14px; border: 2px solid; cursor: pointer; text-align: center; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); user-select: none;"
-                                       :style="periodMonths == 3 ? 'border-color: var(--primary); background: var(--bg-card); box-shadow: 0 0 0 3px var(--primary-glow); transform: translateY(-1px);' : 'border-color: var(--border-color); background: var(--bg-body);'">
-                                    <input type="radio" name="period_months" value="3" x-model="periodMonths" style="display: none;">
+                                <label class="sub-period-card" :class="{ 'is-selected': periodMonths == 3 }">
+                                    <input type="radio" name="period_months" value="3" x-model="periodMonths" class="sub-hidden-input">
                                     <span style="font-weight: 800; font-size: 1.05rem; color: var(--text-main); font-family: 'Outfit', sans-serif;">{{ __('3 Mo') }}</span>
                                     <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; margin-top: 3px;">{{ __('Quarterly') }}</span>
                                 </label>
 
                                 <!-- 6 Mo -->
-                                <label style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.85rem 0.5rem; border-radius: 14px; border: 2px solid; cursor: pointer; text-align: center; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); user-select: none;"
-                                       :style="periodMonths == 6 ? 'border-color: var(--primary); background: var(--bg-card); box-shadow: 0 0 0 3px var(--primary-glow); transform: translateY(-1px);' : 'border-color: var(--border-color); background: var(--bg-body);'">
-                                    <input type="radio" name="period_months" value="6" x-model="periodMonths" style="display: none;">
-                                    <span style="position: absolute; top: -9px; background: #10b981; color: #fff; font-size: 0.65rem; font-weight: 800; padding: 2px 7px; border-radius: 9999px; box-shadow: 0 2px 6px rgba(16,185,129,0.35);">-10%</span>
+                                <label class="sub-period-card" :class="{ 'is-selected': periodMonths == 6 }">
+                                    <input type="radio" name="period_months" value="6" x-model="periodMonths" class="sub-hidden-input">
+                                    <span class="period-discount-badge" style="background: #10b981;">-10%</span>
                                     <span style="font-weight: 800; font-size: 1.05rem; color: var(--text-main); font-family: 'Outfit', sans-serif;">{{ __('6 Mo') }}</span>
                                     <span style="font-size: 0.72rem; color: #10b981; font-weight: 700; margin-top: 3px;">{{ __('10% Off') }}</span>
                                 </label>
 
                                 <!-- 12 Mo -->
-                                <label style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.85rem 0.5rem; border-radius: 14px; border: 2px solid; cursor: pointer; text-align: center; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); user-select: none;"
-                                       :style="periodMonths == 12 ? 'border-color: var(--primary); background: var(--bg-card); box-shadow: 0 0 0 3px var(--primary-glow); transform: translateY(-1px);' : 'border-color: var(--border-color); background: var(--bg-body);'">
-                                    <input type="radio" name="period_months" value="12" x-model="periodMonths" style="display: none;">
-                                    <span style="position: absolute; top: -9px; background: #f97316; color: #fff; font-size: 0.65rem; font-weight: 800; padding: 2px 7px; border-radius: 9999px; box-shadow: 0 2px 6px rgba(249,115,22,0.35);">-20%</span>
+                                <label class="sub-period-card" :class="{ 'is-selected': periodMonths == 12 }">
+                                    <input type="radio" name="period_months" value="12" x-model="periodMonths" class="sub-hidden-input">
+                                    <span class="period-discount-badge" style="background: #f97316;">-20%</span>
                                     <span style="font-weight: 800; font-size: 1.05rem; color: var(--text-main); font-family: 'Outfit', sans-serif;">{{ __('12 Mo') }}</span>
                                     <span style="font-size: 0.72rem; color: #f97316; font-weight: 700; margin-top: 3px;">{{ __('20% Off') }}</span>
                                 </label>
@@ -787,9 +968,10 @@
 
                         <!-- 3. Select Payment Method -->
                         <div>
-                            <label style="display: block; font-size: 0.82rem; font-weight: 800; color: var(--text-muted); margin-bottom: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em;">
-                                {{ __('3. Select Payment Method') }}
-                            </label>
+                            <div class="sub-step-header">
+                                <span class="sub-step-num">3</span>
+                                <span class="sub-step-label">{{ __('Select Payment Method') }}</span>
+                            </div>
                             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.65rem;">
                                 @php
                                     $paymentMethods = [
@@ -802,18 +984,16 @@
                                     ];
                                 @endphp
                                 @foreach($paymentMethods as $pm)
-                                    <label style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.8rem 1rem; border-radius: 14px; border: 2px solid; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); user-select: none;"
-                                           :style="paymentMethod == '{{ $pm['code'] }}' ? 'border-color: var(--primary); background: var(--bg-card); box-shadow: 0 0 0 3px var(--primary-glow); transform: translateY(-1px);' : 'border-color: var(--border-color); background: var(--bg-body);'">
-                                        <input type="radio" name="payment_method" value="{{ $pm['code'] }}" x-model="paymentMethod" style="display: none;">
+                                    <label class="sub-pay-card" :class="{ 'is-selected': paymentMethod == '{{ $pm['code'] }}' }">
+                                        <input type="radio" name="payment_method" value="{{ $pm['code'] }}" x-model="paymentMethod" class="sub-hidden-input">
                                         <div style="display: flex; align-items: center; gap: 0.75rem; min-width: 0; flex: 1;">
                                             <span style="width: 36px; height: 36px; border-radius: 10px; background: {{ $pm['color'] }}18; color: {{ $pm['color'] }}; display: inline-flex; align-items: center; justify-content: center; font-size: 1.05rem; flex-shrink: 0;">
                                                 <i class="{{ $pm['icon'] }}"></i>
                                             </span>
                                             <span style="font-weight: 700; font-size: 0.85rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $pm['name'] }}</span>
                                         </div>
-                                        <span style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; margin-left: 0.5rem;"
-                                              :style="paymentMethod == '{{ $pm['code'] }}' ? 'border-color: var(--primary); background: var(--primary);' : 'border-color: var(--border-color); background: transparent;'">
-                                            <i class="fa-solid fa-check" style="color: #fff; font-size: 0.65rem;" x-show="paymentMethod == '{{ $pm['code'] }}'"></i>
+                                        <span class="sub-radio-dot">
+                                            <i class="fa-solid fa-check" x-show="paymentMethod == '{{ $pm['code'] }}'"></i>
                                         </span>
                                     </label>
                                 @endforeach
@@ -823,9 +1003,9 @@
 
                     <!-- Right: Order Summary & Checkout Card -->
                     <div class="subscription-summary-pane" style="background: var(--bg-body); border-left: 1px solid var(--border-color); padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; overflow-y: auto;">
-                        <div>
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
                             <!-- Summary Header -->
-                            <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1.25rem;">
+                            <div style="display: flex; align-items: center; gap: 0.6rem;">
                                 <span style="width: 32px; height: 32px; border-radius: 10px; background: rgba(37, 99, 235, 0.12); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem;">
                                     <i class="fa-solid fa-receipt"></i>
                                 </span>
@@ -835,51 +1015,56 @@
                             </div>
 
                             <!-- Receipt Details Box -->
-                            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.15rem; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                                    <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">{{ __('Plan') }}:</span>
-                                    <span style="font-size: 0.9rem; font-weight: 800; color: var(--text-main);" x-text="plansInfo[selectedPlanId]?.name"></span>
+                            <div class="sub-receipt-box">
+                                <div class="sub-receipt-row">
+                                    <span>{{ __('Plan') }}</span>
+                                    <strong x-text="plansInfo[selectedPlanId]?.name"></strong>
                                 </div>
                                 
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                                    <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">{{ __('Monthly Rate') }}:</span>
-                                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);" x-text="plansInfo[selectedPlanId]?.formatted_price + ' / {{ __('mo') }}'"></span>
+                                <div class="sub-receipt-row">
+                                    <span>{{ __('Monthly Rate') }}</span>
+                                    <span style="font-weight: 700; color: var(--text-muted);" x-text="plansInfo[selectedPlanId]?.formatted_price + ' / {{ __('mo') }}'"></span>
                                 </div>
 
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                                    <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">{{ __('Duration') }}:</span>
-                                    <span style="font-size: 0.85rem; font-weight: 800; color: var(--text-main);" x-text="periodMonths + ' ' + (periodMonths == 1 ? '{{ __('month') }}' : '{{ __('months') }}')"></span>
+                                <div class="sub-receipt-row">
+                                    <span>{{ __('Duration') }}</span>
+                                    <strong x-text="periodMonths + ' ' + (periodMonths == 1 ? '{{ __('month') }}' : '{{ __('months') }}')"></strong>
                                 </div>
 
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;" x-show="periodMonths > 1">
-                                    <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">{{ __('Base Subtotal') }}:</span>
-                                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);" x-text="calculateBaseTotal() + ' {{ $vendor->currency ?? '֏' }}'"></span>
+                                <div class="sub-receipt-row" x-show="periodMonths > 1">
+                                    <span>{{ __('Base Subtotal') }}</span>
+                                    <span style="font-weight: 700; color: var(--text-muted);" x-text="calculateBaseTotal() + ' {{ $vendor->currency ?? '֏' }}'"></span>
                                 </div>
 
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;" x-show="calculateDiscountPercent() > 0">
-                                    <span style="font-size: 0.82rem; color: #10b981; font-weight: 700; display: flex; align-items: center; gap: 0.35rem;">
+                                <div class="sub-receipt-row" x-show="calculateDiscountPercent() > 0" style="color: #10b981;">
+                                    <span style="display: flex; align-items: center; gap: 0.35rem; font-weight: 700;">
                                         <i class="fa-solid fa-tag"></i> <span x-text="'{{ __('Discount') }} (' + calculateDiscountPercent() + '%)'"></span>
                                     </span>
-                                    <span style="font-size: 0.85rem; font-weight: 800; color: #10b981;" x-text="'-' + calculateDiscountSavings() + ' {{ $vendor->currency ?? '֏' }}'"></span>
+                                    <strong style="color: #10b981;" x-text="'-' + calculateDiscountSavings() + ' {{ $vendor->currency ?? '֏' }}'"></strong>
                                 </div>
 
-                                <div style="border-top: 1px dashed var(--border-color); padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">{{ __('Method') }}:</span>
-                                    <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-main); display: inline-flex; align-items: center; gap: 0.4rem;">
+                                <div class="sub-receipt-row" style="border-top: 1px dashed var(--border-color); margin-top: 0.4rem; padding-top: 0.65rem;">
+                                    <span>{{ __('Method') }}</span>
+                                    <strong style="display: inline-flex; align-items: center; gap: 0.4rem;">
                                         <i :class="paymentMethodsInfo[paymentMethod]?.icon" :style="'color: ' + paymentMethodsInfo[paymentMethod]?.color"></i>
                                         <span x-text="paymentMethodsInfo[paymentMethod]?.name"></span>
-                                    </span>
+                                    </strong>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Summary Bottom Action Area -->
-                        <div>
-                            <div style="margin-bottom: 1.15rem;">
-                                <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 800; color: var(--text-muted); letter-spacing: 0.06em; margin-bottom: 0.25rem;">
-                                    {{ __('Total Due') }}
+                        <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.85rem;">
+                            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--text-muted); letter-spacing: 0.05em;">
+                                        {{ __('Total Due') }}
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 1px;">
+                                        {{ __('One-time payment') }}
+                                    </div>
                                 </div>
-                                <div style="font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.95rem; color: var(--primary); line-height: 1;" x-text="calculateTotal() + ' ' + '{{ $vendor->currency ?? '֏' }}'"></div>
+                                <div style="font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.65rem; color: var(--primary); text-align: right; line-height: 1;" x-text="calculateTotal() + ' ' + '{{ $vendor->currency ?? '֏' }}'"></div>
                             </div>
 
                             <button type="submit" class="btn btn-primary" style="width: 100%; border-radius: 14px; font-weight: 800; padding: 0.95rem 1.25rem; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.65rem; box-shadow: 0 8px 24px var(--primary-glow); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;">
@@ -888,14 +1073,10 @@
                                 <i class="fa-solid fa-arrow-right" style="font-size: 0.85rem; margin-left: 2px;"></i>
                             </button>
 
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.45rem; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.85rem; font-weight: 600;">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.45rem; font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">
                                 <i class="fa-solid fa-shield-halved" style="color: #10b981;"></i>
                                 <span>{{ __('SSL 256-bit Encrypted & Secure Payment') }}</span>
                             </div>
-
-                            <button type="button" @click="renewModalOpen = false" class="btn btn-secondary" style="width: 100%; border-radius: 12px; font-weight: 700; padding: 0.65rem; margin-top: 0.75rem; font-size: 0.85rem; justify-content: center;">
-                                {{ __('Close') }}
-                            </button>
                         </div>
                     </div>
                 </div>

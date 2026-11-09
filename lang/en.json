@@ -7330,5 +7330,12 @@
     "Beneficiary Company": "Beneficiary Company",
     "TIN \/ Tax ID (ՀՎՀՀ)": "TIN \/ Tax ID",
     "Account Number (AMD) \/ IBAN": "Account Number (AMD) \/ IBAN",
-    "Are you sure you want to delete this add-on?": "Are you sure you want to delete this add-on?"
+    "Are you sure you want to delete this add-on?": "Are you sure you want to delete this add-on?",
+    "Select Plan to Renew": "Select Plan to Renew",
+    "Select Billing Interval": "Select Billing Interval",
+    "Select Payment Method": "Select Payment Method",
+    "Select Target Plan": "Select Target Plan",
+    "Upgrade": "Upgrade",
+    "Downgrade": "Downgrade",
+    "One-time payment": "One-time payment"
 }

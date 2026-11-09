@@ -2141,7 +2141,7 @@
     "Duplicate category and all dishes": "Կրկնօրինակել կատեգորիան և բոլոր ուտեստները",
     "Duplicate products are not allowed in daily offers.": "Օրվա առաջարկներում կրկնվող ուտեստներ չեն թույլատրվում։",
     "Duplicated from :role": "Կրկնօրինակված է «:role» դերից",
-    "Duration": "Տևողություն",
+    "Duration": "Ժամանակահատված",
     "Duration & Buffer Timing": "Տևողություն և միջանկյալ ընդմիջումներ",
     "ESC\/POS (Mono)": "ESC\/POS (Մոնո)",
     "ESC\/POS Thermal Printer": "ESC\/POS Ջերմային տպիչ",
@@ -7651,11 +7651,17 @@
     "plans available": "հասանելի փաթեթ",
     "Order Summary": "Պատվերի ամփոփագիր",
     "Monthly Rate": "Ամսական արժեք",
-    "Duration": "Ժամանակահատված",
     "Base Subtotal": "Ենթագումար",
     "SSL 256-bit Encrypted & Secure Payment": "256-bit SSL Ապահով և պաշտպանված վճարում",
     "Features Included": "Ներառված հնարավորություններ",
     "Select Plan to Change": "Ընտրեք նոր փաթեթը",
     "Active Plan": "Ընթացիկ փաթեթ",
-    "New Plan Selected": "Ընտրված նոր փաթեթ"
+    "New Plan Selected": "Ընտրված նոր փաթեթ",
+    "Select Plan to Renew": "Ընտրեք երկարաձգվող փաթեթը",
+    "Select Billing Interval": "Ընտրեք վճարման պարբերականությունը",
+    "Select Payment Method": "Ընտրեք վճարման եղանակը",
+    "Select Target Plan": "Ընտրեք նոր փաթեթը",
+    "Upgrade": "Թարմացում",
+    "Downgrade": "Իջեցում",
+    "One-time payment": "Միանվագ վճարում"
 }
