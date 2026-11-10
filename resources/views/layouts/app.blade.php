@@ -1339,6 +1339,32 @@
                 display: inline !important;
             }
         }
+
+        /* Print Media Styles for Entire Admin System */
+        @media print {
+            .sidebar,
+            .header-navbar,
+            .sidebar-overlay,
+            .no-print,
+            .subscription-top-banner {
+                display: none !important;
+            }
+            body {
+                background: #ffffff !important;
+                color: #0f172a !important;
+            }
+            .main-wrapper {
+                margin-left: 0 !important;
+                padding-top: 0 !important;
+                width: 100% !important;
+            }
+            .content-body {
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+        }
     </style>
     @yield('styles')
 </head>
