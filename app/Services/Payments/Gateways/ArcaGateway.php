@@ -142,14 +142,27 @@ class ArcaGateway implements PaymentGatewayInterface
         ]);
 
         if (empty($creds['client_id']) || empty($creds['username']) || empty($creds['password'])) {
-            Log::info("AmeriaBank vPOS initiated without complete credentials for attempt {$attempt->merchant_reference}.");
+            if ($creds['is_sandbox']) {
+                $sandboxUrl = route('payment.arca.sandbox', [
+                    'reference' => $attempt->merchant_reference,
+                ]);
 
-            return PaymentInitiationResult::redirect(
-                redirectUrl: $returnUrl.'?paymentID=mock_arca_order&resposneCode=00&orderID='.$attempt->id,
-                merchantReference: $attempt->merchant_reference,
+                return PaymentInitiationResult::redirect(
+                    redirectUrl: $sandboxUrl,
+                    merchantReference: $attempt->merchant_reference,
+                    gatewayData: [
+                        'provider_status' => 'sandbox_simulator',
+                        'note' => 'AmeriaBank vPOS Sandbox Simulator active.',
+                    ]
+                );
+            }
+
+            Log::warning("AmeriaBank vPOS initiated without complete credentials for attempt {$attempt->merchant_reference}.");
+
+            return PaymentInitiationResult::failure(
+                errorMessage: 'AmeriaBank vPOS gateway credentials (ClientID, Username, Password) are not configured by Superadmin.',
                 gatewayData: [
                     'provider_status' => 'missing_credentials',
-                    'note' => 'AmeriaBank vPOS requires ClientID, Username, and Password credentials.',
                 ]
             );
         }
@@ -239,6 +252,17 @@ class ArcaGateway implements PaymentGatewayInterface
      */
     public function verifyCallback(PaymentAttempt $attempt, array $payload): PaymentVerificationResult
     {
+        if (! empty($payload['sandbox_approved'])) {
+            return PaymentVerificationResult::paid(
+                providerTransactionId: 'SIM-ARCA-'.uniqid(),
+                amount: (float) $attempt->amount,
+                currency: $attempt->currency,
+                merchantReference: $attempt->merchant_reference,
+                rawPayload: $payload,
+                signatureValid: true
+            );
+        }
+
         $paymentId = $payload['paymentID']
             ?? $payload['PaymentID']
             ?? $payload['paymentId']

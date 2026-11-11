@@ -986,6 +986,61 @@ self.addEventListener('fetch', event => {
         ])->with('info', 'Վճարումը մշակման փուլում է։ Խնդրում ենք սպասել հաստատմանը։');
     }
 
+    /**
+     * Render ArCa / Ameriabank vPOS Sandbox Simulator for testing.
+     */
+    public function arcaSandboxPayment(string $reference)
+    {
+        $attempt = PaymentAttempt::where('merchant_reference', $reference)
+            ->orWhere('uuid', $reference)
+            ->firstOrFail();
+
+        if ($attempt->status === PaymentStatus::Paid) {
+            return redirect()->route('client.payment.callback', [
+                'vendor_slug' => $attempt->vendor->slug,
+                'reference' => $attempt->merchant_reference,
+            ]);
+        }
+
+        return view('payments.arca_sandbox', compact('attempt'));
+    }
+
+    /**
+     * Process simulated ArCa / Ameriabank vPOS payment.
+     */
+    public function processArcaSandboxPayment(
+        string $reference,
+        Request $request,
+        PaymentVerificationService $verificationService
+    ) {
+        $attempt = PaymentAttempt::where('merchant_reference', $reference)
+            ->orWhere('uuid', $reference)
+            ->firstOrFail();
+
+        $action = $request->input('action', 'pay');
+
+        if ($action === 'cancel') {
+            return redirect()->route('client.payment.callback', [
+                'vendor_slug' => $attempt->vendor->slug,
+                'reference' => $attempt->merchant_reference,
+                'status' => 'cancelled',
+            ]);
+        }
+
+        $result = $verificationService->verifyAndFinalizeAttempt($attempt, [
+            'sandbox_approved' => 1,
+            'card_mask' => '4111••••1111',
+            'card_brand' => 'Visa/ArCa',
+            'simulated_at' => now()->toIso8601String(),
+        ]);
+
+        return redirect()->route('client.payment.callback', [
+            'vendor_slug' => $attempt->vendor->slug,
+            'reference' => $attempt->merchant_reference,
+            'status' => $result->success ? 'paid' : 'failed',
+        ]);
+    }
+
     public function orderStatus(Request $request, string $vendor_slug, string $order_number)
     {
         $vendor = Vendor::where('slug', $vendor_slug)->firstOrFail();

@@ -1268,18 +1268,11 @@
                                 <span class="sub-step-num">3</span>
                                 <span class="sub-step-label">{{ __('Select Payment Method') }}</span>
                             </div>
-                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.65rem;">
-                                @php
-                                    $paymentMethods = [
-                                        ['code' => 'bank_transfer', 'name' => __('Bank Transfer'), 'icon' => 'fa-solid fa-building-columns', 'color' => '#10b981'],
-                                        ['code' => 'idram', 'name' => __('Idram Wallet / QR'), 'icon' => 'fa-solid fa-wallet', 'color' => '#f97316'],
-                                        ['code' => 'telcell', 'name' => __('Telcell Wallet'), 'icon' => 'fa-solid fa-mobile-screen-button', 'color' => '#eab308'],
-                                        ['code' => 'fastshift', 'name' => __('FastShift'), 'icon' => 'fa-solid fa-bolt', 'color' => '#06b6d4'],
-                                        ['code' => 'arca', 'name' => __('ArCa / Ameriabank'), 'icon' => 'fa-solid fa-credit-card', 'color' => '#2563eb'],
-                                        ['code' => 'stripe', 'name' => __('Stripe (Cards)'), 'icon' => 'fa-brands fa-stripe', 'color' => '#6366f1'],
-                                    ];
-                                @endphp
-                                @foreach($paymentMethods as $pm)
+                            @php
+                                $activePaymentMethods = \App\Models\SystemSetting::getActiveSubscriptionPaymentMethods();
+                            @endphp
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.65rem;">
+                                @foreach($activePaymentMethods as $pm)
                                     <label class="sub-pay-card" :class="{ 'is-selected': paymentMethod == '{{ $pm['code'] }}' }">
                                         <input type="radio" name="payment_method" value="{{ $pm['code'] }}" x-model="paymentMethod" class="sub-hidden-input">
                                         <div style="display: flex; align-items: center; gap: 0.75rem; min-width: 0; flex: 1;">
@@ -1293,6 +1286,25 @@
                                         </span>
                                     </label>
                                 @endforeach
+                            </div>
+
+                            <!-- Payment Guidance Note -->
+                            <div style="margin-top: 0.85rem;">
+                                <div x-show="paymentMethod === 'bank_transfer'" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 0.75rem 0.95rem; display: flex; align-items: flex-start; gap: 0.65rem; font-size: 0.8rem; color: var(--text-main);">
+                                    <i class="fa-solid fa-building-columns" style="color: #10b981; margin-top: 2px; font-size: 0.95rem;"></i>
+                                    <div>
+                                        <span style="font-weight: 700; display: block; margin-bottom: 2px;">{{ __('Bank Transfer Invoice') }}</span>
+                                        <span style="color: var(--text-muted); line-height: 1.45;">{{ __('An official invoice with bank requisites will be generated. Your subscription will be activated upon transfer confirmation.') }}</span>
+                                    </div>
+                                </div>
+
+                                <div x-show="paymentMethod !== 'bank_transfer'" style="background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.25); border-radius: 12px; padding: 0.75rem 0.95rem; display: flex; align-items: flex-start; gap: 0.65rem; font-size: 0.8rem; color: var(--text-main);">
+                                    <i class="fa-solid fa-bolt" style="color: var(--primary); margin-top: 2px; font-size: 0.95rem;"></i>
+                                    <div>
+                                        <span style="font-weight: 700; display: block; margin-bottom: 2px;">{{ __('Instant Online Checkout') }}</span>
+                                        <span style="color: var(--text-muted); line-height: 1.45;">{{ __('You will be redirected to the secure payment page to complete your payment instantly.') }}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1364,8 +1376,8 @@
                             </div>
 
                             <button type="submit" class="btn btn-primary" style="width: 100%; border-radius: 12px; font-weight: 800; padding: 0.85rem 1.25rem; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 0.65rem; box-shadow: 0 8px 24px var(--primary-glow); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;">
-                                <i class="fa-solid fa-lock"></i>
-                                <span>{{ __('Proceed to Payment') }}</span>
+                                <i :class="paymentMethod === 'bank_transfer' ? 'fa-solid fa-file-invoice' : 'fa-solid fa-lock'"></i>
+                                <span x-text="paymentMethod === 'bank_transfer' ? '{{ __('Generate Invoice') }}' : '{{ __('Proceed to Payment') }}'"></span>
                                 <i class="fa-solid fa-arrow-right" style="font-size: 0.85rem; margin-left: 2px;"></i>
                             </button>
 
@@ -1639,18 +1651,21 @@ function subscriptionManagerApp() {
         modalTab: 'renew',
         selectedPlanId: {{ $vendor->subscription_plan_id ?? ($allPlans->first()?->id ?? 1) }},
         periodMonths: 1,
-        paymentMethod: 'bank_transfer',
+        paymentMethod: '{{ array_key_first(\App\Models\SystemSetting::getActiveSubscriptionPaymentMethods()) ?? 'bank_transfer' }}',
         pricesMap: @json($plansMap),
         addonsMap: @json($addonsMap),
         plansInfo: @json($plansInfo),
-        paymentMethodsInfo: {
-            'bank_transfer': { name: '{{ __('Bank Transfer') }}', icon: 'fa-solid fa-building-columns', color: '#10b981' },
-            'idram': { name: '{{ __('Idram Wallet / QR') }}', icon: 'fa-solid fa-wallet', color: '#f97316' },
-            'telcell': { name: '{{ __('Telcell Wallet') }}', icon: 'fa-solid fa-mobile-screen-button', color: '#eab308' },
-            'fastshift': { name: '{{ __('FastShift') }}', icon: 'fa-solid fa-bolt', color: '#06b6d4' },
-            'arca': { name: '{{ __('ArCa / Ameriabank') }}', icon: 'fa-solid fa-credit-card', color: '#2563eb' },
-            'stripe': { name: '{{ __('Stripe (Cards)') }}', icon: 'fa-brands fa-stripe', color: '#6366f1' },
-        },
+        @php
+            $jsPaymentMethods = array_merge([
+                'bank_transfer' => ['code' => 'bank_transfer', 'name' => __('Bank Transfer'), 'icon' => 'fa-solid fa-building-columns', 'color' => '#10b981'],
+                'arca' => ['code' => 'arca', 'name' => __('ArCa / Ameriabank'), 'icon' => 'fa-solid fa-credit-card', 'color' => '#2563eb'],
+                'idram' => ['code' => 'idram', 'name' => __('Idram Wallet / QR'), 'icon' => 'fa-solid fa-wallet', 'color' => '#f97316'],
+                'telcell' => ['code' => 'telcell', 'name' => __('Telcell Wallet'), 'icon' => 'fa-solid fa-mobile-screen-button', 'color' => '#eab308'],
+                'fastshift' => ['code' => 'fastshift', 'name' => __('FastShift'), 'icon' => 'fa-solid fa-bolt', 'color' => '#06b6d4'],
+                'stripe' => ['code' => 'stripe', 'name' => __('Stripe (Cards)'), 'icon' => 'fa-brands fa-stripe', 'color' => '#6366f1'],
+            ], \App\Models\SystemSetting::getActiveSubscriptionPaymentMethods());
+        @endphp
+        paymentMethodsInfo: @json($jsPaymentMethods),
         selectedAddon: null,
         addonQuantity: 1,
         addonBillingPeriod: 'monthly',

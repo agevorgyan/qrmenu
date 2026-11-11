@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PaymentStatus;
 use App\Enums\SubscriptionStatus;
 use App\Http\Requests\RenewSubscriptionRequest;
 use App\Models\AnalyticsLog;
 use App\Models\FeatureCategory;
 use App\Models\Location;
 use App\Models\Order;
+use App\Models\PaymentAttempt;
 use App\Models\SubscriptionAddon;
 use App\Models\SubscriptionPayment;
 use App\Models\SubscriptionPlan;
@@ -17,6 +19,7 @@ use App\Security\FeatureCatalog;
 use App\Security\QuotaCatalog;
 use App\Services\EntitlementService;
 use App\Services\PaymentGatewayService;
+use App\Services\Payments\PaymentGatewayManager;
 use App\Services\QuotaService;
 use App\Services\SubscriptionAddonService;
 use App\Services\SubscriptionService;
@@ -277,7 +280,7 @@ class VendorAdminController extends Controller
         $selectedMethodName = $methodNames[$validated['payment_method']] ?? strtoupper($validated['payment_method']);
 
         if ($result->type === 'redirect' && $result->redirectUrl) {
-            return redirect($result->redirectUrl)->with(
+            return redirect()->away($result->redirectUrl)->with(
                 'info',
                 __('Payment request created (:method). Invoice: :invoice.', [
                     'method' => __($selectedMethodName),
@@ -286,7 +289,26 @@ class VendorAdminController extends Controller
             );
         }
 
-        return back()->with(
+        if (! $result->success && $result->errorMessage) {
+            return redirect()->route('admin.subscription.invoices.show', $payment->id)->with(
+                'error',
+                __('Payment gateway error (:method): :error', [
+                    'method' => __($selectedMethodName),
+                    'error' => $result->errorMessage,
+                ])
+            );
+        }
+
+        if ($validated['payment_method'] === 'bank_transfer') {
+            return redirect()->route('admin.subscription.invoices.show', $payment->id)->with(
+                'success',
+                __('Invoice :invoice created. Please use the official bank requisites below to complete the transfer.', [
+                    'invoice' => $payment->invoice_number,
+                ])
+            );
+        }
+
+        return redirect()->route('admin.subscription.invoices.show', $payment->id)->with(
             'success',
             __('Invoice created (:method). Invoice: :invoice. Subscription will be activated upon payment confirmation.', [
                 'method' => __($selectedMethodName),
@@ -512,5 +534,79 @@ class VendorAdminController extends Controller
         }
 
         return view('admin.subscription.invoice', ['invoice' => $invoiceModel, 'vendor' => $vendor]);
+    }
+
+    /**
+     * Pay an unpaid/pending subscription invoice online or switch payment method.
+     */
+    public function payInvoice($invoice, PaymentGatewayService $paymentService)
+    {
+        $this->authorize('billing.view');
+
+        $invoiceModel = $invoice instanceof SubscriptionPayment
+            ? $invoice
+            : SubscriptionPayment::withoutGlobalScopes()->findOrFail($invoice);
+
+        $vendor = Auth::user()->vendor;
+        if ((int) $invoiceModel->vendor_id !== (int) $vendor->id) {
+            abort(403, 'Unauthorized invoice access.');
+        }
+
+        if (in_array(strtolower($invoiceModel->status), ['completed', 'paid'], true)) {
+            return redirect()->route('admin.subscription.invoices.show', $invoiceModel->id)
+                ->with('info', __('This invoice has already been paid.'));
+        }
+
+        $paymentMethod = request('payment_method', $invoiceModel->payment_method);
+        if ($paymentMethod && $paymentMethod !== $invoiceModel->payment_method) {
+            $invoiceModel->update(['payment_method' => $paymentMethod]);
+        }
+
+        if ($invoiceModel->payment_method === 'bank_transfer') {
+            return redirect()->route('admin.subscription.invoices.show', $invoiceModel->id)
+                ->with('info', __('Please use the bank transfer requisites below to complete the payment.'));
+        }
+
+        // Create fresh PaymentAttempt for online checkout
+        $attempt = PaymentAttempt::create([
+            'uuid' => (string) Str::uuid(),
+            'vendor_id' => $vendor->id,
+            'subscription_id' => $invoiceModel->id,
+            'gateway' => $invoiceModel->payment_method,
+            'merchant_reference' => 'SUB-'.$invoiceModel->id.'-'.Str::upper(Str::random(10)),
+            'amount' => $invoiceModel->amount,
+            'currency' => $invoiceModel->currency,
+            'status' => PaymentStatus::Pending,
+            'idempotency_key' => (string) Str::uuid(),
+            'expires_at' => now()->addMinutes(60),
+            'request_payload' => [
+                'subscription_payment_id' => $invoiceModel->id,
+                'subscription_plan_id' => $invoiceModel->subscription_plan_id,
+            ],
+        ]);
+
+        $gatewayManager = app(PaymentGatewayManager::class);
+        $gatewayAdapter = $gatewayManager->gateway($invoiceModel->payment_method);
+        $initiationResult = $gatewayAdapter->initiatePayment($attempt);
+
+        $attempt->update([
+            'provider_transaction_id' => $initiationResult->providerTransactionId,
+            'request_payload' => array_merge(
+                $attempt->request_payload ?? [],
+                ['gateway_init' => $initiationResult->gatewayData]
+            ),
+        ]);
+
+        if ($initiationResult->type === 'redirect' && $initiationResult->redirectUrl) {
+            return redirect()->away($initiationResult->redirectUrl);
+        }
+
+        if (! $initiationResult->success && $initiationResult->errorMessage) {
+            return redirect()->route('admin.subscription.invoices.show', $invoiceModel->id)
+                ->with('error', __('Payment gateway error: :error', ['error' => $initiationResult->errorMessage]));
+        }
+
+        return redirect()->route('admin.subscription.invoices.show', $invoiceModel->id)
+            ->with('info', __('Payment request initiated.'));
     }
 }

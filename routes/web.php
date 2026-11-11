@@ -234,6 +234,12 @@ Route::get('/payment/callback/{vendor_slug}/{reference}', [ClientStorefrontContr
     ->middleware('throttle:30,1')
     ->name('client.payment.callback');
 
+// ArCa / Ameriabank vPOS Sandbox Card Simulator
+Route::get('/payment/arca/sandbox/{reference}', [ClientStorefrontController::class, 'arcaSandboxPayment'])
+    ->name('payment.arca.sandbox');
+Route::post('/payment/arca/sandbox/{reference}/process', [ClientStorefrontController::class, 'processArcaSandboxPayment'])
+    ->name('payment.arca.sandbox.process');
+
 // Payment Webhook endpoint for asynchronous server-to-server notifications
 Route::post('/api/webhooks/payment/{gateway}', [PaymentWebhookController::class, 'handleWebhook'])
     ->name('api.webhooks.payment')
@@ -533,6 +539,7 @@ Route::middleware(['auth', 'verified', 'role:vendor_owner,manager,chef,staff', E
         Route::post('/subscription/cancel', [VendorAdminController::class, 'cancelSubscription'])->name('subscription.cancel');
         Route::post('/subscription/resume', [VendorAdminController::class, 'resumeSubscription'])->name('subscription.resume');
         Route::get('/subscription/invoices/{invoice}', [VendorAdminController::class, 'showInvoice'])->name('subscription.invoices.show');
+        Route::post('/subscription/invoices/{invoice}/pay', [VendorAdminController::class, 'payInvoice'])->name('subscription.invoices.pay');
     });
 
     // Translation Management & AI Localization Studio

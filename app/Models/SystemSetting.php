@@ -246,12 +246,78 @@ class SystemSetting extends Model
             ],
             'bank_transfer' => [
                 'enabled' => filter_var($all['payment_bank_transfer_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN),
-                'company_name' => $all['payment_bank_transfer_company_name'] ?? '«Մենյու ԷյԷմ» ՍՊԸ',
-                'tin' => $all['payment_bank_transfer_tin'] ?? '02893072',
-                'bank_name' => $all['payment_bank_transfer_bank_name'] ?? '«Ամերիաբանկ» ՓԲԸ',
-                'account_number' => $all['payment_bank_transfer_account_number'] ?? '1570055555550100',
+                'company_name' => filled($all['payment_bank_transfer_company_name'] ?? null) ? $all['payment_bank_transfer_company_name'] : '«Մենյու ԷյԷմ» ՍՊԸ',
+                'tin' => filled($all['payment_bank_transfer_tin'] ?? null) ? $all['payment_bank_transfer_tin'] : '02893072',
+                'bank_name' => filled($all['payment_bank_transfer_bank_name'] ?? null) ? $all['payment_bank_transfer_bank_name'] : '«Ամերիաբանկ» ՓԲԸ',
+                'account_number' => filled($all['payment_bank_transfer_account_number'] ?? null) ? $all['payment_bank_transfer_account_number'] : '1570055555550100',
                 'notes' => $all['payment_bank_transfer_notes'] ?? 'Վճարման նպատակ՝ QR Menu բաժանորդագրություն (նշել հաշվի համարը)',
             ],
         ];
+    }
+
+    /**
+     * Get list of active payment methods for subscription renewals.
+     * Only returns gateways that Superadmin has enabled.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public static function getActiveSubscriptionPaymentMethods(): array
+    {
+        $all = static::getPaymentGatewaySettings();
+        $definitions = [
+            'bank_transfer' => [
+                'code' => 'bank_transfer',
+                'name' => 'Bank Transfer',
+                'icon' => 'fa-solid fa-building-columns',
+                'color' => '#10b981',
+            ],
+            'arca' => [
+                'code' => 'arca',
+                'name' => 'ArCa / Ameriabank',
+                'icon' => 'fa-solid fa-credit-card',
+                'color' => '#2563eb',
+            ],
+            'idram' => [
+                'code' => 'idram',
+                'name' => 'Idram Wallet / QR',
+                'icon' => 'fa-solid fa-wallet',
+                'color' => '#f97316',
+            ],
+            'telcell' => [
+                'code' => 'telcell',
+                'name' => 'Telcell Wallet',
+                'icon' => 'fa-solid fa-mobile-screen-button',
+                'color' => '#eab308',
+            ],
+            'fastshift' => [
+                'code' => 'fastshift',
+                'name' => 'FastShift',
+                'icon' => 'fa-solid fa-bolt',
+                'color' => '#06b6d4',
+            ],
+            'stripe' => [
+                'code' => 'stripe',
+                'name' => 'Stripe (Cards)',
+                'icon' => 'fa-brands fa-stripe',
+                'color' => '#6366f1',
+            ],
+        ];
+
+        $active = [];
+        foreach ($definitions as $code => $def) {
+            if (! empty($all[$code]['enabled'])) {
+                $def['name'] = __($def['name']);
+                $active[$code] = $def;
+            }
+        }
+
+        // If none are explicitly enabled, default to bank_transfer fallback
+        if (empty($active)) {
+            $def = $definitions['bank_transfer'];
+            $def['name'] = __($def['name']);
+            $active['bank_transfer'] = $def;
+        }
+
+        return $active;
     }
 }

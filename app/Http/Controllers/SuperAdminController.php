@@ -2407,6 +2407,6 @@ class SuperAdminController extends Controller
             metadata: ['group' => 'payment']
         );
 
-        return back()->with('success', __('Վճարային համակարգերի և ռեկվիզիտների կարգավորումները հաջողությամբ պահպանվեցին:'));
+        return redirect()->to(route('superadmin.settings.index').'#payments')->with('success', __('Վճարային համակարգերի և ռեկվիզիտների կարգավորումները հաջողությամբ պահպանվեցին:'));
     }
 }

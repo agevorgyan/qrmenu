@@ -407,6 +407,8 @@
         'arca'          => 'ArCa / Card Payment',
         'idram'         => 'Idram',
         'telcell'       => 'Telcell Wallet',
+        'fastshift'     => 'FastShift',
+        'stripe'        => 'Stripe',
         'manual'        => __('Manual / Admin'),
         'free'          => __('Free Trial'),
     ];
@@ -417,6 +419,8 @@
         'arca'          => 'fa-solid fa-credit-card',
         'idram'         => 'fa-solid fa-wallet',
         'telcell'       => 'fa-solid fa-mobile-screen',
+        'fastshift'     => 'fa-solid fa-bolt',
+        'stripe'        => 'fa-brands fa-stripe',
         'manual'        => 'fa-solid fa-user-shield',
         'free'          => 'fa-solid fa-gift',
     ];
@@ -425,7 +429,7 @@
     $bankConfig = \App\Models\SystemSetting::getPaymentGatewaySettings()['bank_transfer'] ?? [];
 @endphp
 
-<div class="invoice-page-container">
+<div class="invoice-page-container" x-data="{ showBankDetails: false }">
     <!-- Top Action Breadcrumbs (Hidden on print) -->
     <div class="invoice-top-actions no-print">
         <a href="{{ route('admin.subscription') }}" class="btn btn-secondary" style="border-radius: 10px; font-weight: 600; font-size: 0.85rem; padding: 0.55rem 1rem; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none;">
@@ -586,69 +590,167 @@
                 </table>
             </div>
 
-            <!-- Bank Transfer Details (if bank_transfer or pending) -->
-            @if($methodCode === 'bank_transfer' || $invoice->status === 'pending')
-                @php
-                    $companyName = $bankConfig['company_name'] ?? '«Մենյու ԷյԷմ» ՍՊԸ';
-                    $bankName    = $bankConfig['bank_name'] ?? '«Ամերիաբանկ» ՓԲԸ';
-                    $tin         = $bankConfig['tin'] ?? '02893072';
-                    $accountNo   = $bankConfig['account_number'] ?? '1570055555550100';
-                    $purposeText = __('Բաժանորդագրության վճարում (Հաշիվ :invoice)', ['invoice' => $invoice->invoice_number]);
-                @endphp
-                <div class="bank-requisites-box">
-                    <div class="bank-requisites-title">
-                        <i class="fa-solid fa-building-columns" style="color: #10b981;"></i>
-                        <span>{{ __('Bank Transfer Requisites') }}</span>
+            <!-- Status: Paid Banner -->
+            @if($isPaid)
+                <div style="margin-top: 2rem; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.28); border-left: 5px solid #10b981; border-radius: 16px; padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 0.85rem;">
+                        <span style="width: 44px; height: 44px; border-radius: 12px; background: rgba(16, 185, 129, 0.16); color: #10b981; display: inline-flex; align-items: center; justify-content: center; font-size: 1.35rem; flex-shrink: 0;">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </span>
+                        <div>
+                            <div style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.05rem; color: var(--text-main);">
+                                {{ __('Payment Received & Confirmed') }}
+                            </div>
+                            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.15rem;">
+                                {{ __('This invoice has been settled in full. Thank you for your business!') }}
+                            </div>
+                        </div>
                     </div>
+                    <span class="badge badge-emerald" style="font-size: 0.85rem; font-weight: 700; padding: 0.4rem 0.85rem; border-radius: 8px;">
+                        <i class="fa-solid fa-check"></i> {{ __('Paid in Full') }}
+                    </span>
+                </div>
+            @endif
 
-                    <div class="bank-requisites-grid">
-                        <div class="requisite-cell">
-                            <span class="requisite-cell-label">{{ __('Beneficiary Company:') }}</span>
-                            <span class="requisite-cell-value">{{ $companyName }}</span>
-                        </div>
-
-                        <div class="requisite-cell">
-                            <span class="requisite-cell-label">{{ __('Tax ID (ՀՎՀՀ):') }}</span>
-                            <span class="requisite-cell-value font-mono">{{ $tin }}</span>
-                        </div>
-
-                        <div class="requisite-cell">
-                            <span class="requisite-cell-label">{{ __('Bank Name:') }}</span>
-                            <span class="requisite-cell-value">{{ $bankName }}</span>
-                        </div>
-
-                        <div class="requisite-cell">
-                            <span class="requisite-cell-label">{{ __('Account Number (AMD):') }}</span>
-                            <span class="requisite-cell-value" style="color: #10b981; font-family: monospace; font-size: 1rem;">
-                                <span>{{ $accountNo }}</span>
-                                <button type="button" onclick="navigator.clipboard.writeText('{{ $accountNo }}'); const btn=this; btn.innerHTML='<i class=\'fa-solid fa-check\'></i>'; setTimeout(() => btn.innerHTML='<i class=\'fa-regular fa-copy\'></i>', 1800);" class="copy-pill-btn no-print" title="{{ __('Copy Account Number') }}">
-                                    <i class="fa-regular fa-copy"></i>
-                                </button>
+            <!-- Online Payment Action (when invoice is pending and not bank_transfer) -->
+            @if(! $isPaid && $methodCode !== 'bank_transfer')
+                <div class="no-print" style="margin-top: 2rem; background: linear-gradient(135deg, rgba(37, 99, 235, 0.07) 0%, rgba(99, 102, 241, 0.05) 100%); border: 1px solid rgba(37, 99, 235, 0.3); border-left: 5px solid var(--primary); border-radius: 16px; padding: 1.5rem 1.65rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span style="width: 44px; height: 44px; border-radius: 12px; background: var(--nav-active); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                                <i class="{{ $methodIcon }}"></i>
                             </span>
+                            <div>
+                                <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin: 0;">
+                                    {{ __('Invoice Awaiting Online Payment') }}
+                                </h3>
+                                <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.15rem;">
+                                    {{ __('Complete payment online to activate your subscription immediately.') }}
+                                </div>
+                            </div>
                         </div>
+                        <span class="badge badge-amber" style="border-radius: 8px; font-weight: 700; font-size: 0.8rem; padding: 0.35rem 0.75rem;">
+                            <i class="fa-solid fa-clock"></i> {{ __('Pending') }}
+                        </span>
                     </div>
 
-                    <div style="margin-top: 1.15rem; padding-top: 1rem; border-top: 1px solid rgba(16, 185, 129, 0.2); font-size: 0.85rem; color: var(--text-main);">
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
-                            <div>
-                                <span style="font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.04em; display: block; margin-bottom: 0.2rem;">
-                                    {{ __('Payment Purpose / Նպատակ:') }}
-                                </span>
-                                <span style="font-weight: 600; color: var(--text-main);">{{ $purposeText }}</span>
-                            </div>
-                            <button type="button" onclick="navigator.clipboard.writeText('{{ addslashes($purposeText) }}'); const btn=this; btn.innerHTML='<i class=\'fa-solid fa-check\'></i> {{ __('Copied') }}'; setTimeout(() => btn.innerHTML='<i class=\'fa-regular fa-copy\'></i> {{ __('Copy') }}', 1800);" class="copy-pill-btn no-print" title="{{ __('Copy Payment Purpose') }}">
-                                <i class="fa-regular fa-copy"></i>
-                                <span>{{ __('Copy') }}</span>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding-top: 1rem; border-top: 1px solid var(--border-color-light);">
+                        <form action="{{ route('admin.subscription.invoices.pay', $invoice->id) }}" method="POST" style="margin: 0;">
+                            @csrf
+                            <button type="submit" class="btn btn-primary" style="border-radius: 12px; font-weight: 800; font-size: 0.95rem; padding: 0.75rem 1.5rem; display: inline-flex; align-items: center; gap: 0.65rem; box-shadow: 0 4px 16px var(--primary-glow); cursor: pointer;">
+                                <i class="{{ $methodIcon }}"></i>
+                                <span>{{ __('Pay Now via :method', ['method' => $methodLabel]) }} ({{ number_format($invoice->amount, 0, '.', ' ') }} {{ $invoice->currency }})</span>
+                                <i class="fa-solid fa-arrow-right"></i>
                             </button>
-                        </div>
-                        @if(!empty($bankConfig['notes']))
-                            <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted); font-style: italic;">
-                                {{ $bankConfig['notes'] }}
-                            </div>
-                        @endif
+                        </form>
+
+                        <button type="button" @click="showBankDetails = !showBankDetails" class="btn btn-secondary" style="border-radius: 10px; font-weight: 600; font-size: 0.82rem; padding: 0.6rem 1rem; display: inline-flex; align-items: center; gap: 0.5rem; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-muted); cursor: pointer;">
+                            <i class="fa-solid fa-building-columns"></i>
+                            <span x-text="showBankDetails ? '{{ __('Hide Bank Requisites') }}' : '{{ __('Prefer to pay via bank transfer instead?') }}'"></span>
+                            <i :class="showBankDetails ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'" style="font-size: 0.75rem;"></i>
+                        </button>
                     </div>
                 </div>
             @endif
+
+            <!-- Bank Transfer Details (Always for bank_transfer, or toggled on demand) -->
+            @php
+                $showBankRequisitesAlways = ($methodCode === 'bank_transfer');
+                $companyName = $bankConfig['company_name'] ?? '«Մենյու ԷյԷմ» ՍՊԸ';
+                $bankName    = $bankConfig['bank_name'] ?? '«Ամերիաբանկ» ՓԲԸ';
+                $tin         = $bankConfig['tin'] ?? '02893072';
+                $accountNo   = $bankConfig['account_number'] ?? '1570055555550100';
+                $purposeText = __('Բաժանորդագրության վճարում (Հաշիվ :invoice)', ['invoice' => $invoice->invoice_number]);
+            @endphp
+
+            <div class="bank-requisites-box"
+                 @if(!$showBankRequisitesAlways) x-show="showBankDetails" x-cloak @endif>
+                <div class="bank-requisites-title">
+                    <i class="fa-solid fa-building-columns" style="color: #10b981;"></i>
+                    <span>{{ __('Bank Transfer Requisites') }}</span>
+                    @if(! $showBankRequisitesAlways)
+                        <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: none; margin-left: auto;">
+                            ({{ __('Offline Payment Option') }})
+                        </span>
+                    @endif
+                </div>
+
+                <div class="bank-requisites-grid">
+                    <div class="requisite-cell">
+                        <span class="requisite-cell-label">{{ __('Beneficiary Company:') }}</span>
+                        <span class="requisite-cell-value">{{ $companyName }}</span>
+                    </div>
+
+                    <div class="requisite-cell">
+                        <span class="requisite-cell-label">{{ __('Tax ID (ՀՎՀՀ):') }}</span>
+                        <span class="requisite-cell-value font-mono">{{ $tin }}</span>
+                    </div>
+
+                    <div class="requisite-cell">
+                        <span class="requisite-cell-label">{{ __('Bank Name:') }}</span>
+                        <span class="requisite-cell-value">{{ $bankName }}</span>
+                    </div>
+
+                    <div class="requisite-cell">
+                        <span class="requisite-cell-label">{{ __('Account Number (AMD):') }}</span>
+                        <span class="requisite-cell-value" style="color: #10b981; font-family: monospace; font-size: 1rem;">
+                            <span>{{ $accountNo }}</span>
+                            <button type="button" onclick="navigator.clipboard.writeText('{{ $accountNo }}'); const btn=this; btn.innerHTML='<i class=\'fa-solid fa-check\'></i>'; setTimeout(() => btn.innerHTML='<i class=\'fa-regular fa-copy\'></i>', 1800);" class="copy-pill-btn no-print" title="{{ __('Copy Account Number') }}">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1.15rem; padding-top: 1rem; border-top: 1px solid rgba(16, 185, 129, 0.2); font-size: 0.85rem; color: var(--text-main);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
+                        <div>
+                            <span style="font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.04em; display: block; margin-bottom: 0.2rem;">
+                                {{ __('Payment Purpose / Նպատակ:') }}
+                            </span>
+                            <span style="font-weight: 600; color: var(--text-main);">{{ $purposeText }}</span>
+                        </div>
+                        <button type="button" onclick="navigator.clipboard.writeText('{{ addslashes($purposeText) }}'); const btn=this; btn.innerHTML='<i class=\'fa-solid fa-check\'></i> {{ __('Copied') }}'; setTimeout(() => btn.innerHTML='<i class=\'fa-regular fa-copy\'></i> {{ __('Copy') }}', 1800);" class="copy-pill-btn no-print" title="{{ __('Copy Payment Purpose') }}">
+                            <i class="fa-regular fa-copy"></i>
+                            <span>{{ __('Copy') }}</span>
+                        </button>
+                    </div>
+                    @if(!empty($bankConfig['notes']))
+                        <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted); font-style: italic;">
+                            {{ $bankConfig['notes'] }}
+                        </div>
+                    @endif
+                </div>
+
+                @if($showBankRequisitesAlways && ! $isPaid)
+                    @php
+                        $activeOnlineMethods = array_filter(
+                            \App\Models\SystemSetting::getActiveSubscriptionPaymentMethods(),
+                            fn ($m) => $m['code'] !== 'bank_transfer'
+                        );
+                    @endphp
+                    @if(count($activeOnlineMethods) > 0)
+                        <div class="no-print" style="margin-top: 1.15rem; padding-top: 0.95rem; border-top: 1px dashed rgba(16, 185, 129, 0.25); display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
+                            <span style="font-size: 0.82rem; color: var(--text-muted);">
+                                <i class="fa-solid fa-bolt" style="color: var(--primary); margin-right: 0.35rem;"></i>
+                                {{ __('Want to pay online instantly with Card or Idram?') }}
+                            </span>
+                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                @foreach($activeOnlineMethods as $onlineM)
+                                    <form action="{{ route('admin.subscription.invoices.pay', $invoice->id) }}" method="POST" style="margin: 0;">
+                                        @csrf
+                                        <input type="hidden" name="payment_method" value="{{ $onlineM['code'] }}">
+                                        <button type="submit" class="btn btn-secondary" style="border-radius: 8px; font-size: 0.78rem; font-weight: 700; padding: 0.4rem 0.75rem; display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); cursor: pointer;">
+                                            <i class="{{ $onlineM['icon'] }}" style="color: {{ $onlineM['color'] }};"></i>
+                                            <span>{{ __('Pay with :method', ['method' => $onlineM['name']]) }}</span>
+                                        </button>
+                                    </form>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                @endif
+            </div>
 
             <!-- Invoice Footer Note -->
             <div class="invoice-footer-note">

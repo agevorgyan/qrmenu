@@ -58,17 +58,25 @@ class StripeGateway implements PaymentGatewayInterface
         }
 
         try {
+            $rawCurrency = strtolower(trim((string) $attempt->currency));
+            $stripeCurrency = match ($rawCurrency) {
+                '֏', 'amd' => 'amd',
+                '$', 'usd' => 'usd',
+                '€', 'eur' => 'eur',
+                '₽', 'rub' => 'rub',
+                default => $rawCurrency ?: 'amd',
+            };
+
             // Attempt to create Stripe Checkout Session via Stripe API
             $response = Http::withToken($secretKey)
                 ->asForm()
                 ->post('https://api.stripe.com/v1/checkout/sessions', [
-                    'payment_method_types' => ['card'],
                     'client_reference_id' => $attempt->merchant_reference,
                     'customer_email' => $attempt->order?->customer_email ?? $vendor->email,
                     'line_items' => [
                         [
                             'price_data' => [
-                                'currency' => strtolower($attempt->currency),
+                                'currency' => $stripeCurrency,
                                 'product_data' => [
                                     'name' => $attempt->order
                                         ? "Order #{$attempt->order->order_number} - {$vendor->name}"
@@ -86,6 +94,9 @@ class StripeGateway implements PaymentGatewayInterface
                         'payment_attempt_id' => $attempt->id,
                         'merchant_reference' => $attempt->merchant_reference,
                         'vendor_id' => $vendor->id,
+                    ],
+                    'managed_payments' => [
+                        'enabled' => 'false',
                     ],
                 ]);
 

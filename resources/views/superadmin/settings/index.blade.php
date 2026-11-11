@@ -308,7 +308,7 @@
         </button>
         <button type="button" class="settings-tab-btn" :class="activeTab === 'payments' ? 'active' : ''" @click="activeTab = 'payments'; window.location.hash = 'payments'">
             <i class="fa-solid fa-credit-card" style="color: #6366f1;"></i>
-            <span>{{ __('Payment Gateways') }}</span>
+            <span>{{ __('Payment Gateways & Bank Requisites') }}</span>
         </button>
         <button type="button" class="settings-tab-btn" :class="activeTab === 'security' ? 'active' : ''" @click="activeTab = 'security'; window.location.hash = 'security'">
             <i class="fa-solid fa-shield-halved" style="color: #10b981;"></i>
